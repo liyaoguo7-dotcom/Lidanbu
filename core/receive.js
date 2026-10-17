@@ -27,7 +27,7 @@ function today() {
 async function createEvent(db, actorId, ownerId, { name, tagId, date, remark = '' }) {
   if (!name || !name.trim()) throw new Error('礼薄名称必填');
   // 只有主人可建事件（成员开关只作用于明细，见文件头口径）
-  if (actorId !== ownerId) throw new Error('仅账本主人可新建礼薄');
+  if (actorId !== ownerId) throw new Error('无权限：仅账本主人可新建礼薄');
 
   // 查重：同一账本内名称不能完全重复（第19章#16建议，待确认）
   const dup = await db.collection(COLLECTIONS.ReceiveEvent).count({ ownerId, name: name.trim() });
@@ -45,7 +45,7 @@ async function createEvent(db, actorId, ownerId, { name, tagId, date, remark = '
 }
 
 async function updateEvent(db, actorId, ownerId, eventId, patch) {
-  if (actorId !== ownerId) throw new Error('仅账本主人可修改礼薄');
+  if (actorId !== ownerId) throw new Error('无权限：仅账本主人可修改礼薄');
   const user = await getOwner(db, ownerId);
   const q = await quota.checkEditAllowed(db, user, 'event', eventId);
   if (!q.ok) throw new Error(q.reason);
@@ -62,7 +62,7 @@ async function updateEvent(db, actorId, ownerId, eventId, patch) {
 }
 
 async function deleteEvent(db, actorId, ownerId, eventId) {
-  if (actorId !== ownerId) throw new Error('仅账本主人可删除礼薄');
+  if (actorId !== ownerId) throw new Error('无权限：仅账本主人可删除礼薄');
   const n = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId, eventId });
   await db.collection(COLLECTIONS.ReceiveRecord).remove({ ownerId, eventId });
   await db.collection(COLLECTIONS.ReceiveEvent).remove({ _id: eventId, ownerId });
@@ -92,7 +92,7 @@ async function createRecord(db, actorId, ownerId, eventId, { contactId, amount, 
   if (!Number.isInteger(amount) || amount <= 0) throw new Error('金额须为正整数（分）');
   // 联系人必须可见（成员只能选已授权可见的）
   const ck = await authz.check(db, actorId, 'read', { kind: 'contact', ownerId, contactId });
-  if (!ck.ok) throw new Error(`联系人不可见:${ck.reason}`);
+  if (!ck.ok) throw new Error(`无权限选用该联系人:${ck.reason}`);
 
   const { _id } = await db.collection(COLLECTIONS.ReceiveRecord).insert({
     ownerId, eventId, contactId, amount, type, remark,

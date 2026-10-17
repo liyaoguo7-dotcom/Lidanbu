@@ -24,7 +24,7 @@ async function createGift(db, actorId, ownerId, { contactId, tagId, amount, rema
 
   if (!Number.isInteger(amount) || amount <= 0) throw new Error('金额须为正整数（分）');
   const ck = await authz.check(db, actorId, 'read', { kind: 'contact', ownerId, contactId });
-  if (!ck.ok) throw new Error(`联系人不可见:${ck.reason}`);
+  if (!ck.ok) throw new Error(`无权限选用该联系人:${ck.reason}`);
 
   const { _id } = await db.collection(COLLECTIONS.GiftRecord).insert({
     ownerId, contactId, tagId, amount, remark,

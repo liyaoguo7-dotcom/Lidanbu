@@ -11,6 +11,7 @@ module.exports = {
   authz: require('./authz'),
   quota: require('./quota'),
   audit: require('./audit'),
+  export: require('./export'),
   contacts: require('./contacts'),
   receive: require('./receive'),
   gifts: require('./gifts'),
