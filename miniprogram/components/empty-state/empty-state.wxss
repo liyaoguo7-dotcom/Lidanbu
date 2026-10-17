@@ -1,0 +1,27 @@
+/* 空状态（v3.1：所有元素居中，淡色图标+淡色小字） */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+}
+
+.icon {
+  font-size: 120rpx;
+  opacity: 0.35; /* 淡色图标 */
+  margin-bottom: 24rpx;
+}
+
+.tip {
+  font-size: 28rpx;
+  color: #B0B0B0; /* 淡色小字 */
+  text-align: center;
+  line-height: 1.6;
+}
+
+.action {
+  margin-top: 24rpx;
+  font-size: 30rpx;
+  color: #E64340; /* 红色操作文，如"点击查看示例" */
+}

@@ -1,0 +1,8 @@
+<!-- 日期选择：微信原生 picker，不手写 -->
+<picker mode="date" value="{{displayValue}}" bindchange="onChange">
+  <view class="date-field">
+    <text class="label">日期</text>
+    <text class="value">{{displayValue}}</text>
+    <text class="arrow">›</text>
+  </view>
+</picker>

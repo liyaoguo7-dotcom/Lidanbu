@@ -1,0 +1,13 @@
+<!-- 10 标签：两排每排 5 个，单选，默认"结婚" -->
+<view class="tag-grid">
+  <view
+    wx:for="{{tags}}"
+    wx:key="id"
+    class="tag {{item.id === currentId ? 'active' : ''}}"
+    data-id="{{item.id}}"
+    bindtap="onSelect"
+  >
+    <text class="tag-icon">[{{item.icon}}]</text>
+    <text class="tag-name">{{item.name}}</text>
+  </view>
+</view>

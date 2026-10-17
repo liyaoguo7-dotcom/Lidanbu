@@ -1,0 +1,6 @@
+<!-- 空状态：全部居中 -->
+<view class="empty">
+  <text class="icon">{{iconText}}</text>
+  <text class="tip">{{tip}}</text>
+  <text class="action" wx:if="{{actionText}}" bindtap="onAction">{{actionText}}</text>
+</view>

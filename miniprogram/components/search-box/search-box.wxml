@@ -1,0 +1,18 @@
+<!-- 搜索框：右侧"取消"，聚焦或有内容时显示 -->
+<view class="search-wrap">
+  <view class="search-box">
+    <text class="icon">🔍</text>
+    <input
+      class="input"
+      placeholder="{{placeholder}}"
+      value="{{value}}"
+      bindinput="onInput"
+      bindfocus="onFocus"
+      bindconfirm="onConfirm"
+    />
+  </view>
+  <text
+    class="cancel {{(focused || value) ? 'show' : ''}}"
+    bindtap="onCancel"
+  >取消</text>
+</view>

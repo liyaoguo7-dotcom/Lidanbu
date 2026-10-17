@@ -1,1 +1,1 @@
-{"navigationBarTitleText": "组件示例"}
+{"navigationBarTitleText":"组件示例","usingComponents":{"add-btn":"../../components/add-btn/add-btn","confirm-modal":"../../components/confirm-modal/confirm-modal","date-picker":"../../components/date-picker/date-picker","empty-state":"../../components/empty-state/empty-state","search-box":"../../components/search-box/search-box","tag-selector":"../../components/tag-selector/tag-selector","tip-bar":"../../components/tip-bar/tip-bar"}}

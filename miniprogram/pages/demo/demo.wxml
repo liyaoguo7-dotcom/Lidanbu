@@ -1,4 +1,56 @@
-<!-- 礼单簿 · 组件示例页（T0.1 占位；页面实现为阶段2） -->
-<view class="placeholder">
-  <text>组件示例（T0.1 占位页）</text>
+<!-- 组件示例页：7 个通用组件演示 -->
+<view class="demo">
+  <view class="section">
+    <view class="section-title">1. 小喇叭提示条</view>
+    <tip-bar text="点击姓名可查询来往记录哦～" />
+  </view>
+
+  <view class="section">
+    <view class="section-title">2. 搜索框（右侧取消）</view>
+    <search-box
+      placeholder="搜索亲友姓名或备注"
+      value="{{searchValue}}"
+      bindinput="onSearchInput"
+      bindsearch="onSearchConfirm"
+      bindcancel="onSearchCancel"
+    />
+  </view>
+
+  <view class="section">
+    <view class="section-title">3. 10 标签选择器（当前：{{selectedTag || '结婚'}}）</view>
+    <tag-selector bindchange="onTagChange" />
+  </view>
+
+  <view class="section">
+    <view class="section-title">4. 日期选择（当前：{{selectedDate || '默认当天'}}）</view>
+    <date-picker bindchange="onDateChange" />
+  </view>
+
+  <view class="section">
+    <view class="section-title">5. 空状态</view>
+    <empty-state
+      tip="还没有记录，请点击下方红色＋按钮添加"
+      actionText="点击查看示例"
+      bindaction="onEmptyAction"
+    />
+  </view>
+
+  <view class="section">
+    <view class="section-title">6. 确认弹窗</view>
+    <button bindtap="openModal">打开删除确认弹窗</button>
+    <confirm-modal
+      show="{{showModal}}"
+      title="删除确认"
+      content="删除后无法恢复，确定要删除吗？"
+      bindconfirm="onModalConfirm"
+      bindcancel="onModalCancel"
+    />
+  </view>
+
+  <view class="section">
+    <view class="section-title">7. 红色＋按钮（底部中间固定）</view>
+    <text class="hint">页面底部中间固定按钮即＋按钮组件</text>
+  </view>
+
+  <add-btn bindtap="onAddTap" />
 </view>

@@ -1,0 +1,4 @@
+<!-- 红色＋按钮：红圈白加号，底部中间固定 -->
+<view class="add-btn" bindtap="onTap" aria-label="{{ariaLabel}}">
+  <text class="plus">＋</text>
+</view>

@@ -1,0 +1,38 @@
+/* 搜索框（v3.1 第三章第6条：右侧"取消"） */
+.search-wrap {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #F2F2F2;
+  border-radius: 36rpx;
+  padding: 0 24rpx;
+  height: 72rpx;
+}
+
+.icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+}
+
+.input {
+  flex: 1;
+  font-size: 28rpx;
+  height: 72rpx;
+}
+
+.cancel {
+  font-size: 30rpx;
+  color: #576B95;
+  margin-left: 20rpx;
+  display: none;
+}
+
+.cancel.show {
+  display: block;
+}

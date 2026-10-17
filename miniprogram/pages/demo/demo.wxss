@@ -1,8 +1,23 @@
-/* 礼单簿 · 组件示例页样式（T0.1 占位） */
-.placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 60vh;
+/* 组件示例页样式 */
+.demo {
+  padding-bottom: 200rpx;
+}
+
+.section {
+  background-color: #ffffff;
+  margin: 20rpx;
+  border-radius: 16rpx;
+  padding: 20rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  margin-bottom: 16rpx;
+  color: #333333;
+}
+
+.hint {
+  font-size: 26rpx;
   color: #999999;
 }

@@ -1,0 +1,62 @@
+/* 居中确认弹窗（v3.1 第三章第1条：半透明遮罩，左取消右红色删除） */
+.mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明遮罩 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.dialog {
+  width: 600rpx;
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 34rpx;
+  font-weight: bold;
+  text-align: center;
+  padding: 40rpx 32rpx 16rpx;
+}
+
+.content {
+  font-size: 28rpx;
+  color: #666666;
+  text-align: center;
+  padding: 0 40rpx 40rpx;
+  line-height: 1.6;
+}
+
+.buttons {
+  display: flex;
+  border-top: 1rpx solid #E5E5E5;
+}
+
+.btn {
+  flex: 1;
+  text-align: center;
+  padding: 28rpx 0;
+  font-size: 32rpx;
+}
+
+.cancel-btn {
+  color: #333333;
+  border-right: 1rpx solid #E5E5E5;
+}
+
+.danger-btn {
+  color: #E64340; /* 红色确认 */
+  font-weight: bold;
+}
+
+.primary-btn {
+  color: #576B95;
+  font-weight: bold;
+}

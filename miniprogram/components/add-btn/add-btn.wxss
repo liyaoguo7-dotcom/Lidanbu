@@ -1,0 +1,24 @@
+/* 红色＋按钮：红色圆圈＋白色＋，底部中间（v3.1 第三章第5条） */
+.add-btn {
+  position: fixed;
+  bottom: 120rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 50%;
+  background-color: #E64340; /* 主红占位，视觉后定 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4rpx 16rpx rgba(230, 67, 64, 0.4);
+  z-index: 90;
+}
+
+.plus {
+  color: #ffffff;
+  font-size: 56rpx;
+  font-weight: 300;
+  line-height: 1;
+  margin-top: -6rpx;
+}
