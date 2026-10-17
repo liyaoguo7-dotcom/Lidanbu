@@ -48,12 +48,25 @@ const AppConfig = {
       photoImport: true,   // 拍照导入：会员功能
       redLedgerMode: true, // 经典红字大写横置礼簿模式：会员功能
     },
+    // 会员额度（数字待定价时一起定；此处为占位，阶段1逻辑按此结构读取）
+    quota: {
+      receiveEvents: 30,     // 会员：礼薄数（占位，待定）
+      recordsPerEvent: 500,  // 会员：每礼薄记录数（占位，待定）
+      giftRecords: 500,      // 会员：送礼记录数（占位，待定）
+      contacts: 500,         // 会员：联系人数（占位，待定）
+    },
     // 会员到期规则（v3.1 已确认）
     expiry: {
       gracePeriodDays: 90,       // 缓冲期约 90 天
       reminders: [15, 0, -1],    // 到期前15天、到期当天、缓冲期结束前各提醒一次（-1=结束前）
       overQuotaReadonly: true,   // 超出免费额度的记录变为只读（可查可导出，不能改、不能新增）
     },
+  },
+
+  /** 邀请奖励额度（预留：规则待用户确定，当前不启用；邀请功能本阶段不做） */
+  inviteReward: {
+    enabled: false, // 预留开关
+    rules: null,    // 预留：邀请奖励规则（待用户确定后填入）
   },
 
   /** 家庭共享权限开关（五个；"仅查看"恒开不可取消，"可导出"默认关） */
