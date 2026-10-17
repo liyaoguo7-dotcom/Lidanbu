@@ -1,0 +1,1 @@
+{"dependencies":{"wx-server-sdk":"latest"},"description":"礼单簿云函数 api（待联调）","main":"index.js","name":"lidanbu-api","version":"0.1.0"}
