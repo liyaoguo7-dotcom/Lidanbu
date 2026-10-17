@@ -1,0 +1,39 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style-vars.css"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#333;font-size:15px;-webkit-font-smoothing:antialiased}
+.page{width:375px;min-height:810px;background:#F6F6F6;position:relative;padding-bottom:76px}
+.card{background:#fff;border-radius:12px;margin:12px}
+.searchbar{display:flex;align-items:center;padding:10px 12px;gap:8px}
+.searchbox{flex:1;background:#F2F2F2;border-radius:17px;height:34px;display:flex;align-items:center;padding:0 14px;color:#C2C2C2;font-size:14px}
+.search-cancel{color:#F0575A;font-size:14px;white-space:nowrap}
+.tip{display:flex;align-items:flex-start;gap:6px;padding:8px 14px;font-size:12px;color:#999;line-height:1.6}
+.tip .horn{font-size:14px}
+.row{display:flex;align-items:center;padding:0 16px;height:58px;border-bottom:1px solid #F0F0F0}
+.row:last-child{border-bottom:none}
+.form-label{width:82px;flex:none;font-size:15px;color:#333}
+.form-val{flex:1;text-align:left;font-size:15px;color:#333}
+.form-val.ph{color:#C2C2C2}
+.chev{color:#C2C2C2;font-size:18px}
+.mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.45);z-index:20}
+.dialog{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:300px;background:#fff;border-radius:12px;z-index:21;overflow:hidden}
+.dialog .dinfo{padding:20px 20px 6px;font-size:14px;color:#555;line-height:1.9}
+.dialog .dinfo b{color:#333}
+.dialog .dwarn{text-align:center;font-size:14px;color:#333;padding:10px 20px 16px;font-weight:500}
+.dialog .dbtns{display:flex;border-top:1px solid #F0F0F0}
+.dialog .dbtns div{flex:1;text-align:center;padding:14px 0;font-size:15px;height:58px;line-height:30px}
+.dialog .dcancel{color:#666;border-right:1px solid #F0F0F0}
+.dialog .ddel{color:#F0575A;font-weight:600}
+.sheet-mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.35);z-index:20}
+.sheet{position:absolute;left:0;bottom:0;width:375px;background:#fff;border-radius:16px 16px 0 0;z-index:21;padding-bottom:20px}
+.sheet .sname{text-align:center;font-size:17px;font-weight:600;padding:18px 0 6px;font-family:"Songti SC","STSong",serif}
+.sheet .sopt{text-align:center;height:58px;line-height:58px;font-size:15px;border-top:2px solid #F4F4F4}
+.sheet .sopt.red{color:#F0575A}
+.sheet .sopt .sub{font-size:12px;color:#C2C2C2;margin-left:8px}
+</style></head><body><div class="page">
+<div class="wf-titlebar"><span class="back">‹</span>新增亲友<span class="capsule"></span></div>
+<div class="card">
+  <div class="row"><div class="form-label">姓名</div><div class="form-val ph">请输入姓名</div></div>
+  <div class="row"><div class="form-label">备注</div><div class="form-val ph">可填写备注，如：同学</div></div>
+</div>
+<div class="wf-btn wf-btn-fixed">保存</div>
+</div></body></html>

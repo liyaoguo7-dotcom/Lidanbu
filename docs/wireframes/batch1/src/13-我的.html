@@ -1,0 +1,59 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style-vars.css"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#333;font-size:15px;-webkit-font-smoothing:antialiased}
+.page{width:375px;min-height:810px;background:#F6F6F6;position:relative;padding-bottom:76px}
+.card{background:#fff;border-radius:12px;margin:12px}
+.searchbar{display:flex;align-items:center;padding:10px 12px;gap:8px}
+.searchbox{flex:1;background:#F2F2F2;border-radius:17px;height:34px;display:flex;align-items:center;padding:0 14px;color:#C2C2C2;font-size:14px}
+.search-cancel{color:#F0575A;font-size:14px;white-space:nowrap}
+.tip{display:flex;align-items:flex-start;gap:6px;padding:8px 14px;font-size:12px;color:#999;line-height:1.6}
+.tip .horn{font-size:14px}
+.row{display:flex;align-items:center;padding:0 16px;height:58px;border-bottom:1px solid #F0F0F0}
+.row:last-child{border-bottom:none}
+.form-label{width:82px;flex:none;font-size:15px;color:#333}
+.form-val{flex:1;text-align:left;font-size:15px;color:#333}
+.form-val.ph{color:#C2C2C2}
+.chev{color:#C2C2C2;font-size:18px}
+.mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.45);z-index:20}
+.dialog{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:300px;background:#fff;border-radius:12px;z-index:21;overflow:hidden}
+.dialog .dinfo{padding:20px 20px 6px;font-size:14px;color:#555;line-height:1.9}
+.dialog .dinfo b{color:#333}
+.dialog .dwarn{text-align:center;font-size:14px;color:#333;padding:10px 20px 16px;font-weight:500}
+.dialog .dbtns{display:flex;border-top:1px solid #F0F0F0}
+.dialog .dbtns div{flex:1;text-align:center;padding:14px 0;font-size:15px;height:58px;line-height:30px}
+.dialog .dcancel{color:#666;border-right:1px solid #F0F0F0}
+.dialog .ddel{color:#F0575A;font-weight:600}
+.sheet-mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.35);z-index:20}
+.sheet{position:absolute;left:0;bottom:0;width:375px;background:#fff;border-radius:16px 16px 0 0;z-index:21;padding-bottom:20px}
+.sheet .sname{text-align:center;font-size:17px;font-weight:600;padding:18px 0 6px;font-family:"Songti SC","STSong",serif}
+.sheet .sopt{text-align:center;height:58px;line-height:58px;font-size:15px;border-top:2px solid #F4F4F4}
+.sheet .sopt.red{color:#F0575A}
+.sheet .sopt .sub{font-size:12px;color:#C2C2C2;margin-left:8px}
+</style></head><body><div class="page">
+<div class="wf-titlebar">我的<span class="capsule"></span></div>
+<div class="card" style="padding:20px 16px;display:flex;align-items:center;gap:14px">
+  <div style="width:56px;height:56px;border-radius:50%;background:var(--tag-selected-bg);display:flex;align-items:center;justify-content:center;font-size:28px;flex:none">😊</div>
+  <div><div style="font-size:16px;font-weight:600">Noah</div><div style="font-size:12px;color:#C2C2C2;margin-top:4px">礼单簿记了 128 笔人情</div></div>
+</div>
+<div class="card" style="padding:16px;background:linear-gradient(135deg,#F0575A,#e04447);border:none">
+  <div style="color:#fff;font-size:16px;font-weight:600">会员卡片</div>
+  <div style="color:rgba(255,255,255,.85);font-size:13px;margin-top:8px;line-height:1.7">本子虽小，人情事大～开个会员，让每一笔心意都有处安放</div>
+  <div style="margin-top:12px;display:inline-block;background:#fff;color:#F0575A;font-size:13px;font-weight:600;padding:8px 22px;border-radius:20px">开通会员</div>
+</div>
+<div style="padding:4px 12px 0;font-size:13px;color:#999">会员专属功能</div>
+<div class="card"><div class="row" style="height:68px"><div style="font-size:26px;width:40px;flex:none">👨‍👩‍👧</div><div><div style="font-size:15px;font-weight:600">家庭共享邀请</div><div style="font-size:12px;color:#C2C2C2;margin-top:3px">邀请家人共记一本账，查看/新增/修改/删除/导出权限由你定</div></div></div><div class="row" style="height:68px"><div style="font-size:26px;width:40px;flex:none">📷</div><div><div style="font-size:15px;font-weight:600">拍照导入</div><div style="font-size:12px;color:#C2C2C2;margin-top:3px">纸质礼单拍照上传，一键识别成电子账</div></div></div><div class="row" style="height:68px"><div style="font-size:26px;width:40px;flex:none">📕</div><div><div style="font-size:15px;font-weight:600">横置红字礼单本</div><div style="font-size:12px;color:#C2C2C2;margin-top:3px">经典红字大写，横置翻阅，仪式感拉满</div></div></div></div>
+<div class="card">
+  <div class="row"><div class="form-val">经典红字大写横置礼簿模式</div><div style="width:46px;height:26px;border-radius:13px;background:#F0575A;position:relative;flex:none"><div style="width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;right:2px;top:2px"></div></div></div>
+</div>
+<div class="card">
+  <div class="row"><div class="form-val">联系客服</div><span class="chev">›</span></div>
+  <div class="row"><div class="form-val">分享转发</div><span class="chev">›</span></div>
+</div>
+<div style="text-align:center;font-size:11px;color:#C2C2C2;padding:18px 0 8px">隐私政策｜注销账号</div>
+
+<div class="wf-tabbar">
+  <div class="wf-tab"><span class="ti">🏠</span>首页</div>
+  <div class="wf-tab"><span class="ti">↔️</span>往来</div>
+  <div class="wf-tab"><span class="ti">👥</span>亲友录</div>
+  <div class="wf-tab active"><span class="ti">👤</span>我的</div>
+</div></div></body></html>

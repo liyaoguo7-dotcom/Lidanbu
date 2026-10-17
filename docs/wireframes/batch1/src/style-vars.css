@@ -1,0 +1,93 @@
+/* 礼单簿 · 统一样式变量文件（界面风格规范 v1）
+ * 所有页面的颜色、圆角、标题栏、按钮统一在此定义，各页面 HTML 引用本文件。
+ * 色值取自《添加送礼记录 标准页面（新图案版）》标准截图。
+ */
+:root {
+  /* —— 颜色 —— */
+  --titlebar-bg: #F0E6D4;      /* 顶部标题栏背景（米色） */
+  --page-bg: #F6F6F6;          /* 页面背景 */
+  --card-bg: #FFFFFF;          /* 卡片背景 */
+  --btn-primary: #F0575A;      /* 主按钮（保存/修改） */
+  --tag-selected-text: #E05353;/* 选中标签文字（加粗） */
+  --tag-selected-bg: #F1E6D3;  /* 选中标签圆底（米色） */
+  --tag-bg: #F5F6F4;           /* 未选中标签圆底 */
+  --tag-baishi-text: #3B4046;  /* 白事选中文字（深灰，不用红） */
+  --tag-baishi-bg: #E8EAED;    /* 白事选中圆底（深灰） */
+  --text-main: #333333;        /* 正文文字 */
+  --text-sub: #C2C2C2;         /* 次要文字/占位符 */
+  --divider: #F0F0F0;          /* 分割线 */
+  --fab-bg: #F0575A;           /* 红色＋按钮（与主按钮统一，同为#F0575A，颜色克制） */
+  --tab-active: #F0575A;       /* 底部 Tab 选中色 */
+  --diff-bg: #FFF8E1;          /* 往来页差额区淡黄底（沿用 v3.1） */
+
+  /* —— 圆角 —— */
+  --card-radius: 12px;         /* 卡片圆角 */
+  --btn-radius: 28px;          /* 主按钮胶囊（高56px的一半） */
+  --tag-circle: 56px;          /* 标签圆直径 */
+  --tag-pad: 8px;              /* 标签圆内边距 */
+
+  /* —— 尺寸 —— */
+  --page-width: 375px;
+  --titlebar-h: 52px;
+  --card-margin: 12px;         /* 卡片左右留白 */
+  --card-gap: 12px;            /* 卡片之间间距 */
+  --form-row-h: 58px;          /* 表单行高 */
+  --form-label-w: 82px;         /* 表单左侧标签宽 */
+  --btn-h: 56px;               /* 主按钮高 */
+  --btn-bottom: 26px;          /* 主按钮距底部 */
+  --btn-side: 24px;            /* 主按钮左右边距 */
+  --tabbar-h: 62px;
+}
+
+/* —— 标题栏 —— */
+.wf-titlebar {
+  height: var(--titlebar-h);
+  background: var(--titlebar-bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 600; color: var(--text-main);
+  font-family: "Songti SC", "STSong", serif;
+  position: relative;
+}
+.wf-titlebar .back {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 26px; color: var(--text-main); line-height: 1;
+}
+.wf-titlebar .capsule {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  width: 86px; height: 30px; border: 1.5px solid rgba(0,0,0,.12);
+  border-radius: 15px; background: rgba(255,255,255,.5);
+}
+
+/* —— 主按钮 —— */
+.wf-btn {
+  display: block; height: var(--btn-h); line-height: var(--btn-h);
+  background: var(--btn-primary); color: #fff; text-align: center;
+  font-size: 17px; border-radius: var(--btn-radius);
+  margin-left: var(--btn-side); margin-right: var(--btn-side);
+}
+.wf-btn-fixed {
+  position: absolute; left: 0; right: 0; bottom: var(--btn-bottom);
+}
+
+/* —— 红色＋按钮（红圈白＋，底部中间） —— */
+.wf-fab {
+  position: absolute; bottom: 88px; left: 50%; transform: translateX(-50%);
+  width: 58px; height: 58px; border-radius: 50%;
+  background: var(--fab-bg); color: #fff;
+  font-size: 34px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 10px rgba(240,87,90,.45); z-index: 5;
+}
+
+/* —— 底部 Tab —— */
+.wf-tabbar {
+  position: absolute; left: 0; bottom: 0; width: var(--page-width);
+  height: var(--tabbar-h); display: flex;
+  border-top: 1px solid var(--divider); background: #fff;
+}
+.wf-tab { flex: 1; text-align: center; font-size: 11px; color: #999; padding-top: 9px; line-height: 1.5; }
+.wf-tab .ti { font-size: 20px; display: block; }
+.wf-tab.active { color: var(--tab-active); }
+
+/* —— 标签名（宋体风格） —— */
+.wf-tagname { font-family: "Songti SC", "STSong", serif; }
