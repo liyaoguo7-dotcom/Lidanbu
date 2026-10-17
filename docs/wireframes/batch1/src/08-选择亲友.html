@@ -1,0 +1,52 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:375px;margin:0;background:#fff;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#333;font-size:15px;-webkit-font-smoothing:antialiased}
+.page{width:375px;min-height:810px;background:#fff;position:relative;padding-bottom:76px}
+.navbar{height:50px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;border-bottom:1px solid #f0f0f0;background:#fff}
+.tabbar{position:absolute;left:0;bottom:0;width:375px;height:62px;display:flex;border-top:1px solid #eee;background:#fff}
+.tab{flex:1;text-align:center;font-size:11px;color:#999;padding-top:9px;line-height:1.5}
+.tab .ti{font-size:20px;display:block}
+.tab.active{color:#E64340}
+.fab{position:absolute;bottom:86px;left:50%;transform:translateX(-50%);width:58px;height:58px;border-radius:50%;background:#E64340;color:#fff;font-size:34px;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(230,67,64,.45);z-index:5}
+.searchbar{display:flex;align-items:center;padding:10px 12px;gap:8px}
+.searchbox{flex:1;background:#f2f2f2;border-radius:17px;height:34px;display:flex;align-items:center;padding:0 14px;color:#aaa;font-size:14px}
+.search-cancel{color:#E64340;font-size:14px;white-space:nowrap}
+.tip{display:flex;align-items:flex-start;gap:6px;padding:8px 14px;font-size:12px;color:#999;line-height:1.6}
+.tip .horn{font-size:14px}
+.row{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid #f5f5f5}
+.btn-red{display:block;width:343px;margin:24px auto 0;background:#E64340;color:#fff;text-align:center;height:48px;line-height:48px;border-radius:24px;font-size:16px}
+.form-label{font-size:13px;color:#999;padding:16px 16px 6px}
+.form-field{margin:0 16px;padding:13px 0;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;font-size:15px}
+.form-field .ph{color:#bbb}
+.form-field .arrow{color:#ccc}
+input[type=text]{border:none;outline:none;font-size:15px;width:100%;color:#333;background:transparent}
+.group-title{padding:14px 16px 8px;font-size:13px;color:#999}
+.mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.45);z-index:20}
+.dialog{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:300px;background:#fff;border-radius:14px;z-index:21;overflow:hidden}
+.dialog .dinfo{padding:20px 20px 6px;font-size:14px;color:#555;line-height:1.9}
+.dialog .dinfo b{color:#333}
+.dialog .dwarn{text-align:center;font-size:14px;color:#333;padding:10px 20px 16px;font-weight:500}
+.dialog .dbtns{display:flex;border-top:1px solid #eee}
+.dialog .dbtns div{flex:1;text-align:center;padding:13px 0;font-size:15px}
+.dialog .dcancel{color:#666;border-right:1px solid #eee}
+.dialog .ddel{color:#E64340;font-weight:600}
+.sheet-mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.35);z-index:20}
+.sheet{position:absolute;left:0;bottom:0;width:375px;background:#fff;border-radius:16px 16px 0 0;z-index:21;padding-bottom:20px}
+.sheet .sname{text-align:center;font-size:17px;font-weight:600;padding:18px 0 6px}
+.sheet .sopt{text-align:center;padding:14px 0;font-size:15px;border-top:2px solid #f4f4f4}
+.sheet .sopt.red{color:#E64340}
+.sheet .sopt .sub{font-size:12px;color:#bbb;margin-left:8px}
+</style></head><body><div class="page">
+<div class="navbar">选择亲友</div>
+<div class="searchbar"><div class="searchbox">🔍 搜索姓名</div><div class="search-cancel">取消</div></div>
+<div class="tip"><span class="horn">📢</span><span>若亲友姓名不在列表中，请点击下方红色按钮添加</span></div>
+<div class="row"><div style="font-size:16px">张三<span style="font-size:13px;color:#aaa;margin-left:8px">同学</span></div></div><div class="row"><div style="font-size:16px">张小四</div></div><div class="row"><div style="font-size:16px">李五<span style="font-size:13px;color:#aaa;margin-left:8px">邻居</span></div></div><div class="row"><div style="font-size:16px">王二麻<span style="font-size:13px;color:#aaa;margin-left:8px">表哥</span></div></div><div class="row"><div style="font-size:16px">赵六</div></div>
+<div class="fab">＋</div>
+
+<div class="tabbar">
+  <div class="tab active"><span class="ti">🏠</span>首页</div>
+  <div class="tab"><span class="ti">↔️</span>往来</div>
+  <div class="tab"><span class="ti">👥</span>亲友录</div>
+  <div class="tab"><span class="ti">👤</span>我的</div>
+</div></div></body></html>
