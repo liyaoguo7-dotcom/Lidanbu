@@ -39,12 +39,13 @@ async function visibleRecords(db, viewerId, ownerId) {
     const gifts = await db.collection(COLLECTIONS.GiftRecord).find({ ownerId });
     return { receives, gifts, isMember: false };
   }
-  const grant = await authz.getGrant(db, ownerId, viewerId);
-  if (!grant || !grant.switches.view) return { receives: [], gifts: [], isMember: true };
-  const receives = grant.scope.events.length
-    ? await db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, eventId: { $in: grant.scope.events } })
+  const pre = await authz.checkMemberAccess(db, viewerId, ownerId);
+  if (!pre.ok || !pre.switches.view) return { receives: [], gifts: [], isMember: true };
+  const scope = pre.scope;
+  const receives = scope.events.length
+    ? await db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, eventId: { $in: scope.events } })
     : [];
-  const gifts = grant.scope.gifts
+  const gifts = scope.gifts
     ? await db.collection(COLLECTIONS.GiftRecord).find({ ownerId })
     : [];
   return { receives, gifts, isMember: true };

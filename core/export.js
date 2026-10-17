@@ -6,6 +6,7 @@
  * - 成员：需 export 开关；只导出已授权范围（事件取交集，送礼看 scope.gifts）
  * - 读取/导出不信任调用方传入的 id，一律按授权单范围重新筛选
  */
+const errors = require('./errors');
 
 const { COLLECTIONS, now } = require('./models');
 const authz = require('./authz');
@@ -19,16 +20,14 @@ async function checkExportScope(db, actorId, ownerId) {
   if (!actorId || !ownerId) return { ok: false, reason: 'empty-identity' };
   if (actorId === ownerId) return { ok: true, reason: 'owner', events: 'all', gifts: true };
 
-  const grant = await authz.getGrant(db, ownerId, actorId);
-  if (!grant) return { ok: false, reason: 'no-active-membership' };
-  const switches = (grant && grant.switches) || {};
-  if (!switches.view || !switches.export) return { ok: false, reason: 'switch-off:export' };
-  const rawScope = (grant && grant.scope) || {};
+  const pre = await authz.checkMemberAccess(db, actorId, ownerId);
+  if (!pre.ok) return { ok: false, reason: pre.reason };
+  if (!pre.switches.view || !pre.switches.export) return { ok: false, reason: 'switch-off:export' };
   return {
     ok: true,
     reason: 'member',
-    events: Array.isArray(rawScope.events) ? rawScope.events : [],
-    gifts: !!rawScope.gifts,
+    events: pre.scope.events,
+    gifts: pre.scope.gifts,
   };
 }
 
@@ -42,7 +41,7 @@ async function checkExportScope(db, actorId, ownerId) {
 async function exportData(db, actorId, ownerId, opts = {}) {
   const { eventIds = null, includeGifts = true } = opts;
   const sc = await checkExportScope(db, actorId, ownerId);
-  if (!sc.ok) throw new Error(`无权限导出:${sc.reason}`);
+  if (!sc.ok) throw errors.permDenied(sc.reason);
 
   // 事件范围：本人=all；成员=授权events ∩ 请求events（请求为null则全授权）
   let eventIdsEff;

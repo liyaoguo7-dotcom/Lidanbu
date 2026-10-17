@@ -7,6 +7,7 @@
  *   依据：第19章#2"可修改是否拆分"待确认，取保守口径。
  * - 事件名称查重范围按第19章#16建议：同一账本内不能完全重名（待确认）。
  */
+const errors = require('./errors');
 
 const { COLLECTIONS, now } = require('./models');
 const authz = require('./authz');
@@ -35,7 +36,7 @@ async function createEvent(db, actorId, ownerId, { name, tagId, date, remark = '
 
   const user = await getOwner(db, ownerId);
   const q = await quota.checkAddQuota(db, user, 'event');
-  if (!q.ok) throw new Error(q.reason);
+  if (!q.ok) throw errors.quotaDenied(q.reason);
 
   const { _id } = await db.collection(COLLECTIONS.ReceiveEvent).insert({
     ownerId, name: name.trim(), tagId, date: date || today(), remark, createdAt: now(),
@@ -48,7 +49,7 @@ async function updateEvent(db, actorId, ownerId, eventId, patch) {
   if (actorId !== ownerId) throw new Error('无权限：仅账本主人可修改礼薄');
   const user = await getOwner(db, ownerId);
   const q = await quota.checkEditAllowed(db, user, 'event', eventId);
-  if (!q.ok) throw new Error(q.reason);
+  if (!q.ok) throw errors.quotaDenied(q.reason);
   if (patch.name) {
     const dup = await db.collection(COLLECTIONS.ReceiveEvent).count({ ownerId, name: patch.name.trim() });
     if (dup > 0) {
@@ -73,26 +74,26 @@ async function deleteEvent(db, actorId, ownerId, eventId) {
 async function listEvents(db, actorId, ownerId) {
   const all = await db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId }, { sort: { createdAt: -1 } });
   if (actorId === ownerId) return all;
-  const grant = await authz.getGrant(db, ownerId, actorId);
-  if (!grant || !grant.switches.view) return [];
-  return all.filter((e) => grant.scope.events.includes(e._id));
+  const pre = await authz.checkMemberAccess(db, actorId, ownerId);
+  if (!pre.ok || !pre.switches.view) return [];
+  return all.filter((e) => pre.scope.events.includes(e._id));
 }
 
 /* ---------- 收礼明细记录 ---------- */
 
 async function createRecord(db, actorId, ownerId, eventId, { contactId, amount, type, remark = '', date }) {
   const c = await authz.check(db, actorId, 'add', { kind: 'receiveRecord', ownerId, eventId });
-  if (!c.ok) throw new Error(`无权限新增收礼记录:${c.reason}`);
+  if (!c.ok) throw errors.permDenied(c.reason);
 
   const user = await getOwner(db, ownerId);
   // 成员新增计账本主人额度（第19章#4建议：算账本主人的额度，待确认）
   const q = await quota.checkAddQuota(db, user, 'receiveRecord', undefined, eventId);
-  if (!q.ok) throw new Error(q.reason);
+  if (!q.ok) throw errors.quotaDenied(q.reason);
 
   if (!Number.isInteger(amount) || amount <= 0) throw new Error('金额须为正整数（分）');
   // 联系人必须可见（成员只能选已授权可见的）
   const ck = await authz.check(db, actorId, 'read', { kind: 'contact', ownerId, contactId });
-  if (!ck.ok) throw new Error(`无权限选用该联系人:${ck.reason}`);
+  if (!ck.ok) throw errors.permDenied(ck.reason);
 
   const { _id } = await db.collection(COLLECTIONS.ReceiveRecord).insert({
     ownerId, eventId, contactId, amount, type, remark,
@@ -106,10 +107,10 @@ async function updateRecord(db, actorId, ownerId, recordId, patch) {
   const rec = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: recordId, ownerId });
   if (!rec) throw new Error('记录不存在');
   const c = await authz.check(db, actorId, 'edit', { kind: 'receiveRecord', ownerId, eventId: rec.eventId });
-  if (!c.ok) throw new Error(`无权限修改:${c.reason}`);
+  if (!c.ok) throw errors.permDenied(c.reason);
   const user = await getOwner(db, ownerId);
   const q = await quota.checkEditAllowed(db, user, 'receiveRecord', recordId);
-  if (!q.ok) throw new Error(q.reason);
+  if (!q.ok) throw errors.quotaDenied(q.reason);
   if (patch.amount !== undefined && (!Number.isInteger(patch.amount) || patch.amount <= 0)) {
     throw new Error('金额须为正整数（分）');
   }
@@ -121,14 +122,14 @@ async function deleteRecord(db, actorId, ownerId, recordId) {
   const rec = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: recordId, ownerId });
   if (!rec) throw new Error('记录不存在');
   const c = await authz.check(db, actorId, 'delete', { kind: 'receiveRecord', ownerId, eventId: rec.eventId });
-  if (!c.ok) throw new Error(`无权限删除:${c.reason}`);
+  if (!c.ok) throw errors.permDenied(c.reason);
   await db.collection(COLLECTIONS.ReceiveRecord).remove({ _id: recordId });
   await audit.log(db, { ownerId, actorId, action: 'delete', targetType: 'receiveRecord', targetId: recordId, detail: '删除收礼明细' });
 }
 
 async function listRecords(db, actorId, ownerId, eventId) {
   const c = await authz.check(db, actorId, 'read', { kind: 'receiveRecord', ownerId, eventId });
-  if (!c.ok) throw new Error(`无权限查看:${c.reason}`);
+  if (!c.ok) throw errors.permDenied(c.reason);
   return db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, eventId }, { sort: { createdAt: -1 } });
 }
 

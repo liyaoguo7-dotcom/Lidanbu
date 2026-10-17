@@ -16,6 +16,7 @@
  * v3.1 §15.3：额度用完拦截新增（旧记录不删）；会员到期后超额记录只读；
  * 缓冲期约90天；三次温和提醒（到期前15天、到期当天、缓冲期结束前）。
  */
+const errors = require('./errors');
 
 const { COLLECTIONS } = require('./models');
 const AppConfig = require('../miniprogram/config/app-config');

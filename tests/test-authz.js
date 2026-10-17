@@ -26,7 +26,7 @@ test('未授权用户统计拿不到数据', async () => {
   const db = await h.newDB();
   const { owner } = await h.setupOwner(db);
   await h.newUser(db, 'stranger');
-  const st = await core.stats.getWanglaiStats(db, 'stranger', owner, { preset: 'lastYear' });
+  const st = await core.stats.getWanglaiStats(db, 'stranger', owner, { preset: 'custom', from: '2026-01-01', to: '2026-12-31' });
   assert.eq(st.receiveTotal, 0, '陌生人统计收礼应为0');
   assert.eq(st.giftTotal, 0, '陌生人统计送礼应为0');
 });
@@ -49,7 +49,7 @@ test('成员统计只含授权数据', async () => {
   const ev2 = await core.receive.createEvent(db, owner, owner, { name: '李四的生日宴', tagId: 'shengri', date: '2026-10-02' });
   await core.receive.createRecord(db, owner, owner, ev2._id, { contactId: c1, amount: 200000, type: '微信', date: '2026-10-02' });
   const { member } = await h.setupMember(db, owner, { events: [ev], switches: { view: true } });
-  const st = await core.stats.getWanglaiStats(db, member, owner, { preset: 'lastYear' });
+  const st = await core.stats.getWanglaiStats(db, member, owner, { preset: 'custom', from: '2026-01-01', to: '2026-12-31' });
   assert.eq(st.receiveTotal, 100000, '成员只统计授权事件的100000分');
   assert.eq(st.receiveCount, 1, '成员只统计1笔');
 });

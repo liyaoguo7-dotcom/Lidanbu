@@ -20,6 +20,7 @@
 */
 
 const { COLLECTIONS} = require('./models');
+const quota = require('./quota');
 
 const OP_SWITCH = {
 read: 'view',
@@ -44,6 +45,33 @@ const grant = await db.collection(COLLECTIONS.ShareGrant).findOne({
 membershipId: ms._id,
 });
 return grant;
+}
+
+/**
+* 成员访问前置检查（各读取/导出入口共用，不得绕过 check 另查 grant）
+* 校验链：身份非空 → 本人 → 共享关系有效 → 共享未暂停 → 字段完备
+* @returns {{ok, reason, switches?, scope?}}
+*/
+async function checkMemberAccess(db, actorId, ownerId) {
+if (!actorId ||!ownerId) return { ok: false, reason: 'empty-identity'};
+if (actorId === ownerId) return { ok: true, reason: 'owner'};
+const grant = await getGrant(db, ownerId, actorId);
+if (!grant) return { ok: false, reason: 'no-active-membership'};
+// 【会员到期·待用户确认的默认实现】缓冲期后共享暂停：
+// 账本主人会员过期（已过缓冲期），家人访问一律被拒，数据保留；
+// 续费后实时恢复（无缓存）。缓冲期内已有共享照常可用。
+const ownerUser = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
+if (quota.getMembershipState(ownerUser || { _id: ownerId }) === 'expired') {
+return { ok: false, reason: 'sharing-paused'};
+}
+// 授权记录字段缺失 → 明确拒绝，不抛错、不放行
+const switches = (grant && grant.switches) || {};
+const rawScope = (grant && grant.scope) || {};
+const scope = {
+events: Array.isArray(rawScope.events)? rawScope.events: [],
+gifts:!!rawScope.gifts,
+};
+return { ok: true, reason: 'member', switches, scope};
 }
 
 /**
@@ -91,17 +119,10 @@ if (!actorId ||!ownerId) return { ok: false, reason: 'empty-identity'};
 // 1. 身份：本人直接放行
 if (actorId === ownerId) return { ok: true, reason: 'owner'};
 
-// 2. 共享关系：必须有 active 的成员关系
-const grant = await getGrant(db, ownerId, actorId);
-if (!grant) return { ok: false, reason: 'no-active-membership'};
-
-// 授权记录字段缺失 → 明确拒绝，不抛错、不放行
-const switches = (grant && grant.switches) || {};
-const rawScope = (grant && grant.scope) || {};
-const scope = {
-events: Array.isArray(rawScope.events)? rawScope.events: [],
-gifts:!!rawScope.gifts,
-};
+// 2. 成员前置检查（关系+共享暂停+字段完备），各读取入口共用，不得绕过
+const pre = await checkMemberAccess(db, actorId, ownerId);
+if (!pre.ok) return { ok: false, reason: pre.reason};
+const { switches, scope} = pre;
 
 // 没有查看权限，新增/修改/删除/导出一律拒绝
 if (!switches.view) return { ok: false, reason: 'switch-off:view'};
@@ -138,4 +159,4 @@ return { ok: false, reason: 'member-cannot-touch-owner-contacts'};
 return { ok: false, reason: `未知资源:${kind}`};
 }
 
-module.exports = { check, getGrant, OP_SWITCH};
+module.exports = { check, checkMemberAccess, getGrant, OP_SWITCH};

@@ -14,7 +14,7 @@ test('免费额度用完拦截新增，旧记录不删', async () => {
   try {
     await core.receive.createEvent(db, owner, owner, { name: '第4个宴', tagId: 'qita', date: '2026-10-01' });
   } catch (e) { err = e; }
-  assert(err && err.message.includes('quota-exceeded'), '第4个应被额度拦截');
+  assert(err && err.code && err.code.startsWith('quota-exceeded'), '第4个应被额度拦截，code=' + (err && err.code));
   const evs = await core.receive.listEvents(db, owner, owner);
   assert.eq(evs.length, 3, '旧记录一条不删，应仍为3个');
 });
@@ -31,7 +31,9 @@ test('每礼薄30条额度', async () => {
   try {
     await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   } catch (e) { err = e; }
-  assert(err && err.message.includes('quota-exceeded'), '第31条应被拦截');
+  assert(err && err.code && err.code.startsWith('quota-exceeded'), '第31条应被拦截，code=' + (err && err.code));
+  const cntAfter = await db.collection(core.models.COLLECTIONS.ReceiveRecord).count({ ownerId: owner, eventId: ev._id });
+  assert.eq(cntAfter, 30, '拒绝后数据未变：仍为30条');
 });
 
 test('会员有效期内额度扩大', async () => {
@@ -73,7 +75,7 @@ test('会员到期后超额记录只读', async () => {
   try {
     await core.receive.updateEvent(db, owner, owner, ids[3], { remark: '改' });
   } catch (e) { err = e; }
-  assert(err && err.message.includes('readonly'), '超额记录到期后应只读');
+  assert(err && err.code && err.code.startsWith('readonly'), '超额记录到期后应只读，code=' + (err && err.code));
   // 前3个（免费额度内）仍可改
   await core.receive.updateEvent(db, owner, owner, ids[0], { remark: '改' });
   const e0 = await db.collection(core.models.COLLECTIONS.ReceiveEvent).findOne({ _id: ids[0] });

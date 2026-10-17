@@ -16,7 +16,10 @@ async function newUser(db, openid, membership) {
 }
 
 async function setupOwner(db) {
-  const owner = await newUser(db, 'owner1');
+  // 账本主人默认为有效会员（家庭共享邀请要求发起人为会员）
+  const owner = await newUser(db, 'owner1', {
+    status: 'member', expireAt: Date.now() + 30 * 86400e3, graceUntil: null,
+  });
   const c1 = await core.contacts.createContact(db, owner, owner, { name: '张三', remark: '同学' });
   const c2 = await core.contacts.createContact(db, owner, owner, { name: '李四' });
   const ev = await core.receive.createEvent(db, owner, owner, { name: '张三的婚宴', tagId: 'jiehun', date: '2026-10-01' });

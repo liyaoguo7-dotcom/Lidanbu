@@ -10,6 +10,8 @@
 
 const { COLLECTIONS, now } = require('./models');
 const audit = require('./audit');
+const quota = require('./quota');
+const errors = require('./errors');
 
 const SWITCH_IDS = ['view', 'add', 'edit', 'del', 'export'];
 
@@ -30,9 +32,16 @@ function normalizeScope(input = {}) {
 
 /**
  * 发起邀请（主人操作）
+ * 会员专属功能 familyShareInvite：发起人须为有效会员（普通用户、
+ * 已过缓冲期的会员一律拒绝，返回"需要开通会员"）；被邀请的家人可为普通用户。
  * @returns {{membershipId}}
  */
 async function invite(db, ownerId, { switches, scope }) {
+  // 会员门禁：有效会员才能发起邀请（缓冲期内不算有效，不能新邀请）
+  const inviter = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
+  if (!quota.isMemberActive(inviter || {})) {
+    throw errors.memberRequired('家庭共享邀请');
+  }
   const sw = normalizeSwitches(switches);
   const sc = normalizeScope(scope);
   if (sc.events.length === 0 && !sc.gifts) {

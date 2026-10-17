@@ -3,6 +3,7 @@
  * v3.1 §6.3：只有姓名+备注；重名只提醒不合并；稳定 ID 关联。
  * 口径（待确认，见报告）：成员不可增删改主人亲友录；新增记录时只能选已授权可见联系人。
  */
+const errors = require('./errors');
 
 const { COLLECTIONS, now } = require('./models');
 const authz = require('./authz');
@@ -17,11 +18,11 @@ async function createContact(db, actorId, ownerId, { name, remark = '' }) {
   if (!name || !name.trim()) throw new Error('姓名必填');
   // 授权：成员不可动主人亲友录（authz 内部已实现）
   const c = await authz.check(db, actorId, 'add', { kind: 'contact', ownerId });
-  if (!c.ok) throw new Error(`无权限新增联系人:${c.reason}`);
+  if (!c.ok) throw errors.permDenied(c.reason);
 
   const user = await getOwner(db, ownerId);
   const q = await quota.checkAddQuota(db, user, 'contact');
-  if (!q.ok) throw new Error(q.reason);
+  if (!q.ok) throw errors.quotaDenied(q.reason);
 
   // 重名检测：只提醒，不阻止、不合并
   const dup = await db.collection(COLLECTIONS.Contact).count({ ownerId, name: name.trim() });
@@ -35,10 +36,10 @@ async function createContact(db, actorId, ownerId, { name, remark = '' }) {
 
 async function updateContact(db, actorId, ownerId, contactId, { name, remark }) {
   const c = await authz.check(db, actorId, 'edit', { kind: 'contact', ownerId, contactId });
-  if (!c.ok) throw new Error(`无权限修改联系人:${c.reason}`);
+  if (!c.ok) throw errors.permDenied(c.reason);
   const user = await getOwner(db, ownerId);
   const q = await quota.checkEditAllowed(db, user, 'contact', contactId);
-  if (!q.ok) throw new Error(q.reason);
+  if (!q.ok) throw errors.quotaDenied(q.reason);
 
   const patch = {};
   if (name !== undefined) patch.name = name.trim();
@@ -63,7 +64,7 @@ async function deleteContact(db, actorId, ownerId, contactId, confirmed = false)
   if (!confirmed) return { confirmed: false, ...impact };
 
   const c = await authz.check(db, actorId, 'delete', { kind: 'contact', ownerId, contactId });
-  if (!c.ok) throw new Error(`无权限删除联系人:${c.reason}`);
+  if (!c.ok) throw errors.permDenied(c.reason);
 
   await db.collection(COLLECTIONS.ReceiveRecord).remove({ ownerId, contactId });
   await db.collection(COLLECTIONS.GiftRecord).remove({ ownerId, contactId });
@@ -79,8 +80,8 @@ async function listContacts(db, actorId, ownerId) {
   // 成员只能看到已授权记录里出现过的联系人（authz 按第19章#3建议过滤）
   const all = await db.collection(COLLECTIONS.Contact).find({ ownerId }, { sort: { createdAt: 1 } });
   if (actorId === ownerId) return all;
-  const grant = await authz.getGrant(db, ownerId, actorId);
-  if (!grant) return [];
+  const pre = await authz.checkMemberAccess(db, actorId, ownerId);
+  if (!pre.ok) return [];
   const visible = [];
   for (const ct of all) {
     const r = await authz.check(db, actorId, 'read', { kind: 'contact', ownerId, contactId: ct._id });

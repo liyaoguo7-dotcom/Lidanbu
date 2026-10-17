@@ -7,7 +7,7 @@ test('往来统计：总额笔数差额', async () => {
   const db = await h.newDB();
   const { owner } = await h.setupOwner(db);
   // setupOwner: 收礼 100000分×1笔，送礼 50000分×1笔
-  const st = await core.stats.getWanglaiStats(db, owner, owner, { preset: 'lastYear' });
+  const st = await core.stats.getWanglaiStats(db, owner, owner, { preset: 'custom', from: '2026-01-01', to: '2026-12-31' });
   assert.eq(st.receiveTotal, 100000, '收礼总额');
   assert.eq(st.giftTotal, 50000, '送礼总额');
   assert.eq(st.diff, 50000, '差额=收到-送出');
@@ -37,7 +37,7 @@ test('个人时间线最早在上', async () => {
 
 test('邀请需至少勾选一个范围', async () => {
   const db = await h.newDB();
-  const owner = await h.newUser(db, 'owner1');
+  const owner = await h.newUser(db, 'owner1', { status: 'member', expireAt: Date.now() + 30 * 86400e3 });
   let err = null;
   try {
     await core.share.invite(db, owner, { switches: { view: true }, scope: { events: [], gifts: false } });
@@ -47,7 +47,7 @@ test('邀请需至少勾选一个范围', async () => {
 
 test('仅查看不可取消', async () => {
   const db = await h.newDB();
-  const owner = await h.newUser(db, 'owner1');
+  const owner = await h.newUser(db, 'owner1', { status: 'member', expireAt: Date.now() + 30 * 86400e3 });
   let err = null;
   try {
     await core.share.invite(db, owner, { switches: { view: false }, scope: { gifts: true } });

@@ -41,9 +41,9 @@ const AppConfig = {
   /** 收礼记录类型 */
   recordTypes: ['红包', '现金', '转账', '微信', '支付宝'],
 
-  /** 会员规则（具体数字待定价时再定，此处为占位结构） */
+  /** 会员规则（具体数字待定价时再定，会员额度为占位结构） */
   membership: {
-    // 会员专属功能开关
+    // 会员专属功能开关（与 memberOnlyFeatures 清单对应）
     features: {
       photoImport: true,   // 拍照导入：会员功能
       redLedgerMode: true, // 经典红字大写横置礼簿模式：会员功能
@@ -90,6 +90,13 @@ const AppConfig = {
     { id: 'del', name: '可删除', alwaysOn: false, defaultOn: false },
     { id: 'export', name: '可导出', alwaysOn: false, defaultOn: false },
   ],
+
+  /** 会员专属功能清单（老板平台可调；服务端门禁用）
+   * familyShareInvite: 发起家庭共享邀请（须有效会员）
+   * photoImport: 拍照导入
+   * landscapeMode: 经典红字大写横置礼簿模式
+   */
+  memberOnlyFeatures: ['familyShareInvite', 'photoImport', 'landscapeMode'],
 
   /** 全局 UI 规范 */
   ui: {

@@ -19,6 +19,8 @@ const COLLECTIONS = {
   ImportJob: 'importJobs',
   ExportJob: 'exportJobs',
   AppConfig: 'appConfig',
+  // —— 老板平台预留（只存数量与时间，不存账本内容）——
+  InviteRewardGrant: 'inviteRewardGrants', // 邀请奖励发放记录
 };
 
 /**
@@ -35,7 +37,12 @@ const COLLECTIONS = {
  * AuditLog: {_id, ownerId, actorId, action, targetType, targetId, detail(不含金额/姓名原文的摘要), createdAt}
  * ImportJob: {_id, ownerId, kind:'gift'|'receive', eventId?, status, createdAt}  // 阶段4用，T1.1只建模
  * ExportJob: {_id, ownerId, scope, status, createdAt}  // 阶段3用，T1.1只建模
- * AppConfig: {_id:'singleton', freeQuota, membership, inviteReward(预留), updatedAt}
+ * AppConfig: {_id:'singleton', freeQuota, membership, memberOnlyFeatures(会员专属功能清单),
+ *   inviteReward(预留), updatedAt}
+ * InviteRewardGrant: {_id, userId(邀请人), invitedUserId(被邀请人), poolGranted(发放的收礼池数),
+ *   giftsGranted(发放的送礼数), grantedAt}  // 只存数量与时间，不存账本内容；老板平台用
+ * ShareOverview（派生视图，非集合，老板平台用）: {ownerId, memberCount, activeMemberCount,
+ *   authorizedEventCount, updatedAt}  // 只存数量，不读账本内容
  */
 
 function now() {

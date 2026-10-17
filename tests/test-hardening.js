@@ -28,6 +28,8 @@ test('无删除开关：调用删除被拒绝且记录仍在；有开关时删�
   );
   const still = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: r1 });
   assert(still, '被拒绝后记录必须仍在');
+  const cntAfterDeny = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
+  assert.eq(cntAfterDeny, 1, '拒绝后数据未变：收礼记录仍为1条');
   // 对照：加上 del 开关后删除成功
   await core.share.updateGrant(db, owner, membershipId, { switches: { view: true, del: true } });
   await core.receive.deleteRecord(db, member, owner, r1);
@@ -45,7 +47,10 @@ test('无导出开关拒绝导出；有开关时只导出授权范围', async ()
   const { member, membershipId } = await h.setupMember(db, owner, {
     events: [evA], switches: { view: true },
   });
+  const auditBefore = await db.collection(COLLECTIONS.AuditLog).count({ ownerId: owner });
   await assertDenied(core.export.exportData(db, member, owner, {}), '无export开关导出');
+  const auditAfterDeny = await db.collection(COLLECTIONS.AuditLog).count({ ownerId: owner });
+  assert.eq(auditAfterDeny, auditBefore, '拒绝后数据未变：未产生导出审计');
 
   // 对照：打开 export 开关
   await core.share.updateGrant(db, owner, membershipId, { switches: { view: true, export: true } });
@@ -74,10 +79,13 @@ test('移除成员后：读明细/搜索/统计/时间线/导出全部立即失�
   await assertDenied(core.receive.listRecords(db, member, owner, ev), '移除后读明细');
   const s = await core.contacts.searchContacts(db, member, owner, '张');
   assert.eq(s.length, 0, '移除后搜索应为空');
-  const st = await core.stats.getWanglaiStats(db, member, owner, { preset: 'lastYear' });
+  const st = await core.stats.getWanglaiStats(db, member, owner, { preset: 'custom', from: '2026-01-01', to: '2026-12-31' });
   assert.eq(st.receiveTotal, 0, '移除后统计应为0');
   await assertDenied(core.stats.getContactTimeline(db, member, owner, c1), '移除后时间线');
   await assertDenied(core.export.exportData(db, member, owner, {}), '移除后导出');
+  // 拒绝后数据未变：主人的记录一条不少
+  const recCnt = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
+  assert.eq(recCnt, 1, '拒绝后数据未变：收礼记录仍为1条');
 });
 
 /* ---------- 一.4 笔数差额只含授权 ---------- */
@@ -89,7 +97,7 @@ test('成员往来统计：笔数、差额都只含授权数据', async () => {
   const { member } = await h.setupMember(db, owner, {
     events: [evA], switches: { view: true },
   });
-  const st = await core.stats.getWanglaiStats(db, member, owner, { preset: 'lastYear' });
+  const st = await core.stats.getWanglaiStats(db, member, owner, { preset: 'custom', from: '2026-01-01', to: '2026-12-31' });
   assert.eq(st.receiveCount, 1, '笔数只含授权事件');
   assert.eq(st.giftCount, 0, '送礼未授权笔数为0');
   assert.eq(st.diff, 100000, '差额只含授权数据');
@@ -111,12 +119,19 @@ test('无查看权限：新增/修改/删除一律拒绝', async () => {
     scope: { events: [ev], gifts: true },
     updatedAt: Date.now(),
   });
+  const recBefore = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
   await assertDenied(
     core.receive.createRecord(db, member, owner, ev, { contactId: c1, amount: 100, type: '现金', date: '2026-10-01' }),
     '无view新增'
   );
+  const recAfterAddDeny = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
+  assert.eq(recAfterAddDeny, recBefore, '拒绝后数据未变：未新增记录');
   await assertDenied(core.receive.updateRecord(db, member, owner, r1, { remark: 'x' }), '无view修改');
+  const r1After = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: r1 });
+  assert(r1After.remark !== 'x', '拒绝后数据未变：记录未被修改');
   await assertDenied(core.receive.deleteRecord(db, member, owner, r1), '无view删除');
+  const r1Exists = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: r1 });
+  assert(r1Exists, '拒绝后数据未变：记录仍在');
 });
 
 /* ---------- 二.1 空身份 ---------- */
@@ -145,10 +160,13 @@ test('成员新增记录选用不可见联系人被拒绝', async () => {
     events: [evA], switches: { view: true, add: true },
   });
   // 成员在授权事件A里新增，但选用不可见联系人C
+  const recBefore = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
   await assertDenied(
     core.receive.createRecord(db, member, owner, evA, { contactId: cC._id, amount: 100, type: '现金', date: '2026-10-01' }),
     '选用不可见联系人'
   );
+  const recAfter = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
+  assert.eq(recAfter, recBefore, '拒绝后数据未变：未新增记录');
 });
 
 /* ---------- 二.3 未授权事件编号 ---------- */
@@ -212,5 +230,7 @@ test('池为0时第31条仍被拦截（行为不变）', async () => {
   try {
     await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   } catch (e) { err = e; }
-  assert(err && err.message.includes('quota-exceeded'), '池为0时第31条应被拦截');
+  assert(err && err.code && err.code.startsWith('quota-exceeded'), '池为0时第31条应被拦截，code=' + (err && err.code));
+  const cntAfter = await db.collection(core.models.COLLECTIONS.ReceiveRecord).count({ ownerId: owner, eventId: ev._id });
+  assert.eq(cntAfter, 30, '拒绝后数据未变：仍为30条');
 });
