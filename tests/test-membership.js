@@ -38,13 +38,13 @@ test('会员发起邀请成功', async () => {
   assert(inv.membershipId, '会员邀请应成功');
 });
 
-test('缓冲期内：不能新邀请，但已有成员照常访问', async () => {
+test('缓冲期内：家人只读，不能新邀请', async () => {
   const db = await h.newDB();
-  const { owner, ev } = await h.setupOwner(db);
+  const { owner, ev, c1 } = await h.setupOwner(db);
   const { member } = await h.setupMember(db, owner, {
-    events: [ev], switches: { view: true },
+    events: [ev], switches: { view: true, add: true, edit: true, del: true, export: true },
   });
-  // 进入缓冲期
+  // 进入缓冲期（30天）
   await db.collection(COLLECTIONS.User).update(
     { _id: owner },
     { membership: { status: 'member', expireAt: Date.now() - 1000 } }
@@ -56,11 +56,32 @@ test('缓冲期内：不能新邀请，但已有成员照常访问', async () =>
     core.share.invite(db, owner, { switches: { view: true }, scope: { events: [ev] } }),
     '缓冲期内新邀请'
   );
-  // 已有成员照常访问
+  // 家人可读
   const evs = await core.receive.listEvents(db, member, owner);
-  assert.eq(evs.length, 1, '缓冲期内已有成员照常访问');
+  assert.eq(evs.length, 1, '缓冲期内家人可读');
   const st = await core.stats.getWanglaiStats(db, member, owner, { preset: 'custom', from: '2026-01-01', to: '2026-12-31' });
-  assert(st.receiveTotal > 0, '缓冲期内成员统计照常');
+  assert(st.receiveTotal > 0, '缓冲期内家人统计照常');
+  const ex = await core.export.exportData(db, member, owner, {});
+  assert(ex.records.length > 0, '缓冲期内家人可导出');
+  // 家人不能新增/修改/删除
+  const recBefore = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
+  let err = null;
+  try {
+    await core.receive.createRecord(db, member, owner, ev, { contactId: c1, amount: 100, type: '现金', date: '2026-10-01' });
+  } catch (e) { err = e; }
+  assert(err && err.message.includes('无权限'), '缓冲期内家人新增应被拒');
+  assert(!err.message.includes('需要开通会员'), '应为无权限而非会员门禁');
+  const recAfter = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: owner });
+  assert.eq(recAfter, recBefore, '拒绝后数据未变');
+  const r1 = (await db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId: owner }))[0];
+  err = null;
+  try { await core.receive.updateRecord(db, member, owner, r1._id, { remark: 'x' }); } catch (e) { err = e; }
+  assert(err && err.message.includes('无权限'), '缓冲期内家人修改应被拒');
+  err = null;
+  try { await core.receive.deleteRecord(db, member, owner, r1._id); } catch (e) { err = e; }
+  assert(err && err.message.includes('无权限'), '缓冲期内家人删除应被拒');
+  const still = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: r1._id });
+  assert(still, '拒绝后数据未变：记录仍在');
 });
 
 test('缓冲期结束后：成员访问被拒，数据保留；续费后恢复', async () => {

@@ -61,7 +61,8 @@ if (!grant) return { ok: false, reason: 'no-active-membership'};
 // 账本主人会员过期（已过缓冲期），家人访问一律被拒，数据保留；
 // 续费后实时恢复（无缓存）。缓冲期内已有共享照常可用。
 const ownerUser = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
-if (quota.getMembershipState(ownerUser || { _id: ownerId }) === 'expired') {
+const ownerState = quota.getMembershipState(ownerUser || { _id: ownerId });
+if (ownerState === 'expired') {
 return { ok: false, reason: 'sharing-paused'};
 }
 // 授权记录字段缺失 → 明确拒绝，不抛错、不放行
@@ -71,7 +72,7 @@ const scope = {
 events: Array.isArray(rawScope.events)? rawScope.events: [],
 gifts:!!rawScope.gifts,
 };
-return { ok: true, reason: 'member', switches, scope};
+return { ok: true, reason: 'member', switches, scope, ownerState};
 }
 
 /**
@@ -123,6 +124,12 @@ if (actorId === ownerId) return { ok: true, reason: 'owner'};
 const pre = await checkMemberAccess(db, actorId, ownerId);
 if (!pre.ok) return { ok: false, reason: pre.reason};
 const { switches, scope} = pre;
+
+// 【会员到期】缓冲期内家人只读：新增/修改/删除一律拒绝，读和导出放行；
+// 不能新邀请由 share.invite 的会员门禁保证
+if (pre.ownerState === 'grace' && op !== 'read' && op !== 'export') {
+return { ok: false, reason: 'grace-readonly'};
+}
 
 // 没有查看权限，新增/修改/删除/导出一律拒绝
 if (!switches.view) return { ok: false, reason: 'switch-off:view'};

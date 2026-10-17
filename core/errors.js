@@ -19,6 +19,7 @@ const MESSAGES = {
   'out-of-scope:contact': '超出授权范围',
   'member-cannot-touch-owner-contacts': '无权操作账本主人的亲友录',
   'sharing-paused': '共享已暂停：账本主人会员已过期，续费后自动恢复',
+  'grace-readonly': '账本主人会员已到期，共享当前为只读',
   // —— 额度类 ——
   'quota-exceeded:event': '礼薄数量已达上限',
   'quota-exceeded:receiveRecord': '该礼薄记录数已达上限',
