@@ -1,0 +1,12 @@
+/* 选择亲友 */
+.contact-row {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  min-height: 58px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.contact-row:last-child { border-bottom: none; }
+.nm { font-size: 16px; }
+.rmk { font-size: 13px; color: #C2C2C2; margin-left: 8px; }
+.ph { color: #C2C2C2; font-size: 14px; }

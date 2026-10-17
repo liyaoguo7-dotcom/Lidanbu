@@ -1,4 +1,54 @@
-<!-- 礼单簿 · 我的页（T0.1 占位；页面实现为阶段2） -->
-<view class="placeholder">
-  <text>我的（T0.1 占位页）</text>
+<!-- 我的 -->
+<view class="card profile">
+  <view class="avatar">😊</view>
+  <view>
+    <text class="uname">我</text>
+    <text class="usub">礼单簿 · 本地演示版</text>
+  </view>
 </view>
+
+<view class="card member-card" bindtap="onMemberCard">
+  <text class="m-title songti">会员卡片</text>
+  <text class="m-desc">{{memberText}}</text>
+  <view class="m-btn" wx:if="{{!isMember}}">开通会员</view>
+  <view class="m-badge" wx:if="{{isMember}}">会员有效</view>
+</view>
+
+<view class="section-title">会员专属功能</view>
+<view class="card">
+  <view class="feat" wx:for="{{feats}}" wx:key="title">
+    <text class="feat-icon">{{item.icon}}</text>
+    <view class="feat-mid">
+      <text class="feat-t">{{item.title}}</text>
+      <text class="feat-d">{{item.desc}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onLandscapeToggle">
+    <text class="form-val">经典红字大写横置礼簿模式</text>
+    <view class="switch {{landscapeOn ? 'on' : ''}}"><view class="dot"></view></view>
+  </view>
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
+    <text class="form-val">邀请新用户得名额</text>
+    <text class="chev">›</text>
+  </view>
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onService">
+    <text class="form-val">联系客服</text><text class="chev">›</text>
+  </view>
+  <view class="form-row" bindtap="onShare">
+    <text class="form-val">分享转发</text><text class="chev">›</text>
+  </view>
+</view>
+
+<view class="footer">
+  <text bindtap="onPrivacy">隐私政策</text><text>｜</text><text bindtap="onLogout">注销账号</text>
+</view>
+<view style="height:30px"></view>

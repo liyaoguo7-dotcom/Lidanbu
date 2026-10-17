@@ -1,0 +1,26 @@
+/* 送礼记录列表 */
+.summary { padding: 14px 16px; font-size: 14px; }
+.summary .red { color: #F0575A; font-weight: 600; }
+.gift-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  min-height: 68px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.gift-row:last-child { border-bottom: none; }
+.pat {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #F5F6F4;
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.pat-img { width: 30px; height: 30px; }
+.mid { flex: 1; margin-left: 12px; display: flex; flex-direction: column; }
+.nm { font-size: 16px; font-weight: 600; }
+.sub { font-size: 12px; color: #C2C2C2; margin-top: 3px; }
+.amt { font-size: 16px; font-weight: 600; }
+.empty { text-align: center; padding-top: 90px; display: flex; flex-direction: column; align-items: center; }
+.empty-icon { font-size: 72px; opacity: .45; }
+.empty-text { color: #C2C2C2; font-size: 14px; margin-top: 18px; }
+.empty-sample { color: #F0575A; font-size: 14px; margin-top: 14px; }

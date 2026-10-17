@@ -1,8 +1,49 @@
-/* 礼单簿 · 我的页样式（T0.1 占位） */
-.placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 60vh;
-  color: #999999;
+/* 我的页 */
+.profile { padding: 20px 16px; display: flex; align-items: center; }
+.avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #F1E6D3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; flex: none; margin-right: 14px;
 }
+.uname { font-size: 16px; font-weight: 600; display: block; }
+.usub { font-size: 12px; color: #C2C2C2; margin-top: 4px; display: block; }
+.member-card {
+  padding: 16px;
+  background: linear-gradient(135deg, #F0575A, #e04447);
+  border: none;
+  display: flex; flex-direction: column;
+}
+.m-title { color: #fff; font-size: 16px; font-weight: 600; }
+.m-desc { color: rgba(255,255,255,.85); font-size: 13px; margin-top: 8px; line-height: 1.7; }
+.m-btn {
+  margin-top: 12px; align-self: flex-start;
+  background: #fff; color: #F0575A;
+  font-size: 13px; font-weight: 600;
+  padding: 8px 22px; border-radius: 20px;
+}
+.m-badge {
+  margin-top: 12px; align-self: flex-start;
+  border: 1px solid rgba(255,255,255,.7); color: #fff;
+  font-size: 12px; padding: 6px 16px; border-radius: 16px;
+}
+.section-title { padding: 4px 12px 0; font-size: 13px; color: #999; }
+.feat { display: flex; align-items: center; padding: 12px 16px; min-height: 68px; border-bottom: 1px solid #F0F0F0; }
+.feat:last-child { border-bottom: none; }
+.feat-icon { font-size: 26px; width: 40px; flex: none; }
+.feat-mid { display: flex; flex-direction: column; }
+.feat-t { font-size: 15px; font-weight: 600; }
+.feat-d { font-size: 12px; color: #C2C2C2; margin-top: 3px; }
+.switch {
+  width: 46px; height: 26px; border-radius: 13px;
+  background: #DDD; position: relative; flex: none;
+  transition: background .2s;
+}
+.switch.on { background: #F0575A; }
+.switch .dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; position: absolute; top: 2px; left: 2px;
+  transition: left .2s;
+}
+.switch.on .dot { left: 22px; }
+.footer { text-align: center; font-size: 11px; color: #C2C2C2; padding: 18px 0 8px; }

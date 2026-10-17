@@ -20,12 +20,12 @@ const MESSAGES = {
   'member-cannot-touch-owner-contacts': '无权操作账本主人的亲友录',
   'sharing-paused': '共享已暂停：账本主人会员已过期，续费后自动恢复',
   'grace-readonly': '账本主人会员已到期，共享当前为只读',
-  // —— 额度类 ——
-  'quota-exceeded:event': '礼薄数量已达上限',
-  'quota-exceeded:receiveRecord': '该礼薄记录数已达上限',
-  'quota-exceeded:receivePool': '收礼额度已用完',
-  'quota-exceeded:gift': '送礼记录数已达上限',
-  'quota-exceeded:contact': '联系人数已达上限',
+  // —— 额度类（v3.1 第0章第17条：委婉"卖惨"文案，不报剩余数） ——
+  'quota-exceeded:event': '呜呜，本小本本快被塞满啦！礼薄本子已经写满了，开个会员可以添更多本子哦～',
+  'quota-exceeded:receiveRecord': '呜呜，本小本本快被塞满啦！这本礼薄已经记满了，开个会员可以记更多笔哦～',
+  'quota-exceeded:receivePool': '呜呜，本小本本快被塞满啦！收礼名额已经用完啦，开个会员可以记更多笔哦～',
+  'quota-exceeded:gift': '呜呜，本小本本快被塞满啦！送礼记录已经记满了，开个会员可以记更多笔哦～',
+  'quota-exceeded:contact': '呜呜，本小本本快被塞满啦！亲友已经记满啦，开个会员可以添更多亲友哦～',
   'readonly:over-free-quota-after-expiry': '会员已到期，该记录为只读',
 };
 

@@ -1,4 +1,4 @@
-/* 礼单簿 · 往来页样式（T0.1 占位） */
+/* 往来页占位（2A） */
 .placeholder {
   display: flex;
   justify-content: center;

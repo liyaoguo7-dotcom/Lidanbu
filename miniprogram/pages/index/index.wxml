@@ -1,4 +1,14 @@
-<!-- 礼单簿 · 首页页（T0.1 占位；页面实现为阶段2） -->
-<view class="placeholder">
-  <text>首页（T0.1 占位页）</text>
+<!-- 礼单簿 · 首页（阶段2 2A） -->
+<view class="tip"><text>📢</text><text style="margin-left:6px">{{tipText}}</text></view>
+
+<view class="card entry-row">
+  <view class="entry" wx:for="{{entries}}" wx:key="id" data-id="{{item.id}}" bindtap="onEntry">
+    <text class="entry-icon">{{item.icon}}</text>
+    <text class="entry-name">{{item.name}}</text>
+  </view>
+</view>
+
+<view class="bigcards">
+  <view class="bigcard gift" bindtap="goGifts"><text class="songti">送礼</text></view>
+  <view class="bigcard receive" bindtap="goReceive"><text class="songti">收礼</text></view>
 </view>

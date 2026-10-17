@@ -1,8 +1,51 @@
-/* 礼单簿 · 亲友录页样式（T0.1 占位） */
-.placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 60vh;
-  color: #999999;
+/* 亲友录 */
+.group-title {
+  padding: 8px 16px 4px;
+  font-size: 12px;
+  color: #C2C2C2;
+  background: #F6F6F6;
 }
+.contact-row {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  min-height: 58px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.contact-row:last-child { border-bottom: none; }
+.nm { font-size: 16px; }
+.rmk { font-size: 13px; color: #C2C2C2; margin-left: 8px; }
+.ph { color: #C2C2C2; font-size: 14px; }
+/* 半屏 */
+.sheet-mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.35); z-index: 20;
+}
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: #fff; border-radius: 16px 16px 0 0;
+  z-index: 21; padding-bottom: 20px;
+}
+.sname { text-align: center; font-size: 17px; font-weight: 600; padding: 18px 0 6px; }
+.sopt { text-align: center; height: 58px; line-height: 58px; font-size: 15px; border-top: 2px solid #F4F4F4; }
+.sopt.red { color: #F0575A; }
+.sopt.cancel { color: #999; }
+.sopt .sub { font-size: 12px; color: #C2C2C2; margin-left: 8px; }
+/* 删除弹窗 */
+.mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.45); z-index: 30;
+}
+.dialog {
+  position: fixed; left: 50%; top: 38%;
+  transform: translate(-50%,-50%);
+  width: 300px; background: #fff; border-radius: 12px;
+  z-index: 31; overflow: hidden;
+}
+.dinfo { padding: 20px 20px 6px; font-size: 14px; color: #555; line-height: 1.9; }
+.dinfo .b { color: #333; font-weight: 600; }
+.dwarn { text-align: center; font-size: 14px; color: #333; padding: 10px 20px 16px; font-weight: 500; }
+.dbtns { display: flex; border-top: 1px solid #F0F0F0; }
+.dcancel, .ddel { flex: 1; text-align: center; padding: 14px 0; font-size: 15px; }
+.dcancel { color: #666; border-right: 1px solid #F0F0F0; }
+.ddel { color: #F0575A; font-weight: 600; }

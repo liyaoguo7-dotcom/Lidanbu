@@ -1,8 +1,37 @@
-/* 礼单簿 · 首页页样式（T0.1 占位） */
-.placeholder {
+/* 首页（界面风格规范 v1） */
+.entry-row {
   display: flex;
-  justify-content: center;
+  padding: 18px 8px 14px;
+}
+.entry {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  height: 60vh;
-  color: #999999;
+}
+.entry-icon { font-size: 30px; }
+.entry-name { font-size: 13px; margin-top: 6px; color: #555; }
+.bigcards {
+  display: flex;
+  gap: 12px;
+  padding: 0 12px;
+}
+.bigcard {
+  flex: 1;
+  height: 150px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 600;
+}
+.bigcard.gift {
+  background: linear-gradient(135deg, #ff8a80, #F0575A);
+  box-shadow: 0 4px 12px rgba(240,87,90,.3);
+}
+.bigcard.receive {
+  background: linear-gradient(135deg, #ffcc80, #fb8c00);
+  box-shadow: 0 4px 12px rgba(251,140,0,.3);
 }

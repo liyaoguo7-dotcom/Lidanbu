@@ -25,16 +25,16 @@ const AppConfig = {
 
   /** 10 个类别标签（收礼礼薄与送礼记录共用同一套；图案视觉后定，此处为占位名） */
   tags: [
-    { id: 'jiehun', name: '结婚', icon: 'icon-jiehun' },   // 红双喜（白事不得出现）
-    { id: 'shengzi', name: '生子', icon: 'icon-shengzi' },
-    { id: 'tanwang', name: '探望', icon: 'icon-tanwang' },
-    { id: 'yasui', name: '压岁', icon: 'icon-yasui' },
-    { id: 'shengri', name: '生日', icon: 'icon-shengri' },
-    { id: 'shengxue', name: '升学', icon: 'icon-shengxue' },
-    { id: 'qiaoqian', name: '乔迁', icon: 'icon-qiaoqian' },
-    { id: 'dashou', name: '大寿', icon: 'icon-dashou' },
-    { id: 'baishi', name: '白事', icon: 'icon-baishi' },
-    { id: 'qita', name: '其他', icon: 'icon-qita' },
+    { id: 'jiehun', name: '结婚', icon: '01-jiehun.svg' },   // 红双喜（白事不得出现）
+    { id: 'shengzi', name: '生子', icon: '02-shengzi.svg' },
+    { id: 'tanwang', name: '探望', icon: '03-tanwang.svg' },
+    { id: 'yasui', name: '压岁', icon: '04-yasui.svg' },
+    { id: 'shengri', name: '生日', icon: '05-shengri.svg' },
+    { id: 'shengxue', name: '升学', icon: '06-shengxue.svg' },
+    { id: 'qiaoqian', name: '乔迁', icon: '07-qiaoqian.svg' },
+    { id: 'dashou', name: '大寿', icon: '08-dashou.svg' },
+    { id: 'baishi', name: '白事', icon: '09-baishi.svg' },
+    { id: 'qita', name: '其他', icon: '10-qita.svg' },
   ],
   defaultTagId: 'jiehun', // 默认选中"结婚"
 
@@ -98,6 +98,10 @@ const AppConfig = {
    * photoImport: 拍照导入
    * landscapeMode: 经典红字大写横置礼簿模式
    */
+  /** 本地演示模式（阶段2 2A）：true=用微信本地存储演示，false=走云开发。
+   * 正式发布前必须设为 false，见 docs/发布检查清单。 */
+  demo: { localMode: true },
+
   memberOnlyFeatures: ['familyShareInvite', 'photoImport', 'landscapeMode'],
 
   /** 全局 UI 规范 */

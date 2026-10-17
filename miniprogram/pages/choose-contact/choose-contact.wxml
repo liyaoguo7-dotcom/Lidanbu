@@ -1,0 +1,23 @@
+<!-- 选择亲友 -->
+<view class="searchbar">
+  <view class="searchbox">
+    <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
+      placeholder-style="color:#C2C2C2" style="flex:1;font-size:14px" />
+  </view>
+  <text class="search-cancel" bindtap="onCancelSearch">取消</text>
+</view>
+
+<view class="tip"><text>📢</text><text style="margin-left:6px">{{tipText}}</text></view>
+
+<view class="card">
+  <view class="contact-row" wx:for="{{contacts}}" wx:key="_id"
+    data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onPick">
+    <text class="nm">{{item.name}}</text>
+    <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
+  </view>
+  <view class="contact-row" wx:if="{{contacts.length === 0}}">
+    <text class="ph">没有找到相关亲友</text>
+  </view>
+</view>
+
+<view class="fab" bindtap="goAdd">＋</view>

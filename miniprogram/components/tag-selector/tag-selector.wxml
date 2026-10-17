@@ -1,13 +1,15 @@
-<!-- 10 标签：两排每排 5 个，单选，默认"结婚" -->
+<!-- 10 标签：两排每排 5 个，单选，默认"结婚"；图案用 icons/ 下 SVG（白事选中深灰无红） -->
 <view class="tag-grid">
-  <view
-    wx:for="{{tags}}"
-    wx:key="id"
-    class="tag {{item.id === currentId ? 'active' : ''}}"
-    data-id="{{item.id}}"
-    bindtap="onSelect"
-  >
-    <text class="tag-icon">[{{item.icon}}]</text>
-    <text class="tag-name">{{item.name}}</text>
-  </view>
+  <block wx:for="{{tags}}" wx:key="id">
+    <view
+      class="tagcell"
+      data-id="{{item.id}}"
+      bindtap="onSelect"
+    >
+      <view class="tagcircle {{item.id === currentId ? (item.id === 'baishi' ? 'active-baishi' : 'active') : ''}}">
+        <image class="tagimg" src="/icons/{{item.icon}}" mode="aspectFit" />
+      </view>
+      <text class="tagname songti {{item.id === currentId ? (item.id === 'baishi' ? 'name-baishi' : 'name-active') : ''}}">{{item.name}}</text>
+    </view>
+  </block>
 </view>
