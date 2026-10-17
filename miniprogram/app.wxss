@@ -1,0 +1,11 @@
+/** 礼单簿 · 全局样式（T0.1 骨架；视觉细节后定） */
+page {
+  background-color: #FBF9F5;
+  font-size: 28rpx;
+  color: #333333;
+}
+
+/* 主红（占位值，视觉后定） */
+:root {
+  --primary-red: #E64340;
+}

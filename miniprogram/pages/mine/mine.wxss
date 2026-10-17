@@ -1,0 +1,8 @@
+/* 礼单簿 · 我的页样式（T0.1 占位） */
+.placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  color: #999999;
+}

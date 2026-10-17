@@ -1,0 +1,16 @@
+# 密钥与私有配置：绝不提交
+project.private.config.json
+.env
+.env.*
+*.pem
+*.key
+
+# 微信开发者工具本地缓存
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 依赖（如未来引入 npm）
+node_modules/
