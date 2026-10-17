@@ -1,0 +1,55 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style-vars.css"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#333;font-size:15px;-webkit-font-smoothing:antialiased}
+.page{width:375px;min-height:810px;background:#F6F6F6;position:relative;padding-bottom:76px}
+.card{background:#fff;border-radius:12px;margin:12px}
+.searchbar{display:flex;align-items:center;padding:10px 12px;gap:8px}
+.searchbox{flex:1;background:#F2F2F2;border-radius:17px;height:34px;display:flex;align-items:center;padding:0 14px;color:#C2C2C2;font-size:14px}
+.search-cancel{color:#F0575A;font-size:14px;white-space:nowrap}
+.tip{display:flex;align-items:flex-start;gap:6px;padding:8px 14px;font-size:12px;color:#999;line-height:1.6}
+.row{display:flex;align-items:center;padding:0 16px;height:58px;border-bottom:1px solid #F0F0F0}
+.row:last-child{border-bottom:none}
+.form-label{width:82px;flex:none;font-size:15px;color:#333}
+.form-val{flex:1;text-align:left;font-size:15px;color:#333}
+.form-val.ph{color:#C2C2C2}
+.chev{color:#C2C2C2;font-size:18px}
+.tag-grid{display:flex;flex-wrap:wrap;padding:14px 14px 4px}
+.tagcell{width:20%;display:flex;flex-direction:column;align-items:center;padding:10px 0}
+.tagcircle{width:56px;height:56px;border-radius:50%;background:#F5F6F4;display:flex;align-items:center;justify-content:center}
+.tagcircle.active{background:#F1E6D3}
+.tagcircle.active-baishi{background:#E8EAED}
+.tagimg{width:40px;height:40px}
+.tagname{font-size:12px;color:#666;margin-top:6px;font-family:"Songti SC","STSong",serif}
+.tagname.name-active{color:#E05353;font-weight:700}
+.tagname.name-baishi{color:#3B4046;font-weight:700}
+.mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.45);z-index:20}
+.dialog{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:300px;background:#fff;border-radius:12px;z-index:21;overflow:hidden}
+.dialog .dinfo{padding:20px 20px 6px;font-size:14px;color:#555;line-height:1.9}
+.dialog .dinfo b{color:#333}
+.dialog .dwarn{text-align:center;font-size:14px;color:#333;padding:10px 20px 16px;font-weight:500}
+.dialog .dbtns{display:flex;border-top:1px solid #F0F0F0}
+.dialog .dbtns div{flex:1;text-align:center;padding:14px 0;font-size:15px}
+.dialog .dcancel{color:#666;border-right:1px solid #F0F0F0}
+.dialog .ddel{color:#F0575A;font-weight:600}
+.diff{background:#FFF8E1;color:#E05353;text-align:center;padding:12px;font-size:15px;font-weight:600;margin:12px;border-radius:12px}
+.empty{text-align:center;padding-top:90px}
+.empty .eicon{font-size:72px;opacity:.45;display:block}
+.empty .etxt{color:#C2C2C2;font-size:14px;margin-top:18px;display:block}
+.empty .esample{color:#F0575A;font-size:14px;margin-top:14px;display:block}
+.vtree{position:relative;margin:12px;padding:0 0 20px 90px}
+.vtree::before{content:"";position:absolute;left:80px;top:8px;bottom:8px;width:2px;background:#F0E6D4}
+.vnode{position:relative;padding:10px 0 10px 16px}
+.vnode::before{content:"";position:absolute;left:-16px;top:16px;width:10px;height:10px;border-radius:50%;background:#F0575A;transform:translateX(-50%)}
+.vnode .vd{position:absolute;left:-90px;top:12px;width:62px;text-align:right;font-size:12px;color:#999}
+.vnode .va{font-size:15px;font-weight:600}
+.vnode .va.in{color:#E05353}
+.vnode .va.out{color:#3B7DD8}
+.vnode .vn{font-size:13px;color:#666;margin-top:2px}
+.tabbar{position:absolute;left:0;bottom:0;width:375px;height:62px;display:flex;border-top:1px solid #F0F0F0;background:#fff;z-index:10}
+.tab{flex:1;text-align:center;font-size:11px;color:#999;padding-top:9px;line-height:1.5}
+.tab .ti{font-size:20px;display:block}
+.tab.active{color:#F0575A}
+</style></head><body><div class="page">
+<div class="wf-titlebar"><span class="back">‹</span>礼薄详情<span class="capsule"></span></div>
+<div class="card" style="text-align:center;padding:24px 0 14px"><div style="width:72px;height:72px;border-radius:50%;background:#F1E6D3;margin:0 auto;display:flex;align-items:center;justify-content:center"><img src="icons/01-jiehun.svg" style="width:52px;height:52px"></div><div style="font-family:'Songti SC','STSong',serif;color:#E05353;font-weight:700;margin-top:8px">结婚</div><div style="font-size:16px;font-weight:600;margin-top:10px">张三＆李四 婚礼</div><div style="font-size:13px;color:#C2C2C2;margin-top:4px">2026-10-02</div></div><div class="card" style="padding:14px 16px;font-size:14px">共计：<span style="color:#F0575A;font-weight:600">25 笔 ￥6,000 元</span></div><div class="card"><div class="row" style="height:58px"><div style="flex:1"><div style="font-size:16px">王二麻</div><div style="font-size:12px;color:#C2C2C2">微信</div></div><div style="font-size:16px;font-weight:600;color:#E05353">+1,000</div></div><div class="row" style="height:58px"><div style="flex:1"><div style="font-size:16px">刘大</div><div style="font-size:12px;color:#C2C2C2">现金</div></div><div style="font-size:16px;font-weight:600;color:#E05353">+800</div></div><div class="row" style="height:58px"><div style="flex:1"><div style="font-size:16px">陈小</div><div style="font-size:12px;color:#C2C2C2">红包</div></div><div style="font-size:16px;font-weight:600;color:#E05353">+600</div></div></div><div class="wf-fab">＋</div>
+</div></body></html>
