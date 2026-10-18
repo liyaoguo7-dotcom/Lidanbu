@@ -3,11 +3,12 @@
  * 结构：标题「收礼礼簿」→ 小喇叭提示条（可关闭，状态存本地）→ 淡色共计行 →
  * 列表（图案/名称+日期/共N笔|¥金额/⋯）→ 右滑出现修改/删除 → 底部中间红色＋。
  * 标题/礼薄名称用宋体栈，金额/日期用黑体（系统默认），不引入外部字体。
- * 金额一律两位小数（formatAmount），图案一律 tagIconPath。
+ * 金额规则（用户 2026-10-18 拍板）：列表行两位小数（formatAmount），
+ * 共计行整数（formatAmountInt）；图案一律 tagIconPath。
  */
 const dataService = require('../../services/data-service.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
-const { formatAmount } = require('../../core/format.js');
+const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
 const HORN_KEY = 'receiveHornClosed';
 const SWIPE_W = 150; // 修改75 + 删除75
@@ -47,7 +48,7 @@ Page({
         name: e.name,
         date: e.date || '',
         count: st.count,
-        amtText: formatAmount(st.totalFen),
+        amtText: formatAmountInt(st.totalFen),
         icon: tagIconPath(tag.id),
         isBaishi: e.tagId === 'baishi',
         offset: 0,
@@ -57,7 +58,7 @@ Page({
       events: rows,
       hasEvents: rows.length > 0,
       totalCount: rows.length,
-      totalText: formatAmount(totalFen),
+      totalText: formatAmountInt(totalFen),
     });
   },
 

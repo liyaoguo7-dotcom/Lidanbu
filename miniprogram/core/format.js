@@ -1,9 +1,16 @@
 /**
  * 礼单簿 · 金额显示唯一入口（检查点1修改意见第4条，高风险：金额）
  *
- * 铁律：全产品任何位置显示金额，必须调 formatAmount，页面里不许自己拼
- * （不许再出现 amount/100、toFixed、toLocaleString 拼金额）。
+ * 铁律：全产品任何位置显示金额，必须调 formatAmount 或 formatAmountInt，
+ * 页面里不许自己拼（不许再出现 amount/100、toFixed、toLocaleString 拼金额）。
  * 金额在数据库里永远以"分"（整数）存储，大写/显示只是表现层。
+ *
+ * 显示规则（用户 2026-10-18 拍板，新冻结规则）：
+ * - 两位小数（formatAmount）：送礼列表、收礼记录列表、往来竖线树（条目+汇总）、
+ *   送礼详情、收礼详情；以及所有金额输入框的回填（编辑态，不四舍五入显示）。
+ * - 整数（formatAmountInt）：其他一切金额显示（往来页总额/差额/亲友行、共计行、
+ *   导出概览、会员额度页、共享总额等）。
+ * - Excel 导出（core/export-xlsx.js）不受此规则影响，仍为数值单元格 0.00 格式。
  */
 
 /**
@@ -21,6 +28,20 @@ function formatAmount(fen) {
   const yuan = Math.floor(abs / 100);
   const cents = abs % 100;
   return `${sign}${yuan}.${String(cents).padStart(2, '0')}`;
+}
+
+/**
+ * 分 → 整数元字符串（四舍五入到元）
+ * 显示规则（用户 2026-10-18 拍板）：除"两位小数"清单内的位置外，
+ * 其他一切金额显示一律用本函数（整数）。
+ * @param {number} fen 整数分，可为负（符号由调用方按规则加）
+ * @returns {string} 如 100005 → "1000"；100050 → "1001"；0 → "0"；-100000 → "-1000"
+ * 非有限数字一律返回 "0"（显示层永不抛错）。
+ */
+function formatAmountInt(fen) {
+  const n = Number(fen);
+  if (!Number.isFinite(n)) return '0';
+  return String(Math.round(n / 100));
 }
 
 /**
@@ -118,4 +139,4 @@ function amountToChineseUpper(fen) {
   return s;
 }
 
-module.exports = { formatAmount, parseAmountToFen, amountToChineseUpper };
+module.exports = { formatAmount, formatAmountInt, parseAmountToFen, amountToChineseUpper };

@@ -1,6 +1,6 @@
 /** 金额显示函数单元测试（检查点1修改意见第4条，高风险：金额） */
 const { test, assert } = require('./fw');
-const { formatAmount, parseAmountToFen } = require('../core/format');
+const { formatAmount, formatAmountInt, parseAmountToFen } = require('../core/format');
 
 // --- formatAmount：分 → "x.xx" ---
 test('formatAmount: 0分 → "0.00"', () => {
@@ -74,4 +74,27 @@ test('parseAmountToFen 与 formatAmount 往返一致', () => {
     const fen = parseAmountToFen(s);
     assert.eq(formatAmount(fen), parseFloat(s).toFixed(2), 'roundtrip ' + s);
   }
+});
+
+// --- formatAmountInt：分 → 整数元（用户 2026-10-18 拍板：非小数清单位置一律整数）---
+test('formatAmountInt: 100005分 → "1000"（四舍五入）', () => {
+  assert.eq(formatAmountInt(100005), '1000', 'round down');
+});
+
+test('formatAmountInt: 100050分 → "1001"（四舍五入进位）', () => {
+  assert.eq(formatAmountInt(100050), '1001', 'round up');
+});
+
+test('formatAmountInt: 0分 → "0"', () => {
+  assert.eq(formatAmountInt(0), '0', 'zero');
+});
+
+test('formatAmountInt: 负数 -100000分 → "-1000"', () => {
+  assert.eq(formatAmountInt(-100000), '-1000', 'negative');
+});
+
+test('formatAmountInt: 非数字输入不抛错，返回 "0"', () => {
+  assert.eq(formatAmountInt(NaN), '0', 'nan');
+  assert.eq(formatAmountInt(undefined), '0', 'undefined');
+  assert.eq(formatAmountInt('abc'), '0', 'string');
 });

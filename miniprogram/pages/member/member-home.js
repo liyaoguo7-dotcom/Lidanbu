@@ -4,7 +4,6 @@
  */
 const dataService = require('../../services/data-service.js');
 const AppConfig = require('../../config/app-config.js');
-const { formatAmount } = require('../../core/format.js');
 
 const STATE_TEXT = {
   free: '普通用户',

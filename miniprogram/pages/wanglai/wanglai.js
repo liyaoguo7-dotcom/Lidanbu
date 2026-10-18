@@ -7,7 +7,7 @@
  * ?ownerId=xxx 时为成员视角：顶部淡字"仅统计已授权给你的记录"。
  */
 const dataService = require('../../services/data-service.js');
-const { formatAmount } = require('../../core/format.js');
+const { formatAmountInt } = require('../../core/format.js');
 
 const RANGES = [
   { id: 'today', name: '今日' },
@@ -87,8 +87,8 @@ Page({
       const rows = r.rows.map((x) => ({
         ...x,
         countText: `${x.count}笔`,
-        // 方向靠 +/- 号表达（冻结决策：不用红绿蓝三色表示方向）
-        diffText: `${x.diffFen < 0 ? '-' : '+'}${formatAmount(Math.abs(x.diffFen))}`,
+        // 往来页金额一律整数（用户 2026-10-18 拍板）；方向靠 +/- 号表达
+        diffText: `${x.diffFen < 0 ? '-' : '+'}${formatAmountInt(Math.abs(x.diffFen))}`,
       }));
       const totalCount = r.totalReceiveCount + r.totalGiftCount;
       this.setData({
@@ -96,13 +96,13 @@ Page({
         rows,
         isMember: r.isMember,
         rangeText: `${dotDate(r.from)} 至 ${dotDate(r.to)}`,
-        receiveTotalText: formatAmount(r.totalReceiveFen),
+        receiveTotalText: formatAmountInt(r.totalReceiveFen),
         receiveCountText: `${r.totalReceiveCount}笔`,
-        giftTotalText: formatAmount(r.totalGiftFen),
+        giftTotalText: formatAmountInt(r.totalGiftFen),
         giftCountText: `${r.totalGiftCount}笔`,
         totalText: `合计：${totalCount} 笔 · ${rows.length} 位亲友`,
-        // 差额只显示绝对值，不加符号
-        diffText: `差额 ${formatAmount(Math.abs(r.diffFen))}`,
+        // 差额只显示绝对值，不加符号；往来页金额一律整数
+        diffText: `差额 ${formatAmountInt(Math.abs(r.diffFen))}`,
       });
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });

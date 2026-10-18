@@ -4,7 +4,7 @@
  * 只用已授权数据计算（经 core.stats.memberStats）
  */
 const dataService = require('../../services/data-service.js');
-const { formatAmount } = require('../../core/format.js');
+const { formatAmountInt } = require('../../core/format.js');
 
 Page({
   data: {
@@ -34,8 +34,8 @@ Page({
       this.setData({
         events: events || [],
         wanglai: (list.rows || []).slice(0, 20),
-        totalIn: formatAmount(list.totalReceiveFen || 0),
-        totalOut: formatAmount(list.totalGiftFen || 0),
+        totalIn: formatAmountInt(list.totalReceiveFen || 0),
+        totalOut: formatAmountInt(list.totalGiftFen || 0),
       });
     } catch (e) {
       wx.showToast({ title: e.message, icon: 'none' });

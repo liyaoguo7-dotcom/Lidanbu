@@ -5,7 +5,7 @@
  */
 const dataService = require('../../services/data-service.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
-const { formatAmount } = require('../../core/format.js');
+const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
 Page({
   data: {
@@ -56,7 +56,7 @@ Page({
       icon: tagIconPath(tag.id),
       isBaishi: e.tagId === 'baishi',
       date: e.date || '',
-      totalText: `共计：${st.count} 笔 ￥${formatAmount(st.totalFen)} 元`,
+      totalText: `共计：${st.count} 笔 ￥${formatAmountInt(st.totalFen)} 元`,
       records,
       delContent: `${e.name}，将同时删除 ${st.count} 条收礼记录`,
     });

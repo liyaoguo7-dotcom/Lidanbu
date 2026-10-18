@@ -5,7 +5,7 @@
  */
 const dataService = require('../../services/data-service.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
-const { formatAmount } = require('../../core/format.js');
+const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
 function fmtDate(d) {
   return d || '';
@@ -50,7 +50,7 @@ Page({
       all,
       totalCount: list.length,
       totalFen,
-      totalText: `￥${formatAmount(totalFen)} 元`,
+      totalText: `￥${formatAmountInt(totalFen)} 元`,
     });
     this.applyFilter();
   },

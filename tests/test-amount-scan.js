@@ -3,6 +3,8 @@
  * 规则：core/format.js 是全产品唯一的金额显示入口。
  * - miniprogram/**（页面/组件/服务）的 .js 与 .wxml 里，不许出现 /100、toFixed(、toLocaleString(
  * - core/**（除 format.js）里，不许出现 toFixed(、toLocaleString(
+ * - 全仓库调用的金额格式化函数名必须在允许名单内（formatAmount / formatAmountInt），
+ *   新增自创的金额格式化函数会导致本测试失败（用户 2026-10-18 拍板：整数显示入口）。
  * 新增绕过写法会导致本测试失败。
  */
 const { test, assert } = require('./fw');
@@ -99,7 +101,7 @@ function scan(files, patterns) {
     const clean = stripNoise(fs.readFileSync(f, 'utf8'));
     for (const p of patterns) {
       if (p.re.test(clean)) {
-        hits.push(path.relative(ROOT, f) + '：发现「' + p.name + '」，请改调 core/format.js 的 formatAmount');
+        hits.push(path.relative(ROOT, f) + '：发现「' + p.name + '」，请改调 core/format.js 的 formatAmount / formatAmountInt');
       }
     }
   }
@@ -114,4 +116,23 @@ test('金额显示无绕过：miniprogram 页面/组件/服务', () => {
 test('金额显示无绕过：core（format.js 除外）', () => {
   const hits = scan(CORE_JS, PATTERNS_CORE);
   assert(hits.length === 0, hits.length ? '绕过写法：\n' + hits.join('\n') : '无绕过');
+});
+
+// 金额格式化函数允许名单：全仓库只许调这两个（零容忍）
+const FORMAT_ALLOWLIST = ['formatAmount', 'formatAmountInt'];
+
+test('金额格式化函数只许用允许名单（formatAmount / formatAmountInt）', () => {
+  const files = MINI_JS.concat(CORE_JS);
+  const hits = [];
+  for (const f of files) {
+    const clean = stripNoise(fs.readFileSync(f, 'utf8'));
+    const re = /\b([A-Za-z_$][A-Za-z0-9_$]*[Ff]ormat[A-Za-z0-9_$]*)\s*\(/g;
+    let m;
+    while ((m = re.exec(clean)) !== null) {
+      if (FORMAT_ALLOWLIST.indexOf(m[1]) < 0) {
+        hits.push(path.relative(ROOT, f) + '：发现名单外的金额格式化函数「' + m[1] + '」，请改调 formatAmount / formatAmountInt');
+      }
+    }
+  }
+  assert(hits.length === 0, hits.length ? '名单外函数：\n' + hits.join('\n') : '全部在名单内');
 });

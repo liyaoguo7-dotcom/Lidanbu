@@ -168,7 +168,8 @@ function sumFen(records) {
 /**
  * 联系人往来统计（账本主人视角）
  * @returns {{receiveTotalFen, receiveCount, giftTotalFen, giftCount, diffFen, from, to}}
- * 笔数=明细条数；金额实时求和；金额单位"分"，显示层用 formatAmount 格式化
+ * 笔数=明细条数；金额实时求和；金额单位"分"，显示层用 formatAmount / formatAmountInt 格式化
+ *（显示规则见 core/format.js 头注释：用户 2026-10-18 拍板）
  */
 async function contactStats(db, ownerId, contactId, opts = {}) {
   const range = resolveRangeOpt(opts.range);
