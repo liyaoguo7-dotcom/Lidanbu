@@ -1,11 +1,11 @@
 <!-- 拍照导入（收礼）：先选礼薄 -->
-<view class="tip"><text>📢</text><text style="margin-left:6px">收礼要先选好礼薄再拍照，识别结果会记进这本礼薄</text></view>
+<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">收礼要先选好礼薄再拍照，识别结果会记进这本礼薄</text></view>
 
 <view class="card">
-  <view class="card-title">选择礼薄</view>
+  <view class="card-title songti">选择礼薄</view>
   <view wx:for="{{events}}" wx:key="_id" class="form-row" data-id="{{item._id}}" bindtap="pickEvent">
     <text class="form-val">{{item.name}}</text>
-    <text class="form-val ph" style="flex:none;margin-right:8px">{{item.date}}</text>
+    <text class="form-val ph num" style="flex:none;margin-right:8px">{{item.date}}</text>
     <text class="chev">›</text>
   </view>
   <view class="form-row" wx:if="{{events.length === 0}}">
@@ -14,7 +14,7 @@
 </view>
 
 <view class="card">
-  <view class="card-title">新建礼薄</view>
+  <view class="card-title songti">新建礼薄</view>
   <tag-selector selectedId="{{newTagId}}" bind:change="onTagChange" />
   <view class="form-row">
     <text class="form-label">名称</text>

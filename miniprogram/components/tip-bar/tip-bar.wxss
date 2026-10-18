@@ -6,7 +6,8 @@
 }
 
 .horn {
-  font-size: 24rpx; /* 很小的小喇叭 */
+  width: 24rpx; /* 很小的小喇叭 */
+  height: 24rpx;
   margin-right: 8rpx;
 }
 

@@ -1,0 +1,43 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><style>@font-face{font-family:'MSZ';src:url('../fonts-candidates/render/MSZ.woff2') format('woff2')}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:812px;height:375px;font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;overflow:hidden;background:#E9E2D2;position:relative}
+.nav{height:46px;background:#F0E6D4;display:flex;align-items:center;padding:0 14px;color:#333333}
+.nav .back{font-size:22px;width:60px}
+.nav .title{flex:1;text-align:center;font-size:19px;letter-spacing:6px;font-weight:bold}
+.nav .stylebtn{width:60px;font-size:14px;border:1px solid #333333;border-radius:14px;padding:3px 0;text-align:center;opacity:.85}
+.subbar{height:32px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;color:#2B2B2B;background:transparent}
+.subbar img{width:22px;height:22px}
+.paper{position:relative;margin:2px 10px 0 10px;height:243px;background:#F8F1DC;border:3px double #A67C2E;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27150%27%20height%3D%2790%27%3E%3Cpath%20d%3D%27M18%2062%20q4%20-26%2024%20-28%20q16%20-2%2018%2012%20q2%2011%20-9%2015%20q-9%203%20-16%20-3%27%20fill%3D%27none%27%20stroke%3D%27%238A6420%27%20stroke-opacity%3D%270.16%27%20stroke-width%3D%272%27%2F%3E%3Cpath%20d%3D%27M95%2030%20q10%20-14%2026%20-10%20q12%203%2010%2014%20q-2%208%20-12%208%27%20fill%3D%27none%27%20stroke%3D%27%238A6420%27%20stroke-opacity%3D%270.13%27%20stroke-width%3D%271.8%27%2F%3E%3Ccircle%20cx%3D%27130%27%20cy%3D%2770%27%20r%3D%272.5%27%20fill%3D%27%238A6420%27%20fill-opacity%3D%270.14%27%2F%3E%3C%2Fsvg%3E");}
+.paper .corner{position:absolute;width:30px;height:30px;opacity:.9}
+.c-tl{top:4px;left:4px}.c-tr{top:4px;right:4px;transform:rotate(90deg)}
+.c-br{bottom:4px;right:4px;transform:rotate(180deg)}.c-bl{bottom:4px;left:4px;transform:rotate(270deg)}
+.cols{position:absolute;inset:12px 16px;display:flex;flex-direction:row-reverse;height:219px}
+.col{flex:1;display:flex;flex-direction:column;border-left:1px solid #8A6420;padding:6px 2px;position:relative;min-width:0}
+.col:first-child{border-left:none}
+.col.white{border-left-color:#3B4046}
+.col.white::after{content:'';position:absolute;top:0;right:0;bottom:0;width:1px;background:#3B4046}
+.cname{height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'MSZ';color:#2B2B2B}
+.cname span{display:block;line-height:1.12;font-size:21px}
+.cname.n4 span{font-size:19px}.cname.n4{gap:1px}
+.cname.n2,.cname.n3{gap:9px}
+.cname.n5 span{font-size:15px}.cname.n5{gap:2px}
+.cmid{height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.cmid span{display:block;font-size:17px;font-weight:bold;font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;color:#8A6420;line-height:1.1}
+.camt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:5px;font-family:'MSZ';color:#2B2B2B}
+.camt span{display:block;line-height:1.12;font-size:16px}
+.camt.l56 span{font-size:13.5px}.camt.l7 span{font-size:11px}
+.col.white .cname,.col.white .camt{color:#222}.col.white .cmid span{color:#222}
+.footer{height:58px;position:relative;text-align:center}
+.plus{width:38px;height:38px;margin:5px auto 0;border-radius:50%;background:#E05353;color:#fff;font-size:26px;line-height:38px;text-align:center;font-weight:bold}
+.swipe{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:11px;color:#B9B2A0;letter-spacing:2px}
+.hl{outline:3px solid #E8C96A;outline-offset:-3px;background:rgba(232,201,106,.12)}
+.sheetmask{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:#fff;border-radius:14px 14px 0 0;padding:14px 26px 12px 26px}
+.sheet h3{font-size:16px;margin-bottom:8px;text-align:center}
+.kv{display:flex;font-size:14px;padding:5px 0;border-bottom:1px solid #F0F0F0}
+.kv .k{width:90px;color:#888}.kv .v{flex:1;color:#333}
+.sheetbtns{display:flex;gap:12px;margin-top:12px}
+.sheetbtns div{flex:1;text-align:center;padding:9px 0;border-radius:20px;font-size:14px}
+.b1{background:#E05353;color:#fff}.b2{border:1px solid #E05353;color:#E05353}.b3{background:#F5F6F4;color:#333}
+</style></head><body><div class='nav'><div class='back'>‹</div><div class='title'>横置礼单本</div><div class='stylebtn'>样式</div></div><div class='subbar'><img src='../../../miniprogram/icons/01-jiehun.svg'/>张三的婚礼 · 2026-10-18</div><div class='paper'><div class='corners'><svg class='corner c-tl' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='corners'><svg class='corner c-tr' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='corners'><svg class='corner c-br' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='corners'><svg class='corner c-bl' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='cols'><div class='col'><div class='cname n2'><span>张</span><span>三</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>壹</span><span>仟</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>李</span><span>四</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>捌</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>王</span><span>五</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>陆</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>赵</span><span>六</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>伍</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>刘</span><span>七</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l56'><span>壹</span><span>仟</span><span>贰</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>陈</span><span>八</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>贰</span><span>仟</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>孙</span><span>九</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>壹</span><span>万</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>周</span><span>十</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l56'><span>捌</span><span>佰</span><span>捌</span><span>拾</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n3'><span>吴</span><span>十</span><span>一</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l56'><span>壹</span><span>仟</span><span>伍</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n3'><span>郑</span><span>十</span><span>二</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l7'><span>陆</span><span>佰</span><span>陆</span><span>拾</span><span>陆</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n4'><span>欧</span><span>阳</span><span>修</span><span>远</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>贰</span><span>仟</span><span>元</span><span>整</span></div></div></div></div><div class='footer'><div class='plus'>＋</div><div class='swipe'>左 右 滑 动</div></div></body></html>

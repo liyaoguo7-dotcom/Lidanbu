@@ -1,7 +1,8 @@
 /**
- * 礼单簿 · 往来页（阶段2 2B，替换 2A 占位）
- * 时间筛选（今日/本月/今年/近一年/自定义起止）+ 收到总额/送出总额/差额
- * （淡黄底红字，差额=收到-送出）+ 搜索框（输入姓名出联系人，点进竖线树）。
+ * 礼单簿 · 往来页（v3.1 第五章版）
+ * 自上而下：标题「人情往来」→ 时间标签 → 时间跨度 → 搜索框 →
+ *   左右对照（收礼/送礼：上总额、下笔数）→ 合计 → 差额区（淡黄底红字，绝对值无符号）
+ *   → 亲友列表（姓名、笔数、金额，点进竖线树）。
  * 调 data-service.getWanglaiList（经 core.stats.contactStats/memberStats）。
  * ?ownerId=xxx 时为成员视角：顶部淡字"仅统计已授权给你的记录"。
  */
@@ -13,7 +14,7 @@ const RANGES = [
   { id: 'month', name: '本月' },
   { id: 'year', name: '今年' },
   { id: 'lastYear', name: '近一年' },
-  { id: 'custom', name: '自定义' },
+  { id: 'custom', name: '自定义▾' },
 ];
 
 function today() {
@@ -23,18 +24,28 @@ function today() {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
+/** YYYY-MM-DD → 2026.10.16 */
+function dotDate(s) {
+  return String(s || '').replace(/-/g, '.');
+}
+
 Page({
   data: {
     ranges: RANGES,
     rangeId: 'lastYear',
     customFrom: '',
     customTo: '',
+    rangeText: '',
     keyword: '',
     searching: false,
     searchResults: [],
     rows: [],
     isMember: false,
-    summaryText: '',
+    receiveTotalText: '0.00',
+    receiveCountText: '0笔',
+    giftTotalText: '0.00',
+    giftCountText: '0笔',
+    totalText: '',
     diffText: '',
   },
 
@@ -76,17 +87,22 @@ Page({
       const rows = r.rows.map((x) => ({
         ...x,
         countText: `${x.count}笔`,
+        // 方向靠 +/- 号表达（冻结决策：不用红绿蓝三色表示方向）
         diffText: `${x.diffFen < 0 ? '-' : '+'}${formatAmount(Math.abs(x.diffFen))}`,
       }));
-      const recv = formatAmount(r.totalReceiveFen);
-      const gift = formatAmount(r.totalGiftFen);
-      const diff = r.diffFen;
+      const totalCount = r.totalReceiveCount + r.totalGiftCount;
       this.setData({
         searching: false,
         rows,
         isMember: r.isMember,
-        summaryText: `共计：${rows.length} 位亲友`,
-        diffText: `人情差额：收到 ${recv} − 送出 ${gift} = ${diff < 0 ? '-' : '+'}${formatAmount(Math.abs(diff))}`,
+        rangeText: `${dotDate(r.from)} 至 ${dotDate(r.to)}`,
+        receiveTotalText: formatAmount(r.totalReceiveFen),
+        receiveCountText: `${r.totalReceiveCount}笔`,
+        giftTotalText: formatAmount(r.totalGiftFen),
+        giftCountText: `${r.totalGiftCount}笔`,
+        totalText: `合计：${totalCount} 笔 · ${rows.length} 位亲友`,
+        // 差额只显示绝对值，不加符号
+        diffText: `差额 ${formatAmount(Math.abs(r.diffFen))}`,
       });
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });

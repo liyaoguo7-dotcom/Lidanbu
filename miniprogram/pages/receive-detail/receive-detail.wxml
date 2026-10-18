@@ -5,20 +5,20 @@
   </view>
   <text class="songti pat-name {{isBaishi ? 'baishi' : ''}}">{{tagName}}</text>
   <text class="event-name songti">{{event.name}}</text>
-  <text class="event-date">{{date}}</text>
+  <text class="event-date num">{{date}}</text>
 </view>
 
 <view class="card summary">
-  <text>共计：</text><text class="red">{{totalText}}</text>
+  <text>共计：</text><text class="red num">{{totalText}}</text>
 </view>
 
 <view class="card" wx:if="{{records.length > 0}}">
   <view class="rec-row" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRecordDetail">
     <view class="mid">
-      <text class="nm">{{item.name}}</text>
-      <text class="sub">{{item.sub}}</text>
+      <text class="nm songti">{{item.name}}</text>
+      <text class="sub">{{item.subType}}｜</text><text class="sub num">{{item.subDate}}</text>
     </view>
-    <text class="amt red">{{item.amountText}}</text>
+    <text class="amt red num">{{item.amountText}}</text>
   </view>
 </view>
 

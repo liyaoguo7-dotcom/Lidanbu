@@ -9,7 +9,7 @@
   flex-direction: column;
   align-items: center;
 }
-.entry-icon { font-size: 30px; }
+.entry-icon { width: 30px; height: 30px; }
 .entry-name { font-size: 13px; margin-top: 6px; color: #555; }
 .bigcards {
   display: flex;

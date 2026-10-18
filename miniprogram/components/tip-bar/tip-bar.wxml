@@ -1,5 +1,5 @@
 <!-- 小喇叭提示条：克制的小喇叭 + 动态小字 -->
 <view class="tip-bar" wx:if="{{text}}">
-  <text class="horn">📢</text>
+  <image class="horn" src="/images/icons/speaker.svg" mode="aspectFit" />
   <text class="text">{{text}}</text>
 </view>

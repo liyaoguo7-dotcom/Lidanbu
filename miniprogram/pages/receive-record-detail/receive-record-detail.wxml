@@ -2,8 +2,8 @@
 <view class="card">
   <view class="form-row"><text class="form-label">姓名</text><text class="form-val">{{contactName}}</text></view>
   <view class="form-row"><text class="form-label">类型</text><text class="form-val">{{type}}</text></view>
-  <view class="form-row"><text class="form-label">日期</text><text class="form-val">{{date}}</text></view>
-  <view class="form-row"><text class="form-label">金额</text><text class="form-val strong red">+{{amountText}}</text></view>
+  <view class="form-row"><text class="form-label">日期</text><text class="form-val num">{{date}}</text></view>
+  <view class="form-row"><text class="form-label">金额</text><text class="form-val strong red num">+{{amountText}}</text></view>
   <view class="form-row"><text class="form-label">备注</text><text class="form-val {{remark === '无' ? 'ph' : ''}}">{{remark}}</text></view>
 </view>
 

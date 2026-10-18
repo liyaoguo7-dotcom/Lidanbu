@@ -8,7 +8,8 @@
 }
 
 .icon {
-  font-size: 120rpx;
+  width: 120rpx;
+  height: 120rpx;
   opacity: 0.35; /* 淡色图标 */
   margin-bottom: 24rpx;
 }

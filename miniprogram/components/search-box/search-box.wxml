@@ -1,7 +1,7 @@
 <!-- 搜索框：右侧"取消"，聚焦或有内容时显示 -->
 <view class="search-wrap">
   <view class="search-box">
-    <text class="icon">🔍</text>
+    <image class="icon" src="/images/icons/search.svg" mode="aspectFit" />
     <input
       class="input"
       placeholder="{{placeholder}}"

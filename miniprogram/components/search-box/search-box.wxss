@@ -16,7 +16,8 @@
 }
 
 .icon {
-  font-size: 28rpx;
+  width: 28rpx;
+  height: 28rpx;
   margin-right: 12rpx;
 }
 

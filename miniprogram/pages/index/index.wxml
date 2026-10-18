@@ -1,9 +1,9 @@
 <!-- 礼单簿 · 首页（阶段2 2A） -->
-<view class="tip"><text>📢</text><text style="margin-left:6px">{{tipText}}</text></view>
+<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">{{tipText}}</text></view>
 
 <view class="card entry-row">
   <view class="entry" wx:for="{{entries}}" wx:key="id" data-id="{{item.id}}" bindtap="onEntry">
-    <text class="entry-icon">{{item.icon}}</text>
+    <image class="entry-icon" src="{{item.icon}}" mode="aspectFit" />
     <text class="entry-name">{{item.name}}</text>
   </view>
 </view>

@@ -1,25 +1,48 @@
 <!-- 收礼主页 -->
-<view class="card summary" wx:if="{{hasEvents}}">
-  <text>共计：</text><text class="red">{{totalCount}} 本 {{totalText}}</text>
+<view class="horn" wx:if="{{showHorn}}">
+  <image class="horn-icon" src="/images/icons/speaker.svg" mode="aspectFit" />
+  <view class="horn-scroll">
+    <text class="horn-text">点击礼簿查看收礼记录，从右往左滑动可以修改、删除礼簿~</text>
+  </view>
+  <text class="horn-close" bindtap="closeHorn">×</text>
 </view>
 
-<view class="card" wx:if="{{hasEvents}}">
-  <view class="event-row" wx:for="{{events}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
-    <view class="pat {{item.isBaishi ? 'baishi' : ''}}">
-      <image class="pat-img" src="{{item.icon}}" mode="aspectFit" />
+<view class="total-line" wx:if="{{hasEvents}}">
+  <text>共计：{{totalCount}}本 </text><text class="total-num num">￥{{totalText}}</text>
+</view>
+
+<view class="list" wx:if="{{hasEvents}}">
+  <view class="swipe-wrap" wx:for="{{events}}" wx:key="_id" data-id="{{item._id}}"
+    bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd">
+    <view class="swipe-actions">
+      <view class="act act-edit" data-id="{{item._id}}" catchtap="onEditSwipe">修改</view>
+      <view class="act act-del" data-id="{{item._id}}" catchtap="onDeleteSwipe">删除</view>
     </view>
-    <view class="mid">
-      <text class="nm">{{item.name}}</text>
-      <text class="sub">{{item.sub}}</text>
+    <view class="event-row" style="transform: translateX({{item.offset}}px);" data-id="{{item._id}}" bindtap="onRowTap">
+      <view class="pat {{item.isBaishi ? 'baishi' : ''}}">
+        <image class="pat-img" src="{{item.icon}}" mode="aspectFit" />
+      </view>
+      <view class="mid">
+        <view class="line1">
+          <text class="nm songti">{{item.name}}</text>
+          <text class="dt num">{{item.date}}</text>
+        </view>
+        <view class="line2">
+          <text class="cnt">共{{item.count}}笔 ｜ </text><text class="amt num">￥{{item.amtText}}</text>
+        </view>
+      </view>
+      <text class="more" data-id="{{item._id}}" catchtap="onMore">⋯</text>
     </view>
-    <text class="amt red">{{item.amountText}}</text>
   </view>
 </view>
 
 <view class="empty" wx:if="{{!hasEvents}}">
-  <text class="empty-icon">📁</text>
-  <text class="empty-text">还没有记录，请点击下方红色＋按钮添加</text>
+  <image class="empty-icon" src="/images/icons/folder.svg" mode="aspectFit" />
+  <text class="empty-text">还没有礼薄，点击下方红色＋按钮添加</text>
   <text class="empty-sample" bindtap="goSample">点击查看示例</text>
 </view>
 
 <view class="fab" bindtap="goAdd">＋</view>
+
+<confirm-modal show="{{showDelModal}}" title="删除礼薄" content="{{delContent}}"
+  bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />

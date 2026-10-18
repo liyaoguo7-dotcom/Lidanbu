@@ -1,6 +1,23 @@
-<!-- 往来页 -->
+<!-- 往来页（v3.1 第五章） -->
 <view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
 
+<!-- 时间标签 -->
+<view class="timerow">
+  <text class="tchip {{item.id === rangeId ? 'on' : ''}}" wx:for="{{ranges}}" wx:key="id"
+    data-id="{{item.id}}" bindtap="onRangeTap">{{item.name}}</text>
+</view>
+<view class="custom-range" wx:if="{{rangeId === 'custom'}}">
+  <picker mode="date" value="{{customFrom}}" bindchange="onCustomFromChange">
+    <view class="date-box num">{{customFrom}}</view>
+  </picker>
+  <text class="dash">—</text>
+  <picker mode="date" value="{{customTo}}" bindchange="onCustomToChange">
+    <view class="date-box num">{{customTo}}</view>
+  </picker>
+</view>
+<view class="daterange num">{{rangeText}}</view>
+
+<!-- 搜索框 -->
 <view class="searchbar">
   <view class="searchbox">
     <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
@@ -9,28 +26,11 @@
   <text class="search-cancel" bindtap="onCancelSearch">取消</text>
 </view>
 
-<!-- 时间筛选 -->
-<view class="card range-card" wx:if="{{!searching}}">
-  <view class="chips">
-    <text class="chip {{item.id === rangeId ? 'on' : ''}}" wx:for="{{ranges}}" wx:key="id"
-      data-id="{{item.id}}" bindtap="onRangeTap">{{item.name}}</text>
-  </view>
-  <view class="custom-range" wx:if="{{rangeId === 'custom'}}">
-    <picker mode="date" value="{{customFrom}}" bindchange="onCustomFromChange">
-      <view class="date-box">{{customFrom}}</view>
-    </picker>
-    <text class="dash">—</text>
-    <picker mode="date" value="{{customTo}}" bindchange="onCustomToChange">
-      <view class="date-box">{{customTo}}</view>
-    </picker>
-  </view>
-</view>
-
 <!-- 搜索结果 -->
 <view class="card" wx:if="{{searching}}">
   <view class="contact-row" wx:for="{{searchResults}}" wx:key="contactId"
     data-id="{{item.contactId}}" bindtap="goTimeline">
-    <text class="nm">{{item.name}}</text>
+    <text class="nm songti">{{item.name}}</text>
     <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
     <text class="chev">›</text>
   </view>
@@ -39,23 +39,38 @@
   </view>
 </view>
 
-<!-- 统计区 -->
-<view wx:if="{{!searching}}">
-  <view class="card summary">
-    <text>{{summaryText}}</text>
+<block wx:if="{{!searching}}">
+  <!-- 左右对照：收礼（左）、送礼（右）；上总额、下笔数 -->
+  <view class="compare">
+    <view class="side">
+      <text class="side-label">收礼</text>
+      <text class="side-amount num">{{receiveTotalText}}</text>
+      <text class="side-count">{{receiveCountText}}</text>
+    </view>
+    <view class="side">
+      <text class="side-label">送礼</text>
+      <text class="side-amount num">{{giftTotalText}}</text>
+      <text class="side-count">{{giftCountText}}</text>
+    </view>
   </view>
 
+  <!-- 合计 -->
+  <view class="total-line">{{totalText}}</view>
+
+  <!-- 差额区：淡黄底红字，绝对值无符号 -->
   <view class="diff-bar">
-    <text>{{diffText}}</text>
+    <text class="diff-label">差额</text>
+    <text class="diff-amount num">{{diffText}}</text>
   </view>
 
+  <!-- 亲友列表 -->
   <view class="card" wx:if="{{rows.length > 0}}">
     <view class="wl-row" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" bindtap="goTimeline">
-      <text class="nm">{{item.name}}</text>
+      <text class="nm songti">{{item.name}}</text>
       <view class="right">
         <text class="count">{{item.countText}}</text>
         <text class="sep">｜</text>
-        <text class="diff">{{item.diffText}}</text>
+        <text class="diff num">{{item.diffText}}</text>
         <text class="chev">›</text>
       </view>
     </view>
@@ -64,4 +79,4 @@
   <view class="empty" wx:if="{{rows.length === 0}}">
     <text class="empty-text">该时间范围内暂无往来记录</text>
   </view>
-</view>
+</block>

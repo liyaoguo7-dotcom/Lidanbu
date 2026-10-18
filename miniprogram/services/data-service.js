@@ -362,14 +362,17 @@ const service = {
    * 往来列表：每位亲友一行 {contactId, name, count, receiveFen, giftFen, diffFen}
    * @param {string} [ownerId] 缺省看自己账本；传他人 id 则为成员视角（只算授权部分）
    * @param {string|{start,end}} [range] 时间范围，缺省近一年
+   * @returns {rows, totalReceiveFen, totalGiftFen, totalReceiveCount, totalGiftCount,
+   *           diffFen, from, to, isMember}
    */
   async getWanglaiList({ ownerId, range } = {}) {
     const oid = ownerId || _userId;
     const isMember = oid !== _userId;
     try {
+      const rg = core.stats.resolveRangeOpt(range);
       const contacts = await core.contacts.listContacts(_db, _userId, oid);
       const rows = [];
-      let totalReceiveFen = 0, totalGiftFen = 0;
+      let totalReceiveFen = 0, totalGiftFen = 0, totalReceiveCount = 0, totalGiftCount = 0;
       for (const c of contacts) {
         const st = isMember
           ? await core.stats.memberStats(_db, _userId, oid, c._id, { range })
@@ -378,6 +381,8 @@ const service = {
         if (count === 0) continue;
         totalReceiveFen += st.receiveTotalFen;
         totalGiftFen += st.giftTotalFen;
+        totalReceiveCount += st.receiveCount;
+        totalGiftCount += st.giftCount;
         rows.push({
           contactId: c._id, name: c.name, remark: c.remark || '',
           count, receiveFen: st.receiveTotalFen, giftFen: st.giftTotalFen,
@@ -387,8 +392,9 @@ const service = {
       // 按往来笔数倒序，笔数相同按姓名
       rows.sort((a, b) => b.count - a.count || String(a.name).localeCompare(String(b.name)));
       return {
-        rows, totalReceiveFen, totalGiftFen, diffFen: totalReceiveFen - totalGiftFen,
-        isMember,
+        rows, totalReceiveFen, totalGiftFen, totalReceiveCount, totalGiftCount,
+        diffFen: totalReceiveFen - totalGiftFen,
+        from: rg.from, to: rg.to, isMember,
       };
     } catch (e) { throw new Error(friendly(e)); }
   },

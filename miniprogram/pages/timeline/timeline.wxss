@@ -1,66 +1,100 @@
-/* 往来竖线树 */
+/* 往来竖线树 · v3.1 14.2 双栏（左送出/右收到） */
 .member-tip {
   text-align: center;
   color: #C2C2C2;
-  font-size: 12px;
-  padding: 8px 0 0;
+  font-size: 24rpx;
+  padding: 16rpx 0 0;
+  background: #fff;
 }
-/* 差额：淡黄底红字（沿用 v3.1） */
-.diff-bar {
-  margin: 12px 12px;
-  padding: 14px 16px;
-  background: #FDF6E3;
-  border-radius: 12px;
-  color: #E05353;
-  font-size: 15px;
-  font-weight: 700;
-  text-align: center;
-}
-.timeline-card { padding: 8px 0; }
-.tl-item {
+/* 标题下淡金色栏：左送出/右收到，白字 */
+.kindbar {
   display: flex;
-  align-items: flex-start;
-  padding: 10px 16px 10px 0;
+  background: #CEA64F;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.kind-half {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+}
+/* 双栏时间线：竖线贯穿到底 */
+.tl {
   position: relative;
+  background: #fff;
+  padding: 36rpx 0 12rpx;
 }
-.tl-date {
-  width: 92px;
-  flex: none;
-  font-size: 12px;
-  color: #C2C2C2;
-  text-align: right;
-  padding-top: 3px;
-}
-.tl-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #E05353;
-  flex: none;
-  margin: 4px 12px 0;
-  position: relative;
-  z-index: 1;
-}
-.tl-item::before {
-  content: '';
+.tl-line {
   position: absolute;
-  left: 111px;
+  left: 50%;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: #F0E6D4;
+  width: 4rpx;
+  background: #D9C9A8;
+  transform: translateX(-50%);
 }
-.tl-item:first-child::before { top: 16px; }
-.tl-item:last-child::before { bottom: auto; height: 18px; }
-.tl-body { flex: 1; display: flex; flex-direction: column; }
-/* 金额深色文字，方向靠 +/- 号（不用红绿蓝） */
-.tl-amt { font-size: 17px; font-weight: 700; color: #333; }
-.tl-desc { font-size: 13px; color: #666; margin-top: 3px; }
-.tl-pen {
-  font-size: 18px;
-  color: #C2C2C2;
-  padding: 4px 0 4px 12px;
+.trow {
+  position: relative;
+  display: flex;
+  min-height: 128rpx;
+  padding: 16rpx 0;
+}
+.tcell {
+  flex: 1;
+  padding: 0 28rpx;
+}
+.tcell.left { text-align: right; }
+.tcell.right { text-align: left; }
+/* 每条竖线上的红点 */
+.tdot {
+  position: absolute;
+  left: 50%;
+  top: 52rpx;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #E05353;
+  transform: translateX(-50%);
+  z-index: 1;
   flex: none;
 }
-.empty { text-align: center; padding: 60px 0; }
-.empty-text { color: #C2C2C2; font-size: 14px; }
+/* 每条三行：日期（灰）→事由→金额（黑粗体，¥前缀） */
+.tdate {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 6rpx;
+}
+.treason {
+  font-size: 28rpx;
+  color: #333;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
+}
+/* 钢笔线条图标（禁用表情符号） */
+.tpen {
+  width: 28rpx;
+  height: 28rpx;
+  margin-left: 12rpx;
+  vertical-align: -4rpx;
+}
+.tamt {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #111;
+  margin-top: 6rpx;
+}
+/* 底部汇总：淡黄底，紧跟时间线最下方，不悬浮，居中三行 */
+.sumbar {
+  background: #FDF6E3;
+  text-align: center;
+  padding: 28rpx 0 36rpx;
+  font-size: 30rpx;
+  line-height: 2;
+  color: #333;
+}
+.sumbar .dl {
+  color: #E05353;
+  font-weight: 700;
+}
+.empty { text-align: center; padding: 120rpx 0; background: #fff; }
+.empty-text { color: #C2C2C2; font-size: 28rpx; }

@@ -1,5 +1,5 @@
 <!-- 亲友录 -->
-<view class="tip"><text>📢</text><text style="margin-left:6px">{{tipText}}</text></view>
+<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">{{tipText}}</text></view>
 
 <view class="searchbar">
   <view class="searchbox">
@@ -11,10 +11,10 @@
 
 <view class="card">
   <block wx:for="{{groups}}" wx:key="key">
-    <view class="group-title">{{item.key}}</view>
+    <view class="group-title songti">{{item.key}}</view>
     <view class="contact-row" wx:for="{{item.items}}" wx:key="_id"
       data-id="{{item._id}}" data-name="{{item.name}}" bindtap="openSheet">
-      <text class="nm">{{item.name}}</text>
+      <text class="nm songti">{{item.name}}</text>
       <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
     </view>
   </block>

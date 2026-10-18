@@ -37,7 +37,7 @@
 <view class="card" wx:if="{{reminders.length}}">
   <view class="form-row" wx:for="{{reminders}}" wx:key="label">
     <text class="form-label">{{item.label}}</text>
-    <text class="form-val">{{item.date}}</text>
+    <text class="form-val num">{{item.date}}</text>
     <text class="ph" style="font-size:12px;color:{{item.passed ? '#F0575A' : '#999'}}">{{item.passed ? '已提醒' : '待提醒'}}</text>
   </view>
 </view>

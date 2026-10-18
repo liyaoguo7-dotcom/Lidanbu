@@ -1,53 +1,43 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style-vars.css"><style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#333;font-size:15px;-webkit-font-smoothing:antialiased}
-.page{width:375px;min-height:810px;background:#F6F6F6;position:relative;padding-bottom:76px}
-.card{background:#fff;border-radius:12px;margin:12px}
-.searchbar{display:flex;align-items:center;padding:10px 12px;gap:8px}
-.searchbox{flex:1;background:#F2F2F2;border-radius:17px;height:34px;display:flex;align-items:center;padding:0 14px;color:#C2C2C2;font-size:14px}
-.search-cancel{color:#F0575A;font-size:14px;white-space:nowrap}
-.tip{display:flex;align-items:flex-start;gap:6px;padding:8px 14px;font-size:12px;color:#999;line-height:1.6}
-.row{display:flex;align-items:center;padding:0 16px;height:58px;border-bottom:1px solid #F0F0F0}
-.row:last-child{border-bottom:none}
-.form-label{width:82px;flex:none;font-size:15px;color:#333}
-.form-val{flex:1;text-align:left;font-size:15px;color:#333}
-.form-val.ph{color:#C2C2C2}
-.chev{color:#C2C2C2;font-size:18px}
-.tag-grid{display:flex;flex-wrap:wrap;padding:14px 14px 4px}
-.tagcell{width:20%;display:flex;flex-direction:column;align-items:center;padding:10px 0}
-.tagcircle{width:56px;height:56px;border-radius:50%;background:#F5F6F4;display:flex;align-items:center;justify-content:center}
-.tagcircle.active{background:#F1E6D3}
-.tagcircle.active-baishi{background:#E8EAED}
-.tagimg{width:40px;height:40px}
-.tagname{font-size:12px;color:#666;margin-top:6px;font-family:"Songti SC","STSong",serif}
-.tagname.name-active{color:#E05353;font-weight:700}
-.tagname.name-baishi{color:#3B4046;font-weight:700}
-.mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.45);z-index:20}
-.dialog{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:300px;background:#fff;border-radius:12px;z-index:21;overflow:hidden}
-.dialog .dinfo{padding:20px 20px 6px;font-size:14px;color:#555;line-height:1.9}
-.dialog .dinfo b{color:#333}
-.dialog .dwarn{text-align:center;font-size:14px;color:#333;padding:10px 20px 16px;font-weight:500}
-.dialog .dbtns{display:flex;border-top:1px solid #F0F0F0}
-.dialog .dbtns div{flex:1;text-align:center;padding:14px 0;font-size:15px}
-.dialog .dcancel{color:#666;border-right:1px solid #F0F0F0}
-.dialog .ddel{color:#F0575A;font-weight:600}
-.diff{background:#FFF8E1;color:#E05353;text-align:center;padding:12px;font-size:15px;font-weight:600;margin:12px;border-radius:12px}
-.empty{text-align:center;padding-top:90px}
-.empty .eicon{font-size:72px;opacity:.45;display:block}
-.empty .etxt{color:#C2C2C2;font-size:14px;margin-top:18px;display:block}
-.empty .esample{color:#F0575A;font-size:14px;margin-top:14px;display:block}
-.vtree{position:relative;margin:12px;padding:0 0 20px 90px}
-.vtree::before{content:"";position:absolute;left:80px;top:8px;bottom:8px;width:2px;background:#F0E6D4}
-.vnode{position:relative;padding:10px 0 10px 16px}
-.vnode::before{content:"";position:absolute;left:-16px;top:16px;width:10px;height:10px;border-radius:50%;background:#CFCFCF;transform:translateX(-50%)}
-.vnode .vd{position:absolute;left:-90px;top:12px;width:62px;text-align:right;font-size:12px;color:#999}
-.vnode .va{font-size:15px;font-weight:600;color:#333}
-.vnode .vn{font-size:13px;color:#666;margin-top:2px}
-.tabbar{position:absolute;left:0;bottom:0;width:375px;height:62px;display:flex;border-top:1px solid #F0F0F0;background:#fff;z-index:10}
-.tab{flex:1;text-align:center;font-size:11px;color:#999;padding-top:9px;line-height:1.5}
-.tab .ti{font-size:20px;display:block}
-.tab.active{color:#F0575A}
+body{width:375px;margin:0;background:#fff;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#333;font-size:15px;-webkit-font-smoothing:antialiased}
+.page{width:375px;background:#fff;position:relative}
+/* v3.1 14.2：标题白底黑字，无搜索框 */
+.titlebar{background:#fff;color:#111;text-align:center;font-size:17px;font-weight:600;padding:14px 44px;position:relative;border-bottom:1px solid #F0F0F0;font-family:var(--font-songti)}
+.titlebar .back{position:absolute;left:12px;top:12px;font-size:20px;color:#333;font-family:-apple-system,"PingFang SC",sans-serif}
+/* 标题下淡金色栏：左送出/右收到，白字 */
+.kindbar{display:flex;background:#CEA64F;color:#fff;font-size:15px;font-weight:600}
+.kindbar div{flex:1;text-align:center;padding:10px 0}
+/* 双栏时间线 */
+.tl{position:relative;padding:14px 0 4px}
+.tl::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:#D9C9A8;transform:translateX(-50%)}
+.trow{position:relative;display:flex;min-height:58px;padding:7px 0}
+.tcell{flex:1;padding:0 14px}
+.tcell.left{text-align:right}
+.tcell.right{text-align:left}
+.trow::after{content:"";position:absolute;left:50%;top:24px;width:10px;height:10px;border-radius:50%;background:#E05353;transform:translateX(-50%);z-index:1}
+.tdate{display:block;font-size:12px;color:#999;margin-bottom:2px}
+.treason{display:block;font-size:14px;color:#333;font-family:var(--font-songti)}
+.tamt{display:block;font-size:15px;font-weight:700;color:#111;margin-top:2px}
+.pen{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-left:6px}
+/* 底部汇总：淡黄底，紧跟时间线，不悬浮，居中三行 */
+.sumbar{background:#FDF6E3;text-align:center;padding:12px 0 16px;font-size:15px;line-height:2;color:#333}
+.sumbar .dl{color:#E05353;font-weight:700}
 </style></head><body><div class="page">
-<div class="wf-titlebar"><span class="back">‹</span>与王二麻的往来<span class="capsule"></span></div>
-<div class="diff"><div style="color:#333">送出 4000.00</div><div style="color:#333">收到 3600.00</div><div>差额 400.00</div></div><div class="card"><div class="vtree" style="padding-left:76px"><div class="vnode"><div class="vd">2016-06-18</div><div class="va in">+600.00</div><div class="vn">生日｜王二麻</div></div><div class="vnode"><div class="vd">2017-06-18</div><div class="va out">-800.00</div><div class="vn">结婚｜王二麻</div></div><div class="vnode"><div class="vd">2018-06-18</div><div class="va in">+600.00</div><div class="vn">生日｜王二麻</div></div><div class="vnode"><div class="vd">2019-06-18</div><div class="va out">-800.00</div><div class="vn">结婚｜王二麻</div></div><div class="vnode"><div class="vd">2020-06-18</div><div class="va in">+600.00</div><div class="vn">生日｜王二麻</div></div><div class="vnode"><div class="vd">2021-06-18</div><div class="va out">-800.00</div><div class="vn">结婚｜王二麻</div></div><div class="vnode"><div class="vd">2022-06-18</div><div class="va in">+600.00</div><div class="vn">生日｜王二麻</div></div><div class="vnode"><div class="vd">2023-06-18</div><div class="va out">-800.00</div><div class="vn">结婚｜王二麻</div></div><div class="vnode"><div class="vd">2024-06-18</div><div class="va in">+600.00</div><div class="vn">生日｜王二麻</div></div><div class="vnode"><div class="vd">2025-06-18</div><div class="va out">-800.00</div><div class="vn">结婚｜王二麻</div></div><div class="vnode"><div class="vd">2026-06-18</div><div class="va in">+600.00</div><div class="vn">生日｜王二麻</div></div></div></div>
+<div class="titlebar"><span class="back">‹</span>往来记录 - 王二麻</div>
+<div class="kindbar"><div>送出</div><div>收到</div></div>
+<div class="tl">
+<div class="trow"><div class="tcell left"><span class="tdate wf-num">2016-03-08</span><span class="treason">乔迁<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥-600.00</span></div><div class="tcell right"></div></div>
+<div class="trow"><div class="tcell left"></div><div class="tcell right"><span class="tdate wf-num">2017-10-01</span><span class="treason">女儿升学<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥+800.00</span></div></div>
+<div class="trow"><div class="tcell left"></div><div class="tcell right"><span class="tdate wf-num">2018-05-01</span><span class="treason">儿子婚礼<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥+500.00</span></div></div>
+<div class="trow"><div class="tcell left"><span class="tdate wf-num">2019-02-14</span><span class="treason">生日<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥-200.00</span></div><div class="tcell right"></div></div>
+<div class="trow"><div class="tcell left"><span class="tdate wf-num">2020-10-02</span><span class="treason">探望<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥-300.00</span></div><div class="tcell right"></div></div>
+<div class="trow"><div class="tcell left"></div><div class="tcell right"><span class="tdate wf-num">2021-08-15</span><span class="treason">父亲大寿<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥+600.00</span></div></div>
+<div class="trow"><div class="tcell left"></div><div class="tcell right"><span class="tdate wf-num">2022-02-14</span><span class="treason">孙子满月<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥+400.00</span></div></div>
+<div class="trow"><div class="tcell left"><span class="tdate wf-num">2023-11-11</span><span class="treason">结婚<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥-1000.00</span></div><div class="tcell right"></div></div>
+<div class="trow"><div class="tcell left"><span class="tdate wf-num">2024-06-18</span><span class="treason">乔迁<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥-500.00</span></div><div class="tcell right"></div></div>
+<div class="trow"><div class="tcell left"></div><div class="tcell right"><span class="tdate wf-num">2025-01-20</span><span class="treason">女儿升学<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥+700.00</span></div></div>
+<div class="trow"><div class="tcell left"><span class="tdate wf-num">2026-09-09</span><span class="treason">生日<svg class="pen" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></span><span class="tamt wf-num">¥-300.00</span></div><div class="tcell right"></div></div>
+</div>
+<div class="sumbar"><div class="wf-num">送出：¥2900.00</div><div class="wf-num">收到：¥3000.00</div><div class="wf-num"><span class="dl">差额：</span>¥100.00</div></div>
 </div></body></html>

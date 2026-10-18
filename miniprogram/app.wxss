@@ -18,7 +18,7 @@ page {
   border-bottom: 1px solid #F0F0F0;
 }
 .form-row:last-child { border-bottom: none; }
-.form-label { width: 82px; flex: none; }
+.form-label { width: 82px; flex: none; font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
 .form-val { flex: 1; }
 .form-val.ph { color: #C2C2C2; }
 .chev { color: #C2C2C2; font-size: 18px; }
@@ -57,7 +57,9 @@ page {
   box-shadow: 0 3px 10px rgba(240,87,90,.45);
   z-index: 5;
 }
-.songti { font-family: "Songti SC", "STSong", serif; }
+/* 字体规范 v1.1（用户 2026-10-18 确认）：标题/文字标签→宋体风格；金额/日期→黑体（系统无衬线）。不引入外部字体 */
+.songti { font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
+.num { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
 .tip {
   display: flex;
   align-items: flex-start;
@@ -65,6 +67,12 @@ page {
   font-size: 12px;
   color: #999;
   line-height: 1.6;
+}
+.tip-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  margin-top: 2px; /* 与小字行高对齐 */
 }
 .searchbar { display: flex; align-items: center; padding: 10px 12px; }
 .searchbox {
@@ -80,7 +88,7 @@ page {
 }
 .search-cancel { color: #F0575A; font-size: 14px; margin-left: 8px; white-space: nowrap; }
 .divider { height: 1px; background: #F0F0F0; }
-.section-title { padding: 4px 12px 0; font-size: 13px; color: #999; }
+.section-title { padding: 4px 12px 0; font-size: 13px; color: #999; font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
 .switch {
   width: 46px; height: 26px; border-radius: 13px;
   background: #DDD; position: relative; flex: none;

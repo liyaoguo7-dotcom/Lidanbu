@@ -3,18 +3,18 @@
   <view class="photo-row" bindtap="previewPhoto">
     <image class="photo-thumb" src="{{photoPath}}" mode="aspectFill" />
     <view class="photo-meta">
-      <text class="photo-title">原图对照</text>
+      <text class="photo-title songti">原图对照</text>
       <text class="photo-sub">{{kindLabel}}{{eventName ? ' · ' + eventName : ''}} · 点图片放大看</text>
     </view>
     <text class="chev">›</text>
   </view>
 </view>
 
-<view class="tip"><text>📢</text><text style="margin-left:6px">识别结果可直接改：姓名、金额、备注都能改；错的删掉，不够再补录。确认无误点底部"确认写入"。</text></view>
+<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">识别结果可直接改：姓名、金额、备注都能改；错的删掉，不够再补录。确认无误点底部"确认写入"。</text></view>
 
 <view wx:for="{{items}}" wx:key="index" class="card item-card">
   <view class="item-head">
-    <text class="item-no">第{{index + 1}}条</text>
+    <text class="item-no songti">第{{index + 1}}条</text>
     <text class="item-del" data-i="{{index}}" bindtap="onDeleteItem">删除</text>
   </view>
   <view class="form-row">
@@ -28,7 +28,7 @@
   </view>
   <view class="form-row">
     <text class="form-label">金额</text>
-    <input class="form-val" type="digit" placeholder="请输入金额" placeholder-style="color:#C2C2C2"
+    <input class="form-val num" type="digit" placeholder="请输入金额" placeholder-style="color:#C2C2C2"
       value="{{item.amountText}}" data-i="{{index}}" bindinput="onAmountInput" bindblur="onAmountBlur" />
   </view>
   <view class="form-row">

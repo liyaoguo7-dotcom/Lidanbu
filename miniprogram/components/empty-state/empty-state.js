@@ -5,7 +5,7 @@
  */
 Component({
   properties: {
-    iconText: { type: String, value: '📁' },
+    iconSrc: { type: String, value: '/images/icons/folder.svg' }, // 图标 SVG 路径（v3.1 扫除：emoji 图标改用 SVG）
     tip: { type: String, value: '还没有记录' },
     actionText: { type: String, value: '' },
   },

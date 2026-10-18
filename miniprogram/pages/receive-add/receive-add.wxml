@@ -12,7 +12,7 @@
   <view class="form-row">
     <text class="form-label">日期</text>
     <picker mode="date" value="{{date}}" bindchange="onDateChange" style="flex:1">
-      <view class="form-val">{{date}} <text class="chev">›</text></view>
+      <view class="form-val"><text class="num">{{date}}</text> <text class="chev">›</text></view>
     </picker>
   </view>
   <view class="form-row">

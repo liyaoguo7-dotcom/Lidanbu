@@ -1,8 +1,8 @@
 /**
- * 礼单簿 · 往来竖线树（阶段2 2B）
+ * 礼单簿 · 往来竖线树（v3.1 14.2 双栏）
  * 调 data-service.getTimeline（经 core.stats.memberTimeline，成员视角自动过滤）。
- * 从早到晚；每条 +/-号金额（深色文字，不用红绿蓝，方向靠 +/- 表达）；
- * 每条右侧钢笔图标 → 修改/删除/取消（action sheet）；删除走 confirm-modal。
+ * 左送出/右收到双栏，从早到晚；每条三行：日期（灰）→事由→金额（黑粗体，¥前缀，送出-/收到+）；
+ * 底部汇总淡黄底三行（送出/收到/差额，差额红字无符号）；每条钢笔线条图标 → 修改/删除/取消（action sheet）；删除走 confirm-modal。
  * ?ownerId=xxx 时为成员视角：顶部淡字"仅统计已授权给你的记录"。
  */
 const dataService = require('../../services/data-service.js');
@@ -12,8 +12,9 @@ Page({
   data: {
     contactName: '',
     isMember: false,
-    diffText: '',
-    items: [],
+    sumSend: '',
+    sumRecv: '',
+    sumDiff: '',    items: [],
     showDelModal: false,
     delContent: '',
   },
@@ -40,10 +41,10 @@ Page({
         return {
           ...it,
           date: it.date || '',
-          amountText: `${signed < 0 ? '-' : '+'}${formatAmount(Math.abs(signed))}`,
-          desc: it.type === 'receive'
-            ? `${it.tagName || ''}｜${it.eventName || ''}`
-            : (it.tagName || ''),
+          // v3.1 14.2：金额黑粗体，¥前缀；送出负号、收到正号
+          amountText: `¥${signed < 0 ? '-' : '+'}${formatAmount(Math.abs(signed))}`,
+          // v3.1 14.2：送出事由=场合名，收到事由=礼薄名称
+          desc: it.type === 'receive' ? (it.eventName || '') : (it.tagName || ''),
         };
       });
       const recv = formatAmount(tl.receiveTotalFen);
@@ -52,10 +53,13 @@ Page({
       this.setData({
         contactName: tl.contactName || '',
         isMember: !!tl.isMember,
-        diffText: `差额：收到 ${recv} − 送出 ${gift} = ${diff < 0 ? '-' : '+'}${formatAmount(Math.abs(diff))}`,
+        // v3.1 14.2：底部三行居中，差额=收到−送出，不加符号不用颜色
+        sumSend: `¥${gift}`,
+        sumRecv: `¥${recv}`,
+        sumDiff: `¥${formatAmount(Math.abs(diff))}`,
         items,
       });
-      wx.setNavigationBarTitle({ title: `与${tl.contactName || ''}的往来` });
+      wx.setNavigationBarTitle({ title: `往来记录 - ${tl.contactName || ''}` });
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
     }

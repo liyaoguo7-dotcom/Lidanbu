@@ -1,5 +1,5 @@
 <!-- 选择亲友：小喇叭提示在搜索框上边 -->
-<view class="tip"><text>📢</text><text style="margin-left:6px">{{tipText}}</text></view>
+<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">{{tipText}}</text></view>
 
 <view class="searchbar">
   <view class="searchbox">
@@ -12,7 +12,7 @@
 <view class="card">
   <view class="contact-row" wx:for="{{contacts}}" wx:key="_id"
     data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onPick">
-    <text class="nm">{{item.name}}</text>
+    <text class="nm songti">{{item.name}}</text>
     <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
   </view>
   <view class="contact-row" wx:if="{{contacts.length === 0}}">

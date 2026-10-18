@@ -9,10 +9,10 @@ Page({
   data: {
     tipText: '点击拍照导入，可一键识别纸质礼单',
     entries: [
-      { id: 'share', icon: '👨‍👩‍👧', name: '家庭共享' },
-      { id: 'photo', icon: '📷', name: '拍照导入' },
-      { id: 'invite', icon: '💌', name: '电子请柬' },
-      { id: 'export', icon: '💾', name: '导出备份' },
+      { id: 'share', icon: '/images/icons/family.svg', name: '家庭共享' },
+      { id: 'photo', icon: '/images/icons/camera.svg', name: '拍照导入' },
+      { id: 'invite', icon: '/images/icons/mail.svg', name: '电子请柬' },
+      { id: 'export', icon: '/images/icons/export.svg', name: '导出备份' },
     ],
     isMember: false,
   },

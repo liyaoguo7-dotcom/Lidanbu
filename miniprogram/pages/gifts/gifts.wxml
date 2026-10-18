@@ -8,22 +8,22 @@
 </view>
 
 <view class="card summary" wx:if="{{!searching}}">
-  <text>共计：</text><text class="red">{{totalCount}} 笔 {{totalText}}</text>
+  <text>共计：</text><text class="red num">{{totalCount}} 笔 {{totalText}}</text>
 </view>
 
 <view class="card" wx:if="{{shown.length > 0}}">
   <view class="gift-row" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
     <view class="pat"><image class="pat-img" src="{{item.icon}}" mode="aspectFit" /></view>
     <view class="mid">
-      <text class="nm">{{item.name}}</text>
-      <text class="sub">{{item.tagName}}｜{{item.date}}</text>
+      <text class="nm songti">{{item.name}}</text>
+      <text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text>
     </view>
-    <text class="amt">{{item.amountText}}</text>
+    <text class="amt num">{{item.amountText}}</text>
   </view>
 </view>
 
 <view class="empty" wx:if="{{shown.length === 0 && !searching}}">
-  <text class="empty-icon">📁</text>
+  <image class="empty-icon" src="/images/icons/folder.svg" mode="aspectFit" />
   <text class="empty-text">还没有记录，请点击下方红色＋按钮添加</text>
   <text class="empty-sample">点击查看示例</text>
 </view>

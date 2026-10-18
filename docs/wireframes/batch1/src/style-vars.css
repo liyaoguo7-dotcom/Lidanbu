@@ -26,6 +26,10 @@
   --tag-circle: 56px;          /* 标签圆直径 */
   --tag-pad: 8px;              /* 标签圆内边距 */
 
+  /* —— 字体规范 v1.1（用户 2026-10-18 确认）：标题/文字标签→宋体风格；金额/日期→黑体（系统无衬线）。不引入外部字体 —— */
+  --font-songti: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
+  --font-num: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+
   /* —— 尺寸 —— */
   --page-width: 375px;
   --titlebar-h: 52px;
@@ -45,7 +49,7 @@
   background: var(--titlebar-bg);
   display: flex; align-items: center; justify-content: center;
   font-size: 17px; font-weight: 600; color: var(--text-main);
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-songti);
   position: relative;
 }
 .wf-titlebar .back {
@@ -90,4 +94,11 @@
 .wf-tab.active { color: var(--tab-active); }
 
 /* —— 标签名（宋体风格） —— */
-.wf-tagname { font-family: "Songti SC", "STSong", serif; }
+.wf-tagname { font-family: var(--font-songti); }
+
+/* —— 字体规范 v1.1 应用 ——
+ * 标题/文字标签（表单左侧标签、标签文字、成员名等）→ 宋体风格；
+ * 金额/日期（.wf-num）→ 黑体（系统无衬线），避免金额继承宋体。
+ * 只改字体，不改布局。 */
+.form-label, .tagname, .side-label { font-family: var(--font-songti); }
+.wf-num { font-family: var(--font-num); }

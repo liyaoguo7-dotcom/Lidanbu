@@ -1,20 +1,39 @@
-<!-- 往来竖线树 -->
+<!-- 往来竖线树 · v3.1 14.2 双栏（左送出/右收到） -->
 <view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
 
-<view class="diff-bar">
-  <text>{{diffText}}</text>
+<view class="kindbar">
+  <view class="kind-half songti">送出</view>
+  <view class="kind-half songti">收到</view>
 </view>
 
-<view class="card timeline-card" wx:if="{{items.length > 0}}">
-  <view class="tl-item" wx:for="{{items}}" wx:key="recordId">
-    <text class="tl-date">{{item.date}}</text>
-    <view class="tl-dot"></view>
-    <view class="tl-body">
-      <text class="tl-amt">{{item.amountText}}</text>
-      <text class="tl-desc">{{item.desc}}</text>
+<view class="tl" wx:if="{{items.length > 0}}">
+  <view class="tl-line"></view>
+  <block wx:for="{{items}}" wx:key="recordId">
+    <view class="trow">
+      <view class="tcell left">
+        <block wx:if="{{item.type === 'gift'}}">
+          <view class="tdate num">{{item.date}}</view>
+          <view class="treason"><text>{{item.desc}}</text><image class="tpen" src="/images/icons/pen.svg" mode="aspectFit" data-idx="{{index}}" bindtap="onPenTap" /></view>
+          <view class="tamt num">{{item.amountText}}</view>
+        </block>
+      </view>
+      <view class="tdot"></view>
+      <view class="tcell right">
+        <block wx:if="{{item.type === 'receive'}}">
+          <view class="tdate num">{{item.date}}</view>
+          <view class="treason"><text>{{item.desc}}</text><image class="tpen" src="/images/icons/pen.svg" mode="aspectFit" data-idx="{{index}}" bindtap="onPenTap" /></view>
+          <view class="tamt num">{{item.amountText}}</view>
+        </block>
+      </view>
     </view>
-    <text class="tl-pen" data-idx="{{index}}" bindtap="onPenTap">✎</text>
-  </view>
+  </block>
+</view>
+
+<!-- 底部汇总：淡黄底，紧跟时间线最下方，不悬浮 -->
+<view class="sumbar" wx:if="{{items.length > 0}}">
+  <view class="num">送出：{{sumSend}}</view>
+  <view class="num">收到：{{sumRecv}}</view>
+  <view class="num"><text class="dl">差额：</text>{{sumDiff}}</view>
 </view>
 
 <view class="empty" wx:if="{{items.length === 0}}">

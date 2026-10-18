@@ -46,7 +46,8 @@ Page({
     const records = recs.map((r) => ({
       _id: r._id,
       name: cmap[r.contactId] || '—',
-      sub: `${r.type || ''}｜${r.date || ''}`,
+      subType: r.type || '',
+      subDate: r.date || '',
       amountText: `+${formatAmount(r.amount || 0)}`,
     }));
     this.setData({

@@ -1,8 +1,8 @@
 <!-- 我的 -->
 <view class="card profile">
-  <view class="avatar">😊</view>
+  <image class="avatar" src="/images/icons/user.svg" mode="aspectFit" />
   <view>
-    <text class="uname">我</text>
+    <text class="uname songti">我</text>
     <text class="usub">礼单簿 · 本地演示版</text>
   </view>
 </view>
@@ -17,9 +17,9 @@
 <view class="section-title">会员专属功能</view>
 <view class="card">
   <view class="feat" wx:for="{{feats}}" wx:key="title">
-    <text class="feat-icon">{{item.icon}}</text>
+    <image class="feat-icon" src="{{item.icon}}" mode="aspectFit" />
     <view class="feat-mid">
-      <text class="feat-t">{{item.title}}</text>
+      <text class="feat-t songti">{{item.title}}</text>
       <text class="feat-d">{{item.desc}}</text>
     </view>
   </view>

@@ -25,19 +25,29 @@ body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang
 .dialog .ddel{color:#F0575A;font-weight:600}
 .sheet-mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.35);z-index:20}
 .sheet{position:absolute;left:0;bottom:0;width:375px;background:#fff;border-radius:16px 16px 0 0;z-index:21;padding-bottom:20px}
-.sheet .sname{text-align:center;font-size:17px;font-weight:600;padding:18px 0 6px;font-family:"Songti SC","STSong",serif}
+.sheet .sname{text-align:center;font-size:17px;font-weight:600;padding:18px 0 6px;font-family:var(--font-songti)}
 .sheet .sopt{text-align:center;height:58px;line-height:58px;font-size:15px;border-top:2px solid #F4F4F4}
 .sheet .sopt.red{color:#F0575A}
 .sheet .sopt .sub{font-size:12px;color:#C2C2C2;margin-left:8px}
 </style></head><body><div class="page">
 <div class="wf-titlebar">礼单簿<span class="capsule"></span></div>
-<div class="tip"><span class="horn">📢</span><span>点击拍照导入，可一键识别纸质礼单</span></div>
+<div class="tip"><span class="horn"><svg width="14" height="14" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 18v12h8l10 8V10L18 18h-8z"/>
+  <path d="M34 20a8 8 0 0 1 0 8"/>
+  <path d="M38 15a14 14 0 0 1 0 18"/></svg></span><span>点击拍照导入，可一键识别纸质礼单</span></div>
 <div class="card" style="display:flex;padding:18px 8px 14px">
-  <div style="flex:1;text-align:center"><div style="font-size:30px">👨‍👩‍👧</div><div style="font-size:13px;margin-top:6px;color:#555">家庭共享</div></div><div style="flex:1;text-align:center"><div style="font-size:30px">📷</div><div style="font-size:13px;margin-top:6px;color:#555">拍照导入</div></div><div style="flex:1;text-align:center"><div style="font-size:30px">💌</div><div style="font-size:13px;margin-top:6px;color:#555">电子请柬</div></div><div style="flex:1;text-align:center"><div style="font-size:30px">💾</div><div style="font-size:13px;margin-top:6px;color:#555">导出备份</div></div>
+  <div style="flex:1;text-align:center"><div style="font-size:30px"><svg width="30" height="30" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="17" cy="15" r="6"/>
+  <path d="M7 40v-4a10 10 0 0 1 20 0v4"/>
+  <circle cx="33" cy="17" r="5"/>
+  <path d="M29 40v-3a9 9 0 0 1 12-8"/></svg></div><div style="font-size:13px;margin-top:6px;color:#555">家庭共享</div></div><div style="flex:1;text-align:center"><div style="font-size:30px"><svg width="30" height="30" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 14l3-5h10l3 5"/>
+  <rect x="8" y="14" width="32" height="22" rx="4"/>
+  <circle cx="24" cy="25" r="7"/></svg></div><div style="font-size:13px;margin-top:6px;color:#555">拍照导入</div></div><div style="flex:1;text-align:center"><div style="font-size:30px"><svg width="30" height="30" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="12" width="32" height="24" rx="3"/>
+  <path d="M8 15l16 12 16-12"/></svg></div><div style="font-size:13px;margin-top:6px;color:#555">电子请柬</div></div><div style="flex:1;text-align:center"><div style="font-size:30px"><svg width="30" height="30" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 38V8"/>
+  <path d="M15 17l9-9 9 9"/>
+  <path d="M12 26v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V26"/></svg></div><div style="font-size:13px;margin-top:6px;color:#555">导出备份</div></div>
 </div>
 <div style="display:flex;gap:12px;padding:0 12px">
-  <div style="flex:1;background:linear-gradient(135deg,#ff8a80,#F0575A);border-radius:12px;height:150px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:600;font-family:'Songti SC','STSong',serif;box-shadow:0 4px 12px rgba(240,87,90,.3)">送礼</div>
-  <div style="flex:1;background:linear-gradient(135deg,#ffcc80,#fb8c00);border-radius:12px;height:150px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:600;font-family:'Songti SC','STSong',serif;box-shadow:0 4px 12px rgba(251,140,0,.3)">收礼</div>
+  <div style="flex:1;background:linear-gradient(135deg,#ff8a80,#F0575A);border-radius:12px;height:150px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:600;font-family:var(--font-songti);box-shadow:0 4px 12px rgba(240,87,90,.3)">送礼</div>
+  <div style="flex:1;background:linear-gradient(135deg,#ffcc80,#fb8c00);border-radius:12px;height:150px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:600;font-family:var(--font-songti);box-shadow:0 4px 12px rgba(251,140,0,.3)">收礼</div>
 </div>
 
 <div class="wf-tabbar"><div class="wf-tab active"><img class="ti" src="tabbar/home-active.png">首页</div><div class="wf-tab"><img class="ti" src="tabbar/wanglai.png">往来</div><div class="wf-tab"><img class="ti" src="tabbar/contacts.png">亲友录</div><div class="wf-tab"><img class="ti" src="tabbar/mine.png">我的</div></div></div></body></html>

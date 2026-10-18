@@ -2,51 +2,26 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:#333;font-size:15px;-webkit-font-smoothing:antialiased}
 .page{width:375px;min-height:810px;background:#F6F6F6;position:relative;padding-bottom:76px}
-.card{background:#fff;border-radius:12px;margin:12px}
-.searchbar{display:flex;align-items:center;padding:10px 12px;gap:8px}
-.searchbox{flex:1;background:#F2F2F2;border-radius:17px;height:34px;display:flex;align-items:center;padding:0 14px;color:#C2C2C2;font-size:14px}
-.search-cancel{color:#F0575A;font-size:14px;white-space:nowrap}
-.tip{display:flex;align-items:flex-start;gap:6px;padding:8px 14px;font-size:12px;color:#999;line-height:1.6}
-.row{display:flex;align-items:center;padding:0 16px;height:58px;border-bottom:1px solid #F0F0F0}
-.row:last-child{border-bottom:none}
-.form-label{width:82px;flex:none;font-size:15px;color:#333}
-.form-val{flex:1;text-align:left;font-size:15px;color:#333}
-.form-val.ph{color:#C2C2C2}
-.chev{color:#C2C2C2;font-size:18px}
-.tag-grid{display:flex;flex-wrap:wrap;padding:14px 14px 4px}
-.tagcell{width:20%;display:flex;flex-direction:column;align-items:center;padding:10px 0}
-.tagcircle{width:56px;height:56px;border-radius:50%;background:#F5F6F4;display:flex;align-items:center;justify-content:center}
-.tagcircle.active{background:#F1E6D3}
-.tagcircle.active-baishi{background:#E8EAED}
-.tagimg{width:40px;height:40px}
-.tagname{font-size:12px;color:#666;margin-top:6px;font-family:"Songti SC","STSong",serif}
-.tagname.name-active{color:#E05353;font-weight:700}
-.tagname.name-baishi{color:#3B4046;font-weight:700}
-.mask{position:absolute;left:0;top:0;width:375px;height:100%;background:rgba(0,0,0,.45);z-index:20}
-.dialog{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:300px;background:#fff;border-radius:12px;z-index:21;overflow:hidden}
-.dialog .dinfo{padding:20px 20px 6px;font-size:14px;color:#555;line-height:1.9}
-.dialog .dinfo b{color:#333}
-.dialog .dwarn{text-align:center;font-size:14px;color:#333;padding:10px 20px 16px;font-weight:500}
-.dialog .dbtns{display:flex;border-top:1px solid #F0F0F0}
-.dialog .dbtns div{flex:1;text-align:center;padding:14px 0;font-size:15px}
-.dialog .dcancel{color:#666;border-right:1px solid #F0F0F0}
-.dialog .ddel{color:#F0575A;font-weight:600}
-.diff{background:#FFF8E1;color:#E05353;text-align:center;padding:12px;font-size:15px;font-weight:600;margin:12px;border-radius:12px}
+.horn{display:flex;align-items:center;background:#FFF8E1;border-radius:8px;margin:12px 12px 0;padding:8px 10px}
+.horn .hi{font-size:14px;margin-right:6px;flex:none}
+.horn .hs{flex:1;overflow:hidden;white-space:nowrap}
+.horn .ht{display:inline-block;font-size:12px;color:#E8912D;animation:hscroll 9s linear infinite}
+@keyframes hscroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.horn .hx{color:#E8912D;font-size:18px;padding:0 2px 0 8px;flex:none}
+.total-line{font-size:12px;color:#C2C2C2;padding:10px 16px 0}
+.total-line .tn{color:#E05353;font-weight:600}
 .empty{text-align:center;padding-top:90px}
 .empty .eicon{font-size:72px;opacity:.45;display:block}
 .empty .etxt{color:#C2C2C2;font-size:14px;margin-top:18px;display:block}
 .empty .esample{color:#F0575A;font-size:14px;margin-top:14px;display:block}
-.vtree{position:relative;margin:12px;padding:0 0 20px 90px}
-.vtree::before{content:"";position:absolute;left:80px;top:8px;bottom:8px;width:2px;background:#F0E6D4}
-.vnode{position:relative;padding:10px 0 10px 16px}
-.vnode::before{content:"";position:absolute;left:-16px;top:16px;width:10px;height:10px;border-radius:50%;background:#CFCFCF;transform:translateX(-50%)}
-.vnode .vd{position:absolute;left:-90px;top:12px;width:62px;text-align:right;font-size:12px;color:#999}
-.vnode .va{font-size:15px;font-weight:600;color:#333}
-.vnode .vn{font-size:13px;color:#666;margin-top:2px}
 .tabbar{position:absolute;left:0;bottom:0;width:375px;height:62px;display:flex;border-top:1px solid #F0F0F0;background:#fff;z-index:10}
 .tab{flex:1;text-align:center;font-size:11px;color:#999;padding-top:9px;line-height:1.5}
 .tab .ti{width:24px;height:24px;display:block;margin:0 auto 3px}
 .tab.active{color:#F0575A}
 </style></head><body><div class="page">
-<div class="wf-titlebar"><span class="back">‹</span>收礼<span class="capsule"></span></div>
-<div class="empty"><span class="eicon">📕</span><span class="etxt">还没有礼薄，点击下方红色＋按钮添加</span><span class="esample">点击查看示例</span></div><div class="wf-fab">＋</div><div class="tabbar"><div class="tab active"><img class="ti" src="tabbar/home-active.png">首页</div><div class="tab"><img class="ti" src="tabbar/wanglai.png">往来</div><div class="tab"><img class="ti" src="tabbar/contacts.png">亲友录</div><div class="tab"><img class="ti" src="tabbar/mine.png">我的</div></div></div></body></html>
+<div class="wf-titlebar"><span class="back">‹</span>收礼礼簿<span class="capsule"></span></div>
+<div class="horn"><span class="hi"><svg width="14" height="14" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 18v12h8l10 8V10L18 18h-8z"/>
+  <path d="M34 20a8 8 0 0 1 0 8"/>
+  <path d="M38 15a14 14 0 0 1 0 18"/></svg></span><span class="hs"><span class="ht">点击礼簿查看收礼记录，从右往左滑动可以修改、删除礼簿~</span></span><span class="hx">×</span></div>
+<div class="total-line">共计：0本 <span class="tn wf-num">￥0.00</span></div>
+<div class="empty"><span class="eicon"><svg width="72" height="72" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14a4 4 0 0 1 4-4h8l4 6h12a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V14z"/></svg></span><span class="etxt">还没有礼薄，点击下方红色＋按钮添加</span><span class="esample">点击查看示例</span></div><div class="wf-fab">＋</div><div class="tabbar"><div class="tab active"><img class="ti" src="tabbar/home-active.png">首页</div><div class="tab"><img class="ti" src="tabbar/wanglai.png">往来</div><div class="tab"><img class="ti" src="tabbar/contacts.png">亲友录</div><div class="tab"><img class="ti" src="tabbar/mine.png">我的</div></div></div></body></html>

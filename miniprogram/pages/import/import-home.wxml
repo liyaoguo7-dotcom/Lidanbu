@@ -1,5 +1,5 @@
 <!-- 拍照导入：先选送礼/收礼 -->
-<view class="tip"><text>📢</text><text style="margin-left:6px">先选类型再拍照：收礼要先选好礼薄，送礼直接拍，按拍照顺序导入</text></view>
+<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">先选类型再拍照：收礼要先选好礼薄，送礼直接拍，按拍照顺序导入</text></view>
 
 <view class="kind-row">
   <view class="kind-card gift" bindtap="goGift">

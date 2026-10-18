@@ -12,8 +12,8 @@ Page({
     memberText: '',
     landscapeOn: false,
     feats: [
-      { icon: '👨‍👩‍👧', title: '家庭共享邀请', desc: '邀请家人共记一本账，查看/新增/修改/删除/导出权限由你定' },
-      { icon: '📕', title: '横置红字礼单本', desc: '经典红字大写，横置翻阅，仪式感拉满' },
+      { icon: '/images/icons/family.svg', title: '家庭共享邀请', desc: '邀请家人共记一本账，查看/新增/修改/删除/导出权限由你定' },
+      { icon: '/images/icons/book.svg', title: '横置红字礼单本', desc: '经典红字大写，横置翻阅，仪式感拉满' },
     ],
     inviteRewardEnabled: false,
   },

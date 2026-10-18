@@ -1,10 +1,8 @@
 /* 我的页 */
 .profile { padding: 20px 16px; display: flex; align-items: center; }
 .avatar {
-  width: 56px; height: 56px; border-radius: 50%;
-  background: #F1E6D3;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; flex: none; margin-right: 14px;
+  width: 56px; height: 56px;
+  flex: none; margin-right: 14px;
 }
 .uname { font-size: 16px; font-weight: 600; display: block; }
 .usub { font-size: 12px; color: #C2C2C2; margin-top: 4px; display: block; }
@@ -30,7 +28,7 @@
 .section-title { padding: 4px 12px 0; font-size: 13px; color: #999; }
 .feat { display: flex; align-items: center; padding: 12px 16px; min-height: 68px; border-bottom: 1px solid #F0F0F0; }
 .feat:last-child { border-bottom: none; }
-.feat-icon { font-size: 26px; width: 40px; flex: none; }
+.feat-icon { width: 32px; height: 32px; flex: none; margin-right: 8px; }
 .feat-mid { display: flex; flex-direction: column; }
 .feat-t { font-size: 15px; font-weight: 600; }
 .feat-d { font-size: 12px; color: #C2C2C2; margin-top: 3px; }
