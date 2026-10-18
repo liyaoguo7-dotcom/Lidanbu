@@ -12,6 +12,7 @@ module.exports = {
   quota: require('./quota'),
   audit: require('./audit'),
   export: require('./export'),
+  format: require('./format'),
   contacts: require('./contacts'),
   receive: require('./receive'),
   gifts: require('./gifts'),

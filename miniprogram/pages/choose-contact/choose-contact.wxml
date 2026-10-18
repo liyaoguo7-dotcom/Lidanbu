@@ -1,4 +1,6 @@
-<!-- 选择亲友 -->
+<!-- 选择亲友：小喇叭提示在搜索框上边 -->
+<view class="tip"><text>📢</text><text style="margin-left:6px">{{tipText}}</text></view>
+
 <view class="searchbar">
   <view class="searchbox">
     <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
@@ -6,8 +8,6 @@
   </view>
   <text class="search-cancel" bindtap="onCancelSearch">取消</text>
 </view>
-
-<view class="tip"><text>📢</text><text style="margin-left:6px">{{tipText}}</text></view>
 
 <view class="card">
   <view class="contact-row" wx:for="{{contacts}}" wx:key="_id"
@@ -21,3 +21,7 @@
 </view>
 
 <view class="fab" bindtap="goAdd">＋</view>
+
+<!-- 添加亲友半屏 -->
+<contact-sheet show="{{addSheetOpen}}"
+  bind:confirm="onAddConfirm" bind:cancel="onAddCancel" />

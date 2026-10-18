@@ -18,7 +18,7 @@
   <view class="form-row">
     <text class="form-label">金额</text>
     <input class="form-val" type="digit" placeholder="请输入金额" placeholder-style="color:#C2C2C2"
-      value="{{amount}}" bindinput="onAmountInput" />
+      value="{{amount}}" bindinput="onAmountInput" bindblur="onAmountBlur" />
   </view>
   <view class="form-row">
     <text class="form-label">备注</text>

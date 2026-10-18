@@ -31,20 +31,19 @@
   <view class="sname songti">{{sheetName}}</view>
   <view class="sopt red" bindtap="goWanglai">往来记录</view>
   <view class="sopt" bindtap="goEdit">修改姓名</view>
-  <view class="sopt" bindtap="onDelete">删除姓名<text class="sub">数据无价谨慎删除</text></view>
+  <view class="sopt" bindtap="onDelete">删除姓名</view>
+  <view class="snote">数据无价，谨慎删除</view>
   <view class="sopt cancel" bindtap="closeSheet">取消</view>
 </view>
 
-<!-- 删除二次确认 -->
-<view class="mask" wx:if="{{delModal}}"></view>
-<view class="dialog" wx:if="{{delModal}}">
-  <view class="dinfo">
-    <text>联系人：<text class="b">{{delInfo.name}}</text>\n</text>
-    <text>将同时删除 {{delInfo.receiveCount}} 条收礼、{{delInfo.giftCount}} 条送礼记录\n</text>
-  </view>
-  <view class="dwarn">删除后无法恢复，确定要删除吗？</view>
-  <view class="dbtns">
-    <view class="dcancel" bindtap="onCancelDel">取消</view>
-    <view class="ddel" bindtap="onConfirmDel">删除</view>
-  </view>
-</view>
+<!-- 删除二次确认（全产品统一弹窗） -->
+<confirm-modal show="{{delModal}}" title="删除亲友" content="{{delContent}}"
+  bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />
+
+<!-- 添加亲友半屏 -->
+<contact-sheet show="{{addSheetOpen}}"
+  bind:confirm="onAddConfirm" bind:cancel="onAddCancel" />
+
+<!-- 修改亲友信息半屏 -->
+<contact-edit-sheet show="{{editSheetOpen}}" initName="{{editName}}" initRemark="{{editRemark}}"
+  bind:confirm="onEditConfirm" bind:cancel="onEditCancel" />

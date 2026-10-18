@@ -7,6 +7,7 @@
 </view>
 
 <view class="card">
+  <view class="form-row"><text class="form-label">场合</text><text class="form-val">{{tagName}}</text></view>
   <view class="form-row"><text class="form-label">日期</text><text class="form-val">{{date}}</text></view>
   <view class="form-row"><text class="form-label">姓名</text><text class="form-val">{{contactName}}</text></view>
   <view class="form-row"><text class="form-label">金额</text><text class="form-val strong">{{amountText}}</text></view>
@@ -15,21 +16,12 @@
 
 <view class="wanglai-link" bindtap="goWanglai">查看往来记录＞＞＞</view>
 
-<view style="height:150px"></view>
-<text class="del-link" bindtap="onDelete">删除</text>
-<view class="btn-primary btn-bottom" bindtap="goEdit">修改</view>
+<view style="height:130px"></view>
+<view class="bottom-btns">
+  <view class="btn-outline" bindtap="onDelete">删除</view>
+  <view class="btn-primary btn-half" bindtap="goEdit">修改</view>
+</view>
 
 <!-- 统一删除弹窗 -->
-<view class="mask" wx:if="{{showDelModal}}"></view>
-<view class="dialog" wx:if="{{showDelModal}}">
-  <view class="dinfo">
-    <text>联系人：<text class="b">{{contactName}}</text>\n</text>
-    <text>场合：{{tagName}} ｜ 日期：{{date}}\n</text>
-    <text>金额：<text class="b">{{amountText}}</text></text>
-  </view>
-  <view class="dwarn">删除后无法恢复，确定要删除吗？</view>
-  <view class="dbtns">
-    <view class="dcancel" bindtap="onCancelDel">取消</view>
-    <view class="ddel" bindtap="onConfirmDel">删除</view>
-  </view>
-</view>
+<confirm-modal show="{{showDelModal}}" title="删除送礼记录" content="{{delContent}}"
+  bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />

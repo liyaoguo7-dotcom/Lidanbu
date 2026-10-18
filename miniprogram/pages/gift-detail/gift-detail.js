@@ -4,6 +4,7 @@
  * "查看往来记录＞＞＞"底部居中；底部修改按钮；删除走统一弹窗。
  */
 const dataService = require('../../services/data-service.js');
+const { formatAmount } = require('../../core/format.js');
 
 Page({
   data: {
@@ -35,13 +36,16 @@ Page({
     const tag = dataService.getTagById(g.tagId) || {};
     const contacts = await dataService.listContacts();
     const c = contacts.find((x) => x._id === g.contactId);
+    const contactName = c ? c.name : '—';
+    const amountAbs = formatAmount(g.amount || 0); // 金额两位小数，详情按"姓名 · 标签 · 金额"
     this.setData({
       gift: g,
       tagName: tag.name || '',
       icon: `/icons/${tag.icon || '10-qita.svg'}`,
       isBaishi: g.tagId === 'baishi',
-      contactName: c ? c.name : '—',
-      amountText: `￥${(g.amount / 100).toLocaleString()}`,
+      contactName,
+      amountText: formatAmount(-(g.amount || 0)), // 送出金额带负号
+      delContent: `${contactName} · ${tag.name || ''} · ${amountAbs}`,
       date: g.date || '',
       remark: g.remark || '无',
     });

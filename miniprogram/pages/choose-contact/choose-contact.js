@@ -11,10 +11,12 @@ Page({
     contacts: [],
     keyword: '',
     tipText: '若亲友姓名不在列表中，请点击下方红色按钮添加',
+    addSheetOpen: false,
   },
 
-  async onLoad() {
+  async onLoad(options) {
     await dataService.init();
+    this.from = (options && options.from) || '';
   },
 
   async onShow() {
@@ -46,6 +48,48 @@ Page({
   },
 
   goAdd() {
-    wx.navigateTo({ url: '/pages/contact-add/contact-add?from=choose' });
+    this.setData({ addSheetOpen: true });
+  },
+
+  onAddCancel() {
+    this.setData({ addSheetOpen: false });
+  },
+
+  async onAddConfirm(e) {
+    const { name, remark } = e.detail;
+    try {
+      const r = await dataService.createContact({ name, remark });
+      const newId = r && r._id;
+      this.setData({ addSheetOpen: false });
+      if (this.from) {
+        // 从录入流程（添加/修改送礼）来：自动选中新亲友并返回，
+        // 表单页 onShow 用 form-state 领取 pick，已填内容保留
+        if (newId) savePick(wxStorage(), { contactId: newId, contactName: name });
+        if (r && r.duplicateWarning) {
+          wx.showModal({
+            title: '已保存',
+            content: '重名提醒：亲友录中已有同名亲友（不会合并）。',
+            showCancel: false,
+            success: () => wx.navigateBack(),
+          });
+          return;
+        }
+        wx.navigateBack();
+        return;
+      }
+      // 直接进入本页：留在列表，刷新即可继续选
+      await this.reload();
+      if (r && r.duplicateWarning) {
+        wx.showModal({
+          title: '已保存',
+          content: '重名提醒：亲友录中已有同名亲友（不会合并）。',
+          showCancel: false,
+        });
+      } else {
+        wx.showToast({ title: '已保存', icon: 'success' });
+      }
+    } catch (err) {
+      wx.showModal({ title: '提示', content: err.message, showCancel: false });
+    }
   },
 });

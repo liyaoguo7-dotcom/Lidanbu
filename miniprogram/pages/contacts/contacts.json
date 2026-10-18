@@ -1,1 +1,1 @@
-{"navigationBarBackgroundColor":"#F0E6D4","navigationBarTextStyle":"black","navigationBarTitleText":"亲友录"}
+{"navigationBarBackgroundColor":"#F0E6D4","navigationBarTextStyle":"black","navigationBarTitleText":"亲友录","usingComponents":{"confirm-modal":"/components/confirm-modal/confirm-modal","contact-edit-sheet":"/components/contact-edit-sheet/contact-edit-sheet","contact-sheet":"/components/contact-sheet/contact-sheet"}}

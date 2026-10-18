@@ -1,0 +1,15 @@
+/* 修改亲友信息半屏（风格规范 v1：米色标题区、白色圆角卡片、#F0575A 胶囊主按钮） */
+.sheet-mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.35); z-index: 40;
+}
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: #F6F6F6; border-radius: 16px 16px 0 0;
+  z-index: 41; padding-bottom: 26px;
+}
+.sheet-title {
+  text-align: center; font-size: 18px; font-weight: 700;
+  padding: 18px 0 12px; color: #333;
+}
+.sheet-btns { padding: 20px 24px 0; }

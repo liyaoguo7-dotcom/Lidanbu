@@ -9,6 +9,8 @@ require('./test-hardening');
 require('./test-membership');
 require('./test-wxstorage');
 require('./test-form-state');
+require('./test-format');
+require('./test-amount-scan');
 
 (async () => {
   console.log('礼单簿 阶段1 本地测试（内存数据库）\n');

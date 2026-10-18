@@ -3,6 +3,7 @@
   <view class="dialog" catchtap="noop">
     <view class="title">{{title}}</view>
     <view class="content">{{content}}</view>
+    <view class="warn" wx:if="{{warn}}">{{warn}}</view>
     <view class="buttons">
       <view class="btn cancel-btn" bindtap="onCancel">{{cancelText}}</view>
       <view class="btn {{danger ? 'danger-btn' : 'primary-btn'}}" bindtap="onConfirm">{{confirmText}}</view>

@@ -1,0 +1,20 @@
+<!-- 添加亲友（底部半屏） -->
+<view class="sheet-mask" wx:if="{{show}}" bindtap="onCancel" catchtouchmove="noop"></view>
+<view class="sheet" wx:if="{{show}}">
+  <view class="sheet-title songti">添加亲友</view>
+  <view class="card" style="margin:0 12px">
+    <view class="form-row">
+      <text class="form-label">姓名</text>
+      <input class="form-val" placeholder="请输入亲友姓名" placeholder-style="color:#C2C2C2"
+        value="{{name}}" bindinput="onNameInput" maxlength="20" />
+    </view>
+    <view class="form-row">
+      <text class="form-label">备注</text>
+      <input class="form-val" placeholder="若有重名，可在此备注" placeholder-style="color:#C2C2C2"
+        value="{{remark}}" bindinput="onRemarkInput" maxlength="60" />
+    </view>
+  </view>
+  <view class="sheet-btns">
+    <view class="btn-primary" bindtap="onConfirm">添加</view>
+  </view>
+</view>

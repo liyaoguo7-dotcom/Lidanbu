@@ -9,8 +9,6 @@
     "pages/gift-detail/gift-detail",
     "pages/gift-edit/gift-edit",
     "pages/choose-contact/choose-contact",
-    "pages/contact-add/contact-add",
-    "pages/contact-edit/contact-edit",
     "pages/demo/demo"
   ],
   "sitemapLocation": "sitemap.json",

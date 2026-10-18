@@ -4,6 +4,7 @@
  * 跳转选择亲友/新增亲友再返回时，已填内容通过 form-state 保留。
  */
 const dataService = require('../../services/data-service.js');
+const { formatAmount, parseAmountToFen } = require('../../core/format.js');
 const { saveForm, restoreForm, clearForm, wxStorage, GIFT_ADD_KEY, takePick } = require('../../services/form-state.js');
 
 function today() {
@@ -67,7 +68,23 @@ Page({
   },
 
   onAmountInput(e) {
-    this.setData({ amount: e.detail.value.replace(/[^\d]/g, '') });
+    // 只保留数字和小数点（至多一个小数点）；校验与两位小数格式化走 blur/保存
+    let v = (e.detail.value || '').replace(/[^\d.]/g, '');
+    const parts = v.split('.');
+    if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+    this.setData({ amount: v });
+    this.persist();
+  },
+
+  onAmountBlur() {
+    const raw = (this.data.amount || '').trim();
+    if (!raw) return; // 未填不打扰，保存时再拦
+    const fen = parseAmountToFen(raw);
+    if (fen === null) {
+      wx.showToast({ title: '请输入正确的金额', icon: 'none' });
+      return;
+    }
+    this.setData({ amount: formatAmount(fen) });
     this.persist();
   },
 
@@ -98,9 +115,9 @@ Page({
       wx.showToast({ title: '请选择亲友', icon: 'none' });
       return;
     }
-    const fen = parseInt(amount, 10);
-    if (!fen || fen <= 0) {
-      wx.showToast({ title: '请输入正确金额', icon: 'none' });
+    const fen = parseAmountToFen(amount);
+    if (fen === null) {
+      wx.showToast({ title: '请输入正确的金额', icon: 'none' });
       return;
     }
     try {

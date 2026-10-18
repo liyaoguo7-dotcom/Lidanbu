@@ -3,6 +3,7 @@
  * 表单预填；保存走 core.updateGift。
  */
 const dataService = require('../../services/data-service.js');
+const { formatAmount, parseAmountToFen } = require('../../core/format.js');
 const { wxStorage, takePick } = require('../../services/form-state.js');
 
 Page({
@@ -31,14 +32,30 @@ Page({
       date: g.date || '',
       contactId: g.contactId,
       contactName: c ? c.name : '—',
-      amount: String(Math.round(g.amount / 100)),
+      amount: formatAmount(g.amount || 0), // 回显两位小数（如 1000.00）
       remark: g.remark || '',
     });
   },
 
   onTagChange(e) { this.setData({ tagId: e.detail.id }); },
   onDateChange(e) { this.setData({ date: e.detail.value }); },
-  onAmountInput(e) { this.setData({ amount: e.detail.value.replace(/[^\d]/g, '') }); },
+  onAmountInput(e) {
+    let v = (e.detail.value || '').replace(/[^\d.]/g, '');
+    const parts = v.split('.');
+    if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+    this.setData({ amount: v });
+  },
+
+  onAmountBlur() {
+    const raw = (this.data.amount || '').trim();
+    if (!raw) return;
+    const fen = parseAmountToFen(raw);
+    if (fen === null) {
+      wx.showToast({ title: '请输入正确的金额', icon: 'none' });
+      return;
+    }
+    this.setData({ amount: formatAmount(fen) });
+  },
   onRemarkInput(e) { this.setData({ remark: e.detail.value }); },
 
   async onShow() {
@@ -54,9 +71,9 @@ Page({
   },
 
   async onSave() {
-    const fen = parseInt(this.data.amount, 10);
-    if (!fen || fen <= 0) {
-      wx.showToast({ title: '请输入正确金额', icon: 'none' });
+    const fen = parseAmountToFen(this.data.amount);
+    if (fen === null) {
+      wx.showToast({ title: '请输入正确的金额', icon: 'none' });
       return;
     }
     try {

@@ -25,7 +25,11 @@ Page({
     sheetName: '',
     sheetId: '',
     delModal: false,
-    delInfo: null,
+    delContent: '',
+    addSheetOpen: false,
+    editSheetOpen: false,
+    editName: '',
+    editRemark: '',
   },
 
   async onLoad() {
@@ -76,22 +80,46 @@ Page({
 
   goEdit() {
     const id = this.data.sheetId;
-    this.closeSheet();
-    wx.navigateTo({ url: `/pages/contact-edit/contact-edit?id=${id}` });
+    this.setData({ sheetOpen: false });
+    // 取出当前姓名/备注，回填到半屏
+    dataService.listContacts().then((list) => {
+      const c = list.find((x) => x._id === id) || {};
+      this.setData({
+        editName: c.name || this.data.sheetName,
+        editRemark: c.remark || '',
+        editSheetOpen: true,
+      });
+    }).catch(() => {
+      this.setData({ editName: this.data.sheetName, editRemark: '', editSheetOpen: true });
+    });
+  },
+
+  onEditCancel() {
+    this.setData({ editSheetOpen: false });
+  },
+
+  async onEditConfirm(e) {
+    const { name, remark } = e.detail;
+    try {
+      await dataService.updateContact(this.data.sheetId, { name, remark });
+      this.setData({ editSheetOpen: false });
+      wx.showToast({ title: '已保存', icon: 'success' });
+      await this.reload();
+    } catch (err) {
+      wx.showModal({ title: '提示', content: err.message, showCancel: false });
+    }
   },
 
   async onDelete() {
     // 第一步：先查影响条数
     try {
       const info = await dataService.deleteContact(this.data.sheetId, false);
+      const rc = info.receiveCount || 0;
+      const gc = info.giftCount || 0;
       this.setData({
         sheetOpen: false,
         delModal: true,
-        delInfo: {
-          name: this.data.sheetName,
-          receiveCount: info.receiveCount || 0,
-          giftCount: info.giftCount || 0,
-        },
+        delContent: `${this.data.sheetName}\n将同时删除 ${rc} 条收礼、${gc} 条送礼记录`,
       });
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
@@ -99,7 +127,7 @@ Page({
   },
 
   onCancelDel() {
-    this.setData({ delModal: false, delInfo: null });
+    this.setData({ delModal: false, delContent: '' });
   },
 
   async onConfirmDel() {
@@ -110,11 +138,36 @@ Page({
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
     } finally {
-      this.setData({ delModal: false, delInfo: null });
+      this.setData({ delModal: false, delContent: '' });
     }
   },
 
   goAdd() {
-    wx.navigateTo({ url: '/pages/contact-add/contact-add' });
+    this.setData({ addSheetOpen: true });
+  },
+
+  onAddCancel() {
+    this.setData({ addSheetOpen: false });
+  },
+
+  async onAddConfirm(e) {
+    const { name, remark } = e.detail;
+    try {
+      const r = await dataService.createContact({ name, remark });
+      this.setData({ addSheetOpen: false });
+      await this.reload();
+      if (r && r.duplicateWarning) {
+        // core：重名只提醒不阻止，记录已创建
+        wx.showModal({
+          title: '已保存',
+          content: '重名提醒：亲友录中已有同名亲友（不会合并）。',
+          showCancel: false,
+        });
+        return;
+      }
+      wx.showToast({ title: '已保存', icon: 'success' });
+    } catch (err) {
+      wx.showModal({ title: '提示', content: err.message, showCancel: false });
+    }
   },
 });

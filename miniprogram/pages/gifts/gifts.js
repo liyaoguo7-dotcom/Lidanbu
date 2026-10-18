@@ -4,6 +4,7 @@
  * 搜索框右侧"取消"，无结果显示空结果态。
  */
 const dataService = require('../../services/data-service.js');
+const { formatAmount } = require('../../core/format.js');
 
 function fmtDate(d) {
   return d || '';
@@ -40,7 +41,7 @@ Page({
         tagName: tag.name || '',
         icon: `/icons/${tag.icon || '10-qita.svg'}`,
         date: fmtDate(g.date),
-        amountText: `-${(g.amount / 100).toLocaleString()}`,
+        amountText: formatAmount(-(g.amount || 0)),
       };
     });
     const totalFen = list.reduce((s, g) => s + (g.amount || 0), 0);
@@ -48,7 +49,7 @@ Page({
       all,
       totalCount: list.length,
       totalFen,
-      totalText: `￥${(totalFen / 100).toLocaleString()} 元`,
+      totalText: `￥${formatAmount(totalFen)} 元`,
     });
     this.applyFilter();
   },

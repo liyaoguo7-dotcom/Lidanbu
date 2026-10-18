@@ -1,0 +1,77 @@
+/** 金额显示函数单元测试（检查点1修改意见第4条，高风险：金额） */
+const { test, assert } = require('./fw');
+const { formatAmount, parseAmountToFen } = require('../core/format');
+
+// --- formatAmount：分 → "x.xx" ---
+test('formatAmount: 0分 → "0.00"', () => {
+  assert.eq(formatAmount(0), '0.00', 'zero');
+});
+
+test('formatAmount: 1分 → "0.01"', () => {
+  assert.eq(formatAmount(1), '0.01', 'one fen');
+});
+
+test('formatAmount: 100000分 → "1000.00"', () => {
+  assert.eq(formatAmount(100000), '1000.00', 'thousand');
+});
+
+test('formatAmount: 100050分 → "1000.50"（一位小数补零）', () => {
+  assert.eq(formatAmount(100050), '1000.50', 'pad zero');
+});
+
+test('formatAmount: 100005分 → "1000.05"', () => {
+  assert.eq(formatAmount(100005), '1000.05', 'cents');
+});
+
+test('formatAmount: 9999999900分 → "99999999.00"（大金额）', () => {
+  assert.eq(formatAmount(9999999900), '99999999.00', 'big');
+});
+
+test('formatAmount: 负数 -100000分 → "-1000.00"', () => {
+  assert.eq(formatAmount(-100000), '-1000.00', 'negative');
+});
+
+test('formatAmount: 非数字输入不抛错，返回 "0.00"', () => {
+  assert.eq(formatAmount(NaN), '0.00', 'nan');
+  assert.eq(formatAmount(undefined), '0.00', 'undefined');
+  assert.eq(formatAmount('abc'), '0.00', 'string');
+});
+
+test('formatAmount: 小数分四舍五入到整分', () => {
+  assert.eq(formatAmount(100000.4), '1000.00', 'round down');
+  assert.eq(formatAmount(100000.5), '1000.01', 'round up');
+});
+
+// --- parseAmountToFen：输入 → 分，非法 → null ---
+test('parseAmountToFen: "1000" → 100000', () => {
+  assert.eq(parseAmountToFen('1000'), 100000, 'int');
+});
+
+test('parseAmountToFen: "1000.5" → 100050', () => {
+  assert.eq(parseAmountToFen('1000.5'), 100050, 'one decimal');
+});
+
+test('parseAmountToFen: "1000.05" → 100005', () => {
+  assert.eq(parseAmountToFen('1000.05'), 100005, 'two decimals');
+});
+
+test('parseAmountToFen: 前后空格自动去掉', () => {
+  assert.eq(parseAmountToFen('  1000  '), 100000, 'trim');
+});
+
+test('parseAmountToFen: 三位小数/空/字母/负数/零 → null', () => {
+  assert.eq(parseAmountToFen('1000.555'), null, '3 decimals');
+  assert.eq(parseAmountToFen(''), null, 'empty');
+  assert.eq(parseAmountToFen('abc'), null, 'alpha');
+  assert.eq(parseAmountToFen('-5'), null, 'negative');
+  assert.eq(parseAmountToFen('0'), null, 'zero');
+  assert.eq(parseAmountToFen(null), null, 'null');
+});
+
+test('parseAmountToFen 与 formatAmount 往返一致', () => {
+  const cases = ['1', '10.5', '1000', '1000.05', '99999999'];
+  for (const s of cases) {
+    const fen = parseAmountToFen(s);
+    assert.eq(formatAmount(fen), parseFloat(s).toFixed(2), 'roundtrip ' + s);
+  }
+});
