@@ -1,0 +1,19 @@
+<!-- 注销账号 -->
+<view class="warn-banner">⚠️ 本功能待用户确认，确认前不上线。以下为预定方案展示。</view>
+
+<view class="section-title">注销后会发生什么</view>
+<view class="card">
+  <view class="form-row"><text class="form-val">删除你的全部账本数据：亲友、礼薄、收礼/送礼记录、共享关系、导入导出任务</text></view>
+  <view class="form-row"><text class="form-val">审计日志仅保留不含金额和姓名的流水</text></view>
+  <view class="form-row"><text class="form-val">删除后无法恢复；注销前建议先导出备份</text></view>
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onToggleConfirm">
+    <text class="check {{confirmed ? 'on' : ''}}">{{confirmed ? '✓' : ''}}</text>
+    <text class="form-val" style="margin-left:10px">我已了解上述后果，并已导出备份</text>
+  </view>
+</view>
+
+<view style="height:100px"></view>
+<view class="btn-bottom"><view class="btn-danger-outline" bindtap="onCancel">确认注销</view></view>

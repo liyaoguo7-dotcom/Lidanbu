@@ -16,6 +16,7 @@ require('./test-export-xlsx');
 require('./test-wanglai');
 require('./test-admin');
 require('./test-uppercase');
+require('./test-stage3');
 
 (async () => {
   console.log('礼单簿 阶段1 本地测试（内存数据库）\n');

@@ -120,7 +120,7 @@ async function getContactTimeline(db, viewerId, ownerId, contactId) {
 module.exports = {
   resolveRange, resolveRangeOpt,
   getWanglaiStats, getContactTimeline, visibleRecords,
-  contactStats, timeline, memberStats, memberTimeline, findContactsByName,
+  contactStats, timeline, memberStats, memberTimeline, memberEvents, findContactsByName,
 };
 
 /**
@@ -275,6 +275,23 @@ async function memberStats(db, actorId, ownerId, contactId, opts = {}) {
     from: range.from, to: range.to,
     isMember: !isOwner, // 成员版页面顶部显示"仅统计已授权给你的记录"
   };
+}
+
+/**
+ * 成员视角：已授权给我的礼薄列表（阶段3 share-view 用）
+ * 主人返回全部事件；成员只返回 scope.events 交集。
+ */
+async function memberEvents(db, actorId, ownerId) {
+  const isOwner = actorId === ownerId;
+  if (isOwner) {
+    return db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId });
+  }
+  const pre = await authz.checkMemberAccess(db, actorId, ownerId);
+  if (!pre.ok) throw errors.permDenied(pre.reason);
+  if (!pre.switches.view) throw errors.permDenied('switch-off:view');
+  const ids = pre.scope.events || [];
+  if (!ids.length) return [];
+  return db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId, _id: { $in: ids } });
 }
 
 /**

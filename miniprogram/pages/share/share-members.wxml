@@ -1,0 +1,12 @@
+<!-- 成员管理 -->
+<view class="card" wx:if="{{members.length}}">
+  <view class="form-row" wx:for="{{members}}" wx:key="membershipId" bindtap="onMember" data-id="{{item.membershipId}}">
+    <view class="form-val">
+      <text>{{item.name}}</text>
+      <text class="ph" style="font-size:12px;color:#999"> {{item.status === 'active' ? '' : '（' + item.status + '）'}}</text>
+      <view style="font-size:12px;color:#999;margin-top:4px">{{item.switchesText}}</view>
+    </view>
+    <text class="chev">›</text>
+  </view>
+</view>
+<view class="tip" wx:if="{{!members.length}}">还没有成员。去"邀请家人"发出第一份邀请吧。</view>

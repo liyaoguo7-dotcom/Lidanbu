@@ -1,0 +1,10 @@
+<view class="warn-banner">只看统计数字：无金额、无名单、无账本内容。</view>
+<view wx:if="{{loading}}"><view class="note">加载中…</view></view>
+<view wx:if="{{!loading && stats}}" class="stat-grid">
+  <view class="stat-card"><view class="stat-num">{{stats.userTotal}}</view><view class="stat-label">用户总数</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.memberCount}}</view><view class="stat-label">会员数</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.freeCount}}</view><view class="stat-label">免费用户数</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.newUsersToday}}</view><view class="stat-label">今日新增用户</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.receiveRecordTotal}}</view><view class="stat-label">收礼记录总数</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.giftRecordTotal}}</view><view class="stat-label">送礼记录总数</view></view>
+</view>

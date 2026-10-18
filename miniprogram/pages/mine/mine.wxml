@@ -51,4 +51,8 @@
 <view class="footer">
   <text bindtap="onPrivacy">隐私政策</text><text>｜</text><text bindtap="onLogout">注销账号</text>
 </view>
+<!-- 老板平台开发期隐藏入口：连点版本号 5 次进入。生产部署方式待定（上线前必须加管理员身份校验+二次验证）。 -->
+<view style="text-align:center;padding:6px 0 4px" bindtap="onVersionTap">
+  <text style="font-size:11px;color:#D8D8D8">v0.5.0-dev</text>
+</view>
 <view style="height:30px"></view>

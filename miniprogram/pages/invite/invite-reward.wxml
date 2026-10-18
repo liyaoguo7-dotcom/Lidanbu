@@ -1,0 +1,15 @@
+<!-- 邀请新用户得名额 -->
+<view class="warn-banner">该功能暂未开启，敬请期待。</view>
+
+<view class="section-title">规则（预定方案）</view>
+<view class="card" wx:if="{{rules}}">
+  <view class="form-row"><text class="form-val">成功邀请一位新用户：收礼额度池 +{{rules.perInvite.receivePool}} 条，送礼 +{{rules.perInvite.giftRecords}} 条</text></view>
+  <view class="form-row"><text class="form-val">生效条件：被邀请人新建 1 个礼薄 + 1 位收礼亲友，或 1 位送礼亲友</text></view>
+  <view class="form-row"><text class="form-val">上限：每位用户最多 {{rules.maxInvites}} 次成功邀请（含义待确认）</text></view>
+</view>
+
+<view class="section-title">微信合规核查结论</view>
+<view class="card">
+  <view class="form-row"><text class="form-val" style="line-height:1.7">微信小程序审核规范 3.2.1 明确拒绝"通过利益诱惑诱导用户分享、传播的小程序"；《微信个人账号使用规范》12.1.1 将"分享后对用户有奖励的内容（如邀请朋友…分享可增加奖励）"列为违规。本功能的"邀请得名额"属于典型的利益诱导分享，<text style="color:#F0575A">上线审核极大概率被拒绝</text>，且可能影响账号。建议：不上线此功能，或改为不带奖励的普通分享。</text></view>
+</view>
+<view class="tip">结论来源：微信开放社区《小程序审核规范》3.2.1、help.wechat.com《微信个人账号使用规范》12.1.1。是否开启由你决定。</view>

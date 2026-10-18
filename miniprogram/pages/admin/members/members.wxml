@@ -1,0 +1,24 @@
+<view class="warn-banner">会员列表只含白名单字段：脱敏用户号、会员状态、到期时间、各集合条数。手动开通/延期将记入操作记录。</view>
+<view style="padding:4px 12px">
+  <text wx:for="{{filters}}" wx:key="id" class="pill {{filter===item.id?'on':''}}" bindtap="onFilter" data-id="{{item.id}}">{{item.name}}</text>
+</view>
+<view class="note">共 {{total}} 位用户</view>
+<view class="card">
+  <view class="form-row" wx:for="{{list}}" wx:key="userId">
+    <view class="form-val">
+      <view class="mask">{{item.userId}} · {{item.stateName}}</view>
+      <view style="font-size:12px;color:#C2C2C2;margin-top:4px">礼薄{{item.recordCounts.events}} · 送礼{{item.recordCounts.gifts}} · 亲友{{item.recordCounts.contacts}}</view>
+    </view>
+    <text class="mini-btn" bindtap="onGrant" data-user="{{item}}">开通/延期</text>
+  </view>
+</view>
+<view wx:if="{{hasMore}}" style="text-align:center;padding:12px"><text class="mini-btn" bindtap="onMore">加载更多</text></view>
+
+<view wx:if="{{grantUser}}" class="card">
+  <view class="form-row"><text class="form-label">用户</text><text class="form-val mask">{{grantUser.userId}}</text></view>
+  <view class="form-row"><text class="form-label">天数</text><input class="form-val" type="number" value="{{grantDays}}" bindinput="onDaysInput" placeholder="1~1095" /></view>
+  <view class="form-row row-between" style="padding:12px 16px">
+    <text class="mini-btn" bindtap="onCancelGrant" style="color:#999;border-color:#CCC">取消</text>
+    <text class="mini-btn" bindtap="onConfirmGrant">确认开通（记入操作记录）</text>
+  </view>
+</view>

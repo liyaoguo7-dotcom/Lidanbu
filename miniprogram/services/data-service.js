@@ -157,7 +157,135 @@ const service = {
     return {
       state: core.quota.getMembershipState(user),
       quota: core.quota.getEffectiveQuota(user),
+      expireAt: (user.membership && user.membership.expireAt) || null,
     };
+  },
+
+  /** 额度使用情况：各类已用/上限（免费+会员+邀请奖励） */
+  async getQuotaUsage() {
+    const me = await ensureUser();
+    const quota = core.quota.getEffectiveQuota(me);
+    const events = await _db.collection(core.models.COLLECTIONS.ReceiveEvent).find({ ownerId: _userId });
+    const gifts = await _db.collection(core.models.COLLECTIONS.GiftRecord).count({ ownerId: _userId });
+    const contacts = await _db.collection(core.models.COLLECTIONS.Contact).count({ ownerId: _userId });
+    const receivePool = await core.quota.computePoolUsed(_db, _userId, quota.recordsPerEvent);
+    return {
+      state: core.quota.getMembershipState(me),
+      quota,
+      used: { events: events.length, receivePool, gifts, contacts },
+    };
+  },
+
+  /** 会员到期三次提醒：到期前15天 / 到期当天 / 缓冲期结束前 */
+  getReminderInfo() {
+    return _db.collection(core.models.COLLECTIONS.User).findOne({ _id: _userId }).then((user) => {
+      const times = core.quota.getReminderSchedule(user || {});
+      const labels = ['到期前 15 天', '到期当天', '缓冲期结束前'];
+      const nowT = Date.now();
+      return times.map((t, i) => ({ label: labels[i], at: t, passed: nowT >= t, date: new Date(t).toLocaleDateString('zh-CN') }));
+    });
+  },
+
+  // —— 家庭共享（阶段3） ——
+  /** 发起邀请：{ switches, scope:{events:[], gifts} }；会员专属 */
+  async shareInvite({ switches, scope }) {
+    try {
+      return await core.share.invite(_db, _userId, { switches, scope });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 我发出的成员列表（含权限摘要） */
+  async listMembers() {
+    try {
+      const list = await core.share.listMembers(_db, _userId);
+      // 补成员昵称（本地演示：memberId 为空=待接受）
+      return list;
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 某成员的权限详情 */
+  async getGrant(membershipId) {
+    try {
+      return await _db.collection(core.models.COLLECTIONS.ShareGrant).findOne({ membershipId });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 修改成员权限（立即生效） */
+  async updateGrant(membershipId, { switches, scope }) {
+    try {
+      return await core.share.updateGrant(_db, _userId, membershipId, { switches, scope });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 移除成员（记录保留） */
+  async removeMember(membershipId) {
+    try {
+      return await core.share.removeMember(_db, _userId, membershipId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 我收到的共享（我是成员的账本） */
+  async myReceivedShares() {
+    try {
+      const mss = await _db.collection(core.models.COLLECTIONS.ShareMembership)
+        .find({ memberId: _userId, status: 'active' });
+      const out = [];
+      for (const ms of mss) {
+        const owner = await _db.collection(core.models.COLLECTIONS.User).findOne({ _id: ms.ownerId });
+        out.push({ membershipId: ms._id, ownerId: ms.ownerId, ownerName: (owner && owner.nickname) || '家人', createdAt: ms.createdAt });
+      }
+      return out;
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 接受邀请 */
+  async acceptShare(membershipId) {
+    try {
+      return await core.share.accept(_db, membershipId, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 家人视角：已授权给我的礼薄列表（只含授权事件） */
+  async listMemberEvents(ownerId) {
+    try {
+      return await core.stats.memberEvents(_db, _userId, ownerId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 共享开关清单（供邀请页渲染） */
+  getShareSwitches() { return AppConfig.shareSwitches; },
+  /** 当前账本数据情况（导出页概览） */
+  async exportSummary() {
+    const C = core.models.COLLECTIONS;
+    const events = await _db.collection(C.ReceiveEvent).find({ ownerId: _userId });
+    const receiveRecords = await _db.collection(C.ReceiveRecord).count({ ownerId: _userId });
+    const gifts = await _db.collection(C.GiftRecord).count({ ownerId: _userId });
+    const contacts = await _db.collection(C.Contact).count({ ownerId: _userId });
+    return { events, receiveRecords, gifts, contacts };
+  },
+  /**
+   * 导出 xlsx：经云函数生成真文件。
+   * 本地模式下 exceljs 不可用，直接提示云联调后可用。
+   */
+  async exportXlsx({ eventIds = null, includeGifts = true } = {}) {
+    if (AppConfig.demo.localMode) {
+      throw new Error('导出功能需要云环境，云联调后可用');
+    }
+    const res = await wx.cloud.callFunction({
+      name: 'api',
+      data: { action: 'exportXlsx', eventIds, includeGifts },
+    });
+    return res.result;
+  },
+  /** 写导出历史 */
+  async logExportJob(scope) {
+    await _db.collection(core.models.COLLECTIONS.ExportJob).insert({
+      ownerId: _userId, scope: scope || '', status: 'done', createdAt: Date.now(),
+    });
+  },
+  /** 导出历史记录 */
+  async listExportJobs() {
+    return _db.collection(core.models.COLLECTIONS.ExportJob)
+      .find({ ownerId: _userId }, { sort: { createdAt: -1 }, limit: 50 });
+  },
+  /** 账号注销（⚠️ 待用户确认，确认前不上线） */
+  async requestCancel() {
+    if (!AppConfig.accountCancellation || !AppConfig.accountCancellation.enabled) {
+      throw new Error('账号注销功能待确认，暂未开放');
+    }
+    return core.account.purgeUserOnCancellation(_db, _userId);
   },
 
   // —— 拍照导入（阶段4；OCR 厂商未拍板，本轮只走 MockOCR） ——
@@ -305,6 +433,34 @@ const service = {
   },
 
   friendly,
+
+  // —— 老板平台（阶段5）——
+  // 铁律：只调 core.admin 白名单聚合接口；绝不返回用户的礼金、联系人、备注内容，
+  // 也不能替用户导出账本。所有返回对象只含白名单字段，userId 一律脱敏短号。
+  async adminOverview() {
+    return core.admin.overview(_db);
+  },
+  async adminMemberList({ page, pageSize, memberState } = {}) {
+    try {
+      return await core.admin.memberList(_db, { page, pageSize, memberState });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminSetMemberPlan(maskedUserId, plan, days) {
+    try {
+      return await core.admin.setMemberPlan(_db, maskedUserId, plan, days, 'admin:' + _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminQuotaUsage(maskedUserId) {
+    try {
+      return await core.admin.quotaUsage(_db, maskedUserId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminInviteStats() {
+    return core.admin.inviteStats(_db);
+  },
+  async adminShareOverview({ limit } = {}) {
+    return core.admin.shareOverview(_db, { limit });
+  },
 };
 
 module.exports = service;

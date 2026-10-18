@@ -1,0 +1,52 @@
+<!-- 会员与额度 -->
+<view class="card member-card">
+  <text class="m-title songti">会员卡片</text>
+  <text class="m-desc">{{stateText}}</text>
+  <view class="m-btn" wx:if="{{state === 'free' || state === 'expired'}}" bindtap="onBuy">开通会员</view>
+  <view class="m-badge" wx:if="{{state === 'member' || state === 'grace'}}">{{stateText}}</view>
+</view>
+
+<view class="section-title">会员专属功能</view>
+<view class="card">
+  <view class="form-row">
+    <text class="form-label">家庭共享邀请</text>
+    <text class="form-val ph">邀请家人共记一本账</text>
+  </view>
+  <view class="form-row" bindtap="onLandscape">
+    <text class="form-label">横置红字礼单本</text>
+    <text class="form-val ph">经典红字大写，横置翻阅</text>
+    <text class="chev">›</text>
+  </view>
+  <view class="form-row">
+    <text class="form-label">拍照导入</text>
+    <text class="form-val ph">一键识别纸质礼单</text>
+  </view>
+</view>
+
+<view class="section-title">额度使用情况</view>
+<view class="card" wx:if="{{quota && used}}">
+  <view class="form-row"><text class="form-label">礼薄</text><text class="form-val">{{used.events}} / {{quota.receiveEvents}} 本</text></view>
+  <view class="form-row"><text class="form-label">收礼记录</text><text class="form-val">{{used.receivePool}} / {{quota.receivePool + quota.recordsPerEvent}} 条</text></view>
+  <view class="form-row"><text class="form-label">送礼记录</text><text class="form-val">{{used.gifts}} / {{quota.giftRecords}} 条</text></view>
+  <view class="form-row"><text class="form-label">亲友</text><text class="form-val">{{used.contacts}} / {{quota.contacts}} 位</text></view>
+</view>
+
+<view class="warn-banner" wx:if="{{overQuotaNote}}">{{overQuotaNote}}</view>
+
+<view class="section-title">到期提醒</view>
+<view class="card" wx:if="{{reminders.length}}">
+  <view class="form-row" wx:for="{{reminders}}" wx:key="label">
+    <text class="form-label">{{item.label}}</text>
+    <text class="form-val">{{item.date}}</text>
+    <text class="ph" style="font-size:12px;color:{{item.passed ? '#F0575A' : '#999'}}">{{item.passed ? '已提醒' : '待提醒'}}</text>
+  </view>
+</view>
+<view class="tip" wx:if="{{!reminders.length}}">你当前是普通用户，开通会员后这里会显示三次到期提醒。</view>
+
+<view class="section-title">价格档位</view>
+<view class="card">
+  <view class="form-row"><text class="form-val ph">{{priceNote}}</text></view>
+</view>
+
+<view style="height:100px"></view>
+<view class="btn-bottom"><view class="btn-primary" bindtap="onExport">一键导出账本</view></view>

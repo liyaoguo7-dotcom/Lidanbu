@@ -1,0 +1,26 @@
+<!-- XX的账本（家人视角） -->
+<view class="card" style="background:#F1E6D3">
+  <view class="form-row" style="border:none">
+    <text class="form-val" style="text-align:center;font-weight:bold">正在查看：{{ownerName}}的账本</text>
+  </view>
+  <view style="text-align:center;font-size:12px;color:#999;padding-bottom:12px">仅统计已授权给你的记录</view>
+</view>
+
+<view class="section-title">已授权的礼薄</view>
+<view class="card" wx:if="{{events.length}}">
+  <view class="form-row" wx:for="{{events}}" wx:key="_id">
+    <text class="form-label">{{item.name}}</text>
+    <text class="form-val"></text>
+  </view>
+</view>
+<view class="tip" wx:if="{{!events.length}}">对方尚未授权任何礼薄给你。</view>
+
+<view class="section-title">往来（已授权部分）</view>
+<view class="card">
+  <view class="form-row">
+    <text class="form-label">收到</text><text class="form-val">{{totalIn}}</text>
+  </view>
+  <view class="form-row">
+    <text class="form-label">送出</text><text class="form-val">{{totalOut}}</text>
+  </view>
+</view>

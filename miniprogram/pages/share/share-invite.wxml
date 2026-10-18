@@ -1,0 +1,39 @@
+<!-- 发起邀请 -->
+<view class="card">
+  <view class="form-row">
+    <text class="form-label">邀请亲友</text>
+    <picker mode="selector" range="{{contacts}}" range-key="name" bindchange="onContactChange" style="flex:1">
+      <view class="form-val {{contactName ? '' : 'ph'}}">{{contactName || '请选择一位亲友'}} <text class="chev">›</text></view>
+    </picker>
+  </view>
+</view>
+
+<view class="section-title">允许查看我标记的项目</view>
+<view class="card">
+  <view class="form-row" wx:for="{{switches}}" wx:key="id" bindtap="onSwitchToggle" data-id="{{item.id}}">
+    <text class="form-label">{{item.name}}</text>
+    <text class="form-val ph" wx:if="{{item.alwaysOn}}">恒开，不可取消</text>
+    <text class="form-val" wx:else></text>
+    <view class="switch {{item.on ? 'on' : ''}}" style="{{item.alwaysOn ? 'opacity:.6' : ''}}"><view class="dot"></view></view>
+  </view>
+</view>
+
+<view class="section-title">共享范围（至少选一项）</view>
+<view class="card">
+  <view class="form-row" wx:for="{{events}}" wx:key="_id" bindtap="onEventToggle" data-id="{{item._id}}">
+    <text class="form-label">{{item.name}}</text>
+    <text class="form-val"></text>
+    <text class="check {{item.checked ? 'on' : ''}}">{{item.checked ? '✓' : ''}}</text>
+  </view>
+  <view class="form-row" bindtap="onGiftsToggle">
+    <text class="form-label">送礼记录</text>
+    <text class="form-val"></text>
+    <text class="check {{giftsOn ? 'on' : ''}}">{{giftsOn ? '✓' : ''}}</text>
+  </view>
+  <view class="form-row" wx:if="{{!events.length && !giftsOn}}">
+    <text class="form-val ph">还没有礼薄，可先去添加礼薄</text>
+  </view>
+</view>
+
+<view style="height:100px"></view>
+<view class="btn-bottom"><view class="btn-primary" bindtap="onSend">发出邀请</view></view>

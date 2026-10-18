@@ -1,0 +1,31 @@
+<!-- 成员权限详情 -->
+<view class="section-title">允许查看我标记的项目</view>
+<view class="card">
+  <view class="form-row" wx:for="{{switches}}" wx:key="id" bindtap="onSwitchToggle" data-id="{{item.id}}">
+    <text class="form-label">{{item.name}}</text>
+    <text class="form-val ph" wx:if="{{item.alwaysOn}}">恒开，不可取消</text>
+    <text class="form-val" wx:else></text>
+    <view class="switch {{item.on ? 'on' : ''}}" style="{{item.alwaysOn ? 'opacity:.6' : ''}}"><view class="dot"></view></view>
+  </view>
+</view>
+
+<view class="section-title">共享范围</view>
+<view class="card">
+  <view class="form-row" wx:for="{{events}}" wx:key="_id" bindtap="onEventToggle" data-id="{{item._id}}">
+    <text class="form-label">{{item.name}}</text>
+    <text class="form-val"></text>
+    <text class="check {{item.checked ? 'on' : ''}}">{{item.checked ? '✓' : ''}}</text>
+  </view>
+  <view class="form-row" bindtap="onGiftsToggle">
+    <text class="form-label">送礼记录</text>
+    <text class="form-val"></text>
+    <text class="check {{giftsOn ? 'on' : ''}}">{{giftsOn ? '✓' : ''}}</text>
+  </view>
+</view>
+
+<view class="tip">权限修改立即生效，对方下次打开即按新权限执行。</view>
+<view style="height:130px"></view>
+<view class="btn-bottom">
+  <view class="btn-primary" bindtap="onSave" style="{{dirty ? '' : 'opacity:.55'}}">保存（立即生效）</view>
+  <view class="btn-danger-outline" bindtap="onRemove" style="margin-top:10px">移除成员</view>
+</view>

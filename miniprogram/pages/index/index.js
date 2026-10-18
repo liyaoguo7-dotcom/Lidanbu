@@ -52,10 +52,10 @@ Page({
       this.memberOnly(id);
       return;
     }
-    if (id === 'share') { wx.showToast({ title: '家庭共享（阶段3）', icon: 'none' }); return; }
+    if (id === 'share') { wx.navigateTo({ url: '/pages/share/share-home' }); return; }
     if (id === 'photo') { wx.navigateTo({ url: '/pages/import/import-home' }); return; }
     if (id === 'invite') { wx.showToast({ title: '电子请柬（阶段4）', icon: 'none' }); return; }
-    if (id === 'export') { wx.showToast({ title: '导出备份（阶段3）', icon: 'none' }); return; }
+    if (id === 'export') { wx.navigateTo({ url: '/pages/export/export-home' }); return; }
   },
 
   goGifts() {

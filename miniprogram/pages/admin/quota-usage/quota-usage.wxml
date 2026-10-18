@@ -1,0 +1,13 @@
+<view class="warn-banner">只看数量与剩余，不看金额、不看账本内容。输入会员管理页显示的脱敏用户号查询。</view>
+<view class="input-line">
+  <input placeholder="脱敏用户号，如 oAb***9zQ" value="{{masked}}" bindinput="onInput" />
+  <text class="mini-btn" bindtap="onQuery">查询</text>
+</view>
+<view wx:if="{{result}}" class="card">
+  <view class="form-row"><text class="form-label">用户</text><text class="form-val mask">{{result.userId}} · {{result.memberState}}</text></view>
+  <view class="form-row" wx:for="{{result.usage}}" wx:key="kind">
+    <text class="form-label">{{item.kindName}}</text>
+    <text class="form-val">已用 {{item.used}} / 上限 {{item.limit}}（剩 {{item.remain}}）</text>
+  </view>
+</view>
+<view wx:if="{{!result}}" class="note">查询结果只显示已用/上限/剩余三个数字。</view>

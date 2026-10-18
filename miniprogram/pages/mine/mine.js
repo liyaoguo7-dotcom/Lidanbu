@@ -43,16 +43,7 @@ Page({
   },
 
   onMemberCard() {
-    if (this.data.isMember) {
-      wx.showToast({ title: '会员中心（阶段3）', icon: 'none' });
-      return;
-    }
-    wx.showModal({
-      title: '开通会员',
-      content: '会员价格与档位即将公布，敬请期待。',
-      showCancel: false,
-      confirmText: '知道了',
-    });
+    wx.navigateTo({ url: '/pages/member/member-home' });
   },
 
   onLandscapeToggle() {
@@ -79,14 +70,27 @@ Page({
   },
 
   onInviteReward() {
-    wx.showToast({ title: '邀请得名额暂未开启', icon: 'none' });
+    wx.navigateTo({ url: '/pages/invite/invite-reward' });
   },
 
   onPrivacy() {
-    wx.showToast({ title: '隐私政策（阶段3起草）', icon: 'none' });
+    wx.navigateTo({ url: '/pages/privacy/privacy' });
   },
 
   onLogout() {
-    wx.showToast({ title: '注销账号（阶段3）', icon: 'none' });
+    wx.navigateTo({ url: '/pages/mine-cancel/mine-cancel' });
+  },
+
+  // 老板平台开发期隐藏入口：连点版本号 5 次进入。生产部署方式待定。
+  _versionTaps: 0,
+  _versionTimer: null,
+  onVersionTap() {
+    this._versionTaps += 1;
+    clearTimeout(this._versionTimer);
+    this._versionTimer = setTimeout(() => { this._versionTaps = 0; }, 2000);
+    if (this._versionTaps >= 5) {
+      this._versionTaps = 0;
+      wx.navigateTo({ url: '/pages/admin/admin-home/admin-home' });
+    }
   },
 });

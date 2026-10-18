@@ -98,6 +98,9 @@ const AppConfig = {
    * photoImport: 拍照导入
    * landscapeMode: 经典红字大写横置礼簿模式
    */
+
+  /** 账号注销（阶段3）：⚠️ 待用户确认，确认前不上线（enabled 保持 false） */
+  accountCancellation: { enabled: false },
   /** 本地演示模式（阶段2 2A）：true=用微信本地存储演示，false=走云开发。
    * 正式发布前必须设为 false，见 docs/发布检查清单。 */
   demo: { localMode: true },

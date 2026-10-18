@@ -1,0 +1,8 @@
+<view class="warn-banner">配置只读展示。所有配置修改走 AppConfig（改配置不改代码），修改将记入操作记录；云函数管理员身份 + 二次验证待联调，上线前必须有。</view>
+<view class="card">
+  <block wx:for="{{rows}}" wx:key="k">
+    <view wx:if="{{item.group}}" class="form-row" style="background:#FAFAFA"><text style="font-size:13px;color:#999">{{item.group}}</text></view>
+    <view wx:else class="form-row"><text class="form-label" style="width:150px">{{item.k}}</text><text class="form-val">{{item.v}}</text></view>
+  </block>
+</view>
+<view class="note">数字与开关以 AppConfig 为准；价格档位当前为占位，发布前必须填真实价格。</view>

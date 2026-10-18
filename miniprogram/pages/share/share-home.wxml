@@ -1,0 +1,24 @@
+<!-- 家庭共享 -->
+<view class="card">
+  <view class="form-row" bindtap="onInvite">
+    <text class="form-label">邀请家人</text>
+    <text class="form-val ph">先勾选权限和范围，再发出邀请</text>
+    <text class="chev">›</text>
+  </view>
+  <view class="form-row" bindtap="onMembers">
+    <text class="form-label">成员管理</text>
+    <text class="form-val ph">查看与修改家人权限</text>
+    <text class="chev">›</text>
+  </view>
+</view>
+
+<view class="tip">邀请家人共记一本账：允许查看我标记的项目，权限由你定，随时可改、立即生效。</view>
+
+<view class="section-title" wx:if="{{received.length}}">我收到的共享</view>
+<view class="card" wx:if="{{received.length}}">
+  <view class="form-row" wx:for="{{received}}" wx:key="membershipId" bindtap="onViewShare" data-owner="{{item.ownerId}}">
+    <text class="form-label">{{item.ownerName}}的账本</text>
+    <text class="form-val"></text>
+    <text class="chev">›</text>
+  </view>
+</view>

@@ -1,0 +1,34 @@
+<!-- 导出备份 -->
+<view class="section-title">当前账本数据情况</view>
+<view class="card" wx:if="{{summary}}">
+  <view class="form-row"><text class="form-label">礼薄</text><text class="form-val">{{summary.events.length}} 本</text></view>
+  <view class="form-row"><text class="form-label">收礼记录</text><text class="form-val">{{summary.receiveRecords}} 条</text></view>
+  <view class="form-row"><text class="form-label">送礼记录</text><text class="form-val">{{summary.gifts}} 条</text></view>
+  <view class="form-row"><text class="form-label">亲友</text><text class="form-val">{{summary.contacts}} 位</text></view>
+</view>
+
+<view class="section-title">选择导出范围</view>
+<view class="card">
+  <view class="form-row" wx:for="{{events}}" wx:key="_id" bindtap="onEventToggle" data-id="{{item._id}}">
+    <text class="form-label">{{item.name}}</text>
+    <text class="form-val"></text>
+    <text class="check {{item.checked ? 'on' : ''}}">{{item.checked ? '✓' : ''}}</text>
+  </view>
+  <view class="form-row" bindtap="onGiftsToggle">
+    <text class="form-label">送礼记录</text>
+    <text class="form-val"></text>
+    <text class="check {{includeGifts ? 'on' : ''}}">{{includeGifts ? '✓' : ''}}</text>
+  </view>
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onHistory">
+    <text class="form-label">历史记录</text>
+    <text class="form-val"></text>
+    <text class="chev">›</text>
+  </view>
+</view>
+
+<view class="tip">导出为 Excel（.xlsx）文件。成员账号仅导出已授权给你的部分，且需要账本主人为你打开"可导出"权限。</view>
+<view style="height:100px"></view>
+<view class="btn-bottom"><view class="btn-primary" bindtap="onExport">导出并发送至微信</view></view>

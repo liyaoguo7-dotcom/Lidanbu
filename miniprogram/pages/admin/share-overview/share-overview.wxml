@@ -1,0 +1,12 @@
+<view class="warn-banner">只看数量：开共享的账本数、成员总数、每位账本主人的家人数。成员身份与共享内容不可见。</view>
+<view wx:if="{{stats}}" class="stat-grid">
+  <view class="stat-card"><view class="stat-num">{{stats.ownerCount}}</view><view class="stat-label">开共享的账本数</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.activeMemberships}}</view><view class="stat-label">生效中成员数</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.totalMemberships}}</view><view class="stat-label">成员总数（含非生效）</view></view>
+</view>
+<view class="card" wx:if="{{stats}}">
+  <view class="form-row" wx:for="{{stats.perOwner}}" wx:key="ownerId">
+    <text class="form-val mask">{{item.ownerId}}</text>
+    <text style="font-size:14px;color:#999">{{item.memberCount}} 位家人</text>
+  </view>
+</view>
