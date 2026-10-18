@@ -10,6 +10,7 @@
  */
 const core = require('../core/index.js');
 const AppConfig = require('../config/app-config.js');
+const { tagIconPath } = require('../config/tag-icons.js');
 const { WxStorageDB } = require('./db-wxstorage.js');
 
 const USER_KEY = 'lidanbu_demo_user';
@@ -19,7 +20,16 @@ let _db = null;
 let _userId = null;
 
 function _makeDb() {
-  // 云环境就绪后：return new core.db.CloudDB();
+  // —— 本地/云切换点（只改这里，页面代码不动）——
+  // 本地演示模式：return new WxStorageDB();（当前）
+  // 云模式：return new core.db.CloudDB();
+  //   切云的前提（缺一不可，见 docs/云环境切换步骤.md）：
+  //   1) miniprogram/app.js 填好 globalData.cloudEnvId 并取消 wx.cloud.init 注释；
+  //   2) AppConfig.demo.localMode 设为 false；
+  //   3) core/db-cloud.js 骨架已补全并联调通过；
+  //   4) cloudfunctions/api 已部署。
+  // 注意：WxStorageDB 与 CloudDB 同接口（collection/insert/find/findOne/count/update/remove），
+  // core/ 业务层不感知底层是本地还是云，所以切换后页面层零改动。
   return new WxStorageDB();
 }
 
@@ -132,11 +142,9 @@ const service = {
   getTags() { return AppConfig.tags; },
   getTagById(id) { return AppConfig.tags.find((t) => t.id === id); },
   getDefaultTagId() { return AppConfig.defaultTagId; },
-  /** 标签图案：白事用灰，其余跟随标签（SVG 路径） */
+  /** 标签图案：唯一映射，换文件即换图案（见 config/tag-icons.js） */
   tagIcon(tagId) {
-    const tag = this.getTagById(tagId);
-    const file = tag && tag.icon ? tag.icon : '10-qita.svg';
-    return `/icons/${file}`;
+    return tagIconPath(tagId);
   },
 
   // —— 会员/额度 ——

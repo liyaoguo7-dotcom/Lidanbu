@@ -1,0 +1,27 @@
+{
+  "name": "lidanbu",
+  "version": "1.0.0",
+  "description": "> 阶段 0 工程骨架（T0.1）。需求基线：《礼单簿小程序产品需求文档 v3.1 决策更新版》。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liyaoguo7-dotcom/Lidanbu.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/liyaoguo7-dotcom/Lidanbu/issues"
+  },
+  "homepage": "https://github.com/liyaoguo7-dotcom/Lidanbu#readme",
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}

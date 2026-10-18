@@ -5,6 +5,9 @@
  * - 本人：可导出全部
  * - 成员：需 export 开关；只导出已授权范围（事件取交集，送礼看 scope.gifts）
  * - 读取/导出不信任调用方传入的 id，一律按授权单范围重新筛选
+ * - 金额显示铁律（检查点1第4条）：阶段3生成 xlsx 时，所有金额单元格必须调
+ *   require('./format').formatAmount(分) 得到两位小数（如 "1000.00"），
+ *   不许在导出代码里自己拼 /100、toFixed、toLocaleString。
  */
 const errors = require('./errors');
 

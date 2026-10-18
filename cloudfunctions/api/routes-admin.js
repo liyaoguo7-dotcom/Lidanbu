@@ -1,0 +1,48 @@
+/**
+* 礼单簿 · 老板平台云函数路由（阶段5 骨架，待云联调）
+*
+* 老板平台只看统计数字和会员状态。
+* 任何接口/页面/导出都不得返回用户的礼金、联系人、备注内容，
+* 也不能替用户导出账本。
+* 本文件只是 core/admin.js 的薄封装：参数透传、结果原样返回，
+* 不做任何字段增删——字段白名单由 core/admin.js 强制执行。
+*
+* 待联调事项：
+* 1. 管理员身份校验 + 二次验证（上线前必须有）；
+* 2. 所有配置修改写操作记录（setMemberPlan 已写 audit，其余后台配置项后续补）；
+* 3. 部署时把 core/ 与 miniprogram/config/app-config.js 一并打包进云函数目录。
+*/
+
+// const cloud = require('wx-server-sdk');
+// cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV});
+// const core = require('./core'); // 部署时复制 core/ 到本目录
+// const db = new core.db.CloudDB();
+
+/**
+* 管理员 action 分发（示意，待联调）
+* event: { action: 'admin.xxx', actorId(管理员), params}
+*/
+// const ADMIN_ACTIONS = {
+// 'admin.overview': (db, params) => core.admin.overview(db),
+// 'admin.memberList': (db, params) => core.admin.memberList(db, params),
+// 'admin.setMemberPlan': (db, params) =>
+// core.admin.setMemberPlan(db, params.userId, params.plan, params.days),
+// 'admin.quotaUsage': (db, params) => core.admin.quotaUsage(db, params.userId),
+// 'admin.inviteStats': (db) => core.admin.inviteStats(db),
+// 'admin.shareOverview': (db, params) => core.admin.shareOverview(db, params),
+//};
+//
+// exports.main = async (event) => {
+// // TODO(待联调): 校验 actorId 为管理员身份 + 二次验证，未通过直接拒绝
+// const { action, params} = event;
+// const fn = ADMIN_ACTIONS[action];
+// if (!fn) return { ok: false, reason: `未知action:${action}`};
+// try {
+// const data = await fn(db, params || {});
+// return { ok: true, data};
+//} catch (e) {
+// return { ok: false, reason: e.message};
+//}
+//};
+
+module.exports = {};

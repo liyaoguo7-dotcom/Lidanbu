@@ -5,6 +5,7 @@
  * 事件：change({ id, name }) 选择改变
  */
 const AppConfig = require('../../config/app-config.js');
+const { tagIconPath } = require('../../config/tag-icons.js');
 
 Component({
   properties: {
@@ -22,7 +23,7 @@ Component({
   },
   lifetimes: {
     attached() {
-      const tags = AppConfig.tags;
+      const tags = AppConfig.tags.map((t) => ({ ...t, iconPath: tagIconPath(t.id) }));
       const currentId = this.properties.selectedId || AppConfig.defaultTagId;
       this.setData({ tags, currentId });
     },

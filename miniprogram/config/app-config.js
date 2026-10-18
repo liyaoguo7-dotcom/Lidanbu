@@ -25,16 +25,16 @@ const AppConfig = {
 
   /** 10 个类别标签（收礼礼薄与送礼记录共用同一套；图案视觉后定，此处为占位名） */
   tags: [
-    { id: 'jiehun', name: '结婚', icon: '01-jiehun.svg' },   // 红双喜（白事不得出现）
-    { id: 'shengzi', name: '生子', icon: '02-shengzi.svg' },
-    { id: 'tanwang', name: '探望', icon: '03-tanwang.svg' },
-    { id: 'yasui', name: '压岁', icon: '04-yasui.svg' },
-    { id: 'shengri', name: '生日', icon: '05-shengri.svg' },
-    { id: 'shengxue', name: '升学', icon: '06-shengxue.svg' },
-    { id: 'qiaoqian', name: '乔迁', icon: '07-qiaoqian.svg' },
-    { id: 'dashou', name: '大寿', icon: '08-dashou.svg' },
-    { id: 'baishi', name: '白事', icon: '09-baishi.svg' },
-    { id: 'qita', name: '其他', icon: '10-qita.svg' },
+    { id: 'jiehun', name: '结婚' },   // 红双喜（白事不得出现）
+    { id: 'shengzi', name: '生子' },
+    { id: 'tanwang', name: '探望' },
+    { id: 'yasui', name: '压岁' },
+    { id: 'shengri', name: '生日' },
+    { id: 'shengxue', name: '升学' },
+    { id: 'qiaoqian', name: '乔迁' },
+    { id: 'dashou', name: '大寿' },
+    { id: 'baishi', name: '白事' },
+    { id: 'qita', name: '其他' },
   ],
   defaultTagId: 'jiehun', // 默认选中"结婚"
 

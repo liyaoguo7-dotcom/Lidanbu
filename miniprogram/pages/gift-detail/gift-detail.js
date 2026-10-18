@@ -4,6 +4,7 @@
  * "查看往来记录＞＞＞"底部居中；底部修改按钮；删除走统一弹窗。
  */
 const dataService = require('../../services/data-service.js');
+const { tagIconPath } = require('../../config/tag-icons.js');
 const { formatAmount } = require('../../core/format.js');
 
 Page({
@@ -41,7 +42,7 @@ Page({
     this.setData({
       gift: g,
       tagName: tag.name || '',
-      icon: `/icons/${tag.icon || '10-qita.svg'}`,
+      icon: tagIconPath(tag && tag.id),
       isBaishi: g.tagId === 'baishi',
       contactName,
       amountText: formatAmount(-(g.amount || 0)), // 送出金额带负号

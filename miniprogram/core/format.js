@@ -38,4 +38,84 @@ function parseAmountToFen(str) {
   return fen;
 }
 
-module.exports = { formatAmount, parseAmountToFen };
+/**
+ * 分 → 财务大写中文金额（横置红字礼单本用，阶段4）
+ * @param {number} fen 整数分（应为非负；负数前加"负"字；非数字按 0 处理）
+ * @returns {string} 如 100000 → "壹仟元整"；100055 → "壹仟元伍角伍分"
+ * 规范：零→"零元整"；10元→"壹拾元整"；101→"壹佰零壹元整"；
+ * 1050→"壹仟零伍拾元整"；10000→"壹万元整"；100000→"壹拾万元整"；
+ * 110000→"壹拾壹万元整"；1000000→"壹佰万元整"；
+ * 有角无分→"…角"；无角有分→"…零…分"；有角有分→"…角…分"；无角分→"…元整"。
+ */
+const CN_DIGITS = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+const CN_RADICES = ['仟', '佰', '拾', '']; // 四位一组内的位权（千→个）
+const CN_BIG = ['', '万', '亿'];
+
+/** 四位一组（0-9999）→ 中文，不带大单位 */
+function sectionToChinese(section) {
+  const ds = [
+    Math.floor(section / 1000),
+    Math.floor(section / 100) % 10,
+    Math.floor(section / 10) % 10,
+    section % 10,
+  ];
+  let s = '';
+  let zeroPending = false;
+  for (let i = 0; i < 4; i++) {
+    const d = ds[i];
+    if (d !== 0) {
+      if (zeroPending) { s += '零'; zeroPending = false; }
+      s += CN_DIGITS[d] + CN_RADICES[i];
+    } else if (s !== '') {
+      zeroPending = true; // 组内高位已有非零，记一个待定的零
+    }
+  }
+  return s;
+}
+
+/** 非负整数元 → 中文（不带"元"字） */
+function intYuanToChinese(n) {
+  if (n === 0) return '零';
+  const secs = [];
+  let rest = n;
+  while (rest > 0) { secs.push(rest % 10000); rest = Math.floor(rest / 10000); }
+  let result = '';
+  let needZero = false; // 跳过了全零组，低位再出现非零组时补"零"
+  for (let i = secs.length - 1; i >= 0; i--) {
+    const secStr = sectionToChinese(secs[i]);
+    if (secStr === '') {
+      if (result !== '') needZero = true;
+      continue;
+    }
+    if (needZero) {
+      result += '零';
+      needZero = false;
+    } else if (result !== '' && secs[i] < 1000) {
+      result += '零'; // 低位组不满四位（如"壹万"后跟"壹"→"壹万零壹"）
+    }
+    result += secStr + CN_BIG[i];
+  }
+  return result;
+}
+
+function amountToChineseUpper(fen) {
+  let n = Number(fen);
+  if (!Number.isFinite(n)) n = 0;
+  n = Math.round(n);
+  const neg = n < 0 ? '负' : '';
+  const abs = Math.abs(n);
+  const yuan = Math.floor(abs / 100);
+  const jiao = Math.floor((abs % 100) / 10);
+  const cent = abs % 10;
+  let s = neg + intYuanToChinese(yuan) + '元';
+  if (jiao === 0 && cent === 0) {
+    s += '整';
+  } else {
+    if (jiao > 0) s += CN_DIGITS[jiao] + '角';
+    else if (cent > 0) s += '零';
+    if (cent > 0) s += CN_DIGITS[cent] + '分';
+  }
+  return s;
+}
+
+module.exports = { formatAmount, parseAmountToFen, amountToChineseUpper };

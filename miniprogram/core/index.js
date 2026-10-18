@@ -18,5 +18,6 @@ module.exports = {
   gifts: require('./gifts'),
   stats: require('./stats'),
   share: require('./share'),
+  admin: require('./admin'), // 老板平台聚合接口（阶段5骨架，只返回数字与会员状态）
   config: require('../config/app-config'),
 };

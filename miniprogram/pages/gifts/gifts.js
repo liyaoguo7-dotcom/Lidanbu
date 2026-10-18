@@ -4,6 +4,7 @@
  * 搜索框右侧"取消"，无结果显示空结果态。
  */
 const dataService = require('../../services/data-service.js');
+const { tagIconPath } = require('../../config/tag-icons.js');
 const { formatAmount } = require('../../core/format.js');
 
 function fmtDate(d) {
@@ -39,7 +40,7 @@ Page({
         _id: g._id,
         name: cmap[g.contactId] || '—',
         tagName: tag.name || '',
-        icon: `/icons/${tag.icon || '10-qita.svg'}`,
+        icon: tagIconPath(tag && tag.id),
         date: fmtDate(g.date),
         amountText: formatAmount(-(g.amount || 0)),
       };
