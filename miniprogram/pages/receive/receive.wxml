@@ -2,7 +2,7 @@
 <view class="horn" wx:if="{{showHorn}}">
   <image class="horn-icon" src="/images/icons/speaker.svg" mode="aspectFit" />
   <view class="horn-scroll">
-    <text class="horn-text">点击礼簿查看收礼记录，从右往左滑动可以修改、删除礼簿~</text>
+    <text class="horn-text">查看收礼记录，从右往左滑动可以修改、删除礼簿~</text>
   </view>
   <text class="horn-close" bindtap="closeHorn">×</text>
 </view>

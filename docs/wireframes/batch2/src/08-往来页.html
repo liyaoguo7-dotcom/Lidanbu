@@ -51,14 +51,21 @@ body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang
 .tchip{font-size:13px;color:#666;border:1px solid #E5E5E5;border-radius:15px;padding:5px 13px;background:#fff}
 .tchip.on{color:#E05353;border-color:#E05353}
 .daterange{text-align:center;font-size:12px;color:#999;padding:6px 0 4px}
-.diff div{margin:3px 0}
+.compare{display:flex;margin:4px 12px 0;background:#fff;border-radius:12px;overflow:hidden}
+.side{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 0}
+.side-label{font-size:14px;color:#333;font-family:var(--font-songti)}
+.side-amount{font-size:22px;font-weight:700;color:#333;margin-top:6px}
+.side-count{font-size:12px;color:#999;margin-top:4px}
+.total-line{text-align:center;font-size:13px;color:#666;padding:10px 0 2px;font-family:var(--font-songti)}
+.diff{background:#FFF8E1;color:#E05353;text-align:center;padding:12px;font-size:15px;font-weight:600;margin:12px;border-radius:12px}
 </style></head><body>
 <div class="page">
 <div class="wf-titlebar">人情往来<span class="capsule"></span></div>
 <div class="searchbar"><div class="searchbox">搜索姓名</div><span class="search-cancel">取消</span></div>
 <div class="timerow"><span class="tchip">今日</span><span class="tchip on">本月</span><span class="tchip">今年</span><span class="tchip">近一年</span><span class="tchip">自定义</span></div>
 <div class="daterange wf-num">2026.10.01 至 2026.10.16</div>
-<div class="diff"><div>收到总额 8800.00</div><div>送出总额 2600.00</div><div>差额 6200.00</div></div>
-<div class="card" style="padding:14px 16px;font-size:14px;font-family:var(--font-songti)">共计：<span style="font-weight:600">12 位亲友</span></div>
+<div class="compare"><div class="side"><div class="side-label">收礼</div><div class="side-amount wf-num">8800.00</div><div class="side-count">12笔</div></div><div class="side"><div class="side-label">送礼</div><div class="side-amount wf-num">2600.00</div><div class="side-count">8笔</div></div></div>
+<div class="total-line">合计：20 笔 · 12 位亲友</div>
+<div class="diff"><div>差额 6200.00</div></div>
 <div class="card"><div class="row"><div style="flex:1;font-size:16px">张三</div><div style="font-size:13px;color:#C2C2C2;font-family:var(--font-num);">3笔 ｜ +2000.00</div><span class="chev" style="margin-left:8px">›</span></div><div class="row"><div style="flex:1;font-size:16px">李五</div><div style="font-size:13px;color:#C2C2C2;font-family:var(--font-num);">2笔 ｜ -400.00</div><span class="chev" style="margin-left:8px">›</span></div><div class="row"><div style="flex:1;font-size:16px">王二麻</div><div style="font-size:13px;color:#C2C2C2;font-family:var(--font-num);">4笔 ｜ +1600.00</div><span class="chev" style="margin-left:8px">›</span></div></div>
 <div class="tabbar"><div class="tab"><img class="ti" src="tabbar/home.png">首页</div><div class="tab active"><img class="ti" src="tabbar/wanglai-active.png">往来</div><div class="tab"><img class="ti" src="tabbar/contacts.png">亲友录</div><div class="tab"><img class="ti" src="tabbar/mine.png">我的</div></div></div></body></html>

@@ -1,7 +1,7 @@
 /**
  * 礼单簿 · 往来竖线树（v3.1 14.2 双栏）
  * 调 data-service.getTimeline（经 core.stats.memberTimeline，成员视角自动过滤）。
- * 左送出/右收到双栏，从早到晚；每条三行：日期（灰）→事由→金额（黑粗体，¥前缀，送出-/收到+）；
+ * 左送出/右收到双栏，从早到晚；每条三行：日期（灰）→事由→金额（黑粗体，无¥前缀，送出-/收到+）；
  * 底部汇总淡黄底三行（送出/收到/差额，差额红字无符号）；每条钢笔线条图标 → 修改/删除/取消（action sheet）；删除走 confirm-modal。
  * ?ownerId=xxx 时为成员视角：顶部淡字"仅统计已授权给你的记录"。
  */
@@ -41,8 +41,8 @@ Page({
         return {
           ...it,
           date: it.date || '',
-          // v3.1 14.2：金额黑粗体，¥前缀；送出负号、收到正号
-          amountText: `¥${signed < 0 ? '-' : '+'}${formatAmount(Math.abs(signed))}`,
+          // v3.1 14.2 + 标准截图06：金额黑粗体，无¥前缀；送出负号、收到正号
+          amountText: `${signed < 0 ? '-' : '+'}${formatAmount(Math.abs(signed))}`,
           // v3.1 14.2：送出事由=场合名，收到事由=礼薄名称
           desc: it.type === 'receive' ? (it.eventName || '') : (it.tagName || ''),
         };
