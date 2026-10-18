@@ -221,3 +221,41 @@ test('按姓名找联系人：模糊匹配', async () => {
   const r6 = await stats.findContactsByName(db, owner, '  ');
   assert.eq(r6.length, 0, '空关键字返回空');
 });
+
+// ---------- memberTimeline ----------
+test('成员竖线树：主人视角等价于timeline', async () => {
+  const db = await h.newDB();
+  const { owner, cA } = await setup(db);
+  const tl = await stats.memberTimeline(db, owner, owner, cA, { range: { start: D400, end: TODAY } });
+  assert.eq(tl.isMember, false, '主人标识');
+  assert.eq(tl.items.length, 4, 'cA 共4条（收2+送2）');
+  assert(tl.items.every((i) => i.eventId !== undefined || i.type === 'gift'), '收礼条目带 eventId');
+});
+
+test('成员竖线树：只含授权事件收礼 + 授权送礼', async () => {
+  const db = await h.newDB();
+  const { owner, cA, evA } = await setup(db);
+  const { member } = await h.setupMember(db, owner, { events: [evA], gifts: true });
+  const tl = await stats.memberTimeline(db, member, owner, cA, { range: { start: D400, end: TODAY } });
+  assert.eq(tl.isMember, true, '成员标识');
+  assert.eq(tl.items.length, 3, 'evA收礼1条+送礼2条（evOld收礼被滤掉）');
+  assert(tl.items.filter((i) => i.type === 'receive').every((i) => i.eventId === evA), '收礼只含授权事件');
+  assert.eq(tl.receiveTotalFen, 100000, '总额与memberStats一致');
+});
+
+test('成员竖线树：gifts未授权则送礼条目被滤掉', async () => {
+  const db = await h.newDB();
+  const { owner, cA, evA } = await setup(db);
+  const { member } = await h.setupMember(db, owner, { events: [evA], gifts: false });
+  const tl = await stats.memberTimeline(db, member, owner, cA, { range: { start: D400, end: TODAY } });
+  assert.eq(tl.items.length, 1, '只剩evA收礼1条');
+  assert.eq(tl.items[0].type, 'receive', '类型');
+});
+
+test('成员竖线树：无权限被拒绝', async () => {
+  const db = await h.newDB();
+  const { owner, cA } = await setup(db);
+  let err = null;
+  try { await stats.memberTimeline(db, 'stranger', owner, cA); } catch (e) { err = e; }
+  assert(err && /^无权限：/.test(err.message), '陌生人拒绝且文案用户可读');
+});

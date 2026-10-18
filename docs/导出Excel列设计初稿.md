@@ -1,7 +1,7 @@
 # 导出 Excel 列设计初稿（阶段3）
 
 > 状态：初稿，待用户确认。生成引擎见 `core/export-xlsx.js`（Node/云函数运行，小程序端通过云函数调用，本次不做界面）。
-> 约定：金额一律以"分"存储，导出时调 `formatAmount` 转两位小数**文本**（如 `1000.00`），不用数值型，避免浮点误差。
+> 约定：金额一律以"分"存储；导出时写**数值单元格**（分/100 单次换算）+ 数字格式 `0.00`，Excel 里显示 1000.00 且可直接 SUM；总额类数字在服务端用整数分累加、换算只做一次，不经过浮点累加。
 
 ## Sheet「收礼」
 
@@ -10,7 +10,7 @@
 | 礼薄名称 | ReceiveEvent.name | 文本 |
 | 场合 | ReceiveEvent.tagId → 10 标签名（结婚/生子/…/白事/其他） | 文本 |
 | 姓名 | Contact.name（按 contactId 关联） | 文本 |
-| 金额（元） | ReceiveRecord.amount（分）→ `formatAmount` | 文本，两位小数，如 1000.00 |
+| 金额（元） | ReceiveRecord.amount（分）→ 分/100 单次换算 | 数值单元格，数字格式 0.00（Excel 显示 1000.00，可直接 SUM） |
 | 类型 | ReceiveRecord.type（红包/现金/转账/微信/支付宝） | 文本 |
 | 日期 | ReceiveRecord.date（YYYY-MM-DD） | 文本 |
 | 备注 | ReceiveRecord.remark（空则留空） | 文本 |
@@ -23,7 +23,7 @@
 |---|---|---|
 | 姓名 | Contact.name（按 contactId 关联） | 文本 |
 | 场合 | GiftRecord.tagId → 10 标签名 | 文本 |
-| 金额（元） | GiftRecord.amount（分）→ `formatAmount` | 文本，两位小数 |
+| 金额（元） | GiftRecord.amount（分）→ 分/100 单次换算 | 数值单元格，数字格式 0.00 |
 | 日期 | GiftRecord.date（YYYY-MM-DD） | 文本 |
 | 备注 | GiftRecord.remark（空则留空） | 文本 |
 
@@ -39,8 +39,8 @@
 | 收礼记录数 | 导出收礼条数 |
 | 送礼记录数 | 导出送礼条数 |
 | 联系人数（导出范围内） | 导出记录里出现过的联系人数 |
-| 收礼总额（元） | 两位小数文本 |
-| 送礼总额（元） | 两位小数文本 |
+| 收礼总额（元） | 数值单元格，数字格式 0.00（服务端整数分累加后换算） |
+| 送礼总额（元） | 数值单元格，数字格式 0.00（服务端整数分累加后换算） |
 
 ## 权限说明
 

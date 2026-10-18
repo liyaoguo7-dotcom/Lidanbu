@@ -1,4 +1,67 @@
-<!-- 往来页（2A 占位；真实页面阶段2 2B） -->
-<view class="placeholder">
-  <text>往来页（阶段2B 实现）</text>
+<!-- 往来页 -->
+<view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
+
+<view class="searchbar">
+  <view class="searchbox">
+    <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
+      placeholder-style="color:#C2C2C2" style="flex:1;font-size:14px" />
+  </view>
+  <text class="search-cancel" bindtap="onCancelSearch">取消</text>
+</view>
+
+<!-- 时间筛选 -->
+<view class="card range-card" wx:if="{{!searching}}">
+  <view class="chips">
+    <text class="chip {{item.id === rangeId ? 'on' : ''}}" wx:for="{{ranges}}" wx:key="id"
+      data-id="{{item.id}}" bindtap="onRangeTap">{{item.name}}</text>
+  </view>
+  <view class="custom-range" wx:if="{{rangeId === 'custom'}}">
+    <picker mode="date" value="{{customFrom}}" bindchange="onCustomFromChange">
+      <view class="date-box">{{customFrom}}</view>
+    </picker>
+    <text class="dash">—</text>
+    <picker mode="date" value="{{customTo}}" bindchange="onCustomToChange">
+      <view class="date-box">{{customTo}}</view>
+    </picker>
+  </view>
+</view>
+
+<!-- 搜索结果 -->
+<view class="card" wx:if="{{searching}}">
+  <view class="contact-row" wx:for="{{searchResults}}" wx:key="contactId"
+    data-id="{{item.contactId}}" bindtap="goTimeline">
+    <text class="nm">{{item.name}}</text>
+    <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
+    <text class="chev">›</text>
+  </view>
+  <view class="contact-row" wx:if="{{searchResults.length === 0}}">
+    <text class="ph">没有找到相关亲友</text>
+  </view>
+</view>
+
+<!-- 统计区 -->
+<view wx:if="{{!searching}}">
+  <view class="card summary">
+    <text>{{summaryText}}</text>
+  </view>
+
+  <view class="diff-bar">
+    <text>{{diffText}}</text>
+  </view>
+
+  <view class="card" wx:if="{{rows.length > 0}}">
+    <view class="wl-row" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" bindtap="goTimeline">
+      <text class="nm">{{item.name}}</text>
+      <view class="right">
+        <text class="count">{{item.countText}}</text>
+        <text class="sep">｜</text>
+        <text class="diff">{{item.diffText}}</text>
+        <text class="chev">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{rows.length === 0}}">
+    <text class="empty-text">该时间范围内暂无往来记录</text>
+  </view>
 </view>

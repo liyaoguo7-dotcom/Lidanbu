@@ -37,7 +37,8 @@ function friendly(err) {
   if (!err) return '操作失败，请重试';
   const msg = err.message || String(err);
   // core 抛出的已是用户可读文案（errors.js），直接透出；兜底未知错误
-  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须/.test(msg)) return msg;
+  // 卖惨文案以"呜呜"开头，也须透出（此前会被吞成"操作失败"，已修复）
+  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|呜呜/.test(msg)) return msg;
   return '操作失败，请重试';
 }
 
@@ -142,6 +143,8 @@ const service = {
   getTags() { return AppConfig.tags; },
   getTagById(id) { return AppConfig.tags.find((t) => t.id === id); },
   getDefaultTagId() { return AppConfig.defaultTagId; },
+  /** 收礼类型：红包/现金/转账/微信/支付宝 */
+  getRecordTypes() { return AppConfig.recordTypes || ['红包', '现金', '转账', '微信', '支付宝']; },
   /** 标签图案：唯一映射，换文件即换图案（见 config/tag-icons.js） */
   tagIcon(tagId) {
     return tagIconPath(tagId);
@@ -155,6 +158,150 @@ const service = {
       state: core.quota.getMembershipState(user),
       quota: core.quota.getEffectiveQuota(user),
     };
+  },
+
+  // —— 拍照导入（阶段4；OCR 厂商未拍板，本轮只走 MockOCR） ——
+  /** 识别照片 → [{ name, amountFen, note, raw }]（可编辑） */
+  async recognizePhoto(imagePath, kind) {
+    try {
+      return await core.ocr.recognize(imagePath, { kind });
+    } catch (e) {
+      throw new Error(friendly(e));
+    }
+  },
+  // —— 收礼礼薄（事件）——
+  /** 收礼礼薄列表（导入前先选） */
+  async listEvents() {
+    return core.receive.listEvents(_db, _userId, _userId);
+  },
+  async createEvent({ name, tagId, date, remark }) {
+    try {
+      return await core.receive.createEvent(_db, _userId, _userId, { name, tagId, date, remark });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async updateEvent(eventId, patch) {
+    try {
+      return await core.receive.updateEvent(_db, _userId, _userId, eventId, patch);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 删除礼薄：返回 {removedRecords}（连带删除的明细条数），供弹窗展示 */
+  async deleteEvent(eventId) {
+    try {
+      return await core.receive.deleteEvent(_db, _userId, _userId, eventId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async getEvent(eventId) {
+    const col = _db.collection(core.models.COLLECTIONS.ReceiveEvent);
+    return col.findOne({ _id: eventId, ownerId: _userId });
+  },
+  /** 礼薄共计：{count, totalFen} */
+  async getEventStats(eventId) {
+    const recs = await core.receive.listRecords(_db, _userId, _userId, eventId);
+    const totalFen = recs.reduce((s, r) => s + (r.amount || 0), 0);
+    return { count: recs.length, totalFen };
+  },
+
+  // —— 收礼明细记录 ——
+  async listRecords(eventId) {
+    try {
+      return await core.receive.listRecords(_db, _userId, _userId, eventId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async createRecord(eventId, { contactId, amountFen, type, remark, date }) {
+    try {
+      return await core.receive.createRecord(_db, _userId, _userId, eventId, {
+        contactId, amount: amountFen, type, remark, date,
+      });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async updateRecord(recordId, patch) {
+    try {
+      return await core.receive.updateRecord(_db, _userId, _userId, recordId, patch);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async deleteRecord(recordId) {
+    try {
+      return await core.receive.deleteRecord(_db, _userId, _userId, recordId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async getRecord(recordId) {
+    const col = _db.collection(core.models.COLLECTIONS.ReceiveRecord);
+    return col.findOne({ _id: recordId, ownerId: _userId });
+  },
+
+  // —— 往来 ——
+  /**
+   * 往来列表：每位亲友一行 {contactId, name, count, receiveFen, giftFen, diffFen}
+   * @param {string} [ownerId] 缺省看自己账本；传他人 id 则为成员视角（只算授权部分）
+   * @param {string|{start,end}} [range] 时间范围，缺省近一年
+   */
+  async getWanglaiList({ ownerId, range } = {}) {
+    const oid = ownerId || _userId;
+    const isMember = oid !== _userId;
+    try {
+      const contacts = await core.contacts.listContacts(_db, _userId, oid);
+      const rows = [];
+      let totalReceiveFen = 0, totalGiftFen = 0;
+      for (const c of contacts) {
+        const st = isMember
+          ? await core.stats.memberStats(_db, _userId, oid, c._id, { range })
+          : await core.stats.contactStats(_db, oid, c._id, { range });
+        const count = st.receiveCount + st.giftCount;
+        if (count === 0) continue;
+        totalReceiveFen += st.receiveTotalFen;
+        totalGiftFen += st.giftTotalFen;
+        rows.push({
+          contactId: c._id, name: c.name, remark: c.remark || '',
+          count, receiveFen: st.receiveTotalFen, giftFen: st.giftTotalFen,
+          diffFen: st.diffFen,
+        });
+      }
+      // 按往来笔数倒序，笔数相同按姓名
+      rows.sort((a, b) => b.count - a.count || String(a.name).localeCompare(String(b.name)));
+      return {
+        rows, totalReceiveFen, totalGiftFen, diffFen: totalReceiveFen - totalGiftFen,
+        isMember,
+      };
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 往来页搜索：输入姓名出联系人（成员视角自动只搜可见的） */
+  async searchWanglaiContacts({ ownerId, keyword } = {}) {
+    const oid = ownerId || _userId;
+    try {
+      return await core.contacts.searchContacts(_db, _userId, oid, keyword || '');
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /**
+   * 竖线树数据（成员视角自动过滤未授权记录）
+   * @returns {items, receiveTotalFen, receiveCount, giftTotalFen, giftCount, diffFen, isMember}
+   */
+  async getTimeline({ contactId, ownerId, range } = {}) {
+    const oid = ownerId || _userId;
+    try {
+      const tl = await core.stats.memberTimeline(_db, _userId, oid, contactId, { range });
+      const c = await this.getContact(contactId, oid);
+      return { ...tl, contactName: c ? c.name : '' };
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async getContact(contactId, ownerId) {
+    const oid = ownerId || _userId;
+    const col = _db.collection(core.models.COLLECTIONS.Contact);
+    return col.findOne({ _id: contactId, ownerId: oid });
+  },
+  /**
+   * 确认写入识别结果；逐条写，首条失败即停。
+   * 成功返回 { written, total }；失败抛错（err.written/err.total 为已写入/总数），
+   * 额度类错误消息为卖惨文案，直接展示。
+   */
+  async importWrite({ kind, eventId, items }) {
+    const r = await core.importer.writeImport(_db, _userId, _userId, { kind, eventId, items });
+    if (r.rawError) {
+      const err = new Error(friendly(r.rawError));
+      err.written = r.written;
+      err.total = r.total;
+      throw err;
+    }
+    return { written: r.written, total: r.total };
   },
 
   friendly,

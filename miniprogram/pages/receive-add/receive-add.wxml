@@ -1,0 +1,26 @@
+<!-- 添加礼薄 -->
+<view class="card" style="padding-bottom:10px">
+  <tag-selector selectedId="{{tagId}}" bind:change="onTagChange" />
+</view>
+
+<view class="card">
+  <view class="form-row">
+    <text class="form-label">礼薄名称</text>
+    <input class="form-val" placeholder="请输入礼薄名称" placeholder-style="color:#C2C2C2"
+      value="{{name}}" bindinput="onNameInput" maxlength="30" />
+  </view>
+  <view class="form-row">
+    <text class="form-label">日期</text>
+    <picker mode="date" value="{{date}}" bindchange="onDateChange" style="flex:1">
+      <view class="form-val">{{date}} <text class="chev">›</text></view>
+    </picker>
+  </view>
+  <view class="form-row">
+    <text class="form-label">备注</text>
+    <input class="form-val" placeholder="请输入备注" placeholder-style="color:#C2C2C2"
+      value="{{remark}}" bindinput="onRemarkInput" />
+  </view>
+</view>
+
+<view style="height:90px"></view>
+<view class="btn-primary btn-bottom" bindtap="onSave">保存</view>

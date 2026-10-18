@@ -1,0 +1,11 @@
+/* 添加收礼记录 */
+.form-row-top { align-items: flex-start; padding-top: 14px; padding-bottom: 14px; }
+.chips { flex: 1; display: flex; flex-wrap: wrap; gap: 10px; }
+.chip {
+  padding: 8px 18px;
+  border-radius: 20px;
+  background: #F5F6F4;
+  color: #333;
+  font-size: 14px;
+}
+.chip.on { background: #F1E6D3; color: #E05353; font-weight: 700; }

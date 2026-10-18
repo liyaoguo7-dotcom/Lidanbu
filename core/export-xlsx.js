@@ -12,14 +12,17 @@
  * 成员无 export 开关直接抛"无权限"（switch-off:export），只能导出
  * 已授权事件的记录；联系人只取导出记录里出现过的（成员视角自动
  * 只含授权部分）。
- * 金额铁律：所有金额单元格调 format.formatAmount 得到两位小数文本
- * （如 "1000.00"），不用数值型避免浮点误差。
+ *
+ * 金额规则（总指挥第三轮指令）：
+ * - 金额列写数值单元格：cell.value = 分/100（单次换算），
+ *   cell.numFmt = '0.00'；用户在 Excel 里可直接 SUM，显示为 1000.00。
+ * - 求和类数字（概览 sheet 的收礼总额/送礼总额）在服务端用整数分
+ *   累加，换算（/100）只做一次，不经过浮点累加。
  */
 
 const ExcelJS = require('exceljs');
 const { exportData } = require('./export');
 const { COLLECTIONS } = require('./models');
-const { formatAmount } = require('./format');
 
 /** tagId → 标签名；取不到配置时回退为 tagId 本身 */
 function tagNameOf(tagId) {
@@ -42,6 +45,24 @@ function fmtDateTime(ts) {
 
 function boldHeader(ws) {
   ws.getRow(1).font = { bold: true };
+}
+
+/**
+ * 分 → 元：单次换算（/100 只做一次）。非法输入按 0 处理，不写 NaN 进表格。
+ * 注意：不要在这里或调用处做浮点累加；求和一律先在整数分上累加。
+ */
+function toYuan(fen) {
+  const n = Number(fen);
+  return Number.isFinite(n) ? n / 100 : 0;
+}
+
+/**
+ * 把某数据行的金额列设为数值型 + 数字格式 0.00。
+ * 按列 key 'amount' 定位，不写死列号。
+ */
+function markAmountCell(ws, row) {
+  const col = ws.columns.findIndex((c) => c.key === 'amount') + 1;
+  if (col > 0) row.getCell(col).numFmt = '0.00';
 }
 
 /**
@@ -89,15 +110,16 @@ async function buildXlsx(db, actorId, ownerId, opts = {}) {
     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
     .forEach((r) => {
       const ev = eventById[r.eventId] || {};
-      wsR.addRow({
+      const row = wsR.addRow({
         eventName: ev.name || '',
         tag: tagNameOf(ev.tagId),
         name: nameOf[r.contactId] || '',
-        amount: formatAmount(r.amount),
+        amount: toYuan(r.amount),
         type: r.type || '',
         date: r.date || '',
         remark: r.remark || '',
       });
+      markAmountCell(wsR, row);
     });
   boldHeader(wsR);
 
@@ -113,13 +135,14 @@ async function buildXlsx(db, actorId, ownerId, opts = {}) {
   [...gifts]
     .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
     .forEach((g) => {
-      wsG.addRow({
+      const row = wsG.addRow({
         name: nameOf[g.contactId] || '',
         tag: tagNameOf(g.tagId),
-        amount: formatAmount(g.amount),
+        amount: toYuan(g.amount),
         date: g.date || '',
         remark: g.remark || '',
       });
+      markAmountCell(wsG, row);
     });
   boldHeader(wsG);
 
@@ -129,18 +152,22 @@ async function buildXlsx(db, actorId, ownerId, opts = {}) {
     { header: '项目', key: 'k', width: 22 },
     { header: '数值', key: 'v', width: 30 },
   ];
-  const totalReceive = records.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-  const totalGift = gifts.reduce((s, g) => s + (Number(g.amount) || 0), 0);
+  // 总额在整数分上累加（全程整数运算，无浮点误差），换算（/100）只做一次
+  const totalReceiveFen = records.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const totalGiftFen = gifts.reduce((s, g) => s + (Number(g.amount) || 0), 0);
   [
-    ['导出时间', fmtDateTime(Date.now())],
-    ['导出范围', actorId === ownerId ? '全部' : '已授权部分'],
-    ['礼薄数', events.length],
-    ['收礼记录数', records.length],
-    ['送礼记录数', gifts.length],
-    ['联系人数（导出范围内）', contactIds.size],
-    ['收礼总额（元）', formatAmount(totalReceive)],
-    ['送礼总额（元）', formatAmount(totalGift)],
-  ].forEach(([k, v]) => wsO.addRow({ k, v }));
+    ['导出时间', fmtDateTime(Date.now()), false],
+    ['导出范围', actorId === ownerId ? '全部' : '已授权部分', false],
+    ['礼薄数', events.length, false],
+    ['收礼记录数', records.length, false],
+    ['送礼记录数', gifts.length, false],
+    ['联系人数（导出范围内）', contactIds.size, false],
+    ['收礼总额（元）', toYuan(totalReceiveFen), true],
+    ['送礼总额（元）', toYuan(totalGiftFen), true],
+  ].forEach(([k, v, isAmount]) => {
+    const row = wsO.addRow({ k, v });
+    if (isAmount) row.getCell(2).numFmt = '0.00';
+  });
   boldHeader(wsO);
 
   const buf = await wb.xlsx.writeBuffer();

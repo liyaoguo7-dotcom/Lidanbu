@@ -53,7 +53,10 @@ Page({
   },
 
   goWanglai() {
-    wx.showToast({ title: '往来竖线树（阶段2B）', icon: 'none' });
+    const g = this.data.gift;
+    if (g && g.contactId) {
+      wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${g.contactId}` });
+    }
   },
 
   goEdit() {

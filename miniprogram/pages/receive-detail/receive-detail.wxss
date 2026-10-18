@@ -1,0 +1,58 @@
+/* 礼薄详情 */
+.pat-card { text-align: center; padding: 24px 0 14px; }
+.pat-big {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: #F1E6D3;
+  margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+}
+.pat-big.baishi { background: #E8EAED; }
+.pat-img { width: 52px; height: 52px; }
+.pat-name { font-size: 14px; color: #E05353; font-weight: 700; margin-top: 8px; display: block; }
+.pat-name.baishi { color: #3B4046; }
+.event-name { font-size: 20px; font-weight: 700; margin-top: 6px; display: block; }
+.event-date { font-size: 13px; color: #C2C2C2; margin-top: 4px; display: block; }
+.summary { padding: 14px 16px; font-size: 14px; }
+.summary .red { color: #F0575A; font-weight: 600; }
+.rec-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  min-height: 60px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.rec-row:last-child { border-bottom: none; }
+.mid { flex: 1; display: flex; flex-direction: column; }
+.nm { font-size: 16px; font-weight: 600; }
+.sub { font-size: 12px; color: #C2C2C2; margin-top: 3px; }
+.amt { font-size: 16px; font-weight: 600; }
+.amt.red { color: #F0575A; }
+.empty { text-align: center; padding: 40px 0; }
+.empty-text { color: #C2C2C2; font-size: 14px; }
+/* 底部双大按钮：左删除（描边）右修改（主按钮） */
+.bottom-btns {
+  position: fixed;
+  left: 24px;
+  right: 24px;
+  bottom: 26px;
+  display: flex;
+  gap: 12px;
+}
+.btn-outline {
+  flex: 1;
+  height: 56px;
+  line-height: 54px;
+  background: #fff;
+  color: #F0575A;
+  border: 1px solid #F0575A;
+  text-align: center;
+  font-size: 17px;
+  border-radius: 28px;
+}
+.btn-half {
+  flex: 1;
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+}

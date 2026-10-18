@@ -1,8 +1,2 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
-<rect x="24" y="12" width="48" height="72" rx="9" fill="#E04B4B"/>
-<path d="M24 21 Q24 12 33 12 H63 Q72 12 72 21 V40 Q48 62 24 40 Z" fill="#B8322F"/>
-<path d="M24 40 Q48 62 72 40" fill="none" stroke="#F4B63F" stroke-width="2.2"/>
-<circle cx="48" cy="46" r="10.5" fill="#F4B63F"/><circle cx="48" cy="46" r="10.5" fill="none" stroke="#D9922B" stroke-width="1.6"/>
-<rect x="43.6" y="41.6" width="8.8" height="8.8" rx="1.2" fill="#B8322F"/>
-<path d="M36 70 h24" stroke="#F4B63F" stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
-<circle cx="31" cy="76" r="1.8" fill="#F4B63F"/><circle cx="65" cy="76" r="1.8" fill="#F4B63F"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96"><rect x="24" y="12" width="48" height="72" rx="9" fill="#EE8B87"/><path d="M24 40 Q48 62 72 40" fill="none" stroke="#FFF7EA" stroke-width="2"/>
+<circle cx="48" cy="47" r="10.5" fill="#F2D08E"/><rect x="43.5" y="42.5" width="9" height="9" rx="1.5" fill="none" stroke="#EE8B87" stroke-width="2"/></svg>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>收礼横置</title>
+<style>
+@font-face {
+  font-family: 'MaShanZheng';
+  src: url('fonts/mashanzheng.ttf') format('truetype');
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 812px; height: 375px; background: #F6F6F6;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  overflow: hidden; position: relative;
+}
+.titlebar {
+  height: 52px; background: #F0E6D4; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: 2px solid #C9A227;
+}
+.titlebar .back { position: absolute; left: 16px; font-size: 20px; color: #333; }
+.titlebar .t {
+  font-size: 20px; font-weight: 700; color: #333;
+  font-family: "Songti SC", "STSong", serif; letter-spacing: 6px;
+}
+.subbar {
+  height: 40px; display: flex; align-items: center; justify-content: center;
+  gap: 18px; background: #FBF7EE; border-bottom: 1px solid #EFE6D2;
+  font-size: 14px; color: #8A7A5C;
+}
+.subbar .total { color: #CE2F23; font-family: 'MaShanZheng', serif; font-size: 18px; }
+.subbar .total.baishi { color: #3B4046; }
+.strip-wrap { position: relative; height: 283px; }
+.strip {
+  display: flex; flex-direction: row-reverse; gap: 14px;
+  padding: 22px 30px; height: 100%; align-items: stretch;
+}
+.col {
+  width: 116px; background: #FFFFFF; border-radius: 12px;
+  border-top: 3px solid #C9A227;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 12px 6px;
+}
+.col .name {
+  font-family: 'MaShanZheng', "Kaiti SC", serif; font-size: 26px; color: #CE2F23;
+  line-height: 1.2; text-align: center;
+}
+.col .div { color: #C9A227; font-size: 12px; letter-spacing: 4px; }
+.col .amt {
+  font-family: 'MaShanZheng', "Kaiti SC", serif; font-size: 21px; color: #CE2F23;
+  line-height: 1.25; text-align: center;
+}
+.col.baishi .name, .col.baishi .amt { color: #3B4046; }
+.col.baishi { border-top-color: #9AA0A8; }
+.col .tag {
+  font-size: 11px; color: #B0B0B0; border: 1px solid #E2E2E2; border-radius: 8px;
+  padding: 1px 8px;
+}
+.col.baishi .tag { color: #3B4046; border-color: #9AA0A8; }
+.fade {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 90px;
+  background: linear-gradient(to right, rgba(246,246,246,1), rgba(246,246,246,0));
+  display: flex; align-items: center; padding-left: 8px; pointer-events: none;
+}
+.swipe-hint {
+  background: rgba(206,47,35,0.9); color: #fff; font-size: 12px;
+  border-radius: 14px; padding: 5px 10px; white-space: nowrap;
+}
+.swipe-hint.baishi-page { background: rgba(59,64,70,0.85); }
+.seq { position: absolute; right: 10px; bottom: 8px; font-size: 11px; color: #C2C2C2; }
+</style></head>
+<body>
+<div class="titlebar"><span class="back">‹</span><span class="t">横 置 礼 单 本</span></div>
+<div class="subbar"><span>张三的婚礼</span><span>收礼</span><span>共计 <span class="total">壹万伍仟叁佰捌拾元整</span></span></div>
+<div class="strip-wrap">
+  <div class="strip">
+<div class="col"><div class="name">张三</div><div class="div">❖ ❖ ❖</div><div class="amt">壹仟元整</div><div class="tag">结婚</div></div>
+<div class="col"><div class="name">李四</div><div class="div">❖ ❖ ❖</div><div class="amt">贰仟元整</div><div class="tag">结婚</div></div>
+<div class="col"><div class="name">王五</div><div class="div">❖ ❖ ❖</div><div class="amt">伍佰元整</div><div class="tag">结婚</div></div>
+<div class="col"><div class="name">赵六</div><div class="div">❖ ❖ ❖</div><div class="amt">壹仟元整</div><div class="tag">结婚</div></div>
+<div class="col"><div class="name">刘七</div><div class="div">❖ ❖ ❖</div><div class="amt">捌佰捌拾元整</div><div class="tag">结婚</div></div>
+<div class="col"><div class="name">陈八</div><div class="div">❖ ❖ ❖</div><div class="amt">壹万元整</div><div class="tag">结婚</div></div>
+  </div>
+  <div class="fade"><span class="swipe-hint">〈 左右滑动</span></div>
+  <div class="seq">按登记先后 · 从右到左排列</div>
+</div>
+</body></html>

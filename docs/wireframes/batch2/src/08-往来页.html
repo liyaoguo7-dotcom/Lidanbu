@@ -39,17 +39,25 @@ body{width:375px;margin:0;background:#F6F6F6;font-family:-apple-system,"PingFang
 .vtree{position:relative;margin:12px;padding:0 0 20px 90px}
 .vtree::before{content:"";position:absolute;left:80px;top:8px;bottom:8px;width:2px;background:#F0E6D4}
 .vnode{position:relative;padding:10px 0 10px 16px}
-.vnode::before{content:"";position:absolute;left:-16px;top:16px;width:10px;height:10px;border-radius:50%;background:#F0575A;transform:translateX(-50%)}
+.vnode::before{content:"";position:absolute;left:-16px;top:16px;width:10px;height:10px;border-radius:50%;background:#CFCFCF;transform:translateX(-50%)}
 .vnode .vd{position:absolute;left:-90px;top:12px;width:62px;text-align:right;font-size:12px;color:#999}
-.vnode .va{font-size:15px;font-weight:600}
-.vnode .va.in{color:#E05353}
-.vnode .va.out{color:#3B7DD8}
+.vnode .va{font-size:15px;font-weight:600;color:#333}
 .vnode .vn{font-size:13px;color:#666;margin-top:2px}
 .tabbar{position:absolute;left:0;bottom:0;width:375px;height:62px;display:flex;border-top:1px solid #F0F0F0;background:#fff;z-index:10}
 .tab{flex:1;text-align:center;font-size:11px;color:#999;padding-top:9px;line-height:1.5}
-.tab .ti{font-size:20px;display:block}
+.tab .ti{width:24px;height:24px;display:block;margin:0 auto 3px}
 .tab.active{color:#F0575A}
+.timerow{display:flex;justify-content:center;gap:8px;padding:10px 12px 2px}
+.tchip{font-size:13px;color:#666;border:1px solid #E5E5E5;border-radius:15px;padding:5px 13px;background:#fff}
+.tchip.on{color:#E05353;border-color:#E05353}
+.daterange{text-align:center;font-size:12px;color:#999;padding:6px 0 4px}
+.diff div{margin:3px 0}
 </style></head><body><div class="page">
-<div class="wf-titlebar">往来<span class="capsule"></span></div>
-<div class="searchbar"><div class="searchbox">搜索姓名</div><span class="search-cancel">取消</span></div><div class="card" style="padding:14px 16px;font-size:14px">共计：<span style="font-weight:600">12 位亲友</span></div><div class="diff">人情差额：收到 8,800 － 送出 2,600 ＝ +6,200</div><div class="card"><div class="row"><div style="flex:1;font-size:16px">张三</div><div style="font-size:13px;color:#C2C2C2">3笔 ｜ +2,000</div><span class="chev" style="margin-left:8px">›</span></div><div class="row"><div style="flex:1;font-size:16px">李五</div><div style="font-size:13px;color:#C2C2C2">2笔 ｜ -400</div><span class="chev" style="margin-left:8px">›</span></div><div class="row"><div style="flex:1;font-size:16px">王二麻</div><div style="font-size:13px;color:#C2C2C2">4笔 ｜ +1,600</div><span class="chev" style="margin-left:8px">›</span></div></div><div class="tabbar"><div class="tab"><span class="ti">🏠</span>首页</div><div class="tab active"><span class="ti">📊</span>往来</div><div class="tab"><span class="ti">👥</span>亲友录</div><div class="tab"><span class="ti">👤</span>我的</div></div>
-</div></body></html>
+<div class="wf-titlebar">人情往来<span class="capsule"></span></div>
+<div class="searchbar"><div class="searchbox">搜索姓名</div><span class="search-cancel">取消</span></div>
+<div class="timerow"><span class="tchip">今日</span><span class="tchip on">本月</span><span class="tchip">今年</span><span class="tchip">近一年</span><span class="tchip">自定义</span></div>
+<div class="daterange">2026.10.01 至 2026.10.16</div>
+<div class="diff"><div>收到总额 8800.00</div><div>送出总额 2600.00</div><div>差额 6200.00</div></div>
+<div class="card" style="padding:14px 16px;font-size:14px">共计：<span style="font-weight:600">12 位亲友</span></div>
+<div class="card"><div class="row"><div style="flex:1;font-size:16px">张三</div><div style="font-size:13px;color:#C2C2C2">3笔 ｜ +2000.00</div><span class="chev" style="margin-left:8px">›</span></div><div class="row"><div style="flex:1;font-size:16px">李五</div><div style="font-size:13px;color:#C2C2C2">2笔 ｜ -400.00</div><span class="chev" style="margin-left:8px">›</span></div><div class="row"><div style="flex:1;font-size:16px">王二麻</div><div style="font-size:13px;color:#C2C2C2">4笔 ｜ +1600.00</div><span class="chev" style="margin-left:8px">›</span></div></div>
+<div class="tabbar"><div class="tab"><img class="ti" src="tabbar/home.png">首页</div><div class="tab active"><img class="ti" src="tabbar/wanglai-active.png">往来</div><div class="tab"><img class="ti" src="tabbar/contacts.png">亲友录</div><div class="tab"><img class="ti" src="tabbar/mine.png">我的</div></div></div></body></html>

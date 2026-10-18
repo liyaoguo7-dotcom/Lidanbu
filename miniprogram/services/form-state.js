@@ -53,6 +53,8 @@ function wxStorage() {
 }
 
 const GIFT_ADD_KEY = 'lidanbu_form_gift_add';
+const RECEIVE_ADD_KEY = 'lidanbu_form_receive_add';
+const RECORD_ADD_KEY = 'lidanbu_form_record_add';
 const PICK_KEY = 'lidanbu_pending_pick';
 
 /** 选择亲友页回传：暂存待领取的选项 */
@@ -74,4 +76,4 @@ function takePick(storage) {
   }
 }
 
-module.exports = { saveForm, restoreForm, clearForm, wxStorage, GIFT_ADD_KEY, savePick, takePick };
+module.exports = { saveForm, restoreForm, clearForm, wxStorage, GIFT_ADD_KEY, RECEIVE_ADD_KEY, RECORD_ADD_KEY, savePick, takePick };

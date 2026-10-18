@@ -1,4 +1,4 @@
-/** 导出 xlsx 生成引擎测试（阶段3）：真文件 + 成员过滤 + 金额两位小数 */
+/** 导出 xlsx 生成引擎测试（阶段3）：真文件 + 成员过滤 + 金额数值型 */
 const { test, assert } = require('./fw');
 const ExcelJS = require('exceljs');
 const core = require('../core');
@@ -44,7 +44,7 @@ test('主人导出：Buffer 非空、PK 头、3 个 sheet', async () => {
   assert.eq(names.join(','), '收礼,送礼,概览', 'sheet 名与顺序');
 });
 
-test('主人导出：行数、金额两位小数文本、概览数字', async () => {
+test('主人导出：行数、金额数值型 + 0.00 格式、概览数字', async () => {
   const db = await newDB();
   const { owner } = await setup(db);
   const wb = await loadBuf(await buildXlsx(db, owner, owner));
@@ -55,14 +55,21 @@ test('主人导出：行数、金额两位小数文本、概览数字', async ()
   assert.eq(wsR.getCell('A2').value, '李四的寿宴', '礼薄名称');
   assert.eq(wsR.getCell('B2').value, '大寿', '场合标签名');
   assert.eq(wsR.getCell('C2').value, '李四', '姓名');
-  assert.eq(wsR.getCell('D2').value, '200.00', '金额两位小数文本');
+  const d2 = wsR.getCell('D2');
+  assert.eq(typeof d2.value, 'number', '金额是数值型不是文本');
+  assert.eq(d2.value, 200, '金额值=20000分/100');
+  assert.eq(d2.numFmt, '0.00', '数字格式 0.00');
   assert.eq(wsR.getCell('E2').value, '微信', '类型');
-  assert.eq(wsR.getCell('D3').value, '1000.00', '第二条金额');
-  assert.eq(typeof wsR.getCell('D2').value, 'string', '金额是文本不是数值');
+  const d3 = wsR.getCell('D3');
+  assert.eq(d3.value, 1000, '第二条金额');
+  assert.eq(d3.numFmt, '0.00', '数字格式');
 
   const wsG = sheet(wb, '送礼');
   assert.eq(wsG.rowCount, 3, '送礼=表头+2条');
-  assert.eq(wsG.getCell('C2').value, '300.00', '送礼金额（日期倒序，9-02 在前）');
+  const g2 = wsG.getCell('C2');
+  assert.eq(typeof g2.value, 'number', '送礼金额数值型');
+  assert.eq(g2.value, 300, '送礼金额（日期倒序，9-02 在前）');
+  assert.eq(g2.numFmt, '0.00', '数字格式');
   assert.eq(wsG.getCell('B2').value, '结婚', '送礼场合');
 
   const wsO = sheet(wb, '概览');
@@ -72,8 +79,43 @@ test('主人导出：行数、金额两位小数文本、概览数字', async ()
   assert.eq(v('B5'), 2, '收礼记录数');
   assert.eq(v('B6'), 2, '送礼记录数');
   assert.eq(v('B7'), 2, '联系人数');
-  assert.eq(v('B8'), '1200.00', '收礼总额');
-  assert.eq(v('B9'), '800.00', '送礼总额');
+  assert.eq(v('B8'), 1200, '收礼总额=120000分/100');
+  assert.eq(wsO.getCell('B8').numFmt, '0.00', '总额数字格式');
+  assert.eq(v('B9'), 800, '送礼总额');
+  assert.eq(wsO.getCell('B9').numFmt, '0.00', '总额数字格式');
+});
+
+test('金额列：SUM 公式可求和、无浮点误差（100005分→1000.05）', async () => {
+  const db = await newDB();
+  const { owner } = await setup(db);
+  // 加一条 100005 分的记录，专测浮点敏感值
+  const c = await core.contacts.createContact(db, owner, owner, { name: '王五' });
+  const ev = await core.receive.createEvent(db, owner, owner, { name: '王五的满月宴', tagId: 'shengzi', date: '2026-10-03' });
+  await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100005, type: '现金', date: '2026-10-03' });
+
+  const wb = await loadBuf(await buildXlsx(db, owner, owner));
+  const wsR = sheet(wb, '收礼');
+  // 日期倒序：10-03 的王五在最前（第 2 行）
+  const d2 = wsR.getCell('D2');
+  assert.eq(typeof d2.value, 'number', '数值型');
+  assert.eq(d2.numFmt, '0.00', '数字格式');
+  assert(d2.value === 100005 / 100, `值与存储的分一致（实际${d2.value}）`);
+  assert(d2.value === 1000.05, '无浮点误差：100005分 → 1000.05');
+
+  // 在工作表内对金额列写 SUM 公式：公式落盘后重读，断言存在且引用范围正确
+  const last = wsR.rowCount; // 表头+3条=4
+  const range = `D2:D${last}`;
+  wsR.getCell('H2').value = { formula: `SUM(${range})` };
+  const buf2 = await wb.xlsx.writeBuffer();
+  const wb2 = await loadBuf(Buffer.isBuffer(buf2) ? buf2 : Buffer.from(buf2));
+  const f = wb2.getWorksheet('收礼').getCell('H2').value;
+  assert(f && f.formula === `SUM(${range})`, 'SUM 公式存在且引用金额列全范围');
+
+  // 值校验：按列求和，与按分累加的期望一致
+  let sum = 0;
+  const wsR2 = wb2.getWorksheet('收礼');
+  for (let r = 2; r <= last; r++) sum += wsR2.getCell(`D${r}`).value;
+  assert(sum === (100005 + 20000 + 100000) / 100, '列内求和值正确');
 });
 
 test('成员无 export 开关：被拒绝', async () => {
@@ -99,7 +141,9 @@ test('成员有 export 开关：只能导出授权事件，概览只算授权部
   const wsR = sheet(wb, '收礼');
   assert.eq(wsR.rowCount, 2, '只含授权事件的1条收礼');
   assert.eq(wsR.getCell('A2').value, '张三的婚宴', '未授权的寿宴不在文件里');
-  assert.eq(wsR.getCell('D2').value, '1000.00', '金额两位小数');
+  const d2 = wsR.getCell('D2');
+  assert.eq(d2.value, 1000, '金额数值');
+  assert.eq(d2.numFmt, '0.00', '数字格式');
 
   const wsG = sheet(wb, '送礼');
   assert.eq(wsG.rowCount, 3, 'scope.gifts=true 时送礼全含');
@@ -108,7 +152,8 @@ test('成员有 export 开关：只能导出授权事件，概览只算授权部
   assert.eq(wsO.getCell('B3').value, '已授权部分', '导出范围标注');
   assert.eq(wsO.getCell('B4').value, 1, '礼薄数只算授权');
   assert.eq(wsO.getCell('B5').value, 1, '收礼记录数只算授权');
-  assert.eq(wsO.getCell('B8').value, '1000.00', '收礼总额只算授权');
+  assert.eq(wsO.getCell('B8').value, 1000, '收礼总额只算授权');
+  assert.eq(wsO.getCell('B8').numFmt, '0.00', '总额数字格式');
 });
 
 test('成员 scope.gifts=false：送礼 sheet 只有表头', async () => {

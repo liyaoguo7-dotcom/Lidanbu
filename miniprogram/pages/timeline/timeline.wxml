@@ -1,0 +1,26 @@
+<!-- 往来竖线树 -->
+<view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
+
+<view class="diff-bar">
+  <text>{{diffText}}</text>
+</view>
+
+<view class="card timeline-card" wx:if="{{items.length > 0}}">
+  <view class="tl-item" wx:for="{{items}}" wx:key="recordId">
+    <text class="tl-date">{{item.date}}</text>
+    <view class="tl-dot"></view>
+    <view class="tl-body">
+      <text class="tl-amt">{{item.amountText}}</text>
+      <text class="tl-desc">{{item.desc}}</text>
+    </view>
+    <text class="tl-pen" data-idx="{{index}}" bindtap="onPenTap">✎</text>
+  </view>
+</view>
+
+<view class="empty" wx:if="{{items.length === 0}}">
+  <text class="empty-text">暂无往来记录</text>
+</view>
+
+<!-- 统一删除弹窗 -->
+<confirm-modal show="{{showDelModal}}" title="{{delTitle}}" content="{{delContent}}"
+  bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />

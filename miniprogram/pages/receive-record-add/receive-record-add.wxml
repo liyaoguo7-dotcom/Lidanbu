@@ -1,0 +1,34 @@
+<!-- 添加收礼记录 -->
+<view class="card">
+  <view class="form-row" bindtap="goChooseContact">
+    <text class="form-label">姓名</text>
+    <text class="form-val {{contactName ? '' : 'ph'}}">{{contactName || '请选择亲友'}}</text>
+    <text class="chev">›</text>
+  </view>
+  <view class="form-row form-row-top">
+    <text class="form-label">类型</text>
+    <view class="chips">
+      <text class="chip {{item === type ? 'on' : ''}}" wx:for="{{types}}" wx:key="*this"
+        data-type="{{item}}" bindtap="onTypeTap">{{item}}</text>
+    </view>
+  </view>
+  <view class="form-row">
+    <text class="form-label">日期</text>
+    <picker mode="date" value="{{date}}" bindchange="onDateChange" style="flex:1">
+      <view class="form-val">{{date}} <text class="chev">›</text></view>
+    </picker>
+  </view>
+  <view class="form-row">
+    <text class="form-label">金额</text>
+    <input class="form-val" type="digit" placeholder="请输入金额" placeholder-style="color:#C2C2C2"
+      value="{{amount}}" bindinput="onAmountInput" bindblur="onAmountBlur" />
+  </view>
+  <view class="form-row">
+    <text class="form-label">备注</text>
+    <input class="form-val" placeholder="请输入备注" placeholder-style="color:#C2C2C2"
+      value="{{remark}}" bindinput="onRemarkInput" />
+  </view>
+</view>
+
+<view style="height:90px"></view>
+<view class="btn-primary btn-bottom" bindtap="onSave">保存</view>

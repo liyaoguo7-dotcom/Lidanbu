@@ -86,7 +86,7 @@
   border-top: 1px solid var(--divider); background: #fff;
 }
 .wf-tab { flex: 1; text-align: center; font-size: 11px; color: #999; padding-top: 9px; line-height: 1.5; }
-.wf-tab .ti { font-size: 20px; display: block; }
+.wf-tab .ti { width: 24px; height: 24px; display: block; margin: 0 auto 3px; }
 .wf-tab.active { color: var(--tab-active); }
 
 /* —— 标签名（宋体风格） —— */

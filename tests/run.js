@@ -11,6 +11,7 @@ require('./test-wxstorage');
 require('./test-form-state');
 require('./test-format');
 require('./test-amount-scan');
+require('./test-import');
 require('./test-export-xlsx');
 require('./test-wanglai');
 require('./test-admin');

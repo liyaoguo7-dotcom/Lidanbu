@@ -1,0 +1,27 @@
+<!-- 拍照导入（收礼）：先选礼薄 -->
+<view class="tip"><text>📢</text><text style="margin-left:6px">收礼要先选好礼薄再拍照，识别结果会记进这本礼薄</text></view>
+
+<view class="card">
+  <view class="card-title">选择礼薄</view>
+  <view wx:for="{{events}}" wx:key="_id" class="form-row" data-id="{{item._id}}" bindtap="pickEvent">
+    <text class="form-val">{{item.name}}</text>
+    <text class="form-val ph" style="flex:none;margin-right:8px">{{item.date}}</text>
+    <text class="chev">›</text>
+  </view>
+  <view class="form-row" wx:if="{{events.length === 0}}">
+    <text class="form-val ph">还没有礼薄，在下方新建一个吧</text>
+  </view>
+</view>
+
+<view class="card">
+  <view class="card-title">新建礼薄</view>
+  <tag-selector selectedId="{{newTagId}}" bind:change="onTagChange" />
+  <view class="form-row">
+    <text class="form-label">名称</text>
+    <input class="form-val" placeholder="如：张三的婚礼" placeholder-style="color:#C2C2C2"
+      value="{{newName}}" bindinput="onNameInput" />
+  </view>
+</view>
+
+<view style="height:90px"></view>
+<view class="btn-primary btn-bottom" bindtap="createAndPhoto">创建并拍照</view>

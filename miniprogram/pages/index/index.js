@@ -53,7 +53,7 @@ Page({
       return;
     }
     if (id === 'share') { wx.showToast({ title: '家庭共享（阶段3）', icon: 'none' }); return; }
-    if (id === 'photo') { wx.showToast({ title: '拍照导入（阶段4）', icon: 'none' }); return; }
+    if (id === 'photo') { wx.navigateTo({ url: '/pages/import/import-home' }); return; }
     if (id === 'invite') { wx.showToast({ title: '电子请柬（阶段4）', icon: 'none' }); return; }
     if (id === 'export') { wx.showToast({ title: '导出备份（阶段3）', icon: 'none' }); return; }
   },
@@ -63,6 +63,6 @@ Page({
   },
 
   goReceive() {
-    wx.showToast({ title: '收礼（阶段2B）', icon: 'none' });
+    wx.navigateTo({ url: '/pages/receive/receive' });
   },
 });

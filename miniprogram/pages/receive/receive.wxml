@@ -1,0 +1,25 @@
+<!-- 收礼主页 -->
+<view class="card summary" wx:if="{{hasEvents}}">
+  <text>共计：</text><text class="red">{{totalCount}} 本 {{totalText}}</text>
+</view>
+
+<view class="card" wx:if="{{hasEvents}}">
+  <view class="event-row" wx:for="{{events}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
+    <view class="pat {{item.isBaishi ? 'baishi' : ''}}">
+      <image class="pat-img" src="{{item.icon}}" mode="aspectFit" />
+    </view>
+    <view class="mid">
+      <text class="nm">{{item.name}}</text>
+      <text class="sub">{{item.sub}}</text>
+    </view>
+    <text class="amt red">{{item.amountText}}</text>
+  </view>
+</view>
+
+<view class="empty" wx:if="{{!hasEvents}}">
+  <text class="empty-icon">📁</text>
+  <text class="empty-text">还没有记录，请点击下方红色＋按钮添加</text>
+  <text class="empty-sample" bindtap="goSample">点击查看示例</text>
+</view>
+
+<view class="fab" bindtap="goAdd">＋</view>

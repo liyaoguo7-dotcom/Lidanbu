@@ -1,0 +1,102 @@
+/**
+ * 礼单簿 · 修改收礼记录（阶段2 2B，仿 gift-edit）
+ * 表单预填（类型/日期/姓名/金额/备注）；保存走 core.updateRecord。
+ */
+const dataService = require('../../services/data-service.js');
+const { formatAmount, parseAmountToFen } = require('../../core/format.js');
+const { wxStorage, takePick } = require('../../services/form-state.js');
+
+Page({
+  data: {
+    types: [],
+    type: '',
+    date: '',
+    contactId: '',
+    contactName: '',
+    amount: '',
+    remark: '',
+  },
+
+  async onLoad(options) {
+    await dataService.init();
+    this.recordId = options.id;
+    const r = await dataService.getRecord(this.recordId);
+    if (!r) {
+      wx.showToast({ title: '记录不存在', icon: 'none' });
+      setTimeout(() => wx.navigateBack(), 800);
+      return;
+    }
+    const c = await dataService.getContact(r.contactId);
+    this.setData({
+      types: dataService.getRecordTypes(),
+      type: r.type || '微信',
+      date: r.date || '',
+      contactId: r.contactId,
+      contactName: c ? c.name : '—',
+      amount: formatAmount(r.amount || 0), // 回显两位小数
+      remark: r.remark || '',
+    });
+  },
+
+  async onShow() {
+    const pick = takePick(wxStorage());
+    if (pick) {
+      this.setData({ contactId: pick.contactId, contactName: pick.contactName });
+    }
+  },
+
+  onTypeTap(e) {
+    this.setData({ type: e.currentTarget.dataset.type });
+  },
+
+  onDateChange(e) {
+    this.setData({ date: e.detail.value });
+  },
+
+  onAmountInput(e) {
+    let v = (e.detail.value || '').replace(/[^\d.]/g, '');
+    const parts = v.split('.');
+    if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+    this.setData({ amount: v });
+  },
+
+  onAmountBlur() {
+    const raw = (this.data.amount || '').trim();
+    if (!raw) return;
+    const fen = parseAmountToFen(raw);
+    if (fen === null) {
+      wx.showToast({ title: '请输入正确的金额', icon: 'none' });
+      return;
+    }
+    this.setData({ amount: formatAmount(fen) });
+  },
+
+  onRemarkInput(e) {
+    this.setData({ remark: e.detail.value });
+  },
+
+  goChooseContact() {
+    wx.navigateTo({ url: '/pages/choose-contact/choose-contact?from=receive-record-edit' });
+  },
+
+  async onSave() {
+    const fen = parseAmountToFen(this.data.amount);
+    if (fen === null) {
+      wx.showToast({ title: '请输入正确的金额', icon: 'none' });
+      return;
+    }
+    try {
+      await dataService.updateRecord(this.recordId, {
+        type: this.data.type,
+        date: this.data.date,
+        contactId: this.data.contactId,
+        amount: fen,
+        remark: (this.data.remark || '').trim(),
+      });
+      wx.showToast({ title: '已保存', icon: 'success' });
+      setTimeout(() => wx.navigateBack(), 600);
+    } catch (e) {
+      wx.showModal({ title: '提示', content: e.message, showCancel: false });
+    }
+  },
+});

@@ -1,0 +1,27 @@
+/* 拍照导入首页：左右两张大卡（沿用首页风格，无多余文字） */
+.kind-row {
+  display: flex;
+  padding: 12px;
+  gap: 12px;
+}
+.kind-card {
+  flex: 1;
+  border-radius: 16px;
+  padding: 34px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.kind-card.gift { background: linear-gradient(135deg, #F67070, #F0575A); }
+.kind-card.receive { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }
+.kind-name {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 4px;
+}
+.kind-desc {
+  color: rgba(255,255,255,.85);
+  font-size: 12px;
+  margin-top: 8px;
+}

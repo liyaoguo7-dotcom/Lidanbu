@@ -74,8 +74,11 @@ Page({
   },
 
   goWanglai() {
+    const id = this.data.sheetId;
     this.closeSheet();
-    wx.showToast({ title: '往来竖线树（阶段2B）', icon: 'none' });
+    if (id) {
+      wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${id}` });
+    }
   },
 
   goEdit() {

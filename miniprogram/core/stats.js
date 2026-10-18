@@ -120,8 +120,27 @@ async function getContactTimeline(db, viewerId, ownerId, contactId) {
 module.exports = {
   resolveRange, resolveRangeOpt,
   getWanglaiStats, getContactTimeline, visibleRecords,
-  contactStats, timeline, memberStats, findContactsByName,
+  contactStats, timeline, memberStats, memberTimeline, findContactsByName,
 };
+
+/**
+ * 成员视角的竖线树（只含已授权给 actorId 的记录）
+ * - 主人视角：等价于 timeline()，isMember:false
+ * - 成员：收礼只含授权事件，送礼看 scope.gifts；无权限抛 errors.permDenied
+ * @returns 同 timeline，另带 isMember
+ */
+async function memberTimeline(db, actorId, ownerId, contactId, opts = {}) {
+  const stats = await memberStats(db, actorId, ownerId, contactId, opts);
+  const full = await timeline(db, ownerId, contactId, opts);
+  if (!stats.isMember) return { ...full, isMember: false };
+  const pre = await authz.checkMemberAccess(db, actorId, ownerId);
+  const eventIds = (pre.ok && pre.scope.events) || [];
+  const giftsOk = !!(pre.ok && pre.scope.gifts);
+  const items = full.items.filter((it) => (
+    it.type === 'receive' ? eventIds.includes(it.eventId) : giftsOk
+  ));
+  return { ...stats, items, isMember: true };
+}
 
 /**
  * 时间范围参数归一化（2B 往来页/竖线树）
@@ -188,7 +207,7 @@ async function timeline(db, ownerId, contactId, opts = {}) {
     items.push({
       type: 'receive', date: r.date, amountFen: r.amount,
       tagId: ev.tagId || '', tagName: tagNameOf(ev.tagId),
-      eventName: ev.name || '', note: r.remark || '',
+      eventName: ev.name || '', eventId: r.eventId || '', note: r.remark || '',
       payType: r.type || '', recordId: r._id, kind: 'receiveRecord',
       createdAt: r.createdAt || 0,
     });

@@ -1,0 +1,48 @@
+<!-- 拍照导入：识别结果核对 -->
+<view class="card">
+  <view class="photo-row" bindtap="previewPhoto">
+    <image class="photo-thumb" src="{{photoPath}}" mode="aspectFill" />
+    <view class="photo-meta">
+      <text class="photo-title">原图对照</text>
+      <text class="photo-sub">{{kindLabel}}{{eventName ? ' · ' + eventName : ''}} · 点图片放大看</text>
+    </view>
+    <text class="chev">›</text>
+  </view>
+</view>
+
+<view class="tip"><text>📢</text><text style="margin-left:6px">识别结果可直接改：姓名、金额、备注都能改；错的删掉，不够再补录。确认无误点底部"确认写入"。</text></view>
+
+<view wx:for="{{items}}" wx:key="index" class="card item-card">
+  <view class="item-head">
+    <text class="item-no">第{{index + 1}}条</text>
+    <text class="item-del" data-i="{{index}}" bindtap="onDeleteItem">删除</text>
+  </view>
+  <view class="form-row">
+    <text class="form-label">姓名</text>
+    <input class="form-val" placeholder="请输入姓名" placeholder-style="color:#C2C2C2"
+      value="{{item.name}}" data-i="{{index}}" bindinput="onNameInput" bindblur="onNameBlur" />
+  </view>
+  <view class="unknown-row" wx:if="{{item.unknown}}">
+    <text class="unknown-hint">「{{item.name}}」不在亲友录</text>
+    <text class="unknown-btn" data-i="{{index}}" bindtap="onBuildContact">先建亲友</text>
+  </view>
+  <view class="form-row">
+    <text class="form-label">金额</text>
+    <input class="form-val" type="digit" placeholder="请输入金额" placeholder-style="color:#C2C2C2"
+      value="{{item.amountText}}" data-i="{{index}}" bindinput="onAmountInput" bindblur="onAmountBlur" />
+  </view>
+  <view class="form-row">
+    <text class="form-label">备注</text>
+    <input class="form-val" placeholder="可不填" placeholder-style="color:#C2C2C2"
+      value="{{item.note}}" data-i="{{index}}" bindinput="onNoteInput" />
+  </view>
+</view>
+
+<view class="add-row" bindtap="onAddItem">
+  <text class="add-plus">＋</text><text>补录一条</text>
+</view>
+
+<view style="height:90px"></view>
+<view class="btn-primary btn-bottom" bindtap="onConfirmWrite">确认写入</view>
+
+<contact-sheet show="{{addSheetOpen}}" bind:confirm="onAddConfirm" bind:cancel="onAddCancel" />
