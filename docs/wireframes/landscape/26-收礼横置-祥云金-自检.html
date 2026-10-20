@@ -1,0 +1,80 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><style>@font-face{font-family:'MSZ';src:url('../fonts-candidates/render/MSZ.woff2') format('woff2')}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:812px;height:375px;font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;overflow:hidden;background:#E9E2D2;position:relative}
+.nav{height:46px;background:#F0E6D4;display:flex;align-items:center;padding:0 14px;color:#333333}
+.nav .back{font-size:22px;width:60px}
+.nav .title{flex:1;text-align:center;font-size:19px;letter-spacing:6px;font-weight:bold}
+.nav .stylebtn{width:60px;font-size:14px;border:1px solid #333333;border-radius:14px;padding:3px 0;text-align:center;opacity:.85}
+.subbar{height:32px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;color:#2B2B2B;background:transparent}
+.subbar img{width:22px;height:22px}
+.paper{position:relative;margin:2px 10px 0 10px;height:243px;background:#F8F1DC;border:3px double #A67C2E;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27150%27%20height%3D%2790%27%3E%3Cpath%20d%3D%27M18%2062%20q4%20-26%2024%20-28%20q16%20-2%2018%2012%20q2%2011%20-9%2015%20q-9%203%20-16%20-3%27%20fill%3D%27none%27%20stroke%3D%27%238A6420%27%20stroke-opacity%3D%270.16%27%20stroke-width%3D%272%27%2F%3E%3Cpath%20d%3D%27M95%2030%20q10%20-14%2026%20-10%20q12%203%2010%2014%20q-2%208%20-12%208%27%20fill%3D%27none%27%20stroke%3D%27%238A6420%27%20stroke-opacity%3D%270.13%27%20stroke-width%3D%271.8%27%2F%3E%3Ccircle%20cx%3D%27130%27%20cy%3D%2770%27%20r%3D%272.5%27%20fill%3D%27%238A6420%27%20fill-opacity%3D%270.14%27%2F%3E%3C%2Fsvg%3E");}
+.paper .corner{position:absolute;width:30px;height:30px;opacity:.9}
+.c-tl{top:4px;left:4px}.c-tr{top:4px;right:4px;transform:rotate(90deg)}
+.c-br{bottom:4px;right:4px;transform:rotate(180deg)}.c-bl{bottom:4px;left:4px;transform:rotate(270deg)}
+.cols{position:absolute;inset:12px 16px;display:flex;flex-direction:row-reverse;height:219px}
+.col{flex:1;display:flex;flex-direction:column;border-left:1px solid #8A6420;padding:6px 2px;position:relative;min-width:0}
+.col:first-child{border-left:none}
+.col.white{border-left-color:#3B4046}
+.col.white::after{content:'';position:absolute;top:0;right:0;bottom:0;width:1px;background:#3B4046}
+.cname{height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'MSZ';color:#2B2B2B}
+.cname span{display:block;line-height:1.12;font-size:21px}
+.cname.n4 span{font-size:19px}.cname.n4{gap:1px}
+.cname.n2,.cname.n3{gap:9px}
+.cname.n5 span{font-size:15px}.cname.n5{gap:2px}
+.cmid{height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.cmid span{display:block;font-size:17px;font-weight:bold;font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;color:#8A6420;line-height:1.1}
+.camt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:5px;font-family:'MSZ';color:#2B2B2B}
+.camt span{display:block;line-height:1.12;font-size:16px}
+.camt.l56 span{font-size:13.5px}.camt.l7 span{font-size:11px}
+.col.white .cname,.col.white .camt{color:#222}.col.white .cmid span{color:#222}
+.footer{height:58px;position:relative;text-align:center}
+.plus{width:38px;height:38px;margin:5px auto 0;border-radius:50%;background:#E05353;color:#fff;font-size:26px;line-height:38px;text-align:center;font-weight:bold}
+.swipe{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:11px;color:#B9B2A0;letter-spacing:2px}
+.hl{outline:3px solid #E8C96A;outline-offset:-3px;background:rgba(232,201,106,.12)}
+.sheetmask{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:#fff;border-radius:14px 14px 0 0;padding:14px 26px 12px 26px}
+.sheet h3{font-size:16px;margin-bottom:8px;text-align:center}
+.kv{display:flex;font-size:14px;padding:5px 0;border-bottom:1px solid #F0F0F0}
+.kv .k{width:90px;color:#888}.kv .v{flex:1;color:#333}
+.sheetbtns{display:flex;gap:12px;margin-top:12px}
+.sheetbtns div{flex:1;text-align:center;padding:9px 0;border-radius:20px;font-size:14px}
+.b1{background:#E05353;color:#fff}.b2{border:1px solid #E05353;color:#E05353}.b3{background:#F5F6F4;color:#333}
+</style><style>
+/* ===== 留白边框公共结构（纸面样式一律不动） ===== */
+body{background:#EDEDEA}
+.nav,.subbar,.footer{display:none}
+.frame{position:absolute;inset:0;display:flex;flex-direction:column;background-color:rgba(201,162,75,0.16);background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2796%27%20height%3D%2754%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23B98A2F%27%20stroke-opacity%3D%270.42%27%20stroke-width%3D%271.7%27%20stroke-linecap%3D%27round%27%3E%3Cpath%20d%3D%27M8%2040%20H46%27%2F%3E%3Cpath%20d%3D%27M14%2040%20a8%208%200%201%201%208-8%20a6%206%200%201%200%206%206%27%2F%3E%3Cpath%20d%3D%27M36%2040%20a6.5%206.5%200%201%201%206.5-6.5%27%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23B98A2F%27%20stroke-opacity%3D%270.30%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20transform%3D%27translate%2850%2024%29%20scale%280.75%29%27%3E%3Cpath%20d%3D%27M8%2040%20H46%27%2F%3E%3Cpath%20d%3D%27M14%2040%20a8%208%200%201%201%208-8%20a6%206%200%201%200%206%206%27%2F%3E%3Cpath%20d%3D%27M36%2040%20a6.5%206.5%200%201%201%206.5-6.5%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E")}
+.topbar{height:48px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;z-index:2}
+.back{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:27px;line-height:1;color:#6B5320}
+.tgrp{display:flex;align-items:center;gap:8px;padding:4px 16px;border-radius:15px;background:rgba(255,255,255,0.42);color:#2B2B2B}
+.tgrp img{width:22px;height:22px}
+.tgrp .nm{font-size:16px;font-weight:bold}
+.tgrp .dt{font-size:13px;color:#555555}
+.midrow{flex:1;display:flex;padding:0 9px;min-height:0;position:relative;z-index:1}
+.paper{margin:0;flex:1;height:auto}
+.cols{height:auto}
+.botbar{height:48px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px 0 18px;position:relative;z-index:2}
+.hint{font-size:12px;letter-spacing:1px;color:#A98F57}
+.plus{width:44px;height:44px;margin:0;border-radius:50%;background:#B98A2F;color:#FFFFFF;font-size:28px;line-height:44px;text-align:center;opacity:.85;flex:none}
+.rod{position:absolute;top:50%;transform:translateY(-50%);width:15px;height:calc(100% + 16px);border-radius:8px;z-index:3;box-shadow:0 1px 4px rgba(120,90,30,0.25);background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2796%27%20height%3D%2754%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23B98A2F%27%20stroke-opacity%3D%270.42%27%20stroke-width%3D%271.7%27%20stroke-linecap%3D%27round%27%3E%3Cpath%20d%3D%27M8%2040%20H46%27%2F%3E%3Cpath%20d%3D%27M14%2040%20a8%208%200%201%201%208-8%20a6%206%200%201%200%206%206%27%2F%3E%3Cpath%20d%3D%27M36%2040%20a6.5%206.5%200%201%201%206.5-6.5%27%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23B98A2F%27%20stroke-opacity%3D%270.30%27%20stroke-width%3D%271.5%27%20stroke-linecap%3D%27round%27%20transform%3D%27translate%2850%2024%29%20scale%280.75%29%27%3E%3Cpath%20d%3D%27M8%2040%20H46%27%2F%3E%3Cpath%20d%3D%27M14%2040%20a8%208%200%201%201%208-8%20a6%206%200%201%200%206%206%27%2F%3E%3Cpath%20d%3D%27M36%2040%20a6.5%206.5%200%201%201%206.5-6.5%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"),linear-gradient(90deg, rgba(169,124,44,0.34), rgba(226,196,120,0.50) 42%, rgba(250,232,180,0.55) 50%, rgba(214,180,105,0.46) 58%, rgba(169,124,44,0.34));background-size:72px 41px, auto}
+.rod.l{left:1px}.rod.r{right:1px}
+</style><style>
+/* ===== 固定格子排版（2026-10-20）：三区定高、字位对齐，全列全字体同一套 =====
+   纸面列内高 237 = 姓名区 78（3 字位 × 26）+ 中段区 44 + 金额区 115（7 字位 × 16 = 112，容最长 7 字不缩字号） */
+.cname{height:78px;justify-content:flex-start;gap:0}
+.cname span{height:26px;line-height:26px;font-size:21px}
+.cname.n1{justify-content:flex-end}
+.cname.n2{justify-content:space-between}
+.cname.n2,.cname.n3,.cname.n4,.cname.n5{gap:0}
+.cname.n4 span{height:19.5px;line-height:19.5px;font-size:18px}
+.cname.n5 span{height:15.6px;line-height:15.6px;font-size:14px}
+.cmid{height:44px;gap:4px}
+.cmid span{font-size:17px;line-height:19px}
+.camt{padding-top:0}
+.camt span{height:16px;line-height:16px;font-size:15px}
+.camt.l56 span,.camt.l7 span{font-size:15px}
+/* 加号：视觉圆约 31px（原 44 的 70%）、透明度 .65；外层 44px 点击范围不变 */
+.plus{width:44px;height:44px;background:transparent;opacity:.65;font-size:20px;line-height:44px;position:relative;z-index:0}
+.plus::before{content:'';position:absolute;left:50%;top:50%;width:31px;height:31px;transform:translate(-50%,-50%);z-index:-1;border-radius:50%;background:#B98A2F}
+</style></head><body><div class='frame'><div class='topbar'><div class='back'>‹</div><div class='tgrp'><img src='../../../miniprogram/icons/01-jiehun.svg'/><span class='nm'>张三的婚礼</span><span class='dt'>· 2026-10-18</span></div></div><div class='midrow'><div class='rod l'></div><div class='rod r'></div><div class='paper'><div class='corners'><svg class='corner c-tl' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='corners'><svg class='corner c-tr' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='corners'><svg class='corner c-br' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='corners'><svg class='corner c-bl' viewBox='0 0 34 34'><path d='M3 31 V11 Q3 3 11 3 H31' fill='none' stroke='#A67C2E' stroke-width='2'/><path d='M8 31 V13 Q8 8 13 8 H31' fill='none' stroke='#A67C2E' stroke-width='1'/><rect x='14' y='14' width='6' height='6' transform='rotate(45 17 17)' fill='#A67C2E'/></svg></div><div class='cols'><div class='col'><div class='cname n2'><span>张</span><span>三</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>壹</span><span>仟</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>李</span><span>四</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>捌</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>王</span><span>五</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>陆</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>赵</span><span>六</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>伍</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>刘</span><span>七</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l56'><span>壹</span><span>仟</span><span>贰</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>陈</span><span>八</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>贰</span><span>仟</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>孙</span><span>九</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>壹</span><span>万</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n2'><span>周</span><span>十</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l56'><span>捌</span><span>佰</span><span>捌</span><span>拾</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n3'><span>吴</span><span>十</span><span>一</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l56'><span>壹</span><span>仟</span><span>伍</span><span>佰</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n3'><span>郑</span><span>十</span><span>二</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt l7'><span>陆</span><span>佰</span><span>陆</span><span>拾</span><span>陆</span><span>元</span><span>整</span></div></div><div class='col'><div class='cname n4'><span>欧</span><span>阳</span><span>修</span><span>远</span></div><div class='cmid'><span>贺</span><span>礼</span></div><div class='camt '><span>贰</span><span>仟</span><span>元</span><span>整</span></div></div></div></div></div><div class='botbar'><div class='hint'>左右滑动查看更多</div><div class='plus'>＋</div></div></div><style>.gh{position:absolute;left:0;width:812px;border-top:2px dashed #0090D9;z-index:60;pointer-events:none}.gv{position:absolute;top:48px;height:279px;border-left:2px dashed rgba(0,144,217,.45);z-index:60;pointer-events:none}.gl{position:absolute;font-size:11px;line-height:1;color:#005B8F;background:rgba(190,235,255,.92);padding:2px 5px;border-radius:3px;font-family:sans-serif;z-index:61}</style><div class='gh' style='top:69px'></div><div class='gl' style='left:2px;top:53px'>姓名区顶线</div><div class='gh' style='top:95px'></div><div class='gl' style='left:2px;top:79px'>字位线</div><div class='gh' style='top:121px'></div><div class='gl' style='left:2px;top:105px'>字位线</div><div class='gh' style='top:147px'></div><div class='gl' style='left:2px;top:131px'>姓名末字线</div><div class='gh' style='top:191px'></div><div class='gl' style='left:2px;top:175px'>金额起点线</div><div class='gl' style='right:2px;top:150px'>中段区上界</div><div class='gl' style='right:2px;top:194px'>中段区下界</div><div class='gv' style='left:62.4px'></div><div class='gv' style='left:131.1px'></div><div class='gv' style='left:199.8px'></div><div class='gv' style='left:268.5px'></div><div class='gv' style='left:337.3px'></div><div class='gv' style='left:406.0px'></div><div class='gv' style='left:474.7px'></div><div class='gv' style='left:543.5px'></div><div class='gv' style='left:612.2px'></div><div class='gv' style='left:680.9px'></div><div class='gv' style='left:749.6px'></div><div class='gl' style='left:50%%;top:330px;transform:translateX(-50%%)'>列中心线（蓝虚线）</div></body></html>
