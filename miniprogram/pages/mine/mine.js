@@ -1,9 +1,10 @@
 /**
  * 礼单簿 · 我的页（阶段2 2A）
  * 会员卡片 + 会员专属功能区 + 横置模式开关（会员专属，普通用户点弹介绍）
- * + 联系客服/分享转发 + 隐私政策｜注销账号 + 邀请得名额（灰色占位，未开启）
+ * + 联系客服/分享转发 + 隐私政策｜注销账号 + 邀请得名额（已开启，读配置开关）
  */
 const dataService = require('../../services/data-service.js');
+const landscapeRoute = require('../../services/landscape-route.js');
 const AppConfig = require('../../config/app-config.js');
 
 Page({
@@ -22,11 +23,14 @@ Page({
     await dataService.init();
     this.setData({
       inviteRewardEnabled: !!(AppConfig.inviteReward && AppConfig.inviteReward.enabled),
+      landscapeOn: landscapeRoute.readLandscapeOn(),
     });
     await this.refresh();
   },
 
   async onShow() {
+    // 开关显示与 storage 同步（横置页「切换回竖置样式」会在那边写回 false）
+    this.setData({ landscapeOn: landscapeRoute.readLandscapeOn() });
     await this.refresh();
   },
 
@@ -57,8 +61,10 @@ Page({
       });
       return;
     }
-    this.setData({ landscapeOn: !this.data.landscapeOn });
-    wx.showToast({ title: this.data.landscapeOn ? '横置模式已开启' : '已回到竖置模式', icon: 'none' });
+    const next = !this.data.landscapeOn;
+    this.setData({ landscapeOn: next });
+    landscapeRoute.writeLandscapeOn(next);
+    wx.showToast({ title: next ? '横置模式已开启' : '已回到竖置模式', icon: 'none' });
   },
 
   onService() {

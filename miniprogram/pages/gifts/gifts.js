@@ -4,6 +4,7 @@
  * 搜索框右侧"取消"，无结果显示空结果态。
  */
 const dataService = require('../../services/data-service.js');
+const landscapeRoute = require('../../services/landscape-route.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
 const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
@@ -19,11 +20,18 @@ Page({
     searching: false,
     totalCount: 0,
     totalFen: 0,
+    showLandscapeEntry: false,
   },
 
   async onShow() {
     await dataService.init();
+    // 横置入口仅在 mine 页横置开关开启时显示（开关状态存 storage）
+    this.setData({ showLandscapeEntry: landscapeRoute.readLandscapeOn() });
     await this.reload();
+  },
+
+  goLandscape() {
+    wx.navigateTo({ url: '/pages/landscape/gift/gift' });
   },
 
   async reload() {

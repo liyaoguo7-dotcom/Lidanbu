@@ -38,7 +38,7 @@ function friendly(err) {
   const msg = err.message || String(err);
   // core 抛出的已是用户可读文案（errors.js），直接透出；兜底未知错误
   // 卖惨文案以"呜呜"开头，也须透出（此前会被吞成"操作失败"，已修复）
-  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|呜呜/.test(msg)) return msg;
+  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|呜呜/.test(msg)) return msg;
   return '操作失败，请重试';
 }
 
@@ -69,6 +69,41 @@ async function seedDemo() {
     await core.contacts.createContact(_db, _userId, _userId, { name: '李五', remark: '邻居' });
   } catch (e) { /* 已存在则跳过 */ }
   try { wx.setStorageSync(SEEDED_KEY, true); } catch (e) { /* ignore */ }
+}
+
+const DEVICE_KEY = 'lidanbu_device_id';
+const PENDING_INVITE_KEY = 'lidanbu_pending_invite_code';
+
+/**
+ * 设备指纹占位：本地生成并持久化的随机设备 id（可注入）。
+ * ⚠️ 这不是真机设备指纹采集；真机方案（设备信息组合/云端风控）列入
+ * docs/开通云开发与联调清单，采集口径确定后只换这里的生成方式。
+ */
+function getDeviceId() {
+  try {
+    let d = wx.getStorageSync(DEVICE_KEY);
+    if (!d) {
+      d = `dev_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      wx.setStorageSync(DEVICE_KEY, d);
+    }
+    return d;
+  } catch (e) { return null; }
+}
+
+/** 邀请额度入参：成功邀请实数 + 生效设置（失败时按无奖励兜底，不影响记账） */
+async function inviteOpts() {
+  try {
+    const successfulInvites = await core.inviteReward.countSuccessfulInvites(_db, _userId);
+    const settings = await core.quota.resolveInviteSettings(_db);
+    return { successfulInvites, settings };
+  } catch (e) { return {}; }
+}
+
+/** 记账后静默评估邀请奖励发放：未达条件只是不发放，绝不打扰记账本身 */
+async function evalInviteQuiet() {
+  try {
+    await core.inviteReward.evaluateInvite(_db, _userId, { deviceId: getDeviceId() });
+  } catch (e) { /* 邀请评估失败不影响记账 */ }
 }
 
 const service = {
@@ -119,9 +154,11 @@ const service = {
   },
   async createGift({ contactId, tagId, amountFen, remark, date }) {
     try {
-      return await core.gifts.createGift(_db, _userId, _userId, {
+      const r = await core.gifts.createGift(_db, _userId, _userId, {
         contactId, tagId, amount: amountFen, remark, date,
       });
+      await evalInviteQuiet(); // 送礼记录是邀请奖励的有效动作之一
+      return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
   async updateGift(giftId, patch) {
@@ -156,7 +193,7 @@ const service = {
     const user = await col.findOne({ _id: _userId });
     return {
       state: core.quota.getMembershipState(user),
-      quota: core.quota.getEffectiveQuota(user),
+      quota: core.quota.getEffectiveQuota(user, AppConfig, Date.now(), await inviteOpts()),
       expireAt: (user.membership && user.membership.expireAt) || null,
     };
   },
@@ -164,7 +201,7 @@ const service = {
   /** 额度使用情况：各类已用/上限（免费+会员+邀请奖励） */
   async getQuotaUsage() {
     const me = await ensureUser();
-    const quota = core.quota.getEffectiveQuota(me);
+    const quota = core.quota.getEffectiveQuota(me, AppConfig, Date.now(), await inviteOpts());
     const events = await _db.collection(core.models.COLLECTIONS.ReceiveEvent).find({ ownerId: _userId });
     const gifts = await _db.collection(core.models.COLLECTIONS.GiftRecord).count({ ownerId: _userId });
     const contacts = await _db.collection(core.models.COLLECTIONS.Contact).count({ ownerId: _userId });
@@ -337,9 +374,11 @@ const service = {
   },
   async createRecord(eventId, { contactId, amountFen, type, remark, date }) {
     try {
-      return await core.receive.createRecord(_db, _userId, _userId, eventId, {
+      const r = await core.receive.createRecord(_db, _userId, _userId, eventId, {
         contactId, amount: amountFen, type, remark, date,
       });
+      await evalInviteQuiet(); // 收礼记录是邀请奖励的有效动作之一
+      return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
   async updateRecord(recordId, patch) {
@@ -438,7 +477,86 @@ const service = {
     return { written: r.written, total: r.total };
   },
 
+  // —— 横置礼单本（阶段4）：按账本主人读数据（自己或成员视角，core 每次都校验授权） ——
+  /** 礼薄列表：ownerId 缺省=自己；成员视角只返回已授权事件 */
+  async listEventsFor(ownerId) {
+    const oid = ownerId || _userId;
+    try {
+      return oid === _userId
+        ? await core.receive.listEvents(_db, _userId, oid)
+        : await core.stats.memberEvents(_db, _userId, oid);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 某礼薄的收礼记录：成员视角由 core.receive.listRecords 内部 authz 校验范围 */
+  async listRecordsFor(ownerId, eventId) {
+    const oid = ownerId || _userId;
+    try {
+      return await core.receive.listRecords(_db, _userId, oid, eventId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 送礼记录：ownerId 缺省=自己；成员视角由 core authz 校验（含 scope.gifts） */
+  async listGiftsFor(ownerId) {
+    const oid = ownerId || _userId;
+    try {
+      const list = await core.gifts.listGifts(_db, _userId, oid);
+      return list.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /**
+   * 我作为成员对某账本的授权（横置页按钮显隐用）：
+   * 自己账本返回 null（页面按 owner 处理）；成员返回 { switches, scope }，无有效共享返回 null。
+   */
+  async getGrantFor(ownerId) {
+    if (!ownerId || ownerId === _userId) return null;
+    const ms = await _db.collection(core.models.COLLECTIONS.ShareMembership)
+      .findOne({ ownerId, memberId: _userId, status: 'active' });
+    if (!ms) return null;
+    const grant = await _db.collection(core.models.COLLECTIONS.ShareGrant)
+      .findOne({ membershipId: ms._id });
+    if (!grant) return null;
+    return { switches: grant.switches || {}, scope: grant.scope || {} };
+  },
+
   friendly,
+
+  // —— 邀请奖励（邀请得名额）——
+  /** 本机设备指纹占位 id（真机采集见联调清单） */
+  getDeviceId,
+  /** 我的邀请奖励汇总：先静默评估一次发放，再返回汇总（奖励额度/成功数/上限/记录） */
+  async getInviteSummary() {
+    try {
+      await evalInviteQuiet();
+      return await core.inviteReward.getMyInviteSummary(_db, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 手动输入邀请码绑定（与分享卡片带码等效，不要求分享到任何地方） */
+  async bindInviteCode(code) {
+    try {
+      return await core.inviteReward.bindInvite(_db, _userId, { code, deviceId: getDeviceId() });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** app 启动捕获到的待绑定邀请码先存起来，init 后调 bindPendingInvite */
+  setPendingInviteCode(code) {
+    try { if (code) wx.setStorageSync(PENDING_INVITE_KEY, String(code)); } catch (e) { /* ignore */ }
+  },
+  /**
+   * 绑定启动时捕获的邀请码：静默执行。
+   * 绑定成功、或明确不可绑定（码无效/已绑定/非新用户/活动未开启）后清除，
+   * 避免每次启动重复尝试；其余失败保留待下次启动再试。
+   */
+  async bindPendingInvite() {
+    let code = null;
+    try { code = wx.getStorageSync(PENDING_INVITE_KEY); } catch (e) { /* ignore */ }
+    if (!code) return;
+    try {
+      await core.inviteReward.bindInvite(_db, _userId, { code, deviceId: getDeviceId() });
+      try { wx.removeStorageSync(PENDING_INVITE_KEY); } catch (e) { /* ignore */ }
+    } catch (e) {
+      if (e && typeof e.code === 'string' && e.code.startsWith('invite-')) {
+        try { wx.removeStorageSync(PENDING_INVITE_KEY); } catch (e2) { /* ignore */ }
+      }
+    }
+  },
 
   // —— 老板平台（阶段5）——
   // 铁律：只调 core.admin 白名单聚合接口；绝不返回用户的礼金、联系人、备注内容，

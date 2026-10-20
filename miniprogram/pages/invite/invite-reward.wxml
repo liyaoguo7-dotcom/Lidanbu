@@ -1,15 +1,52 @@
-<!-- 邀请新用户得名额 -->
-<view class="warn-banner">该功能暂未开启，敬请期待。</view>
+<!-- 邀请得名额（正式版） -->
+<view wx:if="{{!enabled && !loading}}" class="warn-banner">邀请奖励活动暂未开启，敬请期待。</view>
 
-<view class="section-title">规则（预定方案）</view>
-<view class="card" wx:if="{{rules}}">
-  <view class="form-row"><text class="form-val">成功邀请一位新用户：收礼额度池 +{{rules.perInvite.receivePool}} 条，送礼 +{{rules.perInvite.giftRecords}} 条</text></view>
-  <view class="form-row"><text class="form-val">生效条件：被邀请人新建 1 个礼薄 + 1 位收礼亲友，或 1 位送礼亲友</text></view>
-  <view class="form-row"><text class="form-val">上限：每位用户最多 {{rules.maxInvites}} 次成功邀请（含义待确认）</text></view>
-</view>
+<block wx:if="{{enabled && summary}}">
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-size:17px;font-weight:600">邀请好友一起记账，双方都有奖励</text></view>
+    <view class="form-row"><text class="form-val" style="line-height:1.7">把你的邀请码发给还没用过礼单簿的朋友，对方绑定后记下第一笔（新建 1 个礼薄并记 1 条收礼，或记 1 条送礼），你就能获得收礼额度池 +{{summary.perInvite.receivePool}} 条、送礼 +{{summary.perInvite.giftRecords}} 条。</text></view>
+  </view>
 
-<view class="section-title">微信合规核查结论</view>
-<view class="card">
-  <view class="form-row"><text class="form-val" style="line-height:1.7">微信小程序审核规范 3.2.1 明确拒绝"通过利益诱惑诱导用户分享、传播的小程序"；《微信个人账号使用规范》12.1.1 将"分享后对用户有奖励的内容（如邀请朋友…分享可增加奖励）"列为违规。本功能的"邀请得名额"属于典型的利益诱导分享，<text style="color:#F0575A">上线审核极大概率被拒绝</text>，且可能影响账号。建议：不上线此功能，或改为不带奖励的普通分享。</text></view>
-</view>
-<view class="tip">结论来源：微信开放社区《小程序审核规范》3.2.1、help.wechat.com《微信个人账号使用规范》12.1.1。是否开启由你决定。</view>
+  <view class="section-title">我的奖励</view>
+  <view class="card">
+    <view class="form-row"><text class="form-label">已得奖励</text><text class="form-val">收礼额度池 +{{summary.poolEarned}} 条 · 送礼 +{{summary.giftsEarned}} 条</text></view>
+    <view class="form-row"><text class="form-label">成功邀请</text><text class="form-val">{{summary.successfulInvites}} / {{summary.maxSuccessfulInvites}} 次</text></view>
+    <view style="padding:0 16px 12px">
+      <view style="height:6px;border-radius:3px;background:#F0E6D4">
+        <view style="height:6px;border-radius:3px;background:#F0575A;width:{{progressPct}}%"></view>
+      </view>
+      <view class="tip" style="padding:6px 0 0">还可再邀请 {{summary.remainingInvites}} 位新朋友</view>
+    </view>
+  </view>
+
+  <view class="section-title">邀请好友</view>
+  <view class="card">
+    <view class="form-row">
+      <text class="form-label">我的邀请码</text>
+      <text class="form-val" style="letter-spacing:2px">{{summary.inviteCode}}</text>
+      <text class="chev" bindtap="onCopyCode">复制</text>
+    </view>
+  </view>
+  <button class="btn-primary" open-type="share" style="margin:12px 24px 0">发给好友</button>
+  <view class="tip">把邀请码直接告诉朋友也可以：对方在下方填入同一个码，效果一样。</view>
+
+  <view class="section-title">填写邀请码</view>
+  <view class="card">
+    <view class="form-row">
+      <input class="form-val" placeholder="输入朋友给你的邀请码" placeholder-style="color:#C2C2C2"
+             value="{{inputCode}}" bindinput="onCodeInput" maxlength="12" style="letter-spacing:2px" />
+    </view>
+  </view>
+  <button class="btn-primary" bindtap="onBindSubmit" style="margin:12px 24px 0">绑定邀请码</button>
+  <view wx:if="{{summary.myBinding}}" class="tip">你已通过邀请加入礼单簿（邀请人 {{summary.myBinding.inviterId}}）</view>
+
+  <view class="section-title">邀请记录</view>
+  <view class="card">
+    <view wx:if="{{summary.records.length === 0}}" class="form-row"><text class="form-val" style="color:#C2C2C2">还没有邀请记录</text></view>
+    <view wx:for="{{summary.records}}" wx:key="index" class="form-row">
+      <text class="form-label">{{item.inviteeId}}</text>
+      <text class="form-val">{{item.statusText}} · {{item.dateText}}</text>
+    </view>
+  </view>
+  <view class="tip">奖励额度发放后立即计入你的可用额度（收礼额度池为所有礼薄共用），在「我的」和额度详情里都能看到。</view>
+</block>

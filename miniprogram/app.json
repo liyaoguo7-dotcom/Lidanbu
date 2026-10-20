@@ -36,6 +36,9 @@
     "pages/export/export-home",
     "pages/export/export-history",
     "pages/member/member-home",
+    "pages/landscape/receive/receive",
+    "pages/landscape/gift/gift",
+    "pages/landscape/rotate/rotate",
     "pages/mine-cancel/mine-cancel",
     "pages/invite/invite-reward",
     "pages/privacy/privacy"

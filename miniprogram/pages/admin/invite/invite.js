@@ -1,8 +1,8 @@
 /**
  * 老板平台 · 邀请奖励设置与数据（阶段5第14项）
  * 数据只看数量：邀请人数、成功邀请次数、已发放额度。
- * 设置读取 AppConfig.inviteReward（当前开关关闭，预留中）。
- * 配置修改走 AppConfig，修改将记入操作记录（待云联调）。
+ * 设置展示静态配置默认值；生效值以服务端为准（管理员经
+ * core.admin.updateInviteSettings 修改并覆盖，记入操作记录）。
  */
 const ds = require('../../services/data-service.js');
 const AppConfig = require('../../config/app-config.js');

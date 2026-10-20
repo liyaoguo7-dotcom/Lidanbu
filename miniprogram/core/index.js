@@ -18,6 +18,7 @@ module.exports = {
   gifts: require('./gifts'),
   stats: require('./stats'),
   share: require('./share'),
+  inviteReward: require('./invite-reward'), // 邀请得名额（绑定/发放/汇总）
   admin: require('./admin'), // 老板平台聚合接口（阶段5骨架，只返回数字与会员状态）
   ocr: require('./ocr-adapter'), // 拍照导入 OCR 适配层（本轮仅 Mock，纯 JS 无微信依赖）
   importer: require('./import'), // 拍照导入确认写入（纯 JS 无微信依赖）

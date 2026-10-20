@@ -1,0 +1,140 @@
+<!--
+  礼单簿 · 横置礼单本共用模板（收礼/送礼共用一份，页面用 <import> 引入）
+  两态：竖屏 = 请横屏（与定版图 30 文案逐字一致）；横屏 = 礼单本。
+  尺寸全部来自 landscape-core 的定版常量（data.spec 已按窗口宽等比换算）。
+-->
+<template name="book">
+
+  <!-- ===== 竖屏态：请横屏 ===== -->
+  <view wx:if="{{!isLandscape}}" class="rotate-wrap">
+    <view class="rotate-topbar">
+      <view class="rotate-back" bindtap="goBack">‹</view>
+      <view class="rotate-title">{{rotateCopy.title}}</view>
+      <view class="rotate-back-ph"></view>
+    </view>
+    <view class="rotate-center">
+      <image class="rotate-icon" src="/assets/rotate-phone.png" mode="aspectFit" />
+      <view class="rotate-main">{{rotateCopy.main}}</view>
+      <view class="rotate-sub">{{rotateCopy.sub}}</view>
+      <view class="rotate-lock">{{rotateCopy.lock}}</view>
+    </view>
+    <view class="rotate-btn" bindtap="goPortrait">{{rotateCopy.backButton}}</view>
+  </view>
+
+  <!-- ===== 横屏态：礼单本 ===== -->
+  <view wx:else class="frame"
+    style="background-color:{{theme.marginBg}};background-image:url({{theme.marginTile.uri}});background-size:{{view.marginTileW}}px {{view.marginTileH}}px;padding-left:{{safePadL}}px;padding-right:{{safePadR}}px;">
+
+    <!-- 上留白：返回 / 标题组居中 / 样式入口 -->
+    <view class="topbar" style="height:{{spec.marginV}}px;">
+      <view class="back" bindtap="goBack">‹</view>
+      <view class="tgrp">
+        <view class="tpill">
+          <image wx:if="{{titleIcon}}" class="ticon" src="{{titleIcon}}" mode="aspectFit" />
+          <text class="tname">{{titleName}}</text>
+          <text wx:if="{{titleDate}}" class="tdate">· {{titleDate}}</text>
+        </view>
+      </view>
+      <view class="style-btn" bindtap="onOpenPanel">样式</view>
+    </view>
+
+    <!-- 中部：卷轴 + 纸面 + 卷轴 -->
+    <view class="midrow">
+      <image class="scroll-img" src="{{theme.scrollImg}}" mode="aspectFill"
+        style="width:{{spec.scrollW}}px;" />
+      <view class="paper"
+        style="border-color:{{theme.frameColor}};background-color:{{theme.paperBg}};background-image:url({{theme.paperTile.uri}});background-size:{{view.paperTileW}}px {{view.paperTileH}}px;">
+        <view class="corner tl" style="border-color:{{theme.frameColor}};"></view>
+        <view class="corner tr" style="border-color:{{theme.frameColor}};"></view>
+        <view class="corner bl" style="border-color:{{theme.frameColor}};"></view>
+        <view class="corner br" style="border-color:{{theme.frameColor}};"></view>
+        <scroll-view class="cols-scroll" scroll-x="true" scroll-left="{{scrollLeft}}"
+          bindscroll="onScroll" enhanced="true" show-scrollbar="false">
+          <view class="cols-track">
+            <view class="spacer" style="width:{{leftSpacer}}px;"></view>
+            <view wx:for="{{winCols}}" wx:key="key"
+              class="col {{selectedKey === item.key ? 'col-sel' : ''}}"
+              data-key="{{item.key}}" bindtap="onColTap"
+              style="width:{{spec.colW}}px;border-left-color:{{theme.lineColor}};{{selectedKey === item.key ? 'box-shadow:inset 0 0 0 2px ' + theme.highlightBorder + ';background-color:' + theme.highlightBg + ';' : ''}}">
+              <block wx:if="{{!item.empty}}">
+                <view class="zone" style="height:{{spec.nameH}}px;margin-top:{{spec.innerPad}}px;">
+                  <text wx:for="{{item.nameChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
+                    style="top:{{ch.topPx}}px;font-size:{{item.nameFontPx}}px;font-family:{{selStack}};color:{{theme.inkColor}};">{{ch.ch}}</text>
+                </view>
+                <view style="height:{{spec.gap}}px;"></view>
+                <view class="zone" style="height:{{spec.midH}}px;">
+                  <text wx:for="{{item.midChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
+                    style="top:{{ch.topPx}}px;font-size:{{item.midFontPx}}px;font-family:{{item.midRole === 'selected' ? selStack : songtiStack}};color:{{item.midBlack ? '#222222' : theme.midColor}};">{{ch.ch}}</text>
+                </view>
+                <view style="height:{{spec.gap}}px;"></view>
+                <view class="zone" style="height:{{spec.amtH}}px;">
+                  <text wx:for="{{item.amountChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
+                    style="top:{{ch.topPx}}px;font-size:{{item.amountFontPx}}px;font-family:{{selStack}};color:{{theme.inkColor}};">{{ch.ch}}</text>
+                </view>
+              </block>
+            </view>
+            <view class="spacer" style="width:{{rightSpacer}}px;"></view>
+          </view>
+        </scroll-view>
+      </view>
+      <image class="scroll-img flip" src="{{theme.scrollImg}}" mode="aspectFill"
+        style="width:{{spec.scrollW}}px;" />
+    </view>
+
+    <!-- 下留白：滑动提示 / ＋（横置内跟随样式配色，白事深灰） -->
+    <view class="botbar" style="height:{{spec.marginV}}px;">
+      <view class="hint"><text class="hint-txt">左右滑动查看更多</text></view>
+      <view wx:if="{{perms.canAdd}}" class="plus-touch" bindtap="onAdd"
+        style="width:{{spec.plusTouch}}px;height:{{spec.plusTouch}}px;">
+        <view class="plus-circle"
+          style="width:{{spec.plusVisual}}px;height:{{spec.plusVisual}}px;background-color:{{theme.plusBg}};">+</view>
+      </view>
+    </view>
+
+    <!-- 半屏详情（点列弹出；转屏时自动关闭） -->
+    <view wx:if="{{detailOpen}}" class="sheet-mask" bindtap="onCloseDetail">
+      <view class="sheet" catchtap="noop">
+        <view class="sheet-row"><text class="sheet-k">日期</text><text class="sheet-v">{{detail.date}}</text></view>
+        <view class="sheet-row"><text class="sheet-k">姓名</text><text class="sheet-v">{{detail.name}}</text></view>
+        <view class="sheet-row"><text class="sheet-k">金额</text><text class="sheet-v">¥{{detail.amountText}}</text></view>
+        <view class="sheet-row"><text class="sheet-k">场合</text><text class="sheet-v">{{detail.occasion}}</text></view>
+        <view class="sheet-row"><text class="sheet-k">备注</text><text class="sheet-v">{{detail.remark}}</text></view>
+        <view class="sheet-btns">
+          <view class="sheet-btn ghost" bindtap="onDetailTimeline">查看往来记录</view>
+          <view wx:if="{{perms.canEdit}}" class="sheet-btn ghost" bindtap="onDetailEdit">修改</view>
+          <view wx:if="{{perms.canDelete}}" class="sheet-btn danger" bindtap="onDetailDelete">删除</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 样式面板：字体与样式两组独立、互不重置、立即生效 -->
+    <view wx:if="{{panelOpen}}" class="sheet-mask" bindtap="onClosePanel">
+      <view class="sheet" catchtap="noop">
+        <view class="panel-title">字体</view>
+        <view class="opt-row">
+          <view wx:for="{{fonts}}" wx:key="id"
+            class="opt {{fontId === item.id ? 'opt-sel' : ''}}"
+            data-id="{{item.id}}" bindtap="onPickFont">
+            <view class="font-preview" style="font-family:{{item.stack}};">张三 壹仟元整</view>
+            <view class="opt-name">{{item.name}}</view>
+          </view>
+        </view>
+        <view class="panel-title">样式</view>
+        <view class="opt-row wrap">
+          <view wx:for="{{themeList}}" wx:key="id"
+            class="opt sm {{styleId === item.id ? 'opt-sel' : ''}}"
+            data-id="{{item.id}}" bindtap="onPickStyle">
+            <view class="swatch" style="background-color:{{item.marginBg}};border-color:{{item.lineColor}};">
+              <view class="swatch-paper" style="background-color:{{item.paperBg}};"></view>
+            </view>
+            <view class="opt-name">{{item.name}}</view>
+          </view>
+        </view>
+        <view class="credit">{{credit}}</view>
+      </view>
+    </view>
+
+    <confirm-modal show="{{showDelModal}}" title="{{delTitle}}" content="{{delContent}}"
+      bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />
+  </view>
+</template>

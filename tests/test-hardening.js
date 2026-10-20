@@ -207,14 +207,17 @@ test('额度含receivePool字段；邀请奖励规则进配置', async () => {
   const cfg = core.config;
   assert.eq(cfg.inviteReward.rules.perInvite.receivePool, 10, '每邀请收礼池+10');
   assert.eq(cfg.inviteReward.rules.perInvite.giftRecords, 5, '每邀请送礼+5');
-  assert.eq(cfg.inviteReward.rules.maxInvites, 10, '上限预留10');
-  assert.eq(cfg.inviteReward.enabled, false, '当前未启用');
+  assert.eq(cfg.inviteReward.rules.maxSuccessfulInvites, 10, '成功邀请上限10');
+  assert.eq(cfg.inviteReward.enabled, true, '邀请奖励已正式开启（用户2026-10-20决定）');
   const q = core.quota.getInviteRewardQuota('u');
-  assert.eq(q.receivePool, 0, '当前邀请奖励固定返回0');
+  assert.eq(q.receivePool, 0, '无成功邀请时邀请奖励为0');
+  const q3 = core.quota.getInviteRewardQuota('u', 3);
+  assert.eq(q3.receivePool, 30, '3次成功邀请应得收礼池30');
+  assert.eq(q3.giftRecords, 15, '3次成功邀请应得送礼15');
   const user = { _id: 'u', membership: { status: 'free' } };
   const eff = core.quota.getEffectiveQuota(user);
   assert('receivePool' in eff, '有效额度应含receivePool');
-  assert.eq(eff.receivePool, 0, '当前池为0');
+  assert.eq(eff.receivePool, 0, '未传成功邀请数时池为0');
   assert.eq(eff.recordsPerEvent, 30, '每礼薄上限仍为30');
 });
 

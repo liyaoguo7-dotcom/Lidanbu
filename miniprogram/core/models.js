@@ -19,6 +19,7 @@ const COLLECTIONS = {
   ImportJob: 'importJobs',
   ExportJob: 'exportJobs',
   AppConfig: 'appConfig',
+  InviteBinding: 'inviteBindings', // 邀请关系绑定记录（防重复绑定/防刷，注销后保留以防重复计数）
   // —— 老板平台预留（只存数量与时间，不存账本内容）——
   InviteRewardGrant: 'inviteRewardGrants', // 邀请奖励发放记录
 };
@@ -26,7 +27,7 @@ const COLLECTIONS = {
 /**
  * 实体字段说明（code 注释即字典；完整版见 docs/数据字典.md）
  *
- * User: {_id(openid), nickname?, membership:{status:'free'|'member', expireAt: timestamp|null, graceUntil: timestamp|null}, createdAt}
+ * User: {_id(openid), nickname?, inviteCode(我的邀请码,懒生成), membership:{status:'free'|'member', expireAt: timestamp|null, graceUntil: timestamp|null}, createdAt}
  * Contact: {_id, ownerId, name, remark, createdAt}  // 只有姓名+备注，无手机号
  * ReceiveEvent: {_id, ownerId, name, tagId(10选1), date(YYYY-MM-DD), remark, createdAt}
  * ReceiveRecord: {_id, ownerId, eventId, contactId(稳定ID), amount(分), type(红包/现金/转账/微信/支付宝), remark, date, createdBy(openid), createdAt}
@@ -38,9 +39,12 @@ const COLLECTIONS = {
  * ImportJob: {_id, ownerId, kind:'gift'|'receive', eventId?, status, createdAt}  // 阶段4用，T1.1只建模
  * ExportJob: {_id, ownerId, scope, status, createdAt}  // 阶段3用，T1.1只建模
  * AppConfig: {_id:'singleton', freeQuota, membership, memberOnlyFeatures(会员专属功能清单),
- *   inviteReward(预留), updatedAt}
+ *   inviteReward(老板平台可覆盖:{enabled, perInvite:{receivePool,giftRecords}, maxSuccessfulInvites}), updatedAt}
+ * InviteBinding: {_id, inviterId, inviteeId, code, deviceId(设备指纹占位,可空),
+ *   status:'bound'|'granted'|'blocked', boundAt, grantedAt|null}
+ *   // 每位被邀请人最多一条；注销清理时不删除（连同发放记录一起防"注销后重复计")
  * InviteRewardGrant: {_id, userId(邀请人), invitedUserId(被邀请人), poolGranted(发放的收礼池数),
- *   giftsGranted(发放的送礼数), grantedAt}  // 只存数量与时间，不存账本内容；老板平台用
+ *   giftsGranted(发放的送礼数), deviceId(领取时设备指纹占位,可空), grantedAt}  // 只存数量与时间，不存账本内容；老板平台用
  * ShareOverview（派生视图，非集合，老板平台用）: {ownerId, memberCount, activeMemberCount,
  *   authorizedEventCount, updatedAt}  // 只存数量，不读账本内容
  */

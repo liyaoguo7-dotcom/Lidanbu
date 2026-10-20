@@ -4,11 +4,12 @@
  * 核心公式（集中计算，勿散落各处）：
  *   某用户当前可用额度 = 免费额度 + 会员额度 + 邀请奖励额度
  *
- * 邀请奖励（规则用户 2026-10-18 已确认，功能未开发，当前固定返回 0）：
+ * 邀请奖励（用户 2026-10-20 决定正式开启，规则见 core/invite-reward.js）：
  * - 成功邀请一人：收礼额度池 +10（用户级，所有礼薄合计；不增加每礼薄上限，
  *   不增加礼薄个数）；送礼额度 +5
- * - 生效条件：新用户经邀请进入 && (新建1礼薄+1收礼联系人 || 1送礼联系人)
- * - 上限：先按最多 10 个成功邀请预留（含义待确认）；数字全放配置
+ * - 生效条件：新用户经邀请码绑定 && (新建≥1礼薄+≥1收礼记录 || ≥1送礼记录)
+ * - 上限：maxSuccessfulInvites（每个邀请人最多计入的成功邀请次数，默认 10，
+ *   含义待用户最终确认）；数字全放配置，老板平台可覆盖（appConfig 文档）
  *
  * 收礼额度池语义：每个礼薄仍是免费/会员的 30 条上限；某个礼薄超过自己的
  * 上限后，可从用户级池里消耗。池消耗量 = 各礼薄 (记录数 - 每礼薄上限) 的正部之和。
@@ -24,15 +25,67 @@ const AppConfig = require('../config/app-config');
 const ZERO_QUOTA = { receiveEvents: 0, recordsPerEvent: 0, receivePool: 0, giftRecords: 0, contacts: 0 };
 
 /**
- * 邀请奖励额度（预留）
- * 规则已确认但功能未开发；当前固定返回 0。
- * 启用后：按 AppConfig.inviteReward.rules 计算
- *   receivePool = perInvite.receivePool × min(成功邀请数, maxInvites)
- *   giftRecords = perInvite.giftRecords × min(成功邀请数, maxInvites)
- *   receiveEvents 不增加（礼薄个数不随邀请增加）
+ * 从静态配置对象提取邀请奖励设置（统一口径，供各处复用）
+ * @returns {{enabled:boolean, perInvite:{receivePool:number, giftRecords:number}, maxSuccessfulInvites:number}}
  */
-function getInviteRewardQuota(/* userId */) {
-  return { ...ZERO_QUOTA };
+function inviteSettingsFromConfig(config = AppConfig) {
+  const ir = (config && config.inviteReward) || {};
+  const rules = ir.rules || {};
+  const per = rules.perInvite || {};
+  return {
+    enabled: !!ir.enabled,
+    perInvite: {
+      receivePool: Number.isInteger(per.receivePool) ? per.receivePool : 10,
+      giftRecords: Number.isInteger(per.giftRecords) ? per.giftRecords : 5,
+    },
+    maxSuccessfulInvites:
+      (Number.isInteger(rules.maxSuccessfulInvites) ? rules.maxSuccessfulInvites : rules.maxInvites) ?? 10,
+  };
+}
+
+/**
+ * 生效的邀请奖励设置：静态配置为默认，云数据库 appConfig 文档的
+ * inviteReward 段（老板平台写入）逐项覆盖。与 admin.js 配置口径一致：
+ * 文档未写过的项回退静态默认。
+ */
+async function resolveInviteSettings(db, config = AppConfig) {
+  const base = inviteSettingsFromConfig(config);
+  if (!db) return base;
+  const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+  const over = (doc && doc.inviteReward) || null;
+  if (!over) return base;
+  return {
+    enabled: over.enabled !== undefined ? !!over.enabled : base.enabled,
+    perInvite: { ...base.perInvite, ...(over.perInvite || {}) },
+    maxSuccessfulInvites:
+      Number.isInteger(over.maxSuccessfulInvites) ? over.maxSuccessfulInvites : base.maxSuccessfulInvites,
+  };
+}
+
+/** 某邀请人的成功邀请次数（= 已发放记录数，发放记录是唯一真源） */
+async function countSuccessfulInvites(db, userId) {
+  return db.collection(COLLECTIONS.InviteRewardGrant).count({ userId });
+}
+
+/**
+ * 邀请奖励额度（按成功邀请次数计算，纯函数）
+ *   receivePool = perInvite.receivePool × min(成功邀请数, maxSuccessfulInvites)
+ *   giftRecords = perInvite.giftRecords × min(成功邀请数, maxSuccessfulInvites)
+ *   receiveEvents 不增加（礼薄个数不随邀请增加）；contacts/recordsPerEvent 不增加
+ * 开关关闭或成功邀请数为 0 时返回全 0。
+ * @param {string} userId 邀请人（仅作签名占位，计算只看次数）
+ * @param {number} successfulInvites 成功邀请次数（由调用方从发放记录计数后传入）
+ * @param {object} [settings] 生效设置，缺省读静态配置
+ */
+function getInviteRewardQuota(userId, successfulInvites = 0, settings = null) {
+  const s = settings || inviteSettingsFromConfig(AppConfig);
+  if (!s.enabled) return { ...ZERO_QUOTA };
+  const n = Math.max(0, Math.min(Math.floor(Number(successfulInvites) || 0), s.maxSuccessfulInvites));
+  return {
+    ...ZERO_QUOTA,
+    receivePool: s.perInvite.receivePool * n,
+    giftRecords: s.perInvite.giftRecords * n,
+  };
 }
 
 /** 会员是否在有效期内 */
@@ -53,12 +106,19 @@ function getMemberQuota(user, config = AppConfig, now = Date.now()) {
 /**
  * 某用户当前可用额度 = 免费额度 + 会员额度 + 邀请奖励额度
  * recordsPerEvent：每礼薄上限（邀请不增加此项）
- * receivePool：用户级收礼额度池（邀请奖励来源，当前 0）
+ * receivePool：用户级收礼额度池（邀请奖励来源）
+ * @param {object} [inviteOpts] {successfulInvites, settings}：邀请侧入参；
+ *   缺省成功邀请数按 0 计（同步调用方无 db 时用；带 db 的检查路径
+ *   checkAddQuota 会从发放记录实数并传入，老板平台覆盖的设置经 settings 传入）
  */
-function getEffectiveQuota(user, config = AppConfig, now = Date.now()) {
+function getEffectiveQuota(user, config = AppConfig, now = Date.now(), inviteOpts = {}) {
   const free = config.freeQuota;
   const member = getMemberQuota(user, config, now);
-  const invite = getInviteRewardQuota(user._id);
+  const invite = getInviteRewardQuota(
+    user && user._id,
+    inviteOpts.successfulInvites || 0,
+    inviteOpts.settings || inviteSettingsFromConfig(config)
+  );
   return {
     receiveEvents: free.receiveEvents + member.receiveEvents + invite.receiveEvents,
     recordsPerEvent: free.recordsPerEvent + member.recordsPerEvent,
@@ -134,7 +194,10 @@ async function checkAddReceiveRecord(db, ownerId, eventId, quota) {
  * @returns {{ok:boolean, reason:string}}
  */
 async function checkAddQuota(db, user, kind, config = AppConfig, eventId, now = Date.now()) {
-  const quota = getEffectiveQuota(user, config, now);
+  // 邀请奖励实数：从发放记录计成功邀请数，并读老板平台覆盖后的生效设置
+  const successfulInvites = await countSuccessfulInvites(db, user._id);
+  const settings = await resolveInviteSettings(db, config);
+  const quota = getEffectiveQuota(user, config, now, { successfulInvites, settings });
   if (kind === 'receiveRecord') {
     return checkAddReceiveRecord(db, user._id, eventId, quota);
   }
@@ -182,6 +245,9 @@ async function checkEditAllowed(db, user, kind, recordId, config = AppConfig, no
 
 module.exports = {
   getInviteRewardQuota,
+  inviteSettingsFromConfig,
+  resolveInviteSettings,
+  countSuccessfulInvites,
   isMemberActive,
   getMemberQuota,
   getEffectiveQuota,

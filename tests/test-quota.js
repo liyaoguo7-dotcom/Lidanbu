@@ -91,10 +91,10 @@ test('三次提醒时间点', async () => {
   assert.eq(pts[1], expireAt, '第2个应为到期当天');
 });
 
-test('邀请奖励额度预留返回0', async () => {
+test('无成功邀请时邀请奖励额度为0', async () => {
   const q = core.quota.getInviteRewardQuota('anyone');
-  assert.eq(q.receiveEvents, 0, '邀请奖励礼薄额度应为0');
-  assert.eq(q.contacts, 0, '邀请奖励联系人额度应为0');
+  assert.eq(q.receiveEvents, 0, '邀请奖励不增加礼薄个数');
+  assert.eq(q.contacts, 0, '邀请奖励不增加联系人额度');
   const user = { _id: 'u', membership: { status: 'free' } };
   const eff = core.quota.getEffectiveQuota(user);
   assert.eq(eff.receiveEvents, 3, '免费用户有效额度=免费3+会员0+邀请0');

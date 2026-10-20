@@ -1,0 +1,126 @@
+/* 礼单簿 · 横置礼单本共用样式（收礼/送礼共用；页面 wxss 用 @import 引入）
+   尺寸数字不在这里写死：关键尺寸由 JS 按 landscape-core 定版常量等比换算后内联注入。 */
+
+/* ===== 请横屏（竖屏态，与定版图 30 一致） ===== */
+.rotate-wrap {
+  min-height: 100vh; background: #F7F3EC; display: flex; flex-direction: column;
+  align-items: center; box-sizing: border-box;
+}
+.rotate-topbar {
+  width: 100%; height: 88rpx; background: #F0E6D4; display: flex; align-items: center;
+  padding: 0 24rpx; box-sizing: border-box;
+}
+.rotate-back { font-size: 44rpx; color: #333; width: 80rpx; }
+.rotate-back-ph { width: 80rpx; }
+.rotate-title {
+  flex: 1; text-align: center; font-size: 34rpx; color: #333;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", SimSun, serif;
+}
+.rotate-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 64rpx; }
+.rotate-icon { width: 180rpx; height: 180rpx; margin-bottom: 40rpx; }
+.rotate-main {
+  font-size: 38rpx; color: #333; text-align: center; line-height: 1.5;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", SimSun, serif;
+}
+.rotate-sub { margin-top: 28rpx; font-size: 26rpx; color: #999; text-align: center; }
+.rotate-lock { margin-top: 12rpx; font-size: 26rpx; color: #999; text-align: center; }
+.rotate-btn {
+  margin-bottom: 96rpx; padding: 22rpx 72rpx; border: 1px solid #C9BBA3; border-radius: 999rpx;
+  color: #8A7A5F; font-size: 30rpx; background: transparent;
+}
+
+/* ===== 横屏礼单本 ===== */
+.frame {
+  height: 100vh; width: 100vw; box-sizing: border-box;
+  display: flex; flex-direction: column; background-repeat: repeat;
+}
+.topbar { display: flex; align-items: center; position: relative; flex-shrink: 0; }
+.back { font-size: 30px; color: #333; padding: 0 10px; line-height: 1; z-index: 2; }
+.tgrp { position: absolute; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; }
+.tpill {
+  display: flex; align-items: center; background: rgba(255,255,255,0.55);
+  border-radius: 999px; padding: 4px 16px;
+}
+.ticon { width: 18px; height: 18px; margin-right: 6px; }
+.tname {
+  font-size: 17px; color: #2B2B2B;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", SimSun, serif;
+}
+.tdate { font-size: 13px; color: #8A8175; margin-left: 4px; }
+.style-btn {
+  margin-left: auto; z-index: 2; font-size: 13px; color: #6B5D4F;
+  background: rgba(255,255,255,0.55); border-radius: 999px; padding: 4px 12px; margin-right: 8px;
+}
+.midrow { flex: 1; display: flex; flex-direction: row; align-items: stretch; min-height: 0; }
+.scroll-img { height: 100%; flex-shrink: 0; }
+.scroll-img.flip { transform: scaleX(-1); }
+.paper {
+  flex: 1; position: relative; border: 2px solid; box-sizing: border-box;
+  background-repeat: repeat; overflow: hidden;
+}
+.corner { position: absolute; width: 14px; height: 14px; border: 0 solid; z-index: 3; pointer-events: none; }
+.corner.tl { top: 3px; left: 3px; border-top-width: 2px; border-left-width: 2px; }
+.corner.tr { top: 3px; right: 3px; border-top-width: 2px; border-right-width: 2px; }
+.corner.bl { bottom: 3px; left: 3px; border-bottom-width: 2px; border-left-width: 2px; }
+.corner.br { bottom: 3px; right: 3px; border-bottom-width: 2px; border-right-width: 2px; }
+.cols-scroll { width: 100%; height: 100%; }
+.cols-track { display: flex; flex-direction: row; height: 100%; }
+.spacer { flex-shrink: 0; height: 100%; }
+.col {
+  flex-shrink: 0; height: 100%; box-sizing: border-box;
+  border-left: 1px solid; position: relative;
+}
+.zone { position: relative; width: 100%; }
+.vchar {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  line-height: 1; white-space: nowrap;
+}
+.botbar { display: flex; align-items: center; flex-shrink: 0; position: relative; }
+.hint { margin-left: 10px; }
+.hint-txt {
+  font-size: 11px; color: #8A8175; background: rgba(255,255,255,0.55);
+  border-radius: 999px; padding: 3px 10px;
+}
+.plus-touch {
+  margin-left: auto; margin-right: 8px; display: flex; align-items: center; justify-content: center;
+}
+.plus-circle {
+  border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; line-height: 1; opacity: 0.85;
+}
+
+/* ===== 半屏（详情 / 样式面板） ===== */
+.sheet-mask {
+  position: fixed; left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0,0,0,0.35); z-index: 50; display: flex; align-items: flex-end;
+}
+.sheet {
+  width: 100%; background: #FFFDF8; border-radius: 14px 14px 0 0;
+  padding: 14px 20px 20px; box-sizing: border-box; max-height: 86vh; overflow-y: auto;
+}
+.sheet-row { display: flex; padding: 6px 0; border-bottom: 1px solid #F0EDE6; }
+.sheet-k { width: 56px; color: #999; font-size: 14px; flex-shrink: 0; }
+.sheet-v { color: #333; font-size: 14px; }
+.sheet-btns { display: flex; gap: 10px; margin-top: 14px; }
+.sheet-btn {
+  flex: 1; text-align: center; padding: 10px 0; border-radius: 999px; font-size: 14px;
+}
+.sheet-btn.ghost { border: 1px solid #D8CFBE; color: #6B5D4F; }
+.sheet-btn.danger { background: #F0575A; color: #fff; }
+.panel-title { font-size: 14px; color: #6B5D4F; margin: 8px 0; }
+.opt-row { display: flex; gap: 10px; }
+.opt-row.wrap { flex-wrap: wrap; }
+.opt {
+  flex: 1; border: 1px solid #E7E0D2; border-radius: 10px; padding: 8px 6px;
+  display: flex; flex-direction: column; align-items: center; box-sizing: border-box;
+}
+.opt.sm { flex: 0 0 30%; }
+.opt-sel { border-color: #C9A24B; background: rgba(201,162,75,0.08); }
+.font-preview { font-size: 15px; color: #333; white-space: nowrap; }
+.opt-name { font-size: 12px; color: #8A8175; margin-top: 6px; }
+.swatch {
+  width: 44px; height: 30px; border: 1px solid; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.swatch-paper { width: 26px; height: 18px; border-radius: 2px; }
+.credit { margin-top: 14px; font-size: 11px; color: #B4A98F; text-align: center; }

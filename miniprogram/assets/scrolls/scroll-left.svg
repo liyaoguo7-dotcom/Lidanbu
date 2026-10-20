@@ -1,0 +1,30 @@
+<svg viewBox="0 0 44 418" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="gbl" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#E3AE95"/><stop offset="0.25" stop-color="#F8E9DB"/>
+<stop offset="0.5" stop-color="#F8E9DB"/><stop offset="0.78" stop-color="#EFD0BC"/>
+<stop offset="1" stop-color="#E3AE95"/></linearGradient>
+<linearGradient id="gfl" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#C05A4A"/><stop offset="0.55" stop-color="#A33327"/>
+<stop offset="1" stop-color="#7E1F16"/></linearGradient>
+<pattern id="prl" width="28" height="6" patternUnits="userSpaceOnUse">
+<rect width="28" height="6" fill="none"/>
+<path d="M0 0.5 H28" stroke="rgba(70,45,30,0.08)" stroke-width="1"/>
+<path d="M0 3.5 H28" stroke="rgba(255,255,255,0.12)" stroke-width="1"/></pattern>
+</defs>
+<rect x="8" y="12" width="28" height="394" fill="url(#gbl)"/>
+<rect x="8" y="12" width="28" height="394" fill="url(#prl)"/>
+<rect x="8" y="12" width="28" height="394" fill="none" stroke="rgba(60,40,25,0.18)"/>
+<g stroke="rgba(60,40,25,0.22)">
+<rect x="6" y="21" width="32" height="5" rx="2.5" fill="url(#gfl)"/>
+<ellipse cx="22" cy="15" rx="13.5" ry="5.5" fill="url(#gfl)"/>
+<ellipse cx="22" cy="8.5" rx="16" ry="3.6" fill="url(#gfl)"/>
+<path d="M12 6 A10 6 0 0 1 32 6 Z" fill="url(#gfl)"/>
+</g>
+<g transform="translate(0,418) scale(1,-1)" stroke="rgba(60,40,25,0.22)">
+<rect x="6" y="21" width="32" height="5" rx="2.5" fill="url(#gfl)"/>
+<ellipse cx="22" cy="15" rx="13.5" ry="5.5" fill="url(#gfl)"/>
+<ellipse cx="22" cy="8.5" rx="16" ry="3.6" fill="url(#gfl)"/>
+<path d="M12 6 A10 6 0 0 1 32 6 Z" fill="url(#gfl)"/>
+</g>
+</svg>

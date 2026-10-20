@@ -17,13 +17,9 @@
 const { COLLECTIONS, now} = require('./models');
 const quota = require('./quota');
 const audit = require('./audit');
-
-/** userId 脱敏：前3 + *** + 后3，如 oAb***9zQ */
-function maskUserId(openid) {
-const s = String(openid || '');
-if (s.length <= 8) return s.slice(0, 2) + '***';
-return `${s.slice(0, 3)}***${s.slice(-3)}`;
-}
+const errors = require('./errors');
+const { maskUserId } = require('./admin-mask');
+const StaticConfig = require('../config/app-config');
 
 /** 内部：用脱敏短号找回真实用户（骨架实现：全表扫描比对；生产需建索引） */
 async function findUserByMask(db, maskedId) {
@@ -140,7 +136,9 @@ return { userId: maskedUserId, memberState: 'member', expireAt};
 */
 async function quotaUsage(db, maskedUserId) {
 const user = await findUserByMask(db, maskedUserId);
-const q = quota.getEffectiveQuota(user);
+const successfulInvites = await quota.countSuccessfulInvites(db, user._id);
+const inviteSettings = await quota.resolveInviteSettings(db);
+const q = quota.getEffectiveQuota(user, StaticConfig, Date.now(), { successfulInvites, settings: inviteSettings });
 const usedEvents = await countCol(db, 'ReceiveEvent', { ownerId: user._id});
 const usedGifts = await countCol(db, 'GiftRecord', { ownerId: user._id});
 const usedContacts = await countCol(db, 'Contact', { ownerId: user._id});
@@ -206,6 +204,220 @@ perOwner,
 };
 }
 
+// ================= 配置管理（阶段5第5/13项：额度与价格设置、会员专属清单） =================
+//
+// 配置真源：云数据库 appConfig 集合的 singleton 文档
+// {_id:'singleton', adminIds:[openid...], freeQuota?, memberQuota?,
+// membershipFeatures?, memberOnlyFeatures?, pricing?, updatedAt}，
+// 与 models.js 的 AppConfig 字典一致；未写过的段回退静态配置默认值。
+// 管理员名单只认该文档的 adminIds：文档不存在或名单为空时一律拒绝
+// （fail closed）；首位管理员需直接在云数据库写入该文档。
+// 每次修改都写 AuditLog（action:'config'），detail 只写段名与条数摘要。
+// 注意：quota.js 当前读静态配置；云联调时改为先读本配置文档再注入
+// quota 函数的 config 参数（已支持注入），本节写入即刻落库并留审计。
+
+const CONFIG_DOC_ID = 'singleton';
+const KNOWN_MEMBER_ONLY_FEATURES = ['familyShareInvite', 'photoImport', 'landscapeMode'];
+const KNOWN_FEATURE_SWITCHES = ['photoImport', 'redLedgerMode'];
+const QUOTA_KEYS = ['receiveEvents', 'recordsPerEvent', 'giftRecords', 'contacts'];
+
+function badConfig(msg) {
+const e = new Error(`配置不合法：${msg}`);
+e.code = 'bad-config';
+return e;
+}
+
+async function readConfigDoc(db) {
+return db.collection(COLLECTIONS.AppConfig).findOne({ _id: CONFIG_DOC_ID});
+}
+
+/** 是否管理员：只认 appConfig 文档 adminIds 名单（无名单=无人是管理员） */
+async function isAdmin(db, actorId) {
+if (!actorId) return false;
+const doc = await readConfigDoc(db);
+return !!(doc && Array.isArray(doc.adminIds) && doc.adminIds.includes(actorId));
+}
+
+async function requireAdmin(db, actorId) {
+if (!(await isAdmin(db, actorId))) throw errors.permDenied('not-admin');
+}
+
+/**
+* 读取生效配置（仅管理员）：db 文档覆盖静态默认，只返回白名单段
+* @returns {{freeQuota, memberQuota, membershipFeatures, memberOnlyFeatures, inviteReward, pricing, updatedAt}}
+*/
+async function getConfig(db, actorId) {
+await requireAdmin(db, actorId);
+const doc = (await readConfigDoc(db)) || {};
+return {
+freeQuota: { ...StaticConfig.freeQuota, ...(doc.freeQuota || {})},
+memberQuota: { ...StaticConfig.membership.quota, ...(doc.memberQuota || {})},
+membershipFeatures: { ...StaticConfig.membership.features, ...(doc.membershipFeatures || {})},
+memberOnlyFeatures: doc.memberOnlyFeatures || [...StaticConfig.memberOnlyFeatures],
+inviteReward: await quota.resolveInviteSettings(db),
+pricing: doc.pricing || [],
+updatedAt: doc.updatedAt || null,
+};
+}
+
+/** 内部：整段写入配置（patch 为 段名→值）+ 审计，返回 updatedAt */
+async function writeConfigPatch(db, actorId, patch, detail) {
+const updatedAt = now();
+const doc = await readConfigDoc(db);
+if (doc) {
+await db.collection(COLLECTIONS.AppConfig).update({ _id: CONFIG_DOC_ID}, { ...patch, updatedAt});
+} else {
+await db.collection(COLLECTIONS.AppConfig).insert({ _id: CONFIG_DOC_ID, ...patch, updatedAt});
+}
+await audit.log(db, {
+ownerId: actorId, actorId, action: 'config', targetType: 'config',
+targetId: Object.keys(patch).join(','), detail,
+});
+return updatedAt;
+}
+
+/**
+* 修改会员价格档位（仅管理员）
+* plans: [{id, name, priceFen(分), days}]，最多10个，id 唯一；
+* 空数组表示清空（回到"价格待定"占位）。价格数字本身待用户定价，
+* 本接口只负责落库+校验+审计，不内置任何价格。
+*/
+async function updatePricing(db, actorId, plans) {
+await requireAdmin(db, actorId);
+if (!Array.isArray(plans) || plans.length > 10) throw badConfig('价格档位必须是数组（最多10个）');
+const seen = new Set();
+const clean = plans.map((p) => {
+if (!p || typeof p!== 'object') throw badConfig('档位格式不对');
+const id = String(p.id || '');
+if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(id)) throw badConfig(`档位id不合法:${id}`);
+if (seen.has(id)) throw badConfig(`档位id重复:${id}`);
+seen.add(id);
+const name = String(p.name || '').trim();
+if (!name || name.length > 20) throw badConfig('档位名称不能为空且不超过20字');
+if (!Number.isInteger(p.priceFen) || p.priceFen < 0 || p.priceFen > 100000000) {
+throw badConfig('价格（分）必须为0~100000000的整数');
+}
+if (!Number.isInteger(p.days) || p.days < 1 || p.days > 3650) {
+throw badConfig('天数必须为1~3650的整数');
+}
+return { id, name, priceFen: p.priceFen, days: p.days};
+});
+const updatedAt = await writeConfigPatch(db, actorId, { pricing: clean}, `修改会员价格档位：共${clean.length}个档位`);
+return { pricing: clean, updatedAt};
+}
+
+/**
+* 修改会员功能开关（仅管理员）：键只允许 photoImport / redLedgerMode，
+* 值必须为布尔；未传的键保持原值（与静态默认合并后整段落库）。
+*/
+async function updateFeatureSwitches(db, actorId, features) {
+await requireAdmin(db, actorId);
+if (!features || typeof features!== 'object' || Array.isArray(features)) throw badConfig('功能开关必须是对象');
+const keys = Object.keys(features);
+if (keys.length === 0) throw badConfig('功能开关不能为空');
+for (const k of keys) {
+if (!KNOWN_FEATURE_SWITCHES.includes(k)) throw badConfig(`未知功能开关:${k}`);
+if (typeof features[k]!== 'boolean') throw badConfig(`功能开关${k}必须为开/关`);
+}
+const doc = (await readConfigDoc(db)) || {};
+const merged = { ...StaticConfig.membership.features, ...(doc.membershipFeatures || {}), ...features};
+const updatedAt = await writeConfigPatch(db, actorId, { membershipFeatures: merged}, `修改功能开关：${keys.join('、')}`);
+return { membershipFeatures: merged, updatedAt};
+}
+
+/**
+* 修改会员专属功能清单（仅管理员）：只允许已知功能名
+* （familyShareInvite / photoImport / landscapeMode），quota 的会员门禁读此清单。
+*/
+async function updateMemberOnlyFeatures(db, actorId, features) {
+await requireAdmin(db, actorId);
+if (!Array.isArray(features)) throw badConfig('会员专属功能清单必须是数组');
+const clean = [...new Set(features.map((f) => String(f)))];
+for (const f of clean) {
+if (!KNOWN_MEMBER_ONLY_FEATURES.includes(f)) throw badConfig(`未知会员专属功能:${f}`);
+}
+const updatedAt = await writeConfigPatch(db, actorId, { memberOnlyFeatures: clean}, `修改会员专属功能清单：共${clean.length}项`);
+return { memberOnlyFeatures: clean, updatedAt};
+}
+
+function checkQuotaPatch(patch, label) {
+if (!patch || typeof patch!== 'object' || Array.isArray(patch)) throw badConfig(`${label}必须是对象`);
+const keys = Object.keys(patch);
+if (keys.length === 0) throw badConfig(`${label}不能为空`);
+for (const k of keys) {
+if (!QUOTA_KEYS.includes(k)) throw badConfig(`${label}含未知项:${k}`);
+const v = patch[k];
+if (!Number.isInteger(v) || v < 0 || v > 1000000) throw badConfig(`${label}.${k}必须为0~1000000的整数`);
+}
+}
+
+/**
+* 修改额度设置（仅管理员）：freeQuota / memberQuota 至少给一个，
+* 按项合并（未传的项保持原值）。数字校验后落库并审计。
+*/
+async function updateQuotaSettings(db, actorId, { freeQuota, memberQuota} = {}) {
+await requireAdmin(db, actorId);
+if (freeQuota === undefined && memberQuota === undefined) throw badConfig('没有要修改的额度设置');
+const doc = (await readConfigDoc(db)) || {};
+const patch = {};
+if (freeQuota!== undefined) {
+checkQuotaPatch(freeQuota, '免费额度');
+patch.freeQuota = { ...StaticConfig.freeQuota, ...(doc.freeQuota || {}), ...freeQuota};
+}
+if (memberQuota!== undefined) {
+checkQuotaPatch(memberQuota, '会员额度');
+patch.memberQuota = { ...StaticConfig.membership.quota, ...(doc.memberQuota || {}), ...memberQuota};
+}
+const changed = [freeQuota!== undefined && '免费额度', memberQuota!== undefined && '会员额度'].filter(Boolean).join('、');
+const updatedAt = await writeConfigPatch(db, actorId, patch, `修改额度设置：${changed}`);
+const cfg = await getConfig(db, actorId);
+return { freeQuota: cfg.freeQuota, memberQuota: cfg.memberQuota, updatedAt};
+}
+
+/**
+* 修改邀请奖励设置（仅管理员）：enabled / perInvite / maxSuccessfulInvites
+* 至少给一项，按项合并（未传的项保持生效值）。maxSuccessfulInvites 的
+* 含义 = 每个邀请人最多计入的成功邀请次数（默认 10，含义待用户最终确认）；
+* 改动对之后的发放与额度计算立即生效（发放记录为真源，历史发放不追溯）。
+*/
+async function updateInviteSettings(db, actorId, { enabled, perInvite, maxSuccessfulInvites } = {}) {
+await requireAdmin(db, actorId);
+if (enabled === undefined && perInvite === undefined && maxSuccessfulInvites === undefined) {
+throw badConfig('没有要修改的邀请奖励设置');
+}
+const current = await quota.resolveInviteSettings(db);
+const next = {
+enabled: current.enabled,
+perInvite: { ...current.perInvite },
+maxSuccessfulInvites: current.maxSuccessfulInvites,
+};
+const changed = [];
+if (enabled!== undefined) {
+if (typeof enabled!== 'boolean') throw badConfig('邀请奖励开关必须为开/关');
+next.enabled = enabled;
+changed.push('开关');
+}
+if (perInvite!== undefined) {
+if (!perInvite || typeof perInvite!== 'object' || Array.isArray(perInvite)) throw badConfig('每邀请奖励必须是对象');
+for (const k of Object.keys(perInvite)) {
+if (!['receivePool', 'giftRecords'].includes(k)) throw badConfig(`每邀请奖励含未知项:${k}`);
+const v = perInvite[k];
+if (!Number.isInteger(v) || v < 0 || v > 100000) throw badConfig(`每邀请奖励.${k}必须为0~100000的整数`);
+next.perInvite[k] = v;
+}
+changed.push('每邀请奖励');
+}
+if (maxSuccessfulInvites!== undefined) {
+if (!Number.isInteger(maxSuccessfulInvites) || maxSuccessfulInvites < 0 || maxSuccessfulInvites > 10000) {
+throw badConfig('成功邀请上限必须为0~10000的整数');
+}
+next.maxSuccessfulInvites = maxSuccessfulInvites;
+changed.push('成功邀请上限');
+}
+const updatedAt = await writeConfigPatch(db, actorId, { inviteReward: next }, `修改邀请奖励设置：${changed.join('、')}`);
+return { inviteReward: next, updatedAt };
+}
+
 module.exports = {
 maskUserId,
 overview,
@@ -214,4 +426,11 @@ setMemberPlan,
 quotaUsage,
 inviteStats,
 shareOverview,
+isAdmin,
+getConfig,
+updatePricing,
+updateFeatureSwitches,
+updateMemberOnlyFeatures,
+updateQuotaSettings,
+updateInviteSettings,
 };

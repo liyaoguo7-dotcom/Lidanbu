@@ -1,0 +1,6 @@
+{
+  "pageOrientation": "auto",
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "usingComponents": { "confirm-modal": "/components/confirm-modal/confirm-modal" }
+}

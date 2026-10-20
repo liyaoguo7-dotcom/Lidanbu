@@ -28,6 +28,15 @@ const MESSAGES = {
   'quota-exceeded:gift': '呜呜，本小本本快被塞满啦！送礼记录已经记满了，开个会员可以记更多笔哦～',
   'quota-exceeded:contact': '呜呜，本小本本快被塞满啦！亲友已经记满啦，开个会员可以添更多亲友哦～',
   'readonly:over-free-quota-after-expiry': '会员已到期，该记录为只读',
+  // —— 邀请奖励类（口径：邀请是自愿的，不出现强制/诱导分享措辞） ——
+  'invite-disabled': '邀请奖励活动暂未开启',
+  'invite-code-invalid': '邀请码不正确，请检查后再试',
+  'invite-self': '不能填写自己的邀请码哦',
+  'invite-already-bound': '你已经绑定过邀请啦，不能重复绑定',
+  'invite-not-new-user': '邀请奖励只面向新用户哦',
+  'invite-condition-incomplete': '还差一点：新建 1 个礼薄并记 1 条收礼，或记 1 条送礼，就能为邀请人点亮奖励',
+  'invite-cap-reached': '邀请人的奖励名额已达上限',
+  'invite-device-duplicate': '这台设备已经参与过邀请奖励啦',
 };
 
 function userMessage(reason) {
@@ -55,4 +64,11 @@ function memberRequired(featureLabel) {
   return e;
 }
 
-module.exports = { userMessage, permDenied, quotaDenied, memberRequired, MESSAGES };
+/** 邀请奖励拒绝：消息为用户可读提示，err.code 为内部原因码 */
+function inviteDenied(reason) {
+  const e = new Error(userMessage(reason));
+  e.code = reason;
+  return e;
+}
+
+module.exports = { userMessage, permDenied, quotaDenied, memberRequired, inviteDenied, MESSAGES };

@@ -1,4 +1,4 @@
-<view class="warn-banner">邀请奖励数据只看数量。设置当前为预留配置，开关关闭。</view>
+<view class="warn-banner">邀请奖励数据只看数量。设置经管理员接口修改（core.admin.updateInviteSettings），每次修改记入操作记录。</view>
 <view wx:if="{{stats}}" class="stat-grid">
   <view class="stat-card"><view class="stat-num">{{stats.inviterCount}}</view><view class="stat-label">邀请人数</view></view>
   <view class="stat-card"><view class="stat-num">{{stats.totalInvites}}</view><view class="stat-label">成功邀请次数</view></view>
@@ -6,8 +6,8 @@
   <view class="stat-card"><view class="stat-num">{{stats.totalGiftsGranted}}</view><view class="stat-label">已发放送礼额度</view></view>
 </view>
 <view class="card" wx:if="{{cfg}}">
-  <view class="form-row"><text class="form-label">开关</text><text class="form-val">{{cfg.enabled ? '开启' : '关闭（预留）'}}</text></view>
+  <view class="form-row"><text class="form-label">开关</text><text class="form-val">{{cfg.enabled ? '开启' : '关闭'}}</text></view>
   <view class="form-row"><text class="form-label">每邀请奖励</text><text class="form-val">收礼池 +{{cfg.rules.perInvite.receivePool}} / 送礼 +{{cfg.rules.perInvite.giftRecords}}</text></view>
-  <view class="form-row"><text class="form-label">上限</text><text class="form-val">{{cfg.rules.maxInvites}}（含义待用户确认）</text></view>
+  <view class="form-row"><text class="form-label">成功邀请上限</text><text class="form-val">每位邀请人最多 {{cfg.rules.maxSuccessfulInvites}} 次</text></view>
 </view>
-<view class="note">邀请奖励规则修改走 AppConfig 配置，修改将记入操作记录（云函数待联调，上线前必须有管理员二次验证）。</view>
+<view class="note">生效设置以服务端为准（静态配置为默认，管理员修改后覆盖）；修改入口在配置管理（云函数待联调，上线前必须有管理员二次验证）。</view>

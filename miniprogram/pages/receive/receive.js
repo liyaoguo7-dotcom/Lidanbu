@@ -7,6 +7,7 @@
  * 共计行整数（formatAmountInt）；图案一律 tagIconPath。
  */
 const dataService = require('../../services/data-service.js');
+const landscapeRoute = require('../../services/landscape-route.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
 const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
@@ -26,9 +27,12 @@ Page({
   },
 
   touchStartX: 0,
+  _membership: null,
 
   async onShow() {
     await dataService.init();
+    // 缓存会员状态，供行点击时走横置路由判断（横置页内还会再校验一次门禁）
+    try { this._membership = await dataService.getMembership(); } catch (e) { this._membership = null; }
     let closed = false;
     try { closed = wx.getStorageSync(HORN_KEY) === '1'; } catch (e) { /* 忽略 */ }
     this.setData({ showHorn: !closed });
@@ -45,6 +49,7 @@ Page({
       const tag = dataService.getTagById(e.tagId) || {};
       rows.push({
         _id: e._id,
+        ownerId: e.ownerId || '',
         name: e.name,
         date: e.date || '',
         count: st.count,
@@ -98,10 +103,21 @@ Page({
   },
 
   // 行点击：有滑开的行先收回，否则进礼薄详情
+  // 横置开关开 + 会员 → 进横置礼单本；其余情况与原行为一致（竖置详情）
   onRowTap(e) {
     const id = e.currentTarget.dataset.id;
     if (this.data.events.some((r) => r.offset !== 0)) {
       this.closeAllSwipes();
+      return;
+    }
+    const row = this.data.events.find((r) => r._id === id);
+    const route = landscapeRoute.resolveBookRoute({
+      landscapeOn: landscapeRoute.readLandscapeOn(),
+      membership: this._membership,
+    });
+    if (route === 'landscape' && row) {
+      const owner = row.ownerId ? `&ownerId=${row.ownerId}` : '';
+      wx.navigateTo({ url: `/pages/landscape/receive/receive?eventId=${id}${owner}` });
       return;
     }
     wx.navigateTo({ url: `/pages/receive-detail/receive-detail?id=${id}` });

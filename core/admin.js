@@ -18,14 +18,8 @@ const { COLLECTIONS, now} = require('./models');
 const quota = require('./quota');
 const audit = require('./audit');
 const errors = require('./errors');
+const { maskUserId } = require('./admin-mask');
 const StaticConfig = require('../miniprogram/config/app-config');
-
-/** userId 脱敏：前3 + *** + 后3，如 oAb***9zQ */
-function maskUserId(openid) {
-const s = String(openid || '');
-if (s.length <= 8) return s.slice(0, 2) + '***';
-return `${s.slice(0, 3)}***${s.slice(-3)}`;
-}
 
 /** 内部：用脱敏短号找回真实用户（骨架实现：全表扫描比对；生产需建索引） */
 async function findUserByMask(db, maskedId) {
@@ -142,7 +136,9 @@ return { userId: maskedUserId, memberState: 'member', expireAt};
 */
 async function quotaUsage(db, maskedUserId) {
 const user = await findUserByMask(db, maskedUserId);
-const q = quota.getEffectiveQuota(user);
+const successfulInvites = await quota.countSuccessfulInvites(db, user._id);
+const inviteSettings = await quota.resolveInviteSettings(db);
+const q = quota.getEffectiveQuota(user, StaticConfig, Date.now(), { successfulInvites, settings: inviteSettings });
 const usedEvents = await countCol(db, 'ReceiveEvent', { ownerId: user._id});
 const usedGifts = await countCol(db, 'GiftRecord', { ownerId: user._id});
 const usedContacts = await countCol(db, 'Contact', { ownerId: user._id});
@@ -248,7 +244,7 @@ if (!(await isAdmin(db, actorId))) throw errors.permDenied('not-admin');
 
 /**
 * 读取生效配置（仅管理员）：db 文档覆盖静态默认，只返回白名单段
-* @returns {{freeQuota, memberQuota, membershipFeatures, memberOnlyFeatures, pricing, updatedAt}}
+* @returns {{freeQuota, memberQuota, membershipFeatures, memberOnlyFeatures, inviteReward, pricing, updatedAt}}
 */
 async function getConfig(db, actorId) {
 await requireAdmin(db, actorId);
@@ -258,6 +254,7 @@ freeQuota: { ...StaticConfig.freeQuota, ...(doc.freeQuota || {})},
 memberQuota: { ...StaticConfig.membership.quota, ...(doc.memberQuota || {})},
 membershipFeatures: { ...StaticConfig.membership.features, ...(doc.membershipFeatures || {})},
 memberOnlyFeatures: doc.memberOnlyFeatures || [...StaticConfig.memberOnlyFeatures],
+inviteReward: await quota.resolveInviteSettings(db),
 pricing: doc.pricing || [],
 updatedAt: doc.updatedAt || null,
 };
@@ -377,6 +374,50 @@ const cfg = await getConfig(db, actorId);
 return { freeQuota: cfg.freeQuota, memberQuota: cfg.memberQuota, updatedAt};
 }
 
+/**
+* 修改邀请奖励设置（仅管理员）：enabled / perInvite / maxSuccessfulInvites
+* 至少给一项，按项合并（未传的项保持生效值）。maxSuccessfulInvites 的
+* 含义 = 每个邀请人最多计入的成功邀请次数（默认 10，含义待用户最终确认）；
+* 改动对之后的发放与额度计算立即生效（发放记录为真源，历史发放不追溯）。
+*/
+async function updateInviteSettings(db, actorId, { enabled, perInvite, maxSuccessfulInvites } = {}) {
+await requireAdmin(db, actorId);
+if (enabled === undefined && perInvite === undefined && maxSuccessfulInvites === undefined) {
+throw badConfig('没有要修改的邀请奖励设置');
+}
+const current = await quota.resolveInviteSettings(db);
+const next = {
+enabled: current.enabled,
+perInvite: { ...current.perInvite },
+maxSuccessfulInvites: current.maxSuccessfulInvites,
+};
+const changed = [];
+if (enabled!== undefined) {
+if (typeof enabled!== 'boolean') throw badConfig('邀请奖励开关必须为开/关');
+next.enabled = enabled;
+changed.push('开关');
+}
+if (perInvite!== undefined) {
+if (!perInvite || typeof perInvite!== 'object' || Array.isArray(perInvite)) throw badConfig('每邀请奖励必须是对象');
+for (const k of Object.keys(perInvite)) {
+if (!['receivePool', 'giftRecords'].includes(k)) throw badConfig(`每邀请奖励含未知项:${k}`);
+const v = perInvite[k];
+if (!Number.isInteger(v) || v < 0 || v > 100000) throw badConfig(`每邀请奖励.${k}必须为0~100000的整数`);
+next.perInvite[k] = v;
+}
+changed.push('每邀请奖励');
+}
+if (maxSuccessfulInvites!== undefined) {
+if (!Number.isInteger(maxSuccessfulInvites) || maxSuccessfulInvites < 0 || maxSuccessfulInvites > 10000) {
+throw badConfig('成功邀请上限必须为0~10000的整数');
+}
+next.maxSuccessfulInvites = maxSuccessfulInvites;
+changed.push('成功邀请上限');
+}
+const updatedAt = await writeConfigPatch(db, actorId, { inviteReward: next }, `修改邀请奖励设置：${changed.join('、')}`);
+return { inviteReward: next, updatedAt };
+}
+
 module.exports = {
 maskUserId,
 overview,
@@ -391,4 +432,5 @@ updatePricing,
 updateFeatureSwitches,
 updateMemberOnlyFeatures,
 updateQuotaSettings,
+updateInviteSettings,
 };

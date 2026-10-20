@@ -17,6 +17,9 @@ const LEDGER_COLLECTIONS = [
   COLLECTIONS.ImportJob,
   COLLECTIONS.ExportJob,
 ];
+// 注意：inviteBindings / inviteRewardGrants 故意不在清理清单里——
+// 保留邀请绑定与发放历史，才能保证"被邀请人注销后重注册不再重复计数"；
+// 这两类记录只含 id/数量/时间，不含账本内容。
 
 /**
  * 注销账号：清空账本数据，保留脱敏审计流水。

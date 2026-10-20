@@ -1,4 +1,7 @@
 /* 送礼记录列表 */
+.entry-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+.entry-title { font-size: 15px; font-weight: 600; }
+.entry-arrow { color: #C2C2C2; font-size: 16px; }
 .summary { padding: 14px 16px; font-size: 14px; }
 .summary .red { color: #F0575A; font-weight: 600; }
 .gift-row {

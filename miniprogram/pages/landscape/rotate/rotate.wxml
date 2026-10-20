@@ -1,0 +1,15 @@
+<!-- 礼单簿 · 请横屏（竖屏提示页，文案与定版图 30 逐字一致） -->
+<view class="rotate-wrap">
+  <view class="rotate-topbar">
+    <view class="rotate-back" bindtap="goBack">‹</view>
+    <view class="rotate-title">{{copy.title}}</view>
+    <view class="rotate-back-ph"></view>
+  </view>
+  <view class="rotate-center">
+    <image class="rotate-icon" src="/assets/rotate-phone.png" mode="aspectFit" />
+    <view class="rotate-main">{{copy.main}}</view>
+    <view class="rotate-sub">{{copy.sub}}</view>
+    <view class="rotate-lock">{{copy.lock}}</view>
+  </view>
+  <view class="rotate-btn" bindtap="goPortrait">{{copy.backButton}}</view>
+</view>

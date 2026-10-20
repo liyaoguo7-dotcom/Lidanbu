@@ -34,7 +34,7 @@
 
 <view class="card">
   <view class="form-row" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
-    <text class="form-val">邀请新用户得名额</text>
+    <text class="form-val">邀请好友得名额</text>
     <text class="chev">›</text>
   </view>
 </view>
