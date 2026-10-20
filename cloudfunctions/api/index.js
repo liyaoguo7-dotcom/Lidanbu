@@ -5,6 +5,11 @@
 * 部署时把 core/ 与 miniprogram/config/app-config.js 一并打包进云函数目录。
 *
 * 本地 Node 无法运行，需云环境。
+*
+* 已就绪的真实路由模块（依赖注入，可在本地单测）：
+* - 导出 xlsx：./routes-export.js 的 createExportXlsxHandler({ db, buildXlsx })
+*   action='exportXlsx' 时调用，actorId 取 cloud.getWXContext().OPENID；
+*   测试见 tests/test-cloud-export.js。
 */
 
 // const cloud = require('wx-server-sdk');

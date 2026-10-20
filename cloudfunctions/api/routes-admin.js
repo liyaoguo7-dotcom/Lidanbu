@@ -9,7 +9,7 @@
 *
 * 待联调事项：
 * 1. 管理员身份校验 + 二次验证（上线前必须有）；
-* 2. 所有配置修改写操作记录（setMemberPlan 已写 audit，其余后台配置项后续补）；
+* 2. 所有配置修改写操作记录（setMemberPlan 与配置写接口均已在 core 内写 audit）；
 * 3. 部署时把 core/ 与 miniprogram/config/app-config.js 一并打包进云函数目录。
 */
 
@@ -30,6 +30,12 @@
 // 'admin.quotaUsage': (db, params) => core.admin.quotaUsage(db, params.userId),
 // 'admin.inviteStats': (db) => core.admin.inviteStats(db),
 // 'admin.shareOverview': (db, params) => core.admin.shareOverview(db, params),
+// // 配置管理（core 内 requireAdmin 校验 actorId 须在 appConfig.adminIds 名单内）：
+// 'admin.getConfig': (db, params, actorId) => core.admin.getConfig(db, actorId),
+// 'admin.updatePricing': (db, params, actorId) => core.admin.updatePricing(db, actorId, params.plans),
+// 'admin.updateFeatureSwitches': (db, params, actorId) => core.admin.updateFeatureSwitches(db, actorId, params.features),
+// 'admin.updateMemberOnlyFeatures': (db, params, actorId) => core.admin.updateMemberOnlyFeatures(db, actorId, params.features),
+// 'admin.updateQuotaSettings': (db, params, actorId) => core.admin.updateQuotaSettings(db, actorId, params),
 //};
 //
 // exports.main = async (event) => {

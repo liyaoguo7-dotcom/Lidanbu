@@ -15,6 +15,8 @@ require('./test-import');
 require('./test-export-xlsx');
 require('./test-wanglai');
 require('./test-admin');
+require('./test-admin-config');
+require('./test-cloud-export');
 require('./test-uppercase');
 require('./test-stage3');
 

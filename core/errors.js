@@ -8,6 +8,7 @@
 const MESSAGES = {
   // —— 权限类 ——
   'empty-identity': '身份信息缺失，请重新登录',
+  'not-admin': '需要管理员身份',
   'no-active-membership': '无权访问该账本',
   'switch-off:view': '无权查看',
   'switch-off:add': '无权新增',

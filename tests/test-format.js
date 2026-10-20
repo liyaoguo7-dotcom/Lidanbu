@@ -76,21 +76,29 @@ test('parseAmountToFen 与 formatAmount 往返一致', () => {
   }
 });
 
-// --- formatAmountInt：分 → 整数元（用户 2026-10-18 拍板：非小数清单位置一律整数）---
-test('formatAmountInt: 100005分 → "1000"（四舍五入）', () => {
-  assert.eq(formatAmountInt(100005), '1000', 'round down');
+// --- formatAmountInt：整元去尾、带分保留两位（用户 2026-10-20 修订：带零头不四舍五入）---
+test('formatAmountInt: 整元 886600分 → "8866"（去尾 .00）', () => {
+  assert.eq(formatAmountInt(886600), '8866', 'whole yuan strips .00');
 });
 
-test('formatAmountInt: 100050分 → "1001"（四舍五入进位）', () => {
-  assert.eq(formatAmountInt(100050), '1001', 'round up');
+test('formatAmountInt: 带零头 1250分 → "12.50"（保留两位，不四舍五入）', () => {
+  assert.eq(formatAmountInt(1250), '12.50', 'cents kept');
+});
+
+test('formatAmountInt: 100005分 → "1000.05"（零头原样保留）', () => {
+  assert.eq(formatAmountInt(100005), '1000.05', 'no rounding');
+});
+
+test('formatAmountInt: 100050分 → "1000.50"（不进位）', () => {
+  assert.eq(formatAmountInt(100050), '1000.50', 'no round up');
 });
 
 test('formatAmountInt: 0分 → "0"', () => {
   assert.eq(formatAmountInt(0), '0', 'zero');
 });
 
-test('formatAmountInt: 负数 -100000分 → "-1000"', () => {
-  assert.eq(formatAmountInt(-100000), '-1000', 'negative');
+test('formatAmountInt: 负数带零头 -1250分 → "-12.50"', () => {
+  assert.eq(formatAmountInt(-1250), '-12.50', 'negative with cents');
 });
 
 test('formatAmountInt: 非数字输入不抛错，返回 "0"', () => {
