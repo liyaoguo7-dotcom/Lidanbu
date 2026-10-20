@@ -12,9 +12,11 @@ const core = require('../core/index.js');
 const AppConfig = require('../config/app-config.js');
 const { tagIconPath } = require('../config/tag-icons.js');
 const { WxStorageDB } = require('./db-wxstorage.js');
+const demoSeed = require('./demo-seed.js');
 
 const USER_KEY = 'lidanbu_demo_user';
-const SEEDED_KEY = 'lidanbu_demo_seeded_v1';
+const SEEDED_KEY = 'lidanbu_demo_seeded_v2';
+const OLD_SEEDED_KEY = 'lidanbu_demo_seeded_v1';
 
 let _db = null;
 let _userId = null;
@@ -24,7 +26,8 @@ function _makeDb() {
   // 本地演示模式：return new WxStorageDB();（当前）
   // 云模式：return new core.db.CloudDB();
   //   切云的前提（缺一不可，见 docs/云环境切换步骤.md）：
-  //   1) miniprogram/app.js 填好 globalData.cloudEnvId 并取消 wx.cloud.init 注释；
+  //   1) miniprogram/config/app-config.js 的 cloudEnvId 填好环境 ID
+  //      （app.js 启动时自动读取并 wx.cloud.init，不用改其他文件）；
   //   2) AppConfig.demo.localMode 设为 false；
   //   3) core/db-cloud.js 骨架已补全并联调通过；
   //   4) cloudfunctions/api 已部署。
@@ -59,15 +62,39 @@ async function ensureUser() {
   return user;
 }
 
+/**
+ * 清理 v1 演示种子（只有张三/李五两个联系人、无 seed 标记）：
+ * 仅当旧标记在、且联系人没有任何收/送礼记录引用时才删，绝不动用户自己的数据。
+ */
+async function cleanupV1Seeds() {
+  let old = false;
+  try { old = !!wx.getStorageSync(OLD_SEEDED_KEY); } catch (e) { /* ignore */ }
+  if (!old) return;
+  const C = core.models.COLLECTIONS;
+  const pairs = [['张三', '同学'], ['李五', '邻居']];
+  for (const [name, remark] of pairs) {
+    const c = await _db.collection(C.Contact).findOne({ ownerId: _userId, name, remark });
+    if (!c || c.seed) continue;
+    const used = (await _db.collection(C.ReceiveRecord).count({ ownerId: _userId, contactId: c._id }))
+      + (await _db.collection(C.GiftRecord).count({ ownerId: _userId, contactId: c._id }));
+    if (used === 0) await _db.collection(C.Contact).remove({ _id: c._id, ownerId: _userId });
+  }
+  try { wx.removeStorageSync(OLD_SEEDED_KEY); } catch (e) { /* ignore */ }
+}
+
+/**
+ * 演示数据：只在本地演示模式下种、且只种一次（标记 v2）。
+ * 内容与 id 防重逻辑在 services/demo-seed.js；种下的数据全带 seed:true 标记。
+ */
 async function seedDemo() {
+  if (!(AppConfig.demo && AppConfig.demo.localMode)) return;
   let seeded = false;
   try { seeded = !!wx.getStorageSync(SEEDED_KEY); } catch (e) { /* ignore */ }
   if (seeded) return;
-  // 演示种子：2 个联系人（亲友录/选择亲友有内容看）；不送礼记录（保留空状态演示）
   try {
-    await core.contacts.createContact(_db, _userId, _userId, { name: '张三', remark: '同学' });
-    await core.contacts.createContact(_db, _userId, _userId, { name: '李五', remark: '邻居' });
-  } catch (e) { /* 已存在则跳过 */ }
+    await cleanupV1Seeds();
+    await demoSeed.seedDemoData(_db, core, _userId);
+  } catch (e) { /* 演示种子失败不阻断启动 */ }
   try { wx.setStorageSync(SEEDED_KEY, true); } catch (e) { /* ignore */ }
 }
 
@@ -198,9 +225,22 @@ const service = {
     };
   },
 
+  /**
+   * 演示专用：切换会员状态（'free' 免费 | 'member' 会员 | 'grace' 会员已到期/缓冲期）。
+   * 只改用户文档的 membership 一个字段，之后的状态与额度全部走 core/quota
+   * 现行计算（getMembershipState/getEffectiveQuota），没有第二套假逻辑。
+   * 仅本地演示模式可用；返回切换后的状态。
+   */
+  async setDemoMembership(mode) {
+    if (!this.localMode) throw new Error('演示切换只在本地演示模式可用');
+    if (!['free', 'member', 'grace'].includes(mode)) throw new Error('演示状态只能是 免费/会员/会员已到期');
+    try {
+      return await demoSeed.applyDemoMembership(_db, core, _userId, mode);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+
   /** 额度使用情况：各类已用/上限（免费+会员+邀请奖励） */
-  async getQuotaUsage() {
-    const me = await ensureUser();
+  async getQuotaUsage() {    const me = await ensureUser();
     const quota = core.quota.getEffectiveQuota(me, AppConfig, Date.now(), await inviteOpts());
     const events = await _db.collection(core.models.COLLECTIONS.ReceiveEvent).find({ ownerId: _userId });
     const gifts = await _db.collection(core.models.COLLECTIONS.GiftRecord).count({ ownerId: _userId });

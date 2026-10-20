@@ -43,6 +43,23 @@
     "pages/invite/invite-reward",
     "pages/privacy/privacy"
   ],
+  "subpackages": [
+    {
+      "root": "packages/fonts",
+      "name": "fonts",
+      "pages": []
+    }
+  ],
+  "preloadRule": {
+    "pages/receive/receive": {
+      "network": "wifi",
+      "packages": ["fonts"]
+    },
+    "pages/mine/mine": {
+      "network": "wifi",
+      "packages": ["fonts"]
+    }
+  },
   "sitemapLocation": "sitemap.json",
   "tabBar": {
     "backgroundColor": "#ffffff",

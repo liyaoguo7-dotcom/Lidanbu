@@ -7,10 +7,16 @@
  *
  * 发放条件（全部满足才发）：
  * 1. 被邀请人是新注册用户（绑定时名下还没有礼薄/收礼记录/送礼记录）；
- *    注：不看联系人——本地演示种子会给新用户预置联系人，且联系人
+ *    注：绑定判定不看联系人——本地演示种子会给新用户预置联系人，且联系人
  *    本身不构成"已在用账本"的证据；
  * 2. 邀请关系绑定成功（一条 InviteBinding，每位被邀请人最多一条）；
- * 3. 有效动作（二选一）：新建 ≥1 个礼薄且 ≥1 条收礼记录，或 ≥1 条送礼记录。
+ * 3. 有效动作（二选一，用户 2026-10-20 确认口径）：
+ *    A：创建一个礼薄，并添加一位"收礼亲友"；
+ *    B：添加一位"送礼亲友"（不要求礼薄）。
+ *    「收礼/送礼亲友」= 被邀请人本人新建的联系人（createdBy=本人，
+ *    排除演示种子联系人 seed:true；旧数据无 createdBy 不算），
+ *    且该联系人被用于 ≥1 条对应记录（收礼记录/送礼记录）。
+ *    只记一笔但用的是种子/他人联系人，不算有效动作。
  *
  * 防刷：
  * - 自己邀请自己：拒绝；
@@ -118,18 +124,33 @@ async function bindInvite(db, inviteeId, { code, deviceId } = {}, config = AppCo
 }
 
 /**
- * 有效动作检查（二选一）：
- * A：新建 ≥1 个礼薄 且 ≥1 条收礼记录；B：≥1 条送礼记录
+ * 有效动作检查（用户 2026-10-20 确认口径，二选一）：
+ * A：≥1 个礼薄 且 有一位"收礼亲友"；B：有一位"送礼亲友"。
+ * 「亲友」= 本人新建联系人（ownerId=本人、createdBy=本人、seed!==true，
+ * 旧数据缺 createdBy 不算），且被用于 ≥1 条对应记录。
+ * 用种子联系人或他人/旧联系人记的记录不算有效动作。
  */
 async function checkEligibility(db, inviteeId) {
-  const [events, receiveRecords, giftRecords] = await Promise.all([
+  const [events, contacts, receiveRecords, giftRecords] = await Promise.all([
     db.collection(COLLECTIONS.ReceiveEvent).count({ ownerId: inviteeId }),
-    db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: inviteeId }),
-    db.collection(COLLECTIONS.GiftRecord).count({ ownerId: inviteeId }),
+    db.collection(COLLECTIONS.Contact).find({ ownerId: inviteeId }),
+    db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId: inviteeId }),
+    db.collection(COLLECTIONS.GiftRecord).find({ ownerId: inviteeId }),
   ]);
-  const pathReceive = events >= 1 && receiveRecords >= 1;
-  const pathGift = giftRecords >= 1;
-  return { eligible: pathReceive || pathGift, pathReceive, pathGift, events, receiveRecords, giftRecords };
+  const ownNewIds = new Set(
+    contacts
+      .filter((c) => c.createdBy === inviteeId && c.seed !== true)
+      .map((c) => c._id)
+  );
+  const receiveFriend = receiveRecords.some((r) => ownNewIds.has(r.contactId));
+  const giftFriend = giftRecords.some((r) => ownNewIds.has(r.contactId));
+  const pathReceive = events >= 1 && receiveFriend;
+  const pathGift = giftFriend;
+  return {
+    eligible: pathReceive || pathGift, pathReceive, pathGift,
+    events, receiveRecords: receiveRecords.length, giftRecords: giftRecords.length,
+    ownNewContacts: ownNewIds.size, receiveFriend, giftFriend,
+  };
 }
 
 /**

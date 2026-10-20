@@ -32,6 +32,14 @@
   </view>
 </view>
 
+<!-- 演示专用行：只有本地演示模式才有，正式版不显示 -->
+<view class="card" wx:if="{{demoMode}}">
+  <view class="form-row" bindtap="onDemoMembership">
+    <text class="form-val">演示：切换会员状态</text>
+    <text class="chev">{{demoStateText}} ›</text>
+  </view>
+</view>
+
 <view class="card">
   <view class="form-row" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
     <text class="form-val">邀请好友得名额</text>

@@ -1,0 +1,32 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:375px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#333; font-size:15px; }
+.nav { background:#F0E6D4; height:88px; position:relative; }
+.nav .back { position:absolute; left:14px; bottom:12px; font-size:22px; color:#333; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.card { background:#FFF; border-radius:12px; margin:12px; }
+.form-row { display:flex; align-items:center; padding:0 16px; min-height:58px; border-bottom:1px solid #F0F0F0; }
+.form-row:last-child { border-bottom:none; }
+.form-label { width:82px; flex:none; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.form-val { flex:1; }
+.chev { color:#C2C2C2; font-size:18px; }
+.note { font-size:13px; color:#999; margin:12px 16px; line-height:1.6; }
+.warn-banner { background:#FFF7E6; border:1px solid #F5DFA8; color:#8A6D1B; font-size:14px; border-radius:12px; margin:12px; padding:14px 16px; line-height:1.6; }
+.stat-grid { display:flex; flex-wrap:wrap; padding:4px; }
+.stat-card { flex:1 1 40%; background:#FFF; border-radius:12px; margin:8px; padding:18px 12px; text-align:center; }
+.stat-num { font-size:26px; font-weight:bold; color:#333; }
+.stat-label { font-size:13px; color:#999; margin-top:6px; }
+.mask { font-family:monospace; font-size:13px; color:#666; }
+.pill { display:inline-block; font-size:12px; border:1px solid #E0E0E0; border-radius:14px; padding:4px 12px; margin:4px 6px 4px 0; color:#666; }
+.pill.on { border-color:#E05353; color:#E05353; font-weight:bold; }
+.mini-btn { display:inline-block; font-size:13px; color:#E05353; border:1px solid #E05353; border-radius:16px; padding:6px 16px; white-space:nowrap; }
+.input-line { background:#FFF; border-radius:12px; margin:12px; padding:0 16px; min-height:58px; display:flex; align-items:center; }
+.input-line .fake-input { flex:1; color:#C2C2C2; font-size:15px; }
+.todo-desc { color:#999; font-size:14px; line-height:1.6; }
+.todo-empty { color:#C2C2C2; font-size:14px; }
+.group-row { background:#FAFAFA; font-size:13px; color:#999; }
+</style></head><body>
+<div class="nav"><span class="back">‹</span><div class="title">会员管理</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+<div class="warn-banner">会员列表只含白名单字段：脱敏用户号、会员状态、到期时间、各集合条数。手动开通/延期将记入操作记录。</div><div style="padding:4px 12px"><span class="pill on">全部</span><span class="pill">会员</span><span class="pill">免费</span><span class="pill">缓冲期</span><span class="pill">已到期</span></div><div class="note">共 128 位用户</div><div class="card"><div class="form-row"><div class="form-val"><div class="mask">oAb***9zQ · 会员 · 2027-01-15 到期</div><div style="font-size:12px;color:#C2C2C2;margin-top:4px">礼薄3 · 送礼28 · 亲友42</div></div><span class="mini-btn">开通/延期</span></div><div class="form-row"><div class="form-val"><div class="mask">oXy***3kL · 免费用户</div><div style="font-size:12px;color:#C2C2C2;margin-top:4px">礼薄1 · 送礼6 · 亲友12</div></div><span class="mini-btn">开通/延期</span></div><div class="form-row"><div class="form-val"><div class="mask">oMn***7pR · 缓冲期 · 2026-11-19 结束</div><div style="font-size:12px;color:#C2C2C2;margin-top:4px">礼薄3 · 送礼30 · 亲友50</div></div><span class="mini-btn">开通/延期</span></div></div>
+</body></html>

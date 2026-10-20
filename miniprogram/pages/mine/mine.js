@@ -7,11 +7,16 @@ const dataService = require('../../services/data-service.js');
 const landscapeRoute = require('../../services/landscape-route.js');
 const AppConfig = require('../../config/app-config.js');
 
+/** 会员状态 → 演示切换行上显示的文字 */
+const DEMO_STATE_LABELS = { free: '免费', member: '会员', grace: '会员已到期（缓冲期）', expired: '已过期' };
+
 Page({
   data: {
     isMember: false,
     memberText: '',
     landscapeOn: false,
+    demoMode: false,
+    demoStateText: '',
     feats: [
       { icon: '/images/icons/family.svg', title: '家庭共享邀请', desc: '邀请家人共记一本账，查看/新增/修改/删除/导出权限由你定' },
       { icon: '/images/icons/book.svg', title: '横置红字礼单本', desc: '经典红字大写，横置翻阅，仪式感拉满' },
@@ -24,6 +29,7 @@ Page({
     this.setData({
       inviteRewardEnabled: !!(AppConfig.inviteReward && AppConfig.inviteReward.enabled),
       landscapeOn: landscapeRoute.readLandscapeOn(),
+      demoMode: dataService.localMode, // 演示切换行只在本地演示模式出现，正式版没有
     });
     await this.refresh();
   },
@@ -42,8 +48,26 @@ Page({
       this.setData({
         isMember,
         memberText: isMember ? '会员有效期内' : '本子虽小，人情事大～开个会员，让每一笔心意都有处安放',
+        demoStateText: DEMO_STATE_LABELS[m.state] || m.state,
       });
     } catch (e) { /* 演示期忽略 */ }
+  },
+
+  /** 演示专用：切换会员状态（免费/会员/会员已到期），切换后全局按新状态走现行规则 */
+  onDemoMembership() {
+    const modes = ['free', 'member', 'grace'];
+    wx.showActionSheet({
+      itemList: ['免费', '会员', '会员已到期（缓冲期）'],
+      success: async (res) => {
+        try {
+          const state = await dataService.setDemoMembership(modes[res.tapIndex]);
+          wx.showToast({ title: '已切换为：' + (DEMO_STATE_LABELS[state] || state), icon: 'none' });
+          await this.refresh();
+        } catch (e) {
+          wx.showToast({ title: e.message || '切换失败', icon: 'none' });
+        }
+      },
+    });
   },
 
   onMemberCard() {

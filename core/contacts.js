@@ -28,7 +28,7 @@ async function createContact(db, actorId, ownerId, { name, remark = '' }) {
   const dup = await db.collection(COLLECTIONS.Contact).count({ ownerId, name: name.trim() });
 
   const { _id } = await db.collection(COLLECTIONS.Contact).insert({
-    ownerId, name: name.trim(), remark, createdAt: now(),
+    ownerId, name: name.trim(), remark, createdBy: actorId, createdAt: now(),
   });
   await audit.log(db, { ownerId, actorId, action: 'create', targetType: 'contact', targetId: _id, detail: '新增联系人' });
   return { _id, duplicateWarning: dup > 0 };

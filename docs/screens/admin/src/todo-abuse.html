@@ -1,0 +1,32 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:375px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#333; font-size:15px; }
+.nav { background:#F0E6D4; height:88px; position:relative; }
+.nav .back { position:absolute; left:14px; bottom:12px; font-size:22px; color:#333; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.card { background:#FFF; border-radius:12px; margin:12px; }
+.form-row { display:flex; align-items:center; padding:0 16px; min-height:58px; border-bottom:1px solid #F0F0F0; }
+.form-row:last-child { border-bottom:none; }
+.form-label { width:82px; flex:none; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.form-val { flex:1; }
+.chev { color:#C2C2C2; font-size:18px; }
+.note { font-size:13px; color:#999; margin:12px 16px; line-height:1.6; }
+.warn-banner { background:#FFF7E6; border:1px solid #F5DFA8; color:#8A6D1B; font-size:14px; border-radius:12px; margin:12px; padding:14px 16px; line-height:1.6; }
+.stat-grid { display:flex; flex-wrap:wrap; padding:4px; }
+.stat-card { flex:1 1 40%; background:#FFF; border-radius:12px; margin:8px; padding:18px 12px; text-align:center; }
+.stat-num { font-size:26px; font-weight:bold; color:#333; }
+.stat-label { font-size:13px; color:#999; margin-top:6px; }
+.mask { font-family:monospace; font-size:13px; color:#666; }
+.pill { display:inline-block; font-size:12px; border:1px solid #E0E0E0; border-radius:14px; padding:4px 12px; margin:4px 6px 4px 0; color:#666; }
+.pill.on { border-color:#E05353; color:#E05353; font-weight:bold; }
+.mini-btn { display:inline-block; font-size:13px; color:#E05353; border:1px solid #E05353; border-radius:16px; padding:6px 16px; white-space:nowrap; }
+.input-line { background:#FFF; border-radius:12px; margin:12px; padding:0 16px; min-height:58px; display:flex; align-items:center; }
+.input-line .fake-input { flex:1; color:#C2C2C2; font-size:15px; }
+.todo-desc { color:#999; font-size:14px; line-height:1.6; }
+.todo-empty { color:#C2C2C2; font-size:14px; }
+.group-row { background:#FAFAFA; font-size:13px; color:#999; }
+</style></head><body>
+<div class="nav"><span class="back">‹</span><div class="title">异常用户限制</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+<div class="warn-banner">待后端接口：本页为界面骨架，结构已按正式形态搭好，未编造任何数据。绝不读取用户的礼金、联系人、备注内容。</div><div class="card"><div class="form-row"><span class="form-val" style="font-weight:bold">异常用户限制</span></div><div class="form-row"><span class="form-val todo-desc">异常账号的限制/解限操作，操作将记入操作记录。风控接口待后端。</span></div></div><div class="card"><div class="form-row"><span class="form-val" style="font-weight:bold">限制操作</span></div><div class="form-row"><span class="form-val todo-desc">输入脱敏用户号后可限制/解除限制（操作记入操作记录）</span></div><div class="form-row"><span class="form-val todo-empty">风控接口待后端，暂不能操作</span></div></div><div class="card"><div class="form-row"><span class="form-val" style="font-weight:bold">已限制账号</span></div><div class="form-row"><span class="form-val todo-desc">将按脱敏用户号列出当前受限账号</span></div><div class="form-row"><span class="form-val todo-empty">暂无数据</span></div></div><div class="note">云函数 admin 路由待联调（管理员身份 + 二次验证，上线前必须有）。</div>
+</body></html>

@@ -28,7 +28,7 @@ const COLLECTIONS = {
  * 实体字段说明（code 注释即字典；完整版见 docs/数据字典.md）
  *
  * User: {_id(openid), nickname?, inviteCode(我的邀请码,懒生成), membership:{status:'free'|'member', expireAt: timestamp|null, graceUntil: timestamp|null}, createdAt}
- * Contact: {_id, ownerId, name, remark, createdAt}  // 只有姓名+备注，无手机号
+ * Contact: {_id, ownerId, name, remark, createdBy(创建者openid), seed?(true=演示种子联系人，普通新建无此字段), createdAt}  // 只有姓名+备注，无手机号
  * ReceiveEvent: {_id, ownerId, name, tagId(10选1), date(YYYY-MM-DD), remark, createdAt}
  * ReceiveRecord: {_id, ownerId, eventId, contactId(稳定ID), amount(分), type(红包/现金/转账/微信/支付宝), remark, date, createdBy(openid), createdAt}
  * GiftRecord: {_id, ownerId, contactId(稳定ID), tagId, amount(分), remark, date, createdBy(openid), createdAt}

@@ -1,6 +1,11 @@
-<view class="warn-banner">待后端接口：本页为界面骨架，未编造任何数据。绝不读取用户的礼金、联系人、备注内容。</view>
+<view class="warn-banner">待后端接口：本页为界面骨架，结构已按正式形态搭好，未编造任何数据。绝不读取用户的礼金、联系人、备注内容。</view>
 <view class="card">
   <view class="form-row"><text class="form-val" style="font-weight:bold">{{title}}</text></view>
-  <view class="form-row"><text class="form-val" style="color:#999;font-size:14px;line-height:1.6">{{desc}}</text></view>
+  <view class="form-row"><text class="form-val todo-desc">{{desc}}</text></view>
+</view>
+<view class="card" wx:for="{{sections}}" wx:key="title">
+  <view class="form-row"><text class="form-val" style="font-weight:bold">{{item.title}}</text></view>
+  <view class="form-row"><text class="form-val todo-desc">{{item.hint}}</text></view>
+  <view class="form-row"><text class="form-val todo-empty">{{item.empty}}</text></view>
 </view>
 <view class="note">云函数 admin 路由待联调（管理员身份 + 二次验证，上线前必须有）。</view>

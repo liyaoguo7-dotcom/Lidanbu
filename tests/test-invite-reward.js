@@ -1,6 +1,9 @@
 /** 邀请得名额测试（高风险：额度发放/防刷/上限/审计）
- * 规则：新用户经邀请码绑定 + 完成有效动作（建礼薄+1条收礼，或1条送礼）
- * → 邀请人收礼额度池 +10、送礼 +5；每对只发一次；上限 maxSuccessfulInvites。
+ * 规则：新用户经邀请码绑定 + 完成有效动作 → 邀请人收礼额度池 +10、送礼 +5；
+ * 每对只发一次；上限 maxSuccessfulInvites。
+ * 有效动作（2026-10-20 确认口径）：创建一个礼薄并添加一位收礼亲友，
+ * 或添加一位送礼亲友。「亲友」= 本人新建联系人（createdBy=本人，
+ * 排除演示种子联系人），且该联系人被用于 ≥1 条对应记录。
  */
 const { test, assert } = require('./fw');
 const h = require('./helpers');
@@ -27,14 +30,14 @@ async function setupBound(db, inviterId, inviteeId, deviceId) {
   return { code };
 }
 
-/** 被邀请人完成收礼路径：1 联系人 + 1 礼薄 + 1 条收礼记录 */
+/** 被邀请人完成收礼路径：新建联系人（本人建）+ 1 礼薄 + 用该联系人记 1 条收礼 */
 async function actReceive(db, inviteeId) {
   const c = await core.contacts.createContact(db, inviteeId, inviteeId, { name: '亲友甲' });
   const ev = await core.receive.createEvent(db, inviteeId, inviteeId, { name: '婚宴', tagId: 'jiehun', date: '2026-10-01' });
   await core.receive.createRecord(db, inviteeId, inviteeId, ev._id, { contactId: c._id, amount: 10000, type: '现金', date: '2026-10-01' });
 }
 
-/** 被邀请人完成送礼路径：1 联系人 + 1 条送礼记录 */
+/** 被邀请人完成送礼路径：新建联系人（本人建）+ 用该联系人记 1 条送礼 */
 async function actGift(db, inviteeId) {
   const c = await core.contacts.createContact(db, inviteeId, inviteeId, { name: '亲友甲' });
   await core.gifts.createGift(db, inviteeId, inviteeId, { contactId: c._id, tagId: 'shengri', amount: 5000, date: '2026-10-01' });
@@ -96,6 +99,72 @@ test('邀请奖励：只记送礼也可发放（送礼路径）', async () => {
   const r = await IR.evaluateInvite(db, 'invitee1');
   assert.eq(r.granted, true, '送礼路径应发放');
   assert.eq((await grantsOf(db, 'inviter1')).length, 1, '应有1条发放记录');
+});
+
+test('邀请奖励：用种子/旧联系人记一笔不发放（确认口径）', async () => {
+  const db = await h.newDB();
+  await setupBound(db, 'inviter1', 'invitee1');
+  // 演示种子联系人：挂在本人名下，但带 seed 标记（任务D种子写入形态）
+  const { _id: seedId } = await db.collection(COLLECTIONS.Contact).insert({
+    ownerId: 'invitee1', name: '张三', remark: '同学', createdBy: 'invitee1', seed: true, createdAt: Date.now(),
+  });
+  // 旧数据联系人：无 createdBy 字段，不算"本人新建"
+  const { _id: legacyId } = await db.collection(COLLECTIONS.Contact).insert({
+    ownerId: 'invitee1', name: '旧相识', remark: '', createdAt: Date.now(),
+  });
+  // 旧口径下"建礼薄+用种子联系人记1条收礼"就会发放；新口径不算
+  const ev = await core.receive.createEvent(db, 'invitee1', 'invitee1', { name: '婚宴', tagId: 'jiehun', date: '2026-10-01' });
+  await core.receive.createRecord(db, 'invitee1', 'invitee1', ev._id, { contactId: seedId, amount: 10000, type: '现金', date: '2026-10-01' });
+  let elig = await IR.checkEligibility(db, 'invitee1');
+  assert.eq(elig.receiveFriend, false, '种子联系人不算收礼亲友');
+  assert.eq(elig.pathReceive, false, '用种子联系人记收礼不应成立收礼路径');
+  // 用旧联系人记送礼同样不算
+  await core.gifts.createGift(db, 'invitee1', 'invitee1', { contactId: legacyId, tagId: 'shengri', amount: 5000, date: '2026-10-01' });
+  elig = await IR.checkEligibility(db, 'invitee1');
+  assert.eq(elig.giftFriend, false, '无 createdBy 的旧联系人不算送礼亲友');
+  assert.eq(elig.eligible, false, '只用种子/旧联系人不应满足有效动作');
+  const r = await IR.evaluateInvite(db, 'invitee1');
+  assert.eq(r.granted, false, '用种子/旧联系人记一笔不应发放');
+  assert.eq(r.reason, 'invite-condition-incomplete', '原因应为条件未完成');
+  assert.eq((await grantsOf(db, 'inviter1')).length, 0, '不应有发放记录');
+  // 换成本人新建联系人记一笔送礼 → 立即满足并发放
+  await actGift(db, 'invitee1');
+  const r2 = await IR.evaluateInvite(db, 'invitee1');
+  assert.eq(r2.granted, true, '本人新建亲友记送礼后应发放');
+  assert.eq((await grantsOf(db, 'inviter1')).length, 1, '应有1条发放记录');
+});
+
+test('邀请奖励：只建礼薄、没加亲友不发放（确认口径）', async () => {
+  const db = await h.newDB();
+  await setupBound(db, 'inviter1', 'invitee1');
+  await core.receive.createEvent(db, 'invitee1', 'invitee1', { name: '婚宴', tagId: 'jiehun', date: '2026-10-01' });
+  const elig = await IR.checkEligibility(db, 'invitee1');
+  assert.eq(elig.events, 1, '已有1个礼薄');
+  assert.eq(elig.ownNewContacts, 0, '未添加任何本人新建亲友');
+  assert.eq(elig.pathReceive, false, '只有礼薄没有收礼亲友不应成立');
+  const r = await IR.evaluateInvite(db, 'invitee1');
+  assert.eq(r.granted, false, '只建礼薄不应发放');
+  assert.eq((await grantsOf(db, 'inviter1')).length, 0, '不应有发放记录');
+});
+
+test('邀请奖励：加了亲友但没用于任何记录不发放（确认口径）', async () => {
+  const db = await h.newDB();
+  await setupBound(db, 'inviter1', 'invitee1');
+  const c = await core.contacts.createContact(db, 'invitee1', 'invitee1', { name: '亲友甲' });
+  const ev = await core.receive.createEvent(db, 'invitee1', 'invitee1', { name: '婚宴', tagId: 'jiehun', date: '2026-10-01' });
+  let elig = await IR.checkEligibility(db, 'invitee1');
+  assert.eq(elig.ownNewContacts, 1, '已添加1位本人新建亲友');
+  assert.eq(elig.receiveFriend, false, '亲友还没被用于任何收礼记录');
+  assert.eq(elig.eligible, false, '亲友未被用于记录不应满足有效动作');
+  const r = await IR.evaluateInvite(db, 'invitee1');
+  assert.eq(r.granted, false, '加了亲友但没记一笔不应发放');
+  assert.eq((await grantsOf(db, 'inviter1')).length, 0, '不应有发放记录');
+  // 用这位亲友记上第一笔收礼 → 满足并发放
+  await core.receive.createRecord(db, 'invitee1', 'invitee1', ev._id, { contactId: c._id, amount: 10000, type: '现金', date: '2026-10-01' });
+  elig = await IR.checkEligibility(db, 'invitee1');
+  assert.eq(elig.receiveFriend, true, '亲友被用于收礼记录后应成立');
+  const r2 = await IR.evaluateInvite(db, 'invitee1');
+  assert.eq(r2.granted, true, '亲友被用于记录后应发放');
 });
 
 test('邀请奖励：重复评估幂等，不重复发放', async () => {

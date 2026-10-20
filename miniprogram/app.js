@@ -9,8 +9,9 @@ const dataService = require('./services/data-service.js');
 App({
   globalData: {
     config: AppConfig,
-    // 云开发环境 ID：用户提供后填入（见 T0.3 报告需用户提供的信息清单）
-    cloudEnvId: '',
+    // 云开发环境 ID：唯一来源是配置中心 AppConfig.cloudEnvId
+    // （换正式版时只改 app-config.js 那一处，见该文件头说明；这里不要再写一份）
+    cloudEnvId: AppConfig.cloudEnvId,
   },
 
   /** 捕获分享进入时携带的邀请码（path 上的 inviteCode 参数），存起来待 init 后绑定 */
@@ -31,10 +32,11 @@ App({
       });
     }
 
-    // 云开发初始化（环境 ID 待用户提供后启用）
-    // if (this.globalData.cloudEnvId && wx.cloud) {
-    //   wx.cloud.init({ env: this.globalData.cloudEnvId, traceUser: true });
-    // }
+    // 云开发初始化：配置中心 AppConfig.cloudEnvId 填了环境 ID 才启用；
+    // 本地预览时为空字符串，自动跳过（不连云、不用管云开发）
+    if (this.globalData.cloudEnvId && wx.cloud) {
+      wx.cloud.init({ env: this.globalData.cloudEnvId, traceUser: true });
+    }
 
     // 2A：本地演示模式初始化（正式发布前确认 demo.localMode）
     try {

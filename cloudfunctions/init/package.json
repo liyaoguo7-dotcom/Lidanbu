@@ -1,0 +1,1 @@
+{"dependencies":{"wx-server-sdk":"~2.6.3"},"description":"礼单簿云环境一次性初始化：建集合 + 写默认 appConfig。用后删除。","main":"index.js","name":"init","version":"1.0.0"}

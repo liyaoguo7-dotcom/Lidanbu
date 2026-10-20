@@ -2,22 +2,24 @@
  * 礼单簿 · 横置礼单本字体管理器
  *
  * 方案（已定版「替代 A：常用字预生成包」）：三款字体各一个常用字子集 WOFF2 包
- * （miniprogram/assets/fonts/，字符集 = 百家姓+高频名用字+大写金额字，约 721 字），
- * 用户在样式面板选中哪款才加载哪款，加载成功后缓存（storage 标记），下次直接用。
+ * （字符集 = 百家姓+高频名用字+大写金额字，约 721 字，字表与构建方法见包内
+ * packages/fonts/README.md），用户在样式面板选中哪款才加载哪款，加载成功后
+ * 缓存（storage 标记），下次直接用。
  *
- * ⚠️ FONT_SRC_BASE 现在是本地包路径占位常量。上线前必须换成云存储地址：
- *   1) 把 assets/fonts/*.woff2 上传云存储；
- *   2) 把 FONT_SRC_BASE 改为该 https 地址（wx.loadFontFace 远程字体要求 https，
- *      且域名需在小程序后台「服务器域名」downloadFile 合法域名内——待云联调时办）。
+ * 字体文件已移入**分包** `packages/fonts`（app.json subpackages，name:"fonts"），
+ * 不再占主包体积。来源一律经 services/font-source.js 适配层按优先级取：
+ * 已缓存文件 → 本地分包路径 → 云存储（font-source 的 CLOUD_FONT_BASE 留空待填，
+ * 填上即启用云下载）。页面与横置代码不得直接引用字体路径，只调本模块接口。
  *
- * 失败/离线行为：load() 永不抛错、永不 reject；失败时该字体标记为 fallback，
- * 页面继续用回退链渲染（所选字体名仍在栈首，未加载时系统自动逐字回退到
- * 楷体/宋体，不出方框），恢复网络后下次进入页面自动重试。
+ * 失败/离线行为：load() 永不抛错、永不 reject；所有来源都失败时该字体标记为
+ * fallback，页面继续用回退链渲染（所选字体名仍在栈首，未加载时系统自动逐字
+ * 回退到楷体/宋体，不出方框），恢复网络后下次进入页面自动重试。
  */
 const { FONTS, fontById } = require('../pages/landscape/landscape-core.js');
+const { createFontSource, SUBPACKAGE_ROOT } = require('./font-source.js');
 
-/** 字体包地址前缀（占位：本地包路径；上线换云存储 https 地址，见文件头） */
-const FONT_SRC_BASE = '/assets/fonts/';
+/** 本地字体路径前缀（现为分包路径；保留此导出兼容旧引用，来源细节以 font-source 为准） */
+const FONT_SRC_BASE = SUBPACKAGE_ROOT;
 
 const LOADED_KEY_PREFIX = 'landscape.fontLoaded.';
 
@@ -29,22 +31,39 @@ function defaultStorage() {
 }
 
 /**
- * 工厂（可注入 wx 与 storage 便于测试）。
+ * 工厂（可注入 wx、storage 与 fontSource 便于测试）。
  * wxApi 需提供 loadFontFace({family, source, scopes, success, fail})。
  */
 function createFontManager(deps = {}) {
   const wxApi = deps.wxApi || (typeof wx !== 'undefined' ? wx : null);
   const storage = deps.storage || defaultStorage();
+  const fontSource = deps.fontSource || createFontSource({ wxApi, storage, cloudBase: deps.cloudBase, fileExists: deps.fileExists });
   const state = {}; // fontId -> 'idle'|'loading'|'loaded'|'failed'
   FONTS.forEach((f) => { state[f.id] = storage.get(LOADED_KEY_PREFIX + f.id) ? 'loaded' : 'idle'; });
 
   function sourceFor(font) {
-    return `url("${FONT_SRC_BASE}${font.file}")`;
+    return fontSource.subpackageSource(font);
+  }
+
+  /** 单个来源的一次 loadFontFace 尝试；返回 Promise<boolean>，永不 reject */
+  function tryLoadFace(family, source) {
+    return new Promise((resolve) => {
+      try {
+        wxApi.loadFontFace({
+          family,
+          source,
+          scopes: ['webview', 'native'],
+          success: () => resolve(true),
+          fail: () => resolve(false),
+        });
+      } catch (e) { resolve(false); }
+    });
   }
 
   /**
    * 加载指定字体（选中才调用）。返回 Promise<boolean> 是否已就绪；永不 reject。
-   * 已 loaded 直接返回 true；加载中/失败的下次调用会重试（失败不粘滞到 storage）。
+   * 已 loaded 直接返回 true；按 font-source 的优先级逐个来源尝试，首成即止；
+   * 全部失败记 'failed'（不粘滞到 storage，下次调用自动重试）。
    */
   function load(fontId) {
     const font = fontById(fontId);
@@ -54,27 +73,27 @@ function createFontManager(deps = {}) {
       return Promise.resolve(false);
     }
     state[font.id] = 'loading';
-    return new Promise((resolve) => {
-      try {
-        wxApi.loadFontFace({
-          family: font.family,
-          source: sourceFor(font),
-          scopes: ['webview', 'native'],
-          success: () => {
-            state[font.id] = 'loaded';
-            storage.set(LOADED_KEY_PREFIX + font.id, 1); // 缓存标记：下次免重复加载
-            resolve(true);
-          },
-          fail: () => {
-            state[font.id] = 'failed'; // 只记运行时状态，不写 storage，下次自动重试
-            resolve(false);
-          },
-        });
-      } catch (e) {
-        state[font.id] = 'failed';
-        resolve(false);
+    return (async () => {
+      const candidates = fontSource.resolveCandidates(font);
+      for (const cand of candidates) {
+        let source = cand.source || null;
+        if (cand.needsSubpackage) await fontSource.ensureSubpackage(); // 尽力触发分包下载，成败都继续尝试
+        if (cand.kind === 'cloud-file') {
+          source = await fontSource.materialize(cand, font); // 云下载→临时路径（并持久化缓存）
+          if (!source) continue;
+        }
+        if (!source) continue;
+        // eslint-disable-next-line no-await-in-loop
+        const ok = await tryLoadFace(font.family, source);
+        if (ok) {
+          state[font.id] = 'loaded';
+          storage.set(LOADED_KEY_PREFIX + font.id, 1); // 缓存标记：下次免重复加载
+          return true;
+        }
       }
-    });
+      state[font.id] = 'failed';
+      return false;
+    })();
   }
 
   return {
@@ -85,6 +104,7 @@ function createFontManager(deps = {}) {
     /** 是否处于回退状态（加载失败或从未加载成功）：页面据此仍用同一回退链渲染，不阻断 */
     isFallback(fontId) { return state[fontById(fontId).id] !== 'loaded'; },
     sourceFor,
+    fontSource,
     FONT_SRC_BASE,
   };
 }

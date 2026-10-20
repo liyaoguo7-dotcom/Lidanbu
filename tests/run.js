@@ -21,7 +21,9 @@ require('./test-uppercase');
 require('./test-stage3');
 require('./test-landscape');
 require('./test-landscape-route');
+require('./test-font-source');
 require('./test-invite-reward');
+require('./test-demo-seed');
 
 (async () => {
   console.log('礼单簿 阶段1 本地测试（内存数据库）\n');
