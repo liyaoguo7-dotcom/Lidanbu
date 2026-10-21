@@ -1,36 +1,15 @@
-<!-- 首次使用引导：3 屏线框示意（示意图为版式线框，非真实页面截图） -->
+<!-- 首次使用引导：3 屏真实页面截图（分包 packages/guide）+ 配文 -->
 <view class="skip" bindtap="onSkip">{{review ? '关闭' : '跳过'}}</view>
 
-<view class="screen" wx:for="{{screens}}" wx:key="title" wx:if="{{step === index}}">
-  <!-- 线框示意图：手机框 + 列表行，随屏突出不同部位 -->
-  <view class="phone">
-    <view class="phone-head"></view>
-    <block wx:if="{{index === 0}}">
-      <view class="row"><text class="row-t">张三的婚礼</text><text class="row-a">¥8866</text></view>
-      <view class="row"><text class="row-t">赵六的乔迁宴</text><text class="row-a">¥2500</text></view>
-      <view class="row dim"><text class="row-t">王老太爷丧礼</text><text class="row-a">¥2000</text></view>
-      <view class="fab">+</view>
-    </block>
-    <block wx:if="{{index === 1}}">
-      <view class="row"><text class="row-t">送 李四 · 结婚</text><text class="row-a">-500.00</text></view>
-      <view class="row"><text class="row-t">送 王五 · 乔迁</text><text class="row-a">-300.00</text></view>
-      <view class="row dim"><text class="row-t">送 赵六 · 满月</text><text class="row-a">-600.00</text></view>
-      <view class="fab">+</view>
-    </block>
-    <block wx:if="{{index === 2}}">
-      <view class="row"><text class="row-t">李四</text><text class="row-a">+800.00</text></view>
-      <view class="row dim"><text class="row-t">王五</text><text class="row-a">-600.00</text></view>
-      <view class="tabbar">
-        <text class="tab">首页</text><text class="tab hot">往来</text><text class="tab hot">亲友录</text><text class="tab">我的</text>
-      </view>
-    </block>
+<view class="screen" wx:for="{{screens}}" wx:key="caption" wx:if="{{step === index}}">
+  <view class="shot-frame">
+    <image class="shot" src="{{item.img}}" mode="widthFix" />
   </view>
-  <text class="g-title songti">{{item.title}}</text>
-  <text class="g-desc">{{item.desc}}</text>
+  <text class="g-title songti">{{item.caption}}</text>
 </view>
 
 <view class="dots">
-  <view class="dot {{step === index ? 'on' : ''}}" wx:for="{{screens}}" wx:key="title"></view>
+  <view class="dot {{step === index ? 'on' : ''}}" wx:for="{{screens}}" wx:key="caption"></view>
 </view>
 
 <button class="btn-primary g-btn" bindtap="onNext">{{step === total - 1 ? '开始使用' : '下一步'}}</button>

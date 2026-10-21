@@ -34,6 +34,7 @@ require('./test-notify-feedback-cancel');
 require('./test-offline-hint');
 require('./test-login-profile');
 require('./test-mine-privacy-guide');
+require('./test-guide-assets');
 
 (async () => {
   console.log('礼单簿 阶段1 本地测试（内存数据库）\n');

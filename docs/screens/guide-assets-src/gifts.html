@@ -1,0 +1,50 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+/* 引导图2 · 送礼记录列表（静态复刻）
+   数据口径：演示种子送礼 8 条（miniprogram/services/demo-seed.js），
+   日期以 2026-10-21 为今天按各条 daysAgo 回推。列表顺序与真实页面一致：
+   core 按 createdAt 倒序，种子按 DEMO_GIFTS 顺序写入，故显示为写入逆序。
+   金额：条目 formatAmount(-金额) 两位小数；共计行 formatAmountInt 整数场景。
+   版式按 pages/gifts 的 wxml/wxss（横置入口为开关项，默认关闭态不渲染）。 */
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:390px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; color:#333; font-size:15px; }
+.nav { background:#F0E6D4; height:88px; position:relative; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .back { position:absolute; left:14px; bottom:12px; font-size:20px; color:#333; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.card { background:#FFF; border-radius:12px; margin:12px; }
+.songti { font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.searchbar { display:flex; align-items:center; padding:10px 12px 2px; }
+.searchbox { flex:1; background:#F2F2F2; border-radius:17px; height:34px; display:flex; align-items:center; padding:0 14px; color:#C2C2C2; font-size:14px; }
+.search-cancel { color:#F0575A; font-size:14px; margin-left:8px; white-space:nowrap; }
+.summary { padding:14px 16px; font-size:14px; }
+.summary .red { color:#F0575A; font-weight:600; }
+.gift-row { display:flex; align-items:center; padding:12px 16px; min-height:68px; border-bottom:1px solid #F0F0F0; }
+.gift-row:last-child { border-bottom:none; }
+.pat { width:44px; height:44px; border-radius:50%; background:#F5F6F4; display:flex; align-items:center; justify-content:center; flex:none; }
+.pat img { width:30px; height:30px; }
+.mid { flex:1; margin-left:12px; display:flex; flex-direction:column; }
+.nm { font-size:16px; font-weight:600; }
+.sub { font-size:12px; color:#C2C2C2; margin-top:3px; }
+.amt { font-size:16px; font-weight:600; }
+.fab-zone { position:relative; height:96px; }
+.fab { position:absolute; left:50%; margin-left:-29px; bottom:26px; width:58px; height:58px; border-radius:50%; background:#F0575A; color:#fff; font-size:34px; font-weight:300; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(240,87,90,.45); }
+</style></head><body>
+<div class="nav"><div class="back">‹</div><div class="title">送礼记录</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+
+<div class="searchbar"><div class="searchbox">搜索姓名</div><span class="search-cancel">取消</span></div>
+
+<div class="card summary"><span>共计：</span><span class="red">8 笔 ￥19000 元</span></div>
+
+<div class="card">
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/08-dashou.svg"></div><div class="mid"><span class="nm songti">周十</span><span class="sub">大寿｜2025-11-25</span></div><span class="amt">-10000.00</span></div>
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/04-yasui.svg"></div><div class="mid"><span class="nm songti">孙九</span><span class="sub">压岁｜2025-12-25</span></div><span class="amt">-1000.00</span></div>
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/02-shengzi.svg"></div><div class="mid"><span class="nm songti">陈八</span><span class="sub">生子｜2026-02-03</span></div><span class="amt">-3000.00</span></div>
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/03-tanwang.svg"></div><div class="mid"><span class="nm songti">刘七</span><span class="sub">探望｜2026-04-04</span></div><span class="amt">-1000.00</span></div>
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/07-qiaoqian.svg"></div><div class="mid"><span class="nm songti">赵六</span><span class="sub">乔迁｜2026-05-24</span></div><span class="amt">-2000.00</span></div>
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/09-baishi.svg"></div><div class="mid"><span class="nm songti">王五</span><span class="sub">白事｜2026-09-06</span></div><span class="amt">-500.00</span></div>
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/05-shengri.svg"></div><div class="mid"><span class="nm songti">李四</span><span class="sub">生日｜2026-07-23</span></div><span class="amt">-500.00</span></div>
+  <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/01-jiehun.svg"></div><div class="mid"><span class="nm songti">张三</span><span class="sub">结婚｜2026-10-01</span></div><span class="amt">-1000.00</span></div>
+</div>
+
+<div class="fab-zone"><div class="fab">＋</div></div>
+</body></html>

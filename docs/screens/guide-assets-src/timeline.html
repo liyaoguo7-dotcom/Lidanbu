@@ -1,0 +1,48 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+/* 引导图3 · 往来竖线树（静态复刻）
+   数据口径：演示种子里与亲友「王五」的全部往来（收礼 3 笔 + 送礼 1 笔，
+   条数并列最多且金额有变化），日期以 2026-10-21 为今天回推。
+   顺序与真实页面一致：core/stats 按日期从早到晚。金额：条目无 ¥ 前缀、
+   送出负号/收到正号、两位小数（formatAmount）；底部汇总带 ¥ 两位小数，
+   差额 = |收到 − 送出|。版式按 pages/timeline 的 wxml/wxss（rpx 按 390/750 换算）。 */
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:390px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; color:#333; font-size:15px; }
+.nav { background:#FFFFFF; height:88px; position:relative; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .back { position:absolute; left:14px; bottom:12px; font-size:20px; color:#333; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.songti { font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.kindbar { display:flex; background:#CEA64F; color:#fff; font-size:16px; font-weight:600; }
+.kind-half { flex:1; text-align:center; padding:10px 0; }
+.tl { position:relative; background:#fff; padding:19px 0 6px; }
+.tl-line { position:absolute; left:50%; top:0; bottom:0; width:2px; background:#D9C9A8; transform:translateX(-50%); }
+.trow { position:relative; display:flex; min-height:67px; padding:8px 0; }
+.tcell { flex:1; padding:0 15px; }
+.tcell.left { text-align:right; }
+.tcell.right { text-align:left; }
+.tdot { position:absolute; left:50%; top:27px; width:10px; height:10px; border-radius:50%; background:#E05353; transform:translateX(-50%); z-index:1; }
+.tdate { font-size:12px; color:#999; margin-bottom:3px; }
+.treason { font-size:15px; color:#333; }
+.tpen { width:15px; height:15px; vertical-align:-2px; margin-left:3px; }
+.tamt { font-size:16px; font-weight:700; color:#111; margin-top:3px; }
+.sumbar { background:#FDF6E3; text-align:center; padding:15px 0 19px; font-size:16px; line-height:2; color:#333; }
+.sumbar .dl { color:#E05353; font-weight:700; }
+</style></head><body>
+<div class="nav"><div class="back">‹</div><div class="title">往来记录 - 王五</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+
+<div class="kindbar"><div class="kind-half songti">送出</div><div class="kind-half songti">收到</div></div>
+
+<div class="tl">
+  <div class="tl-line"></div>
+  <div class="trow"><div class="tcell left"></div><div class="tdot"></div><div class="tcell right"><div class="tdate">2026-05-24</div><div class="treason songti">赵六的乔迁宴<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">+1000.00</div></div></div>
+  <div class="trow"><div class="tcell left"></div><div class="tdot"></div><div class="tcell right"><div class="tdate">2026-08-22</div><div class="treason songti">王老太爷丧礼<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">+500.00</div></div></div>
+  <div class="trow"><div class="tcell left"><div class="tdate">2026-09-06</div><div class="treason songti">白事<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">-500.00</div></div><div class="tdot"></div><div class="tcell right"></div></div>
+  <div class="trow"><div class="tcell left"></div><div class="tdot"></div><div class="tcell right"><div class="tdate">2026-10-19</div><div class="treason songti">张三的婚礼<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">+500.00</div></div></div>
+</div>
+
+<div class="sumbar">
+  <div>送出：¥500.00</div>
+  <div>收到：¥2000.00</div>
+  <div><span class="dl">差额：</span>¥1500.00</div>
+</div>
+</body></html>

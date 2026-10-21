@@ -68,6 +68,11 @@
       "root": "packages/fonts",
       "name": "fonts",
       "pages": []
+    },
+    {
+      "root": "packages/guide",
+      "name": "guide",
+      "pages": []
     }
   ],
   "preloadRule": {
@@ -81,6 +86,12 @@
       "network": "wifi",
       "packages": [
         "fonts"
+      ]
+    },
+    "pages/index/index": {
+      "network": "all",
+      "packages": [
+        "guide"
       ]
     }
   },

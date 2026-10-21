@@ -1,41 +1,20 @@
-/* 首次使用引导 */
+/* 首次使用引导（任务R：真实页面截图主视觉 + 配文） */
 .skip {
   position: absolute; top: 12px; right: 16px; z-index: 5;
   font-size: 13px; color: #999;
   padding: 6px 10px;
 }
 .screen { display: flex; flex-direction: column; align-items: center; padding: 30px 32px 0; }
-.phone {
-  width: 230px; height: 300px;
-  background: #fff; border: 1px solid #E8DFC9; border-radius: 18px;
-  padding: 14px 12px; box-sizing: border-box;
-  position: relative; overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .05);
+/* 截图框：固定高度、顶对齐裁切，三屏切换时版式不跳动 */
+.shot-frame {
+  width: 300px; height: 470px;
+  border-radius: 12px; overflow: hidden;
+  background: #fff; border: 1px solid #E8DFC9;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
 }
-.phone-head { height: 12px; width: 60px; border-radius: 6px; background: #F0E6D4; margin: 0 auto 14px; }
-.row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 11px 4px; border-bottom: 1px solid #F0F0F0;
-}
-.row.dim { opacity: .45; }
-.row-t { font-size: 13px; color: #333; }
-.row-a { font-size: 13px; color: #333; font-weight: 600; }
-.fab {
-  position: absolute; right: 16px; bottom: 16px;
-  width: 40px; height: 40px; border-radius: 50%;
-  background: #F0575A; color: #fff;
-  font-size: 24px; line-height: 40px; text-align: center;
-}
-.tabbar {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  display: flex; border-top: 1px solid #F0F0F0; background: #fff;
-  padding: 9px 0 11px;
-}
-.tab { flex: 1; text-align: center; font-size: 11px; color: #999; }
-.tab.hot { color: #E05353; font-weight: 700; }
-.g-title { font-size: 20px; font-weight: 600; margin-top: 26px; }
-.g-desc { font-size: 14px; color: #666; line-height: 1.8; text-align: center; margin-top: 10px; }
-.dots { display: flex; justify-content: center; gap: 7px; margin-top: 22px; }
+.shot { width: 300px; display: block; }
+.g-title { font-size: 21px; font-weight: 600; margin-top: 30px; text-align: center; }
+.dots { display: flex; justify-content: center; gap: 7px; margin-top: 26px; }
 .dots .dot { width: 7px; height: 7px; border-radius: 50%; background: #DDD; }
 .dots .dot.on { background: #F0575A; }
-.g-btn { margin: 18px 24px 0; }
+.g-btn { margin: 20px 24px 0; }
