@@ -92,7 +92,7 @@ Page({
               confirmText: '去补充积分',
               cancelText: '算了',
               success: (r) => {
-                if (r.confirm) wx.navigateTo({ url: '/pages/member/purchase' });
+                if (r.confirm) wx.navigateTo({ url: '/pages/member/purchase/purchase' });
               },
             });
             return;

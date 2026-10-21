@@ -92,3 +92,31 @@ test('可导入性：wxml 中绝对路径图片资源存在', () => {
   }
   assert(bad.length === 0, 'wxml 图片不存在: ' + bad.join(' | '));
 });
+
+test('可运行性：字面跳转地址必须是已注册页面且跳法正确（2026-10-21 深查补）', () => {
+  const app = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'));
+  const allPages = new Set(app.pages || []);
+  for (const sp of app.subpackages || app.subPackages || []) {
+    for (const p of sp.pages || []) allPages.add(path.join(sp.root, p).split(path.sep).join('/'));
+  }
+  const tabPages = new Set(((app.tabBar && app.tabBar.list) || []).map((i) => i.pagePath));
+  const bad = [];
+  const check = (url, from, kind) => {
+    if (!url || url.startsWith('http') || url.includes('${')) return;
+    const clean = url.split('?')[0].replace(/^\//, '');
+    if (!allPages.has(clean)) { bad.push(`${from} 跳转目标不存在: ${url}`); return; }
+    if (kind === 'switchTab' && !tabPages.has(clean)) bad.push(`${from} switchTab 跳非 Tab 页: ${url}`);
+    if (kind === 'navigateTo' && tabPages.has(clean)) bad.push(`${from} navigateTo 跳 Tab 页: ${url}`);
+  };
+  for (const f of walk(ROOT, '.js')) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/wx\.(navigateTo|switchTab|redirectTo|reLaunch)\(\{[^}]*?url:\s*'([^']+)'/gs)) {
+      check(m[2], path.relative(REPO, f), m[1]);
+    }
+  }
+  for (const f of walk(ROOT, '.wxml')) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/<navigator[^>]*url="([^"]+)"/g)) check(m[1], path.relative(REPO, f), 'navigateTo');
+  }
+  assert(bad.length === 0, bad.join(' | '));
+});

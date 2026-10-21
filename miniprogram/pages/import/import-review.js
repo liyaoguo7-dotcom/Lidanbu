@@ -324,7 +324,7 @@ Page({
           confirmText: '去补充积分',
           cancelText: '算了',
           success: (r) => {
-            if (r.confirm) wx.navigateTo({ url: '/pages/member/purchase' });
+            if (r.confirm) wx.navigateTo({ url: '/pages/member/purchase/purchase' });
           },
         });
       } else if (Number.isInteger(e.itemIndex) && e.itemIndex >= 0 && e.itemIndex < items.length) {
@@ -347,7 +347,7 @@ Page({
     if (this.data.kind === 'receive' && this.data.eventId) {
       wx.redirectTo({ url: `/pages/receive-detail/receive-detail?id=${this.data.eventId}` });
     } else {
-      wx.switchTab({ url: '/pages/gifts/gifts' });
+      wx.navigateTo({ url: '/pages/gifts/gifts' });
     }
   },
   goAgain() {
