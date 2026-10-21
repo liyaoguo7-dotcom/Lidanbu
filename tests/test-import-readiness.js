@@ -70,7 +70,13 @@ test('可导入性：usingComponents 与 tabBar 图标指向真实文件', () =>
     for (const rel of Object.values(j.usingComponents || {})) {
       if (String(rel).startsWith('plugin://')) continue;
       const base = rel.startsWith('/') ? path.join(ROOT, rel.slice(1)) : path.join(path.dirname(jf), rel);
-      if (!fs.existsSync(base + '.js')) bad.push(path.relative(REPO, jf) + ' 组件不存在: ' + rel);
+      if (!fs.existsSync(base + '.js')) bad.push(path.relative(REPO, jf) + ' 组件 js 不存在: ' + rel);
+      // 组件必须有 .json 且 component:true，否则真工具报"路径下未找到组件"（2026-10-21 真机导入实测）
+      if (!fs.existsSync(base + '.json')) { bad.push(path.relative(REPO, jf) + ' 组件缺 .json 定义: ' + rel); continue; }
+      try {
+        const cj = JSON.parse(fs.readFileSync(base + '.json', 'utf8'));
+        if (cj.component !== true) bad.push(path.relative(REPO, jf) + ' 组件 .json 未声明 component:true: ' + rel);
+      } catch (e) { bad.push(path.relative(REPO, jf) + ' 组件 .json 解析失败: ' + rel); }
     }
   }
   const app = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'));
@@ -131,4 +137,21 @@ test('可运行性：preloadRule 引用的分包必须是已声明的 root（若
     }
   }
   assert(bad.length === 0, 'preloadRule 引用了不存在的分包 root: ' + bad.join(' | '));
+});
+
+test('可运行性：components 目录下每个组件四件套齐全且声明 component:true', () => {
+  const dir = path.join(ROOT, 'components');
+  const bad = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!e.isDirectory()) continue;
+    const base = path.join(dir, e.name, e.name);
+    for (const ext of ['.js', '.json', '.wxml', '.wxss']) {
+      if (!fs.existsSync(base + ext)) bad.push(e.name + ' 缺 ' + ext);
+    }
+    if (fs.existsSync(base + '.json')) {
+      const cj = JSON.parse(fs.readFileSync(base + '.json', 'utf8'));
+      if (cj.component !== true) bad.push(e.name + ' 未声明 component:true');
+    }
+  }
+  assert(bad.length === 0, bad.join(' | '));
 });
