@@ -18,6 +18,7 @@
     <view class="bigcard gift" bindtap="goGifts"><text class="songti">送礼</text></view>
     <view class="bigcard receive" bindtap="goReceive"><text class="songti">收礼</text></view>
   </view>
+  <view class="flex-spacer"></view>
   <view class="bottom-gap"></view>
 </view>
 

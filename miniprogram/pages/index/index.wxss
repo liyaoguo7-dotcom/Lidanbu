@@ -6,7 +6,7 @@
   box-sizing: border-box;
 }
 .flex-spacer { flex: 1; min-height: 24px; }
-.bottom-gap { height: 76px; }
+.bottom-gap { height: 46px; }
 .retry-bar {
   margin: 10px 12px 0; padding: 9px 12px;
   background: #FDF3D7; color: #9A7B1E;
@@ -20,7 +20,7 @@
 .entry-row {
   display: flex;
   padding: 18px 8px 16px;
-  margin-top: 22px; /* 覆盖 .card 的 12px：金刚区往下挪一点 */
+  margin-top: 36px; /* 覆盖 .card 的 12px：金刚区再往下挪一点 */
 }
 .entry {
   flex: 1;
@@ -45,17 +45,17 @@
 .bigcards {
   display: flex;
   gap: 14px;
-  padding: 0 30px;
+  padding: 0 44px;
 }
 .bigcard {
   flex: 1;
-  height: 100px;
+  height: 66px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 600;
 }
 .bigcard.gift {
