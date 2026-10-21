@@ -1,4 +1,12 @@
-/* 首页（界面风格规范 v1） */
+/* 首页（界面风格规范 v1；2026-10-21 按用户反馈调整版式） */
+.page-flex {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.flex-spacer { flex: 1; min-height: 24px; }
+.bottom-gap { height: 76px; }
 .retry-bar {
   margin: 10px 12px 0; padding: 9px 12px;
   background: #FDF3D7; color: #9A7B1E;
@@ -11,7 +19,8 @@
 }
 .entry-row {
   display: flex;
-  padding: 18px 8px 14px;
+  padding: 18px 8px 16px;
+  margin-top: 22px; /* 覆盖 .card 的 12px：金刚区往下挪一点 */
 }
 .entry {
   flex: 1;
@@ -19,29 +28,41 @@
   flex-direction: column;
   align-items: center;
 }
-.entry-icon { width: 30px; height: 30px; }
-.entry-name { font-size: 13px; margin-top: 6px; color: #555; }
+.entry-disc {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.disc-share { background: #E2EEFB; }
+.disc-photo { background: #FDE8E8; }
+.disc-invite { background: #FDEFCB; }
+.disc-export { background: #E0F3E4; }
+.entry-icon { width: 38px; height: 38px; }
+.entry-name { font-size: 13px; margin-top: 7px; color: #555; }
 .bigcards {
   display: flex;
-  gap: 12px;
-  padding: 0 12px;
+  gap: 14px;
+  padding: 0 30px;
 }
 .bigcard {
   flex: 1;
-  height: 150px;
+  height: 100px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 600;
 }
 .bigcard.gift {
-  background: linear-gradient(135deg, #ff8a80, #F0575A);
-  box-shadow: 0 4px 12px rgba(240,87,90,.3);
+  background: linear-gradient(135deg, #FFC7C3, #F78C8F);
+  box-shadow: 0 4px 12px rgba(240,87,90,.18);
 }
 .bigcard.receive {
-  background: linear-gradient(135deg, #ffcc80, #fb8c00);
-  box-shadow: 0 4px 12px rgba(251,140,0,.3);
+  background: linear-gradient(135deg, #FFE4B8, #FDBE68);
+  box-shadow: 0 4px 12px rgba(251,140,0,.18);
 }
