@@ -32,7 +32,7 @@
   <view class="btn-primary btn-half" bindtap="goEdit">修改</view>
 </view>
 
-<view class="fab" bindtap="goAddRecord">＋</view>
+<view class="fab fab-low" bindtap="goAddRecord">＋</view>
 
 <!-- 统一删除弹窗：删除礼薄连带删除全部明细 -->
 <confirm-modal show="{{showDelModal}}" title="删除礼薄" content="{{delContent}}"

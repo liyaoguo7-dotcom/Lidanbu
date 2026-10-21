@@ -42,7 +42,7 @@
   <text class="empty-sample" bindtap="goSample">点击查看示例</text>
 </view>
 
-<view class="fab" bindtap="goAdd">＋</view>
+<view class="fab fab-low" bindtap="goAdd">＋</view>
 
 <confirm-modal show="{{showDelModal}}" title="删除礼薄" content="{{delContent}}"
   bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />

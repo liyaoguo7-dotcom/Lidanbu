@@ -40,6 +40,8 @@ page {
   bottom: 26px;
   bottom: calc(26px + env(safe-area-inset-bottom));
 }
+/* 非 Tab 列表页贴底版 ＋（2026-10-21 用户真机反馈：加号往下挪放最下边） */
+.fab-low { bottom: 24px; bottom: calc(24px + env(safe-area-inset-bottom)); }
 .fab {
   position: fixed;
   bottom: 88px;

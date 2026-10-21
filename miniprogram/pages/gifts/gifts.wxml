@@ -37,4 +37,4 @@
   <text class="empty-text">没有找到"{{keyword}}"相关记录</text>
 </view>
 
-<view class="fab" bindtap="goAdd">＋</view>
+<view class="fab fab-low" bindtap="goAdd">＋</view>
