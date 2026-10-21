@@ -6,7 +6,48 @@
   box-sizing: border-box;
 }
 .flex-spacer { flex: 1; min-height: 24px; }
+/* 任务V：小结+最近往来两块加入后，上方留白压到最小、大卡顺延到下半屏（不贴 Tab 栏） */
+.spacer-top { flex: 0.12; }
 .bottom-gap { height: 46px; }
+/* 本月小结（任务V）：淡黄条，整数场景金额口径 */
+.month-bar {
+  margin: 0 12px;
+  background: #FBF3D9;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #7A6A45;
+  display: flex;
+  align-items: center;
+}
+.month-label { font-weight: bold; color: #5C4E33; margin-right: 8px; }
+.month-recv { color: #E05353; font-weight: 600; }
+.month-give { color: #333; font-weight: 600; }
+.month-dot { margin: 0 6px; color: #C9B98A; }
+.month-empty { color: #9A8B62; }
+/* 最近往来卡（任务V） */
+.recent-card { padding: 4px 16px 6px; }
+.recent-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0 4px;
+}
+.recent-title { font-size: 15px; font-weight: bold; }
+.recent-all { font-size: 12px; color: #C2C2C2; }
+.recent-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid #F0F0F0;
+}
+.recent-name { font-size: 15px; color: #333; line-height: 1.35; }
+.recent-sub { font-size: 12px; color: #999; margin-top: 2px; line-height: 1.35; }
+.recent-amt { font-size: 15px; font-weight: 600; text-align: right; line-height: 1.35; }
+.recent-amt.plus { color: #E05353; }
+.recent-amt.minus { color: #333; }
+.recent-date { font-size: 12px; color: #C2C2C2; margin-top: 2px; text-align: right; line-height: 1.35; }
 .retry-bar {
   margin: 10px 12px 0; padding: 9px 12px;
   background: #FDF3D7; color: #9A7B1E;

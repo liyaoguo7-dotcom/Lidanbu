@@ -23,10 +23,29 @@ body { width:390px; min-height:844px; display:flex; flex-direction:column; backg
 .bottom-gap { height:46px; flex:none; }
 .songti { font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
 .spacer { flex:1; }
+.spacer-top { flex:0.12; }
 .tabbar { display:flex; background:#fff; border-top:1px solid #E5E5E5; padding:6px 0 18px; flex:none; }
 .tab { flex:1; display:flex; flex-direction:column; align-items:center; font-size:11px; color:#7A7E83; }
 .tab img { width:25px; height:25px; margin-bottom:2px; }
 .tab.on { color:#F0575A; }
+
+.month-bar { margin:0 12px; background:#FBF3D9; border-radius:12px; padding:10px 16px; font-size:13px; color:#7A6A45; display:flex; align-items:center; }
+.month-bar .ml { font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; font-weight:bold; color:#5C4E33; margin-right:8px; }
+.month-bar b { font-family:-apple-system,"PingFang SC",sans-serif; }
+.month-bar .recv { color:#E05353; }
+.month-bar .give { color:#333; }
+.month-bar .dot { margin:0 6px; color:#C9B98A; }
+.recent { background:#FFFFFF; border-radius:12px; margin:12px; padding:4px 16px 6px; }
+.recent-head { display:flex; justify-content:space-between; align-items:center; padding:8px 0 4px; }
+.recent-title { font-size:15px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.recent-all { font-size:12px; color:#C2C2C2; }
+.rrow { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-top:1px solid #F0F0F0; }
+.rname { font-size:15px; color:#333; line-height:1.35; }
+.rtag { font-size:12px; color:#999; margin-top:2px; line-height:1.35; }
+.ramt { font-size:15px; font-weight:600; text-align:right; line-height:1.35; }
+.ramt.plus { color:#E05353; }
+.ramt.minus { color:#333; }
+.rdate { font-size:12px; color:#C2C2C2; margin-top:2px; text-align:right; line-height:1.35; }
 </style></head><body>
 <div class="nav"><div class="title">礼单簿</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
 <div class="tip"><span class="tic"><svg width="14" height="14" viewBox="0 0 48 48" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -56,7 +75,13 @@ body { width:390px; min-height:844px; display:flex; flex-direction:column; backg
   <path d="M12 26v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V26"/>
 
 </svg></div><span class="entry-name">导出备份</span></div></div>
-<div class="spacer"></div>
+<div class="month-bar"><span class="ml">本月人情往来</span><span>收 <b class="recv">¥26500</b></span><span class="dot">·</span><span>送 <b class="give">¥1000</b></span></div>
+<div class="recent"><div class="recent-head"><span class="recent-title">最近往来</span><span class="recent-all">查看全部 &gt;</span></div>
+<div class="rrow"><div><div class="rname">欧阳</div><div class="rtag">结婚 · 张三的婚礼</div></div><div><div class="ramt plus">+2000.00</div><div class="rdate">10月19日</div></div></div>
+<div class="rrow"><div><div class="rname">欧阳修远</div><div class="rtag">结婚 · 张三的婚礼</div></div><div><div class="ramt plus">+1000.00</div><div class="rdate">10月19日</div></div></div>
+<div class="rrow"><div><div class="rname">郑文杰</div><div class="rtag">结婚 · 张三的婚礼</div></div><div><div class="ramt plus">+4000.00</div><div class="rdate">10月19日</div></div></div>
+</div>
+<div class="spacer spacer-top"></div>
 <div class="bigcards"><div class="bigcard gift"><span class="songti">送礼</span></div><div class="bigcard receive"><span class="songti">收礼</span></div></div>
 <div class="spacer"></div>
 <div class="bottom-gap"></div>

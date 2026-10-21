@@ -12,7 +12,34 @@
     </view>
   </view>
 
-  <view class="flex-spacer"></view>
+  <view class="month-bar" wx:if="{{monthSummary}}">
+    <text class="month-label songti">本月人情往来</text>
+    <block wx:if="{{monthSummary.hasRecords}}">
+      <text>收 <text class="month-recv">¥{{monthSummary.receiveText}}</text></text>
+      <text class="month-dot">·</text>
+      <text>送 <text class="month-give">¥{{monthSummary.giftText}}</text></text>
+    </block>
+    <text wx:else class="month-empty">本月还没有记录</text>
+  </view>
+
+  <view class="card recent-card" wx:if="{{recent.length}}">
+    <view class="recent-head">
+      <text class="recent-title songti">最近往来</text>
+      <text class="recent-all" bindtap="goWanglai">查看全部 ></text>
+    </view>
+    <view class="recent-row" wx:for="{{recent}}" wx:key="targetUrl" data-url="{{item.targetUrl}}" bindtap="onRecentTap">
+      <view class="recent-main">
+        <view class="recent-name">{{item.contactName}}</view>
+        <view class="recent-sub">{{item.tagName}}<text wx:if="{{item.eventName}}"> · {{item.eventName}}</text></view>
+      </view>
+      <view class="recent-side">
+        <view class="recent-amt {{item.kind === 'receive' ? 'plus' : 'minus'}}">{{item.amountText}}</view>
+        <view class="recent-date">{{item.dateText}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="flex-spacer spacer-top"></view>
 
   <view class="bigcards">
     <view class="bigcard gift" bindtap="goGifts"><text class="songti">送礼</text></view>

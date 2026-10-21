@@ -795,6 +795,98 @@ const service = {
     const col = _db.collection(core.models.COLLECTIONS.Contact);
     return col.findOne({ _id: contactId, ownerId: oid });
   },
+
+  // —— 首页小结与最近往来（任务V） ——
+  /**
+   * 首页本月小结：只统计**本人账本**（ownerId 恒为当前用户；成员视角能看的
+   * 他人共享账本走 listEventsFor/getWanglaiList 等带 ownerId 的接口，不混入这里）。
+   * 本月 = 设备本地日期的自然月，按记录 date 的 YYYY-MM 前缀判定。
+   * 金额返回整数分，页面用 formatAmountInt 按整数场景口径显示。
+   * @returns {{receiveFen, receiveCount, giftFen, giftCount, hasRecords}}
+   *   hasRecords=false（本月一笔都没有）时页面显示"本月还没有记录"，不显示 ¥0。
+   */
+  async getHomeSummary() {
+    const C = core.models.COLLECTIONS;
+    const nowD = new Date();
+    const prefix = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}`;
+    const inMonth = (r) => typeof r.date === 'string' && r.date.startsWith(prefix);
+    const receives = (await _db.collection(C.ReceiveRecord).find({ ownerId: _userId })).filter(inMonth);
+    const gifts = (await _db.collection(C.GiftRecord).find({ ownerId: _userId })).filter(inMonth);
+    const sum = (list) => list.reduce((s, r) => s + (r.amount || 0), 0);
+    return {
+      receiveFen: sum(receives), receiveCount: receives.length,
+      giftFen: sum(gifts), giftCount: gifts.length,
+      hasRecords: receives.length + gifts.length > 0,
+    };
+  },
+
+  /**
+   * 首页最近往来：本人账本的收礼记录与送礼记录两类**合并**，按 date 倒序
+   * （同日按 createdAt 倒序）取前 limit 条。只读真实记录，不拼凑任何数据
+   * （演示模式下种子即真实落库记录，自然命中）。
+   * 每条归一化为页面可直接渲染的形状：金额走现行 formatAmount 两位小数
+   * （收 +X.XX / 送 -X.XX，与送礼列表、竖线树同口径）；收礼的 tagName 为
+   * 礼薄标签名、eventName 为礼薄名，送礼的 tagName 为场合标签名。
+   * @returns {[{kind:'receive'|'gift', contactName, tagName, eventName,
+   *            dateText, amountText, targetUrl}]} 无记录返回 []
+   */
+  async getHomeRecent(limit = 3) {
+    const C = core.models.COLLECTIONS;
+    const n = Math.max(0, Math.floor(Number(limit)) || 0);
+    if (n === 0) return [];
+    const [receives, gifts] = await Promise.all([
+      _db.collection(C.ReceiveRecord).find({ ownerId: _userId }),
+      _db.collection(C.GiftRecord).find({ ownerId: _userId }),
+    ]);
+    if (!receives.length && !gifts.length) return [];
+    const contactIds = [...new Set([...receives, ...gifts].map((r) => r.contactId).filter(Boolean))];
+    const contacts = contactIds.length
+      ? await _db.collection(C.Contact).find({ ownerId: _userId, _id: { $in: contactIds } })
+      : [];
+    const contactName = new Map(contacts.map((c) => [c._id, c.name]));
+    const eventIds = [...new Set(receives.map((r) => r.eventId).filter(Boolean))];
+    const events = eventIds.length
+      ? await _db.collection(C.ReceiveEvent).find({ ownerId: _userId, _id: { $in: eventIds } })
+      : [];
+    const eventById = new Map(events.map((e) => [e._id, e]));
+    const tagNameOf = (tagId) => {
+      const t = AppConfig.tags.find((x) => x.id === tagId);
+      return t ? t.name : '';
+    };
+    const dateTextOf = (date) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date || '');
+      return m ? `${Number(m[2])}月${Number(m[3])}日` : (date || '');
+    };
+    const merged = [
+      ...receives.map((rec) => ({ kind: 'receive', rec })),
+      ...gifts.map((rec) => ({ kind: 'gift', rec })),
+    ].sort((a, b) => {
+      const da = a.rec.date || '';
+      const dbd = b.rec.date || '';
+      if (da !== dbd) return da < dbd ? 1 : -1;
+      const ca = a.rec.createdAt || 0;
+      const cb = b.rec.createdAt || 0;
+      if (ca !== cb) return cb - ca;
+      return String(b.rec._id).localeCompare(String(a.rec._id));
+    });
+    return merged.slice(0, n).map(({ kind, rec }) => {
+      const isReceive = kind === 'receive';
+      const ev = isReceive ? (eventById.get(rec.eventId) || {}) : {};
+      return {
+        kind,
+        contactName: contactName.get(rec.contactId) || '—',
+        tagName: tagNameOf(isReceive ? ev.tagId : rec.tagId),
+        eventName: isReceive ? (ev.name || '') : '',
+        dateText: dateTextOf(rec.date),
+        amountText: isReceive
+          ? `+${core.format.formatAmount(rec.amount || 0)}`
+          : core.format.formatAmount(-(rec.amount || 0)),
+        targetUrl: isReceive
+          ? `/pages/receive-record-detail/receive-record-detail?id=${rec._id}`
+          : `/pages/gift-detail/gift-detail?id=${rec._id}`,
+      };
+    });
+  },
   /**
    * 确认写入识别结果；core 整批原子校验：任一条不合格整批不写。
    * 成功返回 { written, total }；失败抛错（err.written/err.total 为已写入/总数，

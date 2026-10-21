@@ -9,6 +9,7 @@
 const dataService = require('../../services/data-service.js');
 const privacyGuard = require('../../services/privacy-guard.js');
 const guideState = require('../../services/guide-state.js');
+const { formatAmountInt } = require('../../core/format.js');
 
 Page({
   data: {
@@ -24,6 +25,8 @@ Page({
     privacyShow: false,    // 隐私弹窗是否显示
     privacyDeclined: false, // 已弹过窗且未同意 → 显示委婉说明条（只读浏览保留）
     pendingPhoto: false,   // 弹窗同意后要续走的拍照导入
+    monthSummary: null,    // 本月小结（任务V）：{hasRecords, receiveText, giftText}
+    recent: [],            // 最近往来（任务V）：空数组时整卡不渲染
   },
 
   async onLoad() {
@@ -35,11 +38,42 @@ Page({
       wx.navigateTo({ url: '/pages/guide/guide' });
     }
     await this.refreshMember();
+    await this.refreshHomeData();
   },
 
   async onShow() {
     await this.refreshMember();
+    await this.refreshHomeData();
     await this.checkPrivacyPopup();
+  },
+
+  /** 本月小结 + 最近往来（任务V）：只读本人账本真实数据（data-service 口径） */
+  async refreshHomeData() {
+    try {
+      const [s, recent] = await Promise.all([
+        dataService.getHomeSummary(),
+        dataService.getHomeRecent(3),
+      ]);
+      this.setData({
+        monthSummary: {
+          hasRecords: !!s.hasRecords,
+          receiveText: formatAmountInt(s.receiveFen),
+          giftText: formatAmountInt(s.giftFen),
+        },
+        recent: recent || [],
+      });
+    } catch (e) { /* 演示期忽略 */ }
+  },
+
+  /** 最近往来「查看全部」→ 往来 Tab */
+  goWanglai() {
+    wx.switchTab({ url: '/pages/wanglai/wanglai' });
+  },
+
+  /** 最近往来行点击 → 对应记录详情页 */
+  onRecentTap(e) {
+    const url = e.currentTarget.dataset.url;
+    if (url) wx.navigateTo({ url });
   },
 
   async refreshMember() {
