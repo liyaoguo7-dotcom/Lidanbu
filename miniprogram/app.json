@@ -53,11 +53,14 @@
     "pages/mine-cancel/mine-cancel",
     "pages/invite/invite-reward",
     "pages/privacy/privacy",
+    "pages/agreement/agreement",
     "pages/mine/notifications",
     "pages/mine/points/points",
     "pages/mine/feedback",
     "pages/mine/faq",
-    "pages/mine/about"
+    "pages/mine/about",
+    "pages/mine/profile",
+    "pages/guide/guide"
   ],
   "navigateToMiniProgramAppIdList": [],
   "subpackages": [

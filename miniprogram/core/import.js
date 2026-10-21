@@ -4,6 +4,9 @@
  * 任务流（startImportTask → writeImport），顺序铁律：会员 → 积分 → 识别 → 写入。
  * - 会员门禁：拍照录入是会员专属（memberOnlyFeatures 含 photoImport），
  *   非会员在识别前就被 memberRequired 拦下，不查积分、不调识别。
+ * - 隐私同意**不是门禁**（2026-10-21 用户纠正口径）：同意状态只做记录与
+ *   展示（首次打开由页面层弹窗、"我的—隐私"可查），**不拦截拍照导入
+ *   或任何其他功能**，本任务流不查 privacyConsent。
  * - 积分预检：识别前先查余额 < 单价（AppConfig.points.photoImportCost，
  *   老板平台可覆盖）→ 直接抛 insufficient-points（委婉文案），
  *   不产生任务、不调识别、不扣款。

@@ -1,0 +1,13 @@
+<!-- 隐私协议同意弹窗：半透明遮罩 + 居中卡片；同意=主按钮（红），不同意=次按钮 -->
+<view class="mask" wx:if="{{show}}" catchtouchmove="noop">
+  <view class="dialog" catchtap="noop">
+    <view class="title">隐私政策与用户协议</view>
+    <view class="content">欢迎使用礼单簿。你的礼簿、亲友和往来记录只存在你自己的账本里；在使用选头像、拍照导入这些功能前，需要你先看一眼我们的隐私政策和用户协议，同意后才能继续。</view>
+    <view class="links">
+      <text class="link" bindtap="onPrivacy">《隐私政策》</text>
+      <text class="link" bindtap="onAgreement">《用户协议》</text>
+    </view>
+    <view class="btn primary-btn" bindtap="onAgree">同意</view>
+    <view class="btn secondary-btn" bindtap="onDisagree">不同意</view>
+  </view>
+</view>

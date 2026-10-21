@@ -1,0 +1,33 @@
+<!-- 个人资料：头像（微信选头像能力）+ 昵称（微信昵称输入框）+ 会员状态只读 -->
+<view class="card">
+  <!-- 已同意隐私：真正的选头像按钮 -->
+  <button wx:if="{{privacyAgreed}}" class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+    <image wx:if="{{tempAvatar || avatarUrl}}" class="avatar-img" src="{{tempAvatar || avatarUrl}}" mode="aspectFill" />
+    <view wx:else class="avatar-ph">选头像</view>
+    <text class="avatar-hint">点击更换头像</text>
+  </button>
+  <!-- 未同意隐私：先弹隐私协议窗，同意后才能选头像 -->
+  <view wx:else class="avatar-btn" bindtap="onAvatarGate">
+    <image wx:if="{{avatarUrl}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+    <view wx:else class="avatar-ph">选头像</view>
+    <text class="avatar-hint">点击更换头像</text>
+  </view>
+</view>
+
+<view class="card">
+  <view class="form-row">
+    <text class="form-label">昵称</text>
+    <input class="form-val" type="nickname" placeholder="点这里填昵称" placeholder-style="color:#C2C2C2"
+           value="{{nickname}}" maxlength="{{maxLen}}" bindinput="onNicknameInput" />
+  </view>
+  <view class="count-hint">{{nickname.length}}/{{maxLen}}（不填就显示「微信用户」；家人看到你记的账时，显示的就是这个昵称）</view>
+  <view class="form-row">
+    <text class="form-label">会员状态</text>
+    <text class="form-val">{{memberText}}</text>
+  </view>
+</view>
+
+<button class="btn-primary save-btn" bindtap="onSave" loading="{{saving}}">保存</button>
+<view style="height:30px"></view>
+
+<privacy-modal show="{{privacyShow}}" bindagree="onPrivacyAgree" binddisagree="onPrivacyDisagree" bindprivacy="onPrivacyPolicy" bindagreement="onPrivacyAgreement" />

@@ -20,6 +20,7 @@ const OLD_SEEDED_KEY = 'lidanbu_demo_seeded_v1';
 
 let _db = null;
 let _userId = null;
+let _dbFactory = null; // 仅测试注入用（模拟数据库失败/恢复），生产恒为 null
 
 function _makeDb() {
   // —— 本地/云切换点（只改这里，页面代码不动）——
@@ -51,7 +52,7 @@ function friendly(err) {
   const msg = err.message || String(err);
   // core 抛出的已是用户可读文案（errors.js），直接透出；兜底未知错误
   // 卖惨文案以"呜呜"开头，也须透出（此前会被吞成"操作失败"，已修复）
-  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|积分|请填写|请选择|反馈|注销|呜呜/.test(msg)) return msg;
+  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|积分|昵称|隐私|请填写|请选择|反馈|注销|呜呜/.test(msg)) return msg;
   return '操作失败，请重试';
 }
 
@@ -85,7 +86,9 @@ async function ensureUser() {
     _userId = _userId || `demo_${Date.now()}`;
     user = {
       _id: _userId,
-      nickname: '我',
+      // 资料（任务Q1）：昵称空串=未设置，显示名读取时解析为"微信用户"；
+      // 不再写死自称"我"，也不写顶层 nickname 字段
+      profile: { nickname: '', avatarUrl: '' },
       createdAt: Date.now(),
       membership: { status: 'free', expireAt: null },
     };
@@ -170,24 +173,69 @@ async function evalInviteQuiet() {
 }
 
 const service = {
-  /** 应用启动时调用一次 */
+  /**
+   * 应用启动时调用一次 —— 静默登录（任务Q1）：
+   * 本产品**没有任何"先登录才能进"的拦截页**：打开小程序直接进首页，
+   * 身份在后台静默建立，全程不弹登录框、不强制授权头像/昵称/手机号。
+   * - 本地演示模式：直接建/取本地用户（ensureUser）。
+   * - 云模式（联调时接）：wx.login() 拿 code → 云函数以 code 换 openid
+   *   （code2session）→ 以 openid 建/取用户；适配位就在这里，
+   *   init 的流程与页面代码都不用改。
+   * 失败口径：不抛死，返回 { ok:false, reason:'network' } 并清掉半成品
+   * 状态，app.js 把结果存进 globalData.initState，首页据此显示
+   * "网络不太顺，点这里重试"，用户点一下就再调一次 init（可重试成功）。
+   * 成功返回 { ok:true }。
+   */
   async init() {
-    if (_db) return;
-    _db = _makeDb();
+    if (_db) return { ok: true, already: true };
     try {
-      const saved = wx.getStorageSync(USER_KEY);
-      if (saved) _userId = saved;
-    } catch (e) { /* ignore */ }
-    // 注销冷静期到期执行（本地模式的触发点；云端改定时任务，见 core/account）
-    if (_userId) {
-      try { await core.account.executeCancellationIfDue(_db, _userId); } catch (e) { /* 忽略 */ }
+      _db = _dbFactory ? _dbFactory() : _makeDb();
+      try {
+        const saved = wx.getStorageSync(USER_KEY);
+        if (saved) _userId = saved;
+      } catch (e) { /* ignore */ }
+      // 注销冷静期到期执行（本地模式的触发点；云端改定时任务，见 core/account）
+      if (_userId) {
+        try { await core.account.executeCancellationIfDue(_db, _userId); } catch (e) { /* 忽略 */ }
+      }
+      await ensureUser();
+      await seedDemo();
+      return { ok: true };
+    } catch (e) {
+      _db = null; // 清掉半成品，保证重试能从干净状态重来
+      return { ok: false, reason: 'network' };
     }
-    await ensureUser();
-    await seedDemo();
   },
 
   get userId() { return _userId; },
   get localMode() { return !!(AppConfig.demo && AppConfig.demo.localMode); },
+
+  // —— 个人资料与隐私同意（任务Q1） ——
+  /** 我的资料：{ displayName(显示名,无昵称时"微信用户"), nickname(原始存值), avatarUrl } */
+  async getProfile() {
+    await ensureUser();
+    return core.users.getProfile(_db, _userId);
+  },
+  /** 改昵称/头像：昵称过长度与内容安全校验（core/users），违规抛委婉文案 */
+  async updateProfile(patch) {
+    try {
+      const user = await core.users.updateProfile(_db, _userId, patch || {}, { config: AppConfig });
+      return {
+        displayName: core.users.displayName(user),
+        nickname: (user.profile && user.profile.nickname) || '',
+        avatarUrl: (user.profile && user.profile.avatarUrl) || '',
+      };
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 我的隐私同意状态：{ agreed, agreedAt, version, currentVersion } */
+  async getPrivacyConsent() {
+    await ensureUser();
+    return core.users.getPrivacyConsent(_db, _userId, AppConfig);
+  },
+  /** 记录隐私同意（true=同意当前版本政策 / false=撤回） */
+  async setPrivacyConsent(agreed) {
+    return core.users.setPrivacyConsent(_db, _userId, agreed, { config: AppConfig });
+  },
 
   // —— 联系人 ——
   async listContacts() {
@@ -240,7 +288,11 @@ const service = {
   },
   async getGift(giftId) {
     const col = _db.collection(core.models.COLLECTIONS.GiftRecord);
-    return col.findOne({ _id: giftId, ownerId: _userId });
+    const doc = await col.findOne({ _id: giftId, ownerId: _userId });
+    if (!doc) return doc;
+    // 补记账人显示名（读取时按作者当前昵称解析，任务Q1）
+    const [named] = await core.users.attachCreatorNames(_db, [doc]);
+    return named;
   },
 
   // —— 标签/配置 ——
@@ -478,7 +530,9 @@ const service = {
       const out = [];
       for (const ms of mss) {
         const owner = await _db.collection(core.models.COLLECTIONS.User).findOne({ _id: ms.ownerId });
-        out.push({ membershipId: ms._id, ownerId: ms.ownerId, ownerName: (owner && owner.nickname) || '家人', createdAt: ms.createdAt });
+        // 账本主人显示名走统一解析（任务Q1）：其当前昵称，无昵称显示"微信用户"；
+        // 主人文档已不存在（已注销）时才兜底叫"家人"
+        out.push({ membershipId: ms._id, ownerId: ms.ownerId, ownerName: owner ? core.users.displayName(owner) : '家人', createdAt: ms.createdAt });
       }
       return out;
     } catch (e) { throw new Error(friendly(e)); }
@@ -669,7 +723,11 @@ const service = {
   },
   async getRecord(recordId) {
     const col = _db.collection(core.models.COLLECTIONS.ReceiveRecord);
-    return col.findOne({ _id: recordId, ownerId: _userId });
+    const doc = await col.findOne({ _id: recordId, ownerId: _userId });
+    if (!doc) return doc;
+    // 补记账人显示名（读取时按作者当前昵称解析，任务Q1）
+    const [named] = await core.users.attachCreatorNames(_db, [doc]);
+    return named;
   },
 
   // —— 往来 ——
@@ -946,5 +1004,8 @@ const service = {
 // 供测试与 app.js 网络提示复用（不属于页面接口）
 service._isNetworkError = isNetworkError;
 service.NETWORK_HINT = NETWORK_HINT;
+// 仅测试用：注入 db 工厂（模拟初始化失败/恢复）与复位单例状态
+service._setDbFactoryForTest = (fn) => { _dbFactory = fn || null; };
+service._resetForTest = () => { _db = null; _userId = null; _dbFactory = null; };
 
 module.exports = service;

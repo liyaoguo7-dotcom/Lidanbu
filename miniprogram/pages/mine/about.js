@@ -14,8 +14,12 @@ Page({
     wx.navigateTo({ url: '/pages/privacy/privacy' });
   },
 
+  onGuide() {
+    // 重看模式（from=about）：右上角是「关闭」，不改"已看"标记
+    wx.navigateTo({ url: '/pages/guide/guide?from=about' });
+  },
+
   onAgreement() {
-    // 用户协议全文为 docs/legal/用户协议.md（发布前法务审定的终稿随版本内置）
-    wx.showToast({ title: '用户协议将在正式版中提供', icon: 'none' });
+    wx.navigateTo({ url: '/pages/agreement/agreement' });
   },
 });

@@ -26,6 +26,8 @@ module.exports = {
   restriction: require('./restriction'), // 异常用户限制标记与写入口拦截点
   ocr: require('./ocr-adapter'), // 拍照导入 OCR 适配层（本轮仅 Mock，纯 JS 无微信依赖）
   importer: require('./import'), // 拍照导入确认写入（纯 JS 无微信依赖）
+  users: require('./users'), // 用户资料与隐私同意（显示名解析/昵称头像/隐私门禁，任务Q1）
+  contentSafety: require('./content-safety'), // 内容安全适配层（本地词表 Mock / 微信 msgSecCheck 骨架，任务Q1）
   account: require('./account'), // 账号注销（⚠️ 待用户确认，确认前不上线）
   notify: require('./notify'), // 通知中心（站内通知 + 订阅消息适配骨架，任务L）
   feedback: require('./feedback'), // 意见反馈（用户提交 + 老板平台列表，任务L）

@@ -9,6 +9,7 @@ const authz = require('./authz');
 const quota = require('./quota');
 const audit = require('./audit');
 const restriction = require('./restriction');
+const users = require('./users');
 const { today } = require('./receive');
 
 async function getOwner(db, ownerId) {
@@ -66,7 +67,9 @@ async function deleteGift(db, actorId, ownerId, giftId) {
 async function listGifts(db, actorId, ownerId) {
   const c = await authz.check(db, actorId, 'read', { kind: 'giftRecord', ownerId });
   if (!c.ok) throw errors.permDenied(c.reason);
-  return db.collection(COLLECTIONS.GiftRecord).find({ ownerId }, { sort: { createdAt: -1 } });
+  const records = await db.collection(COLLECTIONS.GiftRecord).find({ ownerId }, { sort: { createdAt: -1 } });
+  // 记账人显示名读取时按作者当前昵称解析（任务Q1）
+  return users.attachCreatorNames(db, records);
 }
 
 module.exports = { createGift, updateGift, deleteGift, listGifts };

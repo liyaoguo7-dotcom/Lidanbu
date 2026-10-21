@@ -1,0 +1,71 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:375px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#333; font-size:15px; padding-bottom:8px; }
+.nav { background:#F0E6D4; height:88px; position:relative; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.card { background:#FFF; border-radius:12px; margin:12px; }
+.profile { padding:20px 16px; display:flex; align-items:center; }
+.avatar-initial { width:56px; height:56px; flex:none; margin-right:14px; border-radius:50%; background:#F1E6D3; color:#8A6D3B; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:600; }
+.uname { font-size:16px; font-weight:600; display:block; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.usub { font-size:12px; color:#C2C2C2; margin-top:4px; display:block; }
+.chev { color:#C2C2C2; font-size:18px; }
+.profile-chev { margin-left:auto; }
+.member-card { padding:16px; background:linear-gradient(135deg,#F0575A,#e04447); }
+.m-title { color:#fff; font-size:16px; font-weight:600; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.m-desc { color:rgba(255,255,255,.85); font-size:13px; margin-top:8px; }
+.m-actions { display:flex; align-items:center; gap:10px; margin-top:12px; }
+.m-badge { border:1px solid rgba(255,255,255,.7); color:#fff; font-size:12px; padding:6px 16px; border-radius:16px; }
+.m-btn-ghost { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.7); font-size:13px; font-weight:600; padding:8px 22px; border-radius:20px; }
+.form-row { display:flex; align-items:center; padding:0 16px; min-height:58px; border-bottom:1px solid #F0F0F0; }
+.form-row:last-child { border-bottom:none; }
+.form-val { flex:1; }
+.ph { color:#999; font-size:13px; margin-right:4px; }
+.switch { width:46px; height:26px; border-radius:13px; background:#F0575A; position:relative; flex:none; }
+.switch .dot { width:22px; height:22px; border-radius:50%; background:#fff; position:absolute; top:2px; left:22px; }
+.export-hint { font-size:11px; color:#C2C2C2; padding:8px 16px 12px; }
+.badge { min-width:18px; height:18px; border-radius:9px; background:#F0575A; color:#fff; font-size:11px; line-height:18px; text-align:center; padding:0 5px; margin-right:6px; }
+.footer { text-align:center; font-size:11px; color:#C2C2C2; padding:18px 0 8px; }
+.version { text-align:center; font-size:11px; color:#D8D8D8; padding:6px 0 4px; }
+.tabbar { display:flex; background:#fff; border-top:1px solid #eee; padding:8px 0 14px; margin-top:10px; }
+.tab { flex:1; text-align:center; font-size:11px; color:#7A7E83; }
+.tab.on { color:#E05353; font-weight:700; }
+</style></head><body>
+<div class="nav"><div class="title">我的</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+
+<div class="card profile">
+  <div class="avatar-initial">阿</div>
+  <div><span class="uname">阿明</span><span class="usub">会员</span></div>
+  <span class="chev profile-chev">›</span>
+</div>
+
+<div class="card member-card">
+  <div class="m-title">会员与积分</div>
+  <div class="m-desc">会员有效期至 2027年10月21日</div>
+  <div class="m-desc">积分余额：115 分（不过期）</div>
+  <div class="m-actions"><span class="m-badge">会员有效</span><span class="m-btn-ghost">我的积分</span></div>
+</div>
+
+<div class="card">
+  <div class="form-row"><span class="form-val">家庭共享</span><span class="chev">›</span></div>
+  <div class="form-row"><span class="form-val">横置礼单本</span><span class="switch"><span class="dot"></span></span></div>
+  <div class="form-row"><span class="form-val">导出备份</span><span class="chev">›</span></div>
+  <div class="export-hint">换手机或换微信前，请先导出备份</div>
+</div>
+
+<div class="card">
+  <div class="form-row"><span class="form-val">邀请分享</span><span class="ph">已邀请 3/10</span><span class="chev">›</span></div>
+</div>
+
+<div class="card">
+  <div class="form-row"><span class="form-val">通知</span><span class="badge">2</span><span class="chev">›</span></div>
+  <div class="form-row"><span class="form-val">意见反馈</span><span class="chev">›</span></div>
+  <div class="form-row"><span class="form-val">常见问题</span><span class="chev">›</span></div>
+  <div class="form-row"><span class="form-val">关于我们</span><span class="chev">›</span></div>
+  <div class="form-row"><span class="form-val">联系客服</span><span class="chev">›</span></div>
+</div>
+
+<div class="footer"><span>隐私政策</span><span>｜</span><span>注销账号</span></div>
+<div class="version">v0.5.0-dev</div>
+<div class="tabbar"><span class="tab">首页</span><span class="tab">往来</span><span class="tab">亲友录</span><span class="tab on">我的</span></div>
+</body></html>

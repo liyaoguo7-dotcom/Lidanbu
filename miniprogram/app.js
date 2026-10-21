@@ -12,6 +12,33 @@ App({
     // 云开发环境 ID：唯一来源是配置中心 AppConfig.cloudEnvId
     // （换正式版时只改 app-config.js 那一处，见该文件头说明；这里不要再写一份）
     cloudEnvId: AppConfig.cloudEnvId,
+    // 静默初始化状态（任务Q1）：{status:'starting'|'ready'|'failed', reason?}
+    // 失败不拦启动、不弹登录框；首页读这个状态显示"网络不太顺，点这里重试"条，
+    // 点条调 retryInit()。没有登录页、没有登录拦截，这是唯一状态来源。
+    initState: { status: 'starting' },
+  },
+
+  /** 静默初始化：成功置 ready 并绑定待处理邀请码；失败置 failed（reason=network） */
+  async runInit() {
+    let r = null;
+    try {
+      r = await dataService.init();
+    } catch (e) {
+      r = { ok: false, reason: 'network' };
+    }
+    if (r && r.ok) {
+      this.globalData.initState = { status: 'ready' };
+      // 被邀请人首次打开：如带有邀请码，静默绑定邀请关系（失败不打扰启动）
+      try { await dataService.bindPendingInvite(); } catch (e) { /* 忽略 */ }
+    } else {
+      this.globalData.initState = { status: 'failed', reason: (r && r.reason) || 'network' };
+    }
+    return this.globalData.initState;
+  },
+
+  /** 首页重试条调用：重新静默初始化，返回最新 initState */
+  async retryInit() {
+    return this.runInit();
   },
 
   /** 捕获分享进入时携带的邀请码（path 上的 inviteCode 参数），存起来待 init 后绑定 */
@@ -38,14 +65,8 @@ App({
       wx.cloud.init({ env: this.globalData.cloudEnvId, traceUser: true });
     }
 
-    // 2A：本地演示模式初始化（正式发布前确认 demo.localMode）
-    try {
-      await dataService.init();
-      // 被邀请人首次打开：如带有邀请码，静默绑定邀请关系（失败不打扰启动）
-      await dataService.bindPendingInvite();
-    } catch (e) {
-      console.error('[礼单簿] 数据服务初始化失败', e);
-    }
+    // 静默初始化（任务Q1）：直接进首页、后台建/取身份，失败只置状态不拦截
+    await this.runInit();
     this.watchNetwork();
   },
 

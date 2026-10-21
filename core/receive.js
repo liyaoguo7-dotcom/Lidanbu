@@ -14,6 +14,7 @@ const authz = require('./authz');
 const quota = require('./quota');
 const audit = require('./audit');
 const restriction = require('./restriction');
+const users = require('./users');
 
 async function getOwner(db, ownerId) {
   return db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
@@ -137,7 +138,9 @@ async function deleteRecord(db, actorId, ownerId, recordId) {
 async function listRecords(db, actorId, ownerId, eventId) {
   const c = await authz.check(db, actorId, 'read', { kind: 'receiveRecord', ownerId, eventId });
   if (!c.ok) throw errors.permDenied(c.reason);
-  return db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, eventId }, { sort: { createdAt: -1 } });
+  const records = await db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, eventId }, { sort: { createdAt: -1 } });
+  // 记账人显示名读取时按作者当前昵称解析（任务Q1）：改昵称后历史同步显示新名
+  return users.attachCreatorNames(db, records);
 }
 
 module.exports = { createEvent, updateEvent, deleteEvent, listEvents, createRecord, updateRecord, deleteRecord, listRecords, today };

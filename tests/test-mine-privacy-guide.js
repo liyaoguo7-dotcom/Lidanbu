@@ -1,0 +1,153 @@
+/** 登录与"我的"页面线（任务Q2）：
+ * - 隐私页面层守卫：未同意拦截 chooseAvatar/拍照导入、同意后放行、非隐私动作不拦
+ * - 隐私弹窗首次判定：没展示过且后端未同意才弹
+ * - 引导只显示一次：标记后不再进；关于页重看走 review 模式
+ * - "我的"页行序（源码断言）：资料条→会员积分卡→共享/横置/导出→邀请分享→通知组→底部，
+ *   且没有独立"分享转发"行、导出行下有逐字提示
+ * - 邀请页：标题「邀请分享」、右上角分享路径带邀请码
+ * - 首页：失败重试条文案/调用、隐私弹窗组件接线；资料页：微信头像/昵称能力 */
+const fs = require('fs');
+const path = require('path');
+const { test, assert } = require('./fw');
+
+const ROOT = path.join(__dirname, '..');
+const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
+
+const privacyGuard = require('../miniprogram/services/privacy-guard');
+const guideState = require('../miniprogram/services/guide-state');
+
+function fakeStorage() {
+  const m = new Map();
+  return { get: (k) => (m.has(k) ? m.get(k) : ''), set: (k, v) => m.set(k, v) };
+}
+
+test('隐私守卫：未同意时拦截 chooseAvatar 与拍照导入', async () => {
+  for (const action of ['chooseAvatar', 'photoImport']) {
+    const v = privacyGuard.evaluate({ agreed: false }, action);
+    assert(v.allowed === false && v.needPopup === true, `${action} 未同意应拦截并要求弹窗`);
+  }
+  assert(privacyGuard.isPrivacyAction('chooseAvatar') && privacyGuard.isPrivacyAction('photoImport'), '两个隐私动作在册');
+});
+
+test('隐私守卫：同意后放行，非隐私动作（记账浏览）从不拦', async () => {
+  assert(privacyGuard.evaluate({ agreed: true }, 'chooseAvatar').allowed === true, '同意后选头像放行');
+  assert(privacyGuard.evaluate({ agreed: true }, 'photoImport').allowed === true, '同意后拍照导入放行');
+  for (const action of ['browse', 'addRecord', 'exportExcel', '']) {
+    const v = privacyGuard.evaluate({ agreed: false }, action);
+    assert(v.allowed === true && v.needPopup === false, `非隐私动作 ${action || '(空)'} 不拦`);
+  }
+});
+
+test('隐私弹窗首次判定：只在"没展示过且后端未同意"时弹', async () => {
+  assert(privacyGuard.needsFirstPopup({ localShown: false, backendAgreed: false }) === true, '首次未同意 → 弹');
+  assert(privacyGuard.needsFirstPopup({ localShown: true, backendAgreed: false }) === false, '弹过一次 → 不再弹');
+  assert(privacyGuard.needsFirstPopup({ localShown: false, backendAgreed: true }) === false, '后端已同意 → 不弹');
+  assert(privacyGuard.needsFirstPopup({ localShown: true, backendAgreed: true }) === false, '都满足 → 不弹');
+  const s = fakeStorage();
+  assert(privacyGuard.readPopupShown(s) === false, '新 storage 无标记');
+  privacyGuard.markPopupShown(s);
+  assert(privacyGuard.readPopupShown(s) === true, '标记落 storage');
+});
+
+test('引导只显示一次：标记后不再进入，步进不越界', async () => {
+  const s = fakeStorage();
+  assert(guideState.readSeen(s) === false, '新用户没看过');
+  let entry = guideState.resolveGuideEntry({ seen: guideState.readSeen(s) });
+  assert(entry.enter === true && entry.review === false, '首次 → 进入引导');
+  guideState.markSeen(s);
+  entry = guideState.resolveGuideEntry({ seen: guideState.readSeen(s) });
+  assert(entry.enter === false, '标记后 → 不再进入');
+  assert(guideState.nextStep(0) === 1 && guideState.nextStep(1) === 2, '步进前进');
+  assert(guideState.nextStep(2) === 2 && guideState.isLastStep(2) && !guideState.isLastStep(1), '末屏不越界');
+});
+
+test('引导重看模式：从关于我们进入恒为 review，与已看标记无关', async () => {
+  assert(guideState.resolveGuideEntry({ seen: true, from: 'about' }).review === true, '已看过也能重看');
+  assert(guideState.resolveGuideEntry({ seen: false, from: 'about' }).enter === true, '重看恒进入');
+  const guideJs = read('miniprogram/pages/guide/guide.js');
+  assert(guideJs.includes('if (!this.data.review) guideState.markSeen()'), '只有非重看才落已看标记');
+  const aboutJs = read('miniprogram/pages/mine/about.js');
+  assert(aboutJs.includes('/pages/guide/guide?from=about'), '关于页带 from=about 重看');
+  const aboutWxml = read('miniprogram/pages/mine/about.wxml');
+  assert(aboutWxml.includes('使用引导'), '关于页有「使用引导」行');
+});
+
+test('"我的"页行序：资料条→会员积分卡→共享/横置/导出→邀请分享→通知组→底部', async () => {
+  // 剥掉注释再断言（头注释里复述了顺序，会污染 indexOf）
+  const wxml = read('miniprogram/pages/mine/mine.wxml').replace(/<!--[\s\S]*?-->/g, '');
+  const markers = [
+    'bindtap="onProfile"',   // ① 个人资料条
+    '会员与积分',             // ② 会员与积分卡片
+    '家庭共享',               // ③
+    '横置礼单本',             // ③
+    '导出备份',               // ③
+    '换手机或换微信前，请先导出备份', // ③ 导出行下淡字提示（逐字）
+    '邀请分享',               // ④ 唯一入口
+    '通知',                   // ⑤
+    '意见反馈',               // ⑤
+    '常见问题',               // ⑤
+    '关于我们',               // ⑤
+    '联系客服',               // ⑤
+    '隐私政策',               // ⑥ 底部
+    '注销账号',               // ⑥ 底部
+    '{{version}}',            // ⑥ 版本号在最底部
+  ];
+  let last = -1;
+  for (const m of markers) {
+    const i = wxml.indexOf(m);
+    assert(i > last, `行序错误：「${m}」应出现在上一项之后（index=${i}, last=${last}）`);
+    last = i;
+  }
+  assert(!wxml.includes('分享转发'), '不得再有独立"分享转发"行');
+  const mineJs = read('miniprogram/pages/mine/mine.js');
+  assert(!/onShare\s*\(\s*\)/.test(mineJs) && !mineJs.includes('分享转发（待接入）'), 'mine.js 不得留分享转发处理函数（onShareHome 是家庭共享入口，不算）');
+  assert(wxml.includes('open-type="contact"'), '联系客服是微信客服按钮（open-type=contact）');
+  assert(wxml.includes('已邀请 {{inviteDone}}/{{inviteMax}}'), '邀请行显示已邀请 x/上限（x 读数据）');
+  assert(wxml.includes('{{displayName}}') && !wxml.includes('>我<'), '资料条显示昵称且不再写死"我"');
+});
+
+test('邀请页合并：标题「邀请分享」，右上角分享走同一带码链接', async () => {
+  const j = JSON.parse(read('miniprogram/pages/invite/invite-reward.json'));
+  assert(j.navigationBarTitleText === '邀请分享', '页面标题为邀请分享');
+  const js = read('miniprogram/pages/invite/invite-reward.js');
+  assert(js.includes('onShareAppMessage'), '有右上角分享');
+  assert(js.includes('/pages/index/index?inviteCode='), '分享路径带邀请码（与页内邀请同一链接）');
+});
+
+test('首页接线：重试条 + 隐私弹窗 + 拍照前守卫', async () => {
+  const wxml = read('miniprogram/pages/index/index.wxml');
+  assert(wxml.includes('网络不太顺，点这里重试'), '重试条文案逐字');
+  assert(wxml.includes('<privacy-modal'), '首页挂了隐私弹窗组件');
+  const json = JSON.parse(read('miniprogram/pages/index/index.json'));
+  assert(json.usingComponents && json.usingComponents['privacy-modal'], 'index.json 注册隐私弹窗组件');
+  const js = read('miniprogram/pages/index/index.js');
+  assert(js.includes('retryInit'), '重试条调用 app.retryInit');
+  assert(js.includes("privacyGuard.evaluate({ agreed }, 'photoImport')"), '拍照进入前过隐私守卫');
+  assert(js.includes('setPrivacyConsent(true)'), '点同意落库同意状态');
+  assert(js.includes('guideState.resolveGuideEntry'), '首次先判定引导');
+});
+
+test('个人资料页：微信选头像/昵称输入能力 + 隐私守卫 + 上限读配置', async () => {
+  const wxml = read('miniprogram/pages/mine/profile.wxml');
+  assert(wxml.includes('open-type="chooseAvatar"'), '头像用微信 chooseAvatar 按钮');
+  assert(wxml.includes('type="nickname"'), '昵称用微信 nickname 输入框');
+  assert(wxml.includes('<privacy-modal'), '资料页挂隐私弹窗（选头像前守卫）');
+  const js = read('miniprogram/pages/mine/profile.js');
+  assert(js.includes("privacyGuard.evaluate({ agreed: !!(c && c.agreed) }, 'chooseAvatar')") || js.includes("'chooseAvatar'"), '进入选头像前过守卫判定');
+  assert(js.includes('AppConfig.profile') && js.includes('nicknameMaxLen'), '昵称上限读配置不写死');
+  assert(js.includes('updateProfile'), '保存走 data-service.updateProfile');
+  const appJson = JSON.parse(read('miniprogram/app.json'));
+  assert(appJson.pages.includes('pages/mine/profile'), 'app.json 注册个人资料页');
+  assert(appJson.pages.includes('pages/guide/guide'), 'app.json 注册引导页');
+});
+
+test('隐私弹窗组件：含同意/不同意与双协议链接', async () => {
+  const wxml = read('miniprogram/components/privacy-modal/privacy-modal.wxml');
+  for (const t of ['隐私政策与用户协议', '《隐私政策》', '《用户协议》', '同意', '不同意']) {
+    assert(wxml.includes(t), `弹窗应含「${t}」`);
+  }
+  const js = read('miniprogram/components/privacy-modal/privacy-modal.js');
+  for (const ev of ['agree', 'disagree', 'privacy', 'agreement']) {
+    assert(js.includes(`triggerEvent('${ev}')`), `弹窗应抛出 ${ev} 事件`);
+  }
+});

@@ -13,6 +13,9 @@
   <view class="form-row" bindtap="onAgreement">
     <text class="form-val">用户协议</text><text class="chev">›</text>
   </view>
+  <view class="form-row" bindtap="onGuide">
+    <text class="form-val">使用引导</text><text class="chev">›</text>
+  </view>
 </view>
 
 <view class="card ab-credit">

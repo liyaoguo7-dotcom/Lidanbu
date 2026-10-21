@@ -2,8 +2,13 @@
  * 礼单簿 · 首页（阶段2 2A）
  * 顶部 4 金刚区 + 中部送礼/收礼 2 大卡；小喇叭文案按用户决定。
  * 家庭共享/拍照导入为会员专属，普通用户点进会员介绍。
+ * 任务Q2：静默初始化失败时顶部出重试条（点条调 app.retryInit）；首次打开
+ * 先过一遍引导页（只显示一次）；隐私弹窗首次弹出（privacy-modal），
+ * 拍照导入进入前走页面层隐私守卫（privacy-guard，未同意先弹窗）。
  */
 const dataService = require('../../services/data-service.js');
+const privacyGuard = require('../../services/privacy-guard.js');
+const guideState = require('../../services/guide-state.js');
 
 Page({
   data: {
@@ -15,15 +20,26 @@ Page({
       { id: 'export', icon: '/images/icons/export.svg', name: '导出备份' },
     ],
     isMember: false,
+    initFailed: false,     // 静默初始化失败 → 显示重试条
+    privacyShow: false,    // 隐私弹窗是否显示
+    privacyDeclined: false, // 已弹过窗且未同意 → 显示委婉说明条（只读浏览保留）
+    pendingPhoto: false,   // 弹窗同意后要续走的拍照导入
   },
 
   async onLoad() {
-    await dataService.init();
+    const r = await dataService.init();
+    this.setData({ initFailed: !(r && r.ok) });
+    // 首次使用引导：只显示一次（storage 标记），未看过先去引导页
+    const entry = guideState.resolveGuideEntry({ seen: guideState.readSeen() });
+    if (entry.enter) {
+      wx.navigateTo({ url: '/pages/guide/guide' });
+    }
     await this.refreshMember();
   },
 
   async onShow() {
     await this.refreshMember();
+    await this.checkPrivacyPopup();
   },
 
   async refreshMember() {
@@ -31,6 +47,64 @@ Page({
       const m = await dataService.getMembership();
       this.setData({ isMember: m.state === 'member' || m.state === 'grace' });
     } catch (e) { /* 演示期忽略 */ }
+  },
+
+  /** 重试条：重新静默初始化（app.retryInit），成功后收起重试条 */
+  async onRetryInit() {
+    const app = getApp();
+    let state = null;
+    if (app && typeof app.retryInit === 'function') {
+      state = await app.retryInit();
+    } else {
+      const r = await dataService.init();
+      state = { status: r && r.ok ? 'ready' : 'failed' };
+    }
+    if (state && state.status === 'ready') {
+      this.setData({ initFailed: false });
+      await this.refreshMember();
+    } else {
+      wx.showToast({ title: '还是不太顺，请再试一次', icon: 'none' });
+    }
+  },
+
+  /** 隐私弹窗首次判定：没展示过标记且后端未同意才弹；弹过且没同意则出说明条 */
+  async checkPrivacyPopup() {
+    if (this._privacyChecking || this.data.privacyShow) return;
+    this._privacyChecking = true;
+    try {
+      const consent = await dataService.getPrivacyConsent();
+      const agreed = !!(consent && consent.agreed);
+      this._consentAgreed = agreed;
+      const localShown = privacyGuard.readPopupShown();
+      if (privacyGuard.needsFirstPopup({ localShown, backendAgreed: agreed })) {
+        this.setData({ privacyShow: true });
+      } else if (!agreed && localShown) {
+        this.setData({ privacyDeclined: true });
+      }
+    } catch (e) { /* 忽略 */ }
+    this._privacyChecking = false;
+  },
+
+  async onPrivacyAgree() {
+    try { await dataService.setPrivacyConsent(true); } catch (e) { /* 忽略 */ }
+    privacyGuard.markPopupShown();
+    this._consentAgreed = true;
+    const goPhoto = this.data.pendingPhoto;
+    this.setData({ privacyShow: false, privacyDeclined: false, pendingPhoto: false });
+    if (goPhoto) wx.navigateTo({ url: '/pages/import/import-home' });
+  },
+
+  onPrivacyDisagree() {
+    privacyGuard.markPopupShown();
+    this.setData({ privacyShow: false, privacyDeclined: true, pendingPhoto: false });
+  },
+
+  onPrivacyPolicy() {
+    wx.navigateTo({ url: '/pages/privacy/privacy' });
+  },
+
+  onPrivacyAgreement() {
+    wx.navigateTo({ url: '/pages/agreement/agreement' });
   },
 
   memberOnly(feature) {
@@ -44,6 +118,24 @@ Page({
         if (res.confirm) wx.switchTab({ url: '/pages/mine/mine' });
       },
     });
+  },
+
+  /** 拍照导入：进入前先过页面层隐私守卫——未同意先弹隐私窗，同意后续走 */
+  async goPhotoImport() {
+    let agreed = this._consentAgreed;
+    if (agreed === undefined) {
+      try {
+        const c = await dataService.getPrivacyConsent();
+        agreed = !!(c && c.agreed);
+        this._consentAgreed = agreed;
+      } catch (e) { agreed = false; }
+    }
+    const verdict = privacyGuard.evaluate({ agreed }, 'photoImport');
+    if (!verdict.allowed) {
+      this.setData({ privacyShow: true, pendingPhoto: true });
+      return;
+    }
+    wx.navigateTo({ url: '/pages/import/import-home' });
   },
 
   /** 电子请柬：跳转合作小程序（自制请柬已取消）；未配置目标时提示敬请期待 */
@@ -63,7 +155,7 @@ Page({
       return;
     }
     if (id === 'share') { wx.navigateTo({ url: '/pages/share/share-home' }); return; }
-    if (id === 'photo') { wx.navigateTo({ url: '/pages/import/import-home' }); return; }
+    if (id === 'photo') { this.goPhotoImport(); return; }
     if (id === 'invite') { this.goExternalInvitation(); return; }
     if (id === 'export') { wx.navigateTo({ url: '/pages/export/export-home' }); return; }
   },

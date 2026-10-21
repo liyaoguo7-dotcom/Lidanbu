@@ -197,6 +197,20 @@ const AppConfig = {
 
   /** 意见反馈（任务L）：正文最长字数 */
   feedback: { maxLength: 500 },
+
+  /** 法务文档版本（任务Q1）：隐私政策/用户协议的版本号；用户同意时把当时
+   * 版本号存进 User.privacyConsent.version，政策改版时改这里并让用户重新同意 */
+  legal: { privacyVersion: 'v1' },
+
+  /** 个人资料（任务Q1）：昵称长度上限（按字数计）；不设单独的"名字"字段，
+   * 显示名一律读取时由昵称解析（无昵称显示"微信用户"） */
+  profile: { nicknameMaxLen: 16 },
+
+  /** 内容安全（任务Q1）：昵称敏感检测走 core/content-safety.js 适配层。
+   * provider: 'local' = 本地词表（现行默认）| 'wechat' = 微信 msgSecCheck
+   * （云联调后在云函数侧接入，再改这里）；localBlocklist 为本地词表占位，
+   * 默认空数组——本地词表只作兜底，查不全，上线前应切微信官方检测 */
+  contentSafety: { provider: 'local', localBlocklist: [] },
   /** 本地演示模式（阶段2 2A）：true=用微信本地存储演示，false=走云开发。
    * 正式发布前必须设为 false，见 docs/发布检查清单。 */
   demo: { localMode: true },

@@ -1,43 +1,55 @@
-<!-- 我的 -->
-<view class="card profile">
-  <image class="avatar" src="/images/icons/user.svg" mode="aspectFit" />
-  <view>
-    <text class="uname songti">我</text>
-    <text class="usub">礼单簿 · 本地演示版</text>
-  </view>
+<!-- 我的（任务Q2 重排：资料条 → 会员与积分卡 → 共享/横置/导出 → 邀请分享 → 通知组 → 底部） -->
+<!-- 待注销提示：冷静期内显示，去注销页可撤销（账号级提醒，置顶） -->
+<view class="warn-banner" wx:if="{{cancelPending}}" bindtap="onLogout">
+  你的账号已申请注销，将在 {{cancelPending.cancelAtText}} 执行（还剩 {{cancelPending.remainingDays}} 天）。点这里可以撤销 ›
 </view>
 
-<view class="card member-card" bindtap="onMemberCard">
-  <text class="m-title songti">会员卡片</text>
+<!-- ① 个人资料条 -->
+<view class="card profile" bindtap="onProfile">
+  <image wx:if="{{avatarUrl}}" class="avatar avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+  <view wx:else class="avatar avatar-initial">{{avatarInitial}}</view>
+  <view>
+    <text class="uname songti">{{displayName}}</text>
+    <text class="usub">{{memberStateText}}</text>
+  </view>
+  <text class="chev profile-chev">›</text>
+</view>
+
+<!-- ② 会员与积分卡片 -->
+<view class="card member-card" bindtap="onPurchase">
+  <text class="m-title songti">会员与积分</text>
   <text class="m-desc">{{memberText}}</text>
   <text class="m-desc">积分余额：{{pointsBalance}} 分（不过期）</text>
-  <view class="m-btn" wx:if="{{!isMember}}">开通会员</view>
-  <view class="m-badge" wx:if="{{isMember}}">会员有效</view>
+  <view class="m-actions">
+    <view class="m-btn" wx:if="{{!isMember}}">开通会员</view>
+    <view class="m-badge" wx:if="{{isMember}}">会员有效</view>
+    <view class="m-btn ghost" catchtap="onPoints">我的积分</view>
+  </view>
 </view>
 
+<!-- ③ 家庭共享 / 横置礼单本 / 导出备份 -->
 <view class="card">
-  <view class="form-row" bindtap="onPoints">
-    <text class="form-val">我的积分</text>
-    <text class="ph">{{pointsBalance}} 分</text>
+  <view class="form-row" bindtap="onShareHome">
+    <text class="form-val">家庭共享</text>
     <text class="chev">›</text>
   </view>
-</view>
-
-<view class="section-title">会员专属功能</view>
-<view class="card">
-  <view class="feat" wx:for="{{feats}}" wx:key="title">
-    <image class="feat-icon" src="{{item.icon}}" mode="aspectFit" />
-    <view class="feat-mid">
-      <text class="feat-t songti">{{item.title}}</text>
-      <text class="feat-d">{{item.desc}}</text>
-    </view>
-  </view>
-</view>
-
-<view class="card">
   <view class="form-row" bindtap="onLandscapeToggle">
-    <text class="form-val">经典红字大写横置礼簿模式</text>
+    <text class="form-val">横置礼单本</text>
     <view class="switch {{landscapeOn ? 'on' : ''}}"><view class="dot"></view></view>
+  </view>
+  <view class="form-row" bindtap="onExport">
+    <text class="form-val">导出备份</text>
+    <text class="chev">›</text>
+  </view>
+  <view class="export-hint">换手机或换微信前，请先导出备份</view>
+</view>
+
+<!-- ④ 邀请分享（唯一入口） -->
+<view class="card">
+  <view class="form-row" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
+    <text class="form-val">邀请分享</text>
+    <text class="ph" wx:if="{{inviteRewardEnabled}}">已邀请 {{inviteDone}}/{{inviteMax}}</text>
+    <text class="chev">›</text>
   </view>
 </view>
 
@@ -49,18 +61,7 @@
   </view>
 </view>
 
-<view class="card">
-  <view class="form-row" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
-    <text class="form-val">邀请好友得名额</text>
-    <text class="chev">›</text>
-  </view>
-</view>
-
-<!-- 待注销提示：冷静期内显示，去注销页可撤销 -->
-<view class="warn-banner" wx:if="{{cancelPending}}" bindtap="onLogout">
-  你的账号已申请注销，将在 {{cancelPending.cancelAtText}} 执行（还剩 {{cancelPending.remainingDays}} 天）。点这里可以撤销 ›
-</view>
-
+<!-- ⑤ 通知 / 意见反馈 / 常见问题 / 关于我们 / 联系客服 -->
 <view class="card">
   <view class="form-row" bindtap="onNotifications">
     <text class="form-val">通知</text>
@@ -76,17 +77,12 @@
   <view class="form-row" bindtap="onAbout">
     <text class="form-val">关于我们</text><text class="chev">›</text>
   </view>
-</view>
-
-<view class="card">
-  <view class="form-row" bindtap="onService">
+  <button class="form-row contact-btn" open-type="contact">
     <text class="form-val">联系客服</text><text class="chev">›</text>
-  </view>
-  <view class="form-row" bindtap="onShare">
-    <text class="form-val">分享转发</text><text class="chev">›</text>
-  </view>
+  </button>
 </view>
 
+<!-- ⑥ 底部：隐私政策｜注销账号 + 版本号 -->
 <view class="footer">
   <text bindtap="onPrivacy">隐私政策</text><text>｜</text><text bindtap="onLogout">注销账号</text>
 </view>

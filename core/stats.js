@@ -10,7 +10,18 @@
 const { COLLECTIONS } = require('./models');
 const authz = require('./authz');
 const errors = require('./errors');
+const users = require('./users');
 const AppConfig = require('../miniprogram/config/app-config');
+
+/** 给时间线条目补记账人显示名（按作者当前昵称读取时解析，任务Q1） */
+async function fillCreatorNames(db, items, records) {
+  const byRecordId = new Map((records || []).map((r) => [r._id, r]));
+  const pseudo = items.map((it) => ({ _id: it.recordId, createdBy: (byRecordId.get(it.recordId) || {}).createdBy }));
+  const named = await users.attachCreatorNames(db, pseudo);
+  const nameByRecordId = new Map(named.map((n) => [n._id, n.createdByName]));
+  items.forEach((it) => { it.createdByName = nameByRecordId.get(it.recordId) || users.DEFAULT_DISPLAY_NAME; });
+  return items;
+}
 
 const TAG_NAME = new Map((AppConfig.tags || []).map((t) => [t.id, t.name]));
 function tagNameOf(tagId) {
@@ -110,6 +121,7 @@ async function getContactTimeline(db, viewerId, ownerId, contactId) {
       type: r.type || '', eventName: '', remark: r.remark, recordId: r._id, kind: 'giftRecord',
     });
   });
+  await fillCreatorNames(db, items, [...receives, ...gifts]);
   // 最早在上
   items.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const inTotal = items.filter((i) => i.direction === 'in').reduce((s, i) => s + i.amount, 0);
@@ -222,6 +234,7 @@ async function timeline(db, ownerId, contactId, opts = {}) {
       createdAt: g.createdAt || 0,
     });
   });
+  await fillCreatorNames(db, items, [...receives, ...gifts]);
   items.sort((a, b) => (
     a.date < b.date ? -1 : a.date > b.date ? 1
       : a.createdAt - b.createdAt || String(a.recordId).localeCompare(String(b.recordId))

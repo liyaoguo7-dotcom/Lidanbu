@@ -33,7 +33,9 @@ const COLLECTIONS = {
 /**
  * 实体字段说明（code 注释即字典；完整版见 docs/数据字典.md）
  *
- * User: {_id(openid), nickname?, inviteCode(我的邀请码,懒生成), pointsBalance(积分余额,与 pointsLedger 流水同口径,缺省0),
+ * User: {_id(openid), profile:{nickname(昵称,空串=未设置), avatarUrl(头像地址,只存字符串)}(任务Q1;不设单独"名字"字段,显示名读取时由 core/users.displayName 解析,无昵称显示"微信用户";顶层旧字段 nickname 为历史占位勿再写),
+ *   privacyConsent:{agreed:boolean, agreedAt, version(同意时的政策版本,取 AppConfig.legal.privacyVersion)}(任务Q1;仅记录同意状态供展示,不作任何功能门禁),
+ *   inviteCode(我的邀请码,懒生成), pointsBalance(积分余额,与 pointsLedger 流水同口径,缺省0),
  *   membership:{status:'free'|'member', expireAt: timestamp|null, graceUntil: timestamp|null},
  *   cancelStatus?:'pendingCancel'(已申请注销、冷静期内), cancelApplyAt?, cancelAt?(冷静期满执行时刻),
  *   restricted?:{status:boolean, reason, by(操作的管理员), at}(老板平台异常用户限制标记；status=true 时核心写入口全拦，只拦写不拦读), createdAt}

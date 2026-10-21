@@ -1,0 +1,41 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:375px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#333; font-size:15px; padding-bottom:16px; position:relative; }
+.nav { background:#F0E6D4; height:88px; position:relative; }
+.nav .back { position:absolute; left:14px; bottom:12px; font-size:22px; color:#333; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.skip { position:absolute; top:100px; right:16px; font-size:13px; color:#999; padding:6px 10px; }
+.screen { display:flex; flex-direction:column; align-items:center; padding:30px 32px 0; }
+.phone { width:230px; height:300px; background:#fff; border:1px solid #E8DFC9; border-radius:18px; padding:14px 12px; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.05); }
+.phone-head { height:12px; width:60px; border-radius:6px; background:#F0E6D4; margin:0 auto 14px; }
+.row { display:flex; justify-content:space-between; align-items:center; padding:11px 4px; border-bottom:1px solid #F0F0F0; }
+.row.dim { opacity:.45; }
+.row-t { font-size:13px; color:#333; }
+.row-a { font-size:13px; color:#333; font-weight:600; }
+.fab { position:absolute; right:16px; bottom:16px; width:40px; height:40px; border-radius:50%; background:#F0575A; color:#fff; font-size:24px; line-height:40px; text-align:center; }
+.g-title { font-size:20px; font-weight:600; margin-top:26px; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.g-desc { font-size:14px; color:#666; line-height:1.8; text-align:center; margin-top:10px; }
+.dots { display:flex; justify-content:center; gap:7px; margin-top:22px; }
+.dots .dot { width:7px; height:7px; border-radius:50%; background:#DDD; }
+.dots .dot.on { background:#F0575A; }
+.btn-primary { display:block; height:56px; line-height:56px; background:#F0575A; color:#fff; text-align:center; font-size:17px; border-radius:28px; margin:18px 24px 0; }
+</style></head><body>
+<div class="nav"><span class="back">‹</span><div class="title">使用引导</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+<div class="skip">跳过</div>
+
+<div class="screen">
+  <div class="phone">
+    <div class="phone-head"></div>
+    <div class="row"><span class="row-t">张三的婚礼</span><span class="row-a">¥8866</span></div>
+    <div class="row"><span class="row-t">赵六的乔迁宴</span><span class="row-a">¥2500</span></div>
+    <div class="row dim"><span class="row-t">王老太爷丧礼</span><span class="row-a">¥2000</span></div>
+    <div class="fab">+</div>
+  </div>
+  <div class="g-title">收礼这样记</div>
+  <div class="g-desc">办酒收到的礼金，先新建一本礼薄，再把亲友送的礼一笔一笔登记上。</div>
+</div>
+
+<div class="dots"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></div>
+<div class="btn-primary">下一步</div>
+</body></html>

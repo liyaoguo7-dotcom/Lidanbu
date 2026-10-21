@@ -45,6 +45,9 @@ const MESSAGES = {
   'points-amount-invalid': '积分数量不对，请重试',
   'points-pack-member-only': '积分礼包是会员的小福利，先开通会员就能买啦',
   'points-pack-not-found': '这个积分礼包已经下架啦，看看其他礼包吧',
+  // —— 个人资料类（任务Q1；隐私同意不作门禁，故无"未同意"错误码） ——
+  'nickname-rejected': '这个昵称里有不太合适的词，换一个吧',
+  'nickname-too-long': '昵称太长啦，换个短一点的吧',
   // —— 支付/订单类 ——
   'plan-not-found': '这个会员档位已经下架啦，看看其他档位吧',
   'order-not-found': '订单不存在',
@@ -91,4 +94,11 @@ function pointsDenied(reason) {
   return e;
 }
 
-module.exports = { userMessage, permDenied, quotaDenied, memberRequired, inviteDenied, pointsDenied, MESSAGES };
+/** 个人资料拒绝（昵称不合规/超长等，任务Q1）：消息为用户可读提示，err.code 为内部原因码 */
+function profileDenied(reason) {
+  const e = new Error(userMessage(reason));
+  e.code = reason;
+  return e;
+}
+
+module.exports = { userMessage, permDenied, quotaDenied, memberRequired, inviteDenied, pointsDenied, profileDenied, MESSAGES };

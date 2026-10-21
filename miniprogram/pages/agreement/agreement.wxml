@@ -1,0 +1,7 @@
+<!-- 用户协议 -->
+<view class="warn-banner">本协议为终稿形态，待法务终审，确认前不上线。</view>
+<view class="card" wx:for="{{sections}}" wx:key="title" style="padding:14px 16px">
+  <view style="font-weight:600;margin-bottom:8px">{{item.title}}</view>
+  <view wx:for="{{item.body}}" wx:for-item="line" wx:key="*this" style="font-size:13px;color:#666;line-height:1.8;margin-bottom:4px">{{line}}</view>
+</view>
+<view class="footer">礼单簿 · 用户协议</view>
