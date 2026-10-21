@@ -137,6 +137,32 @@ async function seedDemo() {
   try { wx.setStorageSync(SEEDED_KEY, true); } catch (e) { /* ignore */ }
 }
 
+/**
+ * 演示专用：把当前演示用户加进老板平台管理员名单（appConfig singleton
+ * 文档的 adminIds），让开发者工具本地预览时能直接打开老板平台各页。
+ * —— 仅本地演示模式（localMode=true）下执行；云模式/正式路径下本函数
+ * 直接返回，一行名单都不写：正式环境的管理员名单由 init 脚本/后台
+ * 维护（见 cloudfunctions/init 与 docs/云联调准备.md），没有名单时
+ * core/admin 一律 fail closed 拒绝，本段不改变那个口径。
+ * 合并口径：文档不存在则新建（只带 adminIds）；已存在则只更新
+ * adminIds 一个字段，pricing / points 等其他配置段原样保留；
+ * 演示用户已在名单里则不重复加（重复 init 幂等）。
+ */
+async function ensureDemoAdmin() {
+  if (!(AppConfig.demo && AppConfig.demo.localMode)) return;
+  if (!_userId) return;
+  const col = _db.collection(core.models.COLLECTIONS.AppConfig);
+  const doc = await col.findOne({ _id: 'singleton' });
+  if (!doc) {
+    await col.insert({ _id: 'singleton', adminIds: [_userId] });
+    return;
+  }
+  const ids = Array.isArray(doc.adminIds) ? doc.adminIds : [];
+  if (!ids.includes(_userId)) {
+    await col.update({ _id: 'singleton' }, { adminIds: [...ids, _userId] });
+  }
+}
+
 const DEVICE_KEY = 'lidanbu_device_id';
 const PENDING_INVITE_KEY = 'lidanbu_pending_invite_code';
 
@@ -200,6 +226,9 @@ const service = {
       }
       await ensureUser();
       await seedDemo();
+      // 演示模式自动把演示用户加进老板平台管理员名单（仅 localMode，见
+      // ensureDemoAdmin）；失败不阻断启动，老板平台进不去时重新编译即可
+      try { await ensureDemoAdmin(); } catch (e) { /* ignore */ }
       return { ok: true };
     } catch (e) {
       _db = null; // 清掉半成品，保证重试能从干净状态重来
@@ -1015,7 +1044,8 @@ const service = {
     return core.admin.shareOverview(_db, { limit });
   },
   // —— 老板平台补全（任务M）：以下接口 core 侧一律校验管理员身份
-  // （只认 appConfig 文档 adminIds；本地演示需先把演示用户写进名单）——
+  // （只认 appConfig 文档 adminIds；本地演示模式下 init 已自动把演示
+  // 用户写进名单，见 ensureDemoAdmin；正式环境名单由后台维护）——
   async adminSearchAccounts(opts = {}) {
     try { return await core.admin.searchAccounts(_db, _userId, opts); }
     catch (e) { throw new Error(friendly(e)); }

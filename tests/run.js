@@ -36,6 +36,7 @@ require('./test-login-profile');
 require('./test-mine-privacy-guide');
 require('./test-guide-assets');
 require('./test-home-summary');
+require('./test-demo-admin');
 
 (async () => {
   console.log('礼单簿 阶段1 本地测试（内存数据库）\n');
