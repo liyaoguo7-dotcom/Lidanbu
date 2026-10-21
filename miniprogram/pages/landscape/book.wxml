@@ -81,8 +81,9 @@
         style="width:{{spec.scrollW}}px;" />
     </view>
 
-    <!-- 下留白：滑动提示 / ＋（横置内跟随样式配色，白事深灰） -->
+    <!-- 下留白：返回竖屏 / 滑动提示 / ＋（横置内跟随样式配色，白事深灰） -->
     <view class="botbar" style="height:{{spec.marginV}}px;">
+      <view class="back-portrait" bindtap="goBackToPortrait">返回竖屏</view>
       <view class="hint"><text class="hint-txt">左右滑动查看更多</text></view>
       <view wx:if="{{perms.canAdd}}" class="plus-touch" bindtap="onAdd"
         style="width:{{spec.plusTouch}}px;height:{{spec.plusTouch}}px;">

@@ -1,5 +1,10 @@
 <!-- 礼薄详情 -->
 <view class="card pat-card">
+  <!-- 礼薄级修改/删除：卡内右上角小字入口（2026-10-22 真机反馈：原底部按钮条被贴底＋压住，移上来） -->
+  <view class="card-actions">
+    <text class="card-act" bindtap="goEdit">修改</text>
+    <text class="card-act danger" bindtap="onDelete">删除</text>
+  </view>
   <view class="pat-big {{isBaishi ? 'baishi' : ''}}">
     <image class="pat-img" src="{{icon}}" mode="aspectFit" />
   </view>
@@ -15,7 +20,7 @@
 <view class="card" wx:if="{{records.length > 0}}">
   <view class="rec-row" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRecordDetail">
     <view class="mid">
-      <text class="nm songti">{{item.name}}</text>
+      <text class="nm">{{item.name}}</text>
       <text class="sub">{{item.subType}}｜</text><text class="sub num">{{item.subDate}}</text>
     </view>
     <text class="amt red num">{{item.amountText}}</text>
@@ -26,11 +31,7 @@
   <text class="empty-text">还没有收礼记录，点击下方＋添加</text>
 </view>
 
-<view style="height:130px"></view>
-<view class="bottom-btns">
-  <view class="btn-outline" bindtap="onDelete">删除</view>
-  <view class="btn-primary btn-half" bindtap="goEdit">修改</view>
-</view>
+<view style="height:84px"></view>
 
 <view class="fab fab-low" bindtap="goAddRecord">＋</view>
 

@@ -51,7 +51,7 @@ Page({
     wx.navigateBack({ delta: 1, fail: () => this.goPortrait() });
   },
 
-  /** 「切换回竖置样式」：回普通竖置礼单（不丢数据、不影响会员状态）；
+  /** 「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）：回普通竖置礼单（不丢数据、不影响会员状态）；
    *  同时把横置开关写回关闭，避免下次又被开关自动带回横置（mine 开关 onShow 时同步） */
   goPortrait() {
     landscapeRoute.writeLandscapeOn(false);

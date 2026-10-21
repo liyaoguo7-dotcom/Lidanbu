@@ -18,8 +18,40 @@ Page({
 
   async onLoad(query) {
     await dataService.init();
-    this.setData({ ownerId: query.ownerId || '' });
+    let ownerId = query.ownerId || '';
+    // 分享卡片落地：带 code（邀请码=membershipId）→ 先接受邀请再看账本（2026-10-22 邀请改走微信分享）
+    if (query.code) {
+      ownerId = (await this.acceptByCode(query.code)) || ownerId;
+    }
+    this.setData({ ownerId });
     await this.refresh();
+  },
+
+  /** 凭邀请码接受家庭共享邀请，返回账本主人 id（失败返回 ''） */
+  async acceptByCode(code) {
+    try {
+      const ms = await dataService.getShareMembership(code);
+      if (!ms) {
+        wx.showToast({ title: '邀请不存在或已失效', icon: 'none' });
+        return '';
+      }
+      const myId = dataService.getMyUserId();
+      if (ms.ownerId === myId) {
+        wx.showToast({ title: '这是你发出的邀请', icon: 'none' });
+        return ms.ownerId;
+      }
+      if (ms.status === 'pending') {
+        await dataService.acceptShare(code);
+        wx.showToast({ title: '已接受邀请', icon: 'success' });
+      } else if (ms.memberId && ms.memberId !== myId) {
+        wx.showToast({ title: '这份邀请已被其他人接受', icon: 'none' });
+        return '';
+      }
+      return ms.ownerId;
+    } catch (e) {
+      wx.showModal({ title: '提示', content: e.message, showCancel: false });
+      return '';
+    }
   },
 
   async refresh() {

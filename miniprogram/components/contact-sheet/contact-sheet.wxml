@@ -1,20 +1,27 @@
-<!-- 添加亲友（底部半屏） -->
-<view class="sheet-mask" wx:if="{{show}}" bindtap="onCancel" catchtouchmove="noop"></view>
-<view class="sheet" wx:if="{{show}}">
-  <view class="sheet-title songti">添加亲友</view>
-  <view class="card" style="margin:0 12px">
-    <view class="form-row">
-      <text class="form-label">姓名</text>
-      <input class="form-val" placeholder="请输入亲友姓名" placeholder-style="color:#C2C2C2"
+<!-- 添加亲友（底部面板，约 80vh）
+     2026-10-22 真机反馈重做：原半屏太矮、字段挤；改为面板高约 80vh、
+     姓名/备注左右排（标签左固定宽、输入右同行）、顶部左上角「取消」文字、
+     底部整宽红色主按钮「添加」。样式全部组件内自带（cs- 前缀），不依赖全局类。 -->
+<view class="cs-mask" wx:if="{{show}}" bindtap="onCancel" catchtouchmove="noop"></view>
+<view class="cs-sheet" wx:if="{{show}}">
+  <view class="cs-topbar">
+    <text class="cs-cancel" bindtap="onCancel">取消</text>
+    <text class="cs-title">添加亲友</text>
+    <text class="cs-cancel-ph"></text>
+  </view>
+  <view class="cs-card">
+    <view class="cs-row">
+      <text class="cs-label">姓名</text>
+      <input class="cs-input" placeholder="请输入亲友姓名" placeholder-style="color:#C2C2C2"
         value="{{name}}" bindinput="onNameInput" maxlength="20" />
     </view>
-    <view class="form-row">
-      <text class="form-label">备注</text>
-      <input class="form-val" placeholder="若有重名，可在此备注" placeholder-style="color:#C2C2C2"
+    <view class="cs-row cs-row-last">
+      <text class="cs-label">备注</text>
+      <input class="cs-input" placeholder="若有重名，可在此备注" placeholder-style="color:#C2C2C2"
         value="{{remark}}" bindinput="onRemarkInput" maxlength="60" />
     </view>
   </view>
-  <view class="sheet-btns">
-    <view class="btn-primary" bindtap="onConfirm">添加</view>
+  <view class="cs-btns">
+    <view class="cs-primary" bindtap="onConfirm">添加</view>
   </view>
 </view>

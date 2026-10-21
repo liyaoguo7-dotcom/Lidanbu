@@ -572,6 +572,14 @@ const service = {
       return await core.share.accept(_db, membershipId, _userId);
     } catch (e) { throw new Error(friendly(e)); }
   },
+  /** 按邀请码（membershipId）查共享关系文档（ownerId/status/memberId），供分享落地页接受邀请 */
+  async getShareMembership(membershipId) {
+    try {
+      return await _db.collection(core.models.COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 当前用户 id（页面侧需要比对"是不是自己"时用） */
+  getMyUserId() { return _userId; },
   /** 家人视角：已授权给我的礼薄列表（只含授权事件） */
   async listMemberEvents(ownerId) {
     try {

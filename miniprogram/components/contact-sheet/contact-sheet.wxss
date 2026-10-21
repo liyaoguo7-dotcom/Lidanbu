@@ -1,15 +1,42 @@
-/* 添加亲友半屏（风格规范 v1：米色标题区、白色圆角卡片、#F0575A 胶囊主按钮） */
-.sheet-mask {
+/* 添加亲友面板（2026-10-22 重做：约 80vh、左右排字段、底部整宽红按钮；样式自带不依赖全局类） */
+.cs-mask {
   position: fixed; left: 0; top: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,.35); z-index: 40;
 }
-.sheet {
+.cs-sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
+  height: 80vh;
   background: #F6F6F6; border-radius: 16px 16px 0 0;
-  z-index: 41; padding-bottom: 26px; padding-bottom: calc(26px + env(safe-area-inset-bottom));
+  z-index: 41; box-sizing: border-box;
+  padding-bottom: 26px; padding-bottom: calc(26px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column;
 }
-.sheet-title {
-  text-align: center; font-size: 18px; font-weight: 700;
-  padding: 18px 0 12px; color: #333;
+.cs-topbar {
+  display: flex; align-items: center;
+  padding: 16px 16px 10px;
 }
-.sheet-btns { padding: 20px 24px 0; }
+.cs-cancel { width: 48px; font-size: 15px; color: #666; }
+.cs-cancel-ph { width: 48px; }
+.cs-title {
+  flex: 1; text-align: center;
+  font-size: 18px; font-weight: 700; color: #333;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
+}
+.cs-card { background: #FFFFFF; border-radius: 12px; margin: 4px 12px 0; }
+.cs-row {
+  display: flex; align-items: center;
+  padding: 0 16px; min-height: 58px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.cs-row-last { border-bottom: none; }
+.cs-label {
+  width: 82px; flex: none; font-size: 15px; color: #333;
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
+}
+.cs-input { flex: 1; font-size: 15px; }
+.cs-btns { margin-top: auto; padding: 20px 24px 0; }
+.cs-primary {
+  height: 56px; line-height: 56px; text-align: center;
+  background: #F0575A; color: #fff; font-size: 16px;
+  border-radius: 999px;
+}

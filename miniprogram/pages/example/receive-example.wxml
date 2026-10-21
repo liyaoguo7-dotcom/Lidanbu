@@ -11,7 +11,7 @@
       </view>
       <view class="mid">
         <view class="line1">
-          <text class="nm songti">{{item.name}}</text>
+          <text class="nm">{{item.name}}</text>
           <text class="dt num">{{item.date}}</text>
         </view>
         <view class="line2">
@@ -29,7 +29,7 @@
   <view class="back-row" bindtap="backToList">‹ 返回示例礼薄</view>
   <view class="card">
     <view class="rec-row" wx:for="{{records}}" wx:key="index" data-i="{{index}}" bindtap="openRecord">
-      <text class="rec-name songti">{{item.name}}</text>
+      <text class="rec-name">{{item.name}}</text>
       <text class="rec-type">{{item.type}}</text>
       <text class="rec-amt num">+{{item.amountText}}</text>
     </view>

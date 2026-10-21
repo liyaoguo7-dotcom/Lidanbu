@@ -8,7 +8,7 @@
  *
  * 开关状态持久化在 storage key `landscapeModeOn`：
  * - mine 页横置开关写入（会员可开/关，非会员点弹介绍、不写入）；
- * - 横置页「切换回竖置样式」写回 false，避免用户被开关再次自动带回横置；
+ * - 横置页「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）写回 false，避免用户被开关再次自动带回横置；
  * - mine 页 onShow 时读 storage 刷新开关显示。
  *
  * storage 适配器口径与 landscape-core / font-manager 一致：{ get(k), set(k, v) }；

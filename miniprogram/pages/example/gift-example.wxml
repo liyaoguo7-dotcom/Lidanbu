@@ -10,7 +10,7 @@
     <view class="gift-row" wx:for="{{gifts}}" wx:key="index" data-i="{{index}}" bindtap="openGift">
       <view class="pat {{item.isBaishi ? 'baishi' : ''}}"><image class="pat-img" src="{{item.icon}}" mode="aspectFit" /></view>
       <view class="mid">
-        <text class="nm songti">{{item.name}}</text>
+        <text class="nm">{{item.name}}</text>
         <text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text>
       </view>
       <text class="amt num">-{{item.amountText}}</text>

@@ -16,13 +16,13 @@ async function configAudits(db) {
   return db.collection(COLLECTIONS.AuditLog).find({ action: 'config' });
 }
 
-test('admin配置：getConfig 管理员可读（静态默认+空 pricing），非管理员被拒', async () => {
+test('admin配置：getConfig 管理员可读（静态默认+pricing 回落定版），非管理员被拒', async () => {
   const db = await newDB();
   await seedAdmin(db);
   const r = await admin.getConfig(db, BOSS);
   assert.eq(r.freeQuota.receiveEvents, core.config.freeQuota.receiveEvents, '免费礼薄数=静态默认');
   assert.eq(r.freeQuota.contacts, core.config.freeQuota.contacts, '免费亲友数=静态默认');
-  assert.eq(r.pricing.length, 0, '价格档位默认为空（价格待用户定，先占位）');
+  assert.eq(r.pricing.length, (core.config.pricing || []).length, '价格档位回落静态定版（用户已定四档）');
   assert(r.memberOnlyFeatures.includes('familyShareInvite'), '会员专属清单含家庭共享邀请');
   let err = null;
   try { await admin.getConfig(db, NOBODY); } catch (e) { err = e; }

@@ -1,5 +1,5 @@
 /**
- * 添加亲友（底部半屏组件）
+ * 添加亲友（底部面板组件，约 80vh）
  * 属性：show 是否显示
  * 事件：confirm({ name, remark }) 点"添加"（姓名为空会先拦）；cancel() 点遮罩/取消
  * 由调用方负责真正写库（dataService.createContact），并处理重名提醒。

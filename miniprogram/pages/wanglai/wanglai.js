@@ -10,6 +10,7 @@ const dataService = require('../../services/data-service.js');
 const { formatAmountInt } = require('../../core/format.js');
 
 const RANGES = [
+  { id: 'all', name: '全部' },
   { id: 'today', name: '今日' },
   { id: 'month', name: '本月' },
   { id: 'year', name: '今年' },
@@ -95,14 +96,14 @@ Page({
         searching: false,
         rows,
         isMember: r.isMember,
-        rangeText: `${dotDate(r.from)} 至 ${dotDate(r.to)}`,
+        rangeText: this.data.rangeId === 'all' ? '全部时间' : `${dotDate(r.from)} 至 ${dotDate(r.to)}`,
         receiveTotalText: formatAmountInt(r.totalReceiveFen),
         receiveCountText: `${r.totalReceiveCount}笔`,
         giftTotalText: formatAmountInt(r.totalGiftFen),
         giftCountText: `${r.totalGiftCount}笔`,
         totalText: `合计：${totalCount} 笔 · ${rows.length} 位亲友`,
-        // 差额只显示绝对值，不加符号；往来页金额一律整数
-        diffText: `差额 ${formatAmountInt(Math.abs(r.diffFen))}`,
+        // 差额只显示金额绝对值：「差额」二字由 wxml 的 diff-label 呈现，js 不再拼前缀（防重复，2026-10-22 真机反馈）
+        diffText: `${formatAmountInt(Math.abs(r.diffFen))}`,
       });
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });

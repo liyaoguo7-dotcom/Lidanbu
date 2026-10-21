@@ -206,6 +206,6 @@ test('横置-请横屏文案：与定版图30逐字一致', () => {
   assert.eq(LC.ROTATE_COPY.main, '请把手机横过来，礼单本就会铺开啦', '主提示');
   assert.eq(LC.ROTATE_COPY.sub, '横置礼单本仅支持横屏使用', '次提示');
   assert.eq(LC.ROTATE_COPY.lock, '没有反应？请先在手机控制中心关闭"竖屏锁定"', '锁屏提示');
-  assert.eq(LC.ROTATE_COPY.backButton, '切换回竖置样式', '按钮');
+  assert.eq(LC.ROTATE_COPY.backButton, '返回竖屏', '按钮'); // 2026-10-22 用户真机反馈改名（原定版图30「切换回竖置样式」）
   assert.eq(LC.SPEC.FONT_CREDIT, '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）', '字体署名');
 });

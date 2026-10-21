@@ -14,7 +14,7 @@
     <view class="group-title songti">{{item.key}}</view>
     <view class="contact-row" wx:for="{{item.items}}" wx:key="_id"
       data-id="{{item._id}}" data-name="{{item.name}}" bindtap="openSheet">
-      <text class="nm songti">{{item.name}}</text>
+      <text class="nm">{{item.name}}</text>
       <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
     </view>
   </block>

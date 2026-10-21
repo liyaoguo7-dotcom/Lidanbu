@@ -43,6 +43,9 @@ function resolveRange(preset, customFrom, customTo) {
     const p = new Date(t.getTime() - 365 * 86400e3);
     return { from: fmtDate(p), to: todayS };
   }
+  // 全部时间（2026-10-22 用户真机反馈新增）：用日期字符串的上下界表示不限，
+  // 这样所有按 from/to 做字符串比较的消费方（统计/竖线树/成员视角）都无需特判
+  if (preset === 'all') return { from: '0000-00-00', to: '9999-12-31' };
   if (preset === 'custom') {
     if (!customFrom || !customTo) throw new Error('自定义范围需起止日期');
     return { from: customFrom, to: customTo };
@@ -156,7 +159,7 @@ async function memberTimeline(db, actorId, ownerId, contactId, opts = {}) {
 
 /**
  * 时间范围参数归一化（2B 往来页/竖线树）
- * @param {string|{start,end}} range 'today'|'month'|'year'|'lastYear' 或 {start,end}
+ * @param {string|{start,end}} range 'today'|'month'|'year'|'lastYear'|'all' 或 {start,end}
  *   自定义起止为 YYYY-MM-DD，含起止当天；缺省='lastYear'
  * @returns {{from, to}} YYYY-MM-DD
  */

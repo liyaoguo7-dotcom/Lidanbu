@@ -1,13 +1,5 @@
-<!-- 发起邀请 -->
-<view class="card">
-  <view class="form-row">
-    <text class="form-label">邀请亲友</text>
-    <picker mode="selector" range="{{contacts}}" range-key="name" bindchange="onContactChange" style="flex:1">
-      <view class="form-val {{contactName ? '' : 'ph'}}">{{contactName || '请选择一位亲友'}} <text class="chev">›</text></view>
-    </picker>
-  </view>
-</view>
-
+<!-- 发起邀请（2026-10-22 改走微信联系人：不再从亲友录选人，
+     勾权限+范围 → 生成邀请拿到邀请码 → 用微信分享发给真实微信好友，对方点开即接受） -->
 <view class="section-title">允许查看我标记的项目</view>
 <view class="card">
   <view class="form-row" wx:for="{{switches}}" wx:key="id" bindtap="onSwitchToggle" data-id="{{item.id}}">
@@ -35,5 +27,14 @@
   </view>
 </view>
 
+<block wx:if="{{inviteCode}}">
+  <view class="section-title">邀请已生成</view>
+  <view class="card" style="padding:14px 16px">
+    <view style="font-size:13px;color:#999">点下方按钮发给微信好友，对方点开就能加入你的账本。</view>
+    <view style="font-size:13px;color:#999;margin-top:6px">邀请码：<text style="color:#333">{{inviteCode}}</text></view>
+  </view>
+  <button class="btn-primary" open-type="share" style="margin:12px 24px 0">邀请家人（发给微信好友）</button>
+</block>
+
 <view style="height:100px"></view>
-<view class="btn-bottom"><view class="btn-primary" bindtap="onSend">发出邀请</view></view>
+<view class="btn-bottom" wx:if="{{!inviteCode}}"><view class="btn-primary" bindtap="onCreate">生成邀请</view></view>

@@ -52,7 +52,7 @@ Page({
   },
 
   async onShow() {
-    // 开关显示与 storage 同步（横置页「切换回竖置样式」会在那边写回 false）
+    // 开关显示与 storage 同步（横置页「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）会在那边写回 false）
     this.setData({ landscapeOn: landscapeRoute.readLandscapeOn() });
     await this.refresh();
   },

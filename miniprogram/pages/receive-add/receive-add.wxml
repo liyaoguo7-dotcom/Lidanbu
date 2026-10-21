@@ -23,4 +23,4 @@
 </view>
 
 <view style="height:90px"></view>
-<view class="btn-primary btn-bottom" bindtap="onSave">保存</view>
+<view class="btn-primary btn-bottom" bindtap="onSave">{{isEdit ? '修改' : '保存'}}</view>

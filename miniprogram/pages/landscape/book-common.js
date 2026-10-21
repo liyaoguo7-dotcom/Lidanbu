@@ -6,7 +6,8 @@
  * 数据只经 services/data-service.js；字体经 services/font-manager.js。
  *
  * 待真机联调（见 docs/wireframes/landscape/横置实现方式说明.md）：
- * - pageOrientation:"auto" + onResize 在安卓厂商 ROM / iOS 锁屏下的实际表现；
+ * - 2026-10-22 起 receive/gift 两页 pageOrientation 改为 "landscape"（进入即强制横屏，
+ *   不再依赖手机横屏感应；用户真机实测 auto 时横置无反应后改）。rotate 页保持 "auto"；
  * - 转屏淡入是否闪白；刘海屏 safeArea 与胶囊按钮避让；
  * - wx.loadFontFace 本地包路径在真机上的可用性（上线换云存储地址，见 font-manager）。
  */
@@ -390,7 +391,16 @@ function createBookPage(kind) {
       });
     },
 
-    /** 「切换回竖置样式」：回普通竖置礼单（不丢数据、不影响会员状态）；
+    /** 「返回竖屏」按钮（下留白控件区，2026-10-22 真机反馈新增）：
+     *  优先 navigateBack 回竖屏详情页；栈空（直接落在横置页）时走 goPortrait 回对应竖屏页 */
+    goBackToPortrait() {
+      wx.navigateBack({
+        delta: 1,
+        fail: () => this.goPortrait(),
+      });
+    },
+
+    /** 「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）：回普通竖置礼单（不丢数据、不影响会员状态）；
      *  同时把横置开关写回关闭，避免下次点礼薄又被开关自动带回横置（mine 开关 onShow 时同步） */
     goPortrait() {
       landscapeRoute.writeLandscapeOn(false, wxStorage);

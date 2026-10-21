@@ -8,7 +8,7 @@ page {
 .card {
   background: #FFFFFF;
   border-radius: 12px;
-  margin: 12px;
+  margin: 10px 12px;
 }
 .form-row {
   display: flex;
@@ -40,12 +40,14 @@ page {
   bottom: 26px;
   bottom: calc(26px + env(safe-area-inset-bottom));
 }
-/* 非 Tab 列表页贴底版 ＋（2026-10-21 用户真机反馈：加号往下挪放最下边） */
-.fab-low { bottom: 24px; bottom: calc(24px + env(safe-area-inset-bottom)); }
+/* 红色＋位置全局只保留两种高度（2026-10-22 用户真机反馈：统一一个位置、向下）：
+   - Tab 页（如亲友录）：70px = Tab 栏上方约 20px，与非 Tab 页贴底观感一致；
+   - 非 Tab 列表页（.fab-low）：24px 贴底。
+   注意 .fab-low 必须写在 .fab 之后才能覆盖 bottom。 */
 .fab {
   position: fixed;
-  bottom: 88px;
-  bottom: calc(88px + env(safe-area-inset-bottom));
+  bottom: 70px;
+  bottom: calc(70px + env(safe-area-inset-bottom));
   left: 50%;
   margin-left: -29px;
   width: 58px;
@@ -61,6 +63,8 @@ page {
   box-shadow: 0 3px 10px rgba(240,87,90,.45);
   z-index: 5;
 }
+/* 非 Tab 列表页贴底版 ＋：24px（必须在 .fab 之后定义以覆盖其 bottom） */
+.fab-low { bottom: 24px; bottom: calc(24px + env(safe-area-inset-bottom)); }
 /* 字体规范 v1.1（用户 2026-10-18 确认）：标题/文字标签→宋体风格；金额/日期→黑体（系统无衬线）。不引入外部字体 */
 .songti { font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
 .num { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }

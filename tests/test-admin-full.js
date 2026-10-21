@@ -305,3 +305,14 @@ test('admin补全：配置编辑落库生效（价格/额度）+审计，支付�
   const trail = await admin.auditTrail(db, BOSS, { action: 'config' });
   assert(trail.total >= 2, '两次配置修改都有审计');
 });
+
+test('admin：配置文档只有部分段时 getConfig 各段回落静态默认（pricing 不为空）', async () => {
+  const db = await newDB();
+  // 只写一个仅含 adminIds 的 singleton（模拟演示 ensureDemoAdmin 落库形态）
+  await seedAdmin(db);
+  const cfg = await admin.getConfig(db, BOSS);
+  assert(Array.isArray(cfg.pricing) && cfg.pricing.length >= 4, 'pricing 应回落静态四档而非空数组');
+  assert(cfg.pricing.every((x) => x.id && x.priceFen > 0 && x.days > 0), '回落档位字段完整');
+  assert(cfg.freeQuota && cfg.freeQuota.contacts === 50, 'freeQuota 回落');
+  assert(cfg.paymentPlatforms && typeof cfg.paymentPlatforms === 'object', 'paymentPlatforms 回落');
+});

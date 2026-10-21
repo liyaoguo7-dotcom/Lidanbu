@@ -1,5 +1,11 @@
 /* 礼薄详情 */
-.pat-card { text-align: center; padding: 24px 0 14px; }
+.pat-card { text-align: center; padding: 24px 0 14px; position: relative; }
+.card-actions {
+  position: absolute; top: 10px; right: 12px;
+  display: flex; gap: 16px;
+}
+.card-act { font-size: 14px; color: #666; padding: 4px 2px; }
+.card-act.danger { color: #E05353; }
 .pat-big {
   width: 72px; height: 72px; border-radius: 50%;
   background: #F1E6D3;
@@ -17,7 +23,7 @@
 .rec-row {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 16px;
   min-height: 60px;
   border-bottom: 1px solid #F0F0F0;
 }
