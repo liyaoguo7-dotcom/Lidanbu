@@ -3,8 +3,8 @@
  * 订单金额是平台订单数据（不是用户账本里的礼金），可列出：
  * 脱敏用户、档位名、金额、状态、时间，以及收入汇总（按档位/状态聚合）。
  */
-const ds = require('../../services/data-service.js');
-const { formatAmount } = require('../../../core/format.js');
+const ds = require('../../../services/data-service.js');
+const { formatAmount } = require('../../../../core/format.js');
 
 const STATUS_NAMES = { pending: '待支付', paid: '已支付', failed: '支付失败', cancelled: '已取消', refunded: '已退款' };
 

@@ -3,7 +3,7 @@
  * 只看数量：开共享的账本数、成员总数、每人邀请了几位家人。
  * ownerId 一律脱敏短号。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 Page({
   data: { stats: null, loading: true },

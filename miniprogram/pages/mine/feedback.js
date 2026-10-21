@@ -4,8 +4,8 @@
  * 截图本轮只存本地占位路径：云联调后改为先上传云存储、再把 fileID 提交，
  * 提交接口（data-service.submitFeedback）不变。
  */
-const dataService = require('../../../services/data-service.js');
-const AppConfig = require('../../../config/app-config.js');
+const dataService = require('../../services/data-service.js');
+const AppConfig = require('../../config/app-config.js');
 
 const MAX_IMAGES = 3;
 

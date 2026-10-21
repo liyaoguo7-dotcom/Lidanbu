@@ -3,7 +3,7 @@
  * 只看数量与剩余：礼薄数 / 送礼条数 / 亲友数 / 收礼额度池。
  * 输入脱敏用户号（如 oAb***9zQ）查询。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 const KIND_NAMES = {
   receiveEvents: '礼薄数',

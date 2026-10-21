@@ -3,7 +3,7 @@
  * 管理员名单只读展示（名单维护走云数据库 appConfig 文档直写，现行口径）；
  * 操作记录 = AuditLog 查询，可按动作类型过滤，操作者一律脱敏。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 const ACTION_NAMES = {
   config: '修改配置', grant: '开通会员', payment: '支付', refund: '退款',

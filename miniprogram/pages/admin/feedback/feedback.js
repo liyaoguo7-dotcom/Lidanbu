@@ -3,7 +3,7 @@
  * 反馈正文是用户主动提交给平台的文字，可显示；提交人一律脱敏。
  * 可按状态筛选、点开看详情、标记已处理/改回待处理（操作写审计）。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 Page({
   data: {

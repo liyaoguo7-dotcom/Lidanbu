@@ -6,9 +6,9 @@
  * 选头像属于隐私接口：进入选择前先过页面层隐私守卫（privacy-guard），
  * 未同意先弹 privacy-modal，同意后才露出真正的选头像按钮。
  */
-const dataService = require('../../../services/data-service.js');
-const privacyGuard = require('../../../services/privacy-guard.js');
-const AppConfig = require('../../../config/app-config.js');
+const dataService = require('../../services/data-service.js');
+const privacyGuard = require('../../services/privacy-guard.js');
+const AppConfig = require('../../config/app-config.js');
 
 const MEMBER_LABELS = { free: '免费用户', member: '会员', grace: '会员已到期（缓冲期）', expired: '会员已过期' };
 

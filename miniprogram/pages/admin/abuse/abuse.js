@@ -3,7 +3,7 @@
  * 按脱敏编号给用户打/摘限制标记：被限制的账号在所有记账写入口被拦
  * （只拦写、不拦看），操作写审计。编号先在「账号查询」页确认。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 Page({
   data: { maskedId: '', reason: '', busy: false },

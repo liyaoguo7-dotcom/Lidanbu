@@ -4,8 +4,8 @@
  * 设置展示静态配置默认值；生效值以服务端为准（管理员经
  * core.admin.updateInviteSettings 修改并覆盖，记入操作记录）。
  */
-const ds = require('../../services/data-service.js');
-const AppConfig = require('../../config/app-config.js');
+const ds = require('../../../services/data-service.js');
+const AppConfig = require('../../../config/app-config.js');
 
 Page({
   data: { stats: null, cfg: null, loading: true },

@@ -3,7 +3,7 @@
  * 按脱敏编号片段或注册时间段查用户；只显示编号（脱敏）、注册时间、
  * 会员状态与条数汇总，绝不显示任何账本内容。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 const STATE_NAMES = { free: '免费', member: '会员', grace: '缓冲期', expired: '已过期' };
 

@@ -3,7 +3,7 @@
  * 列表只含白名单字段：脱敏 userId、会员状态、到期时间、各集合条数。
  * 手动开通/延期走 setMemberPlan，操作写入 audit 操作记录。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 const STATE_NAMES = { free: '免费', member: '会员', grace: '缓冲期', expired: '已过期' };
 

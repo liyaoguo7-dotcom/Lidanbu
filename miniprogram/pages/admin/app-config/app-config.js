@@ -5,9 +5,9 @@
  * 页面内直接编辑、保存落库：全部走 core.admin 写接口（管理员校验在 core），
  * 保存前二次确认，每次修改写操作记录（审计）。价格只从配置读，页面不写死。
  */
-const ds = require('../../services/data-service.js');
-const AppConfig = require('../../config/app-config.js');
-const { formatAmount } = require('../../../core/format.js');
+const ds = require('../../../services/data-service.js');
+const AppConfig = require('../../../config/app-config.js');
+const { formatAmount } = require('../../../../core/format.js');
 
 /** 元字符串 → 分（整数）：不用浮点除法，与全站金额口径一致 */
 function yuanToFen(str) {

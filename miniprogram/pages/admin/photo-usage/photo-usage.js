@@ -3,7 +3,7 @@
  * 按日/周聚合导入次数、成功率、失败大类分布。只有数字，
  * 无图片、无识别内容、无账本字段。
  */
-const ds = require('../../services/data-service.js');
+const ds = require('../../../services/data-service.js');
 
 const REASON_NAMES = { quota: '额度不足拦截', validation: '内容校验未过', 'write-error': '写入异常' };
 

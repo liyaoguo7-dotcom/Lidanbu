@@ -3,7 +3,7 @@
  * 站内通知列表：未读带红点，点开即标已读；「全部已读」一键清红点。
  * 数据走 data-service → core/notify（订阅消息通道为骨架，待云联调）。
  */
-const dataService = require('../../../services/data-service.js');
+const dataService = require('../../services/data-service.js');
 
 function fmtTime(ts) {
   if (!ts) return '';

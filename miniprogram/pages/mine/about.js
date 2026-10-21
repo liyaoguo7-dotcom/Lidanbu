@@ -2,7 +2,7 @@
  * 礼单簿 · 关于我们（任务L）
  * 版本号读配置中心（AppConfig.version）；字体授权署名与横置页口径一致。
  */
-const AppConfig = require('../../../config/app-config.js');
+const AppConfig = require('../../config/app-config.js');
 
 Page({
   data: {
