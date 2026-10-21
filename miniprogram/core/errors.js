@@ -20,7 +20,6 @@ const MESSAGES = {
   'out-of-scope:contact': '超出授权范围',
   'member-cannot-touch-owner-contacts': '无权操作账本主人的亲友录',
   'user-restricted': '该账号已被限制，暂时不能记账或修改，如有疑问请联系客服',
-  'invitation-not-owner': '只能操作自己创建的请柬',
   'sharing-paused': '共享已暂停：账本主人会员已过期，续费后自动恢复',
   'grace-readonly': '账本主人会员已到期，共享当前为只读',
   // —— 额度类（v3.1 第0章第17条：委婉"卖惨"文案，不报剩余数） ——
@@ -39,6 +38,13 @@ const MESSAGES = {
   'invite-condition-incomplete': '还差一点：新建 1 个礼薄并记 1 条收礼，或记 1 条送礼，就能为邀请人点亮奖励',
   'invite-cap-reached': '邀请人的奖励名额已达上限',
   'invite-device-duplicate': '这台设备已经参与过邀请奖励啦',
+  // —— 积分类 ——
+  'insufficient-points': '积分不够啦，先去「会员与积分」页看看吧',
+  'points-refund-not-found': '没找到这笔积分消费，暂时退不了',
+  'points-refund-exceeds': '要退的积分比当时扣的还多，退不了哦',
+  'points-amount-invalid': '积分数量不对，请重试',
+  'points-pack-member-only': '积分礼包是会员的小福利，先开通会员就能买啦',
+  'points-pack-not-found': '这个积分礼包已经下架啦，看看其他礼包吧',
   // —— 支付/订单类 ——
   'plan-not-found': '这个会员档位已经下架啦，看看其他档位吧',
   'order-not-found': '订单不存在',
@@ -78,4 +84,11 @@ function inviteDenied(reason) {
   return e;
 }
 
-module.exports = { userMessage, permDenied, quotaDenied, memberRequired, inviteDenied, MESSAGES };
+/** 积分拒绝（不足/退款不合法等）：消息为用户可读提示，err.code 为内部原因码 */
+function pointsDenied(reason) {
+  const e = new Error(userMessage(reason));
+  e.code = reason;
+  return e;
+}
+
+module.exports = { userMessage, permDenied, quotaDenied, memberRequired, inviteDenied, pointsDenied, MESSAGES };

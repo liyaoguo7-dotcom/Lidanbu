@@ -43,21 +43,17 @@
 </view>
 <view class="tip" wx:if="{{!reminders.length}}">你当前是普通用户，开通会员后这里会显示三次到期提醒。</view>
 
-<view class="section-title">价格档位</view>
-<view class="card" wx:if="{{plans.length}}">
-  <view class="form-row" wx:for="{{plans}}" wx:key="id" bindtap="onBuy">
-    <text class="form-label">{{item.name}}</text>
-    <text class="form-val num">¥{{item.priceText}}</text>
-    <text class="ph">{{item.days}}天</text>
+<view class="section-title">会员与积分</view>
+<view class="card">
+  <view class="form-row" bindtap="onBuy">
+    <text class="form-label">会员套餐与积分</text>
+    <text class="form-val ph">套餐、积分礼包都在购买页</text>
     <text class="chev">›</text>
   </view>
   <view class="form-row" bindtap="onOrders">
     <text class="form-label">我的订单</text>
     <text class="chev">›</text>
   </view>
-</view>
-<view class="card" wx:if="{{!plans.length}}">
-  <view class="form-row"><text class="form-val ph">{{priceNote}}</text></view>
 </view>
 
 <view style="height:100px"></view>

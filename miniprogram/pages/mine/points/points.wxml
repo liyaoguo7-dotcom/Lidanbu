@@ -1,0 +1,22 @@
+<!-- 我的积分：余额大字 + 规则小字 + 流水 -->
+<view class="card points-head">
+  <text class="ph-label">积分余额</text>
+  <view class="ph-main"><text class="ph-num num">{{balance}}</text><text class="ph-unit">分</text></view>
+  <text class="ph-rule">积分不过期 · 拍照录入每次用 {{photoImportCost}} 积分 · 会员到期后积分保留，续费后继续能用</text>
+</view>
+
+<view class="section-title">积分流水</view>
+<view class="card" wx:if="{{ledger.length}}">
+  <view class="form-row" wx:for="{{ledger}}" wx:key="id">
+    <view class="led-mid">
+      <text class="form-val">{{item.kindText}}</text>
+      <text class="led-sub">{{item.createdText}}<text wx:if="{{item.refId}}"> · 订单 {{item.refId}}</text></text>
+      <text class="led-sub" wx:if="{{item.note}}">{{item.note}}</text>
+    </view>
+    <text class="led-delta num {{item.delta > 0 ? 'plus' : 'minus'}}">{{item.deltaText}}</text>
+  </view>
+</view>
+<view class="tip" wx:if="{{!loading && !ledger.length}}">还没有积分流水。买套餐、买礼包、拍照录入都会在这里留一笔，清清楚楚能对账。</view>
+
+<view style="height:100px"></view>
+<view class="btn-bottom"><view class="btn-primary" bindtap="onBuy">去买会员 / 积分</view></view>

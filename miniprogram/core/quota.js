@@ -2,7 +2,8 @@
  * 礼单簿 · 额度与会员到期逻辑（T1.5，补强版）
  *
  * 核心公式（集中计算，勿散落各处）：
- *   某用户当前可用额度 = 免费额度 + 会员额度 + 邀请奖励额度
+ *   非会员（含缓冲期/已过期） = 免费额度 + 邀请奖励额度
+ *   有效会员（2026-10-21 新口径） = 防滥用安全上限 safetyCaps（不设业务额度）
  *
  * 邀请奖励（用户 2026-10-20 决定正式开启，规则见 core/invite-reward.js）：
  * - 成功邀请一人：收礼额度池 +10（用户级，所有礼薄合计；不增加每礼薄上限，
@@ -94,7 +95,8 @@ function isMemberActive(user, now = Date.now()) {
   return !!(m && m.status === 'member' && m.expireAt && now < m.expireAt);
 }
 
-/** 会员额度：有效期内返回配置的会员额度，否则 0 */
+/** 【历史兼容】会员额度旧口径：自 2026-10-21 起 getEffectiveQuota 对有效会员
+ * 改走 safetyCaps，本函数仅保留给旧调用方/展示口径，新逻辑勿引用。 */
 function getMemberQuota(user, config = AppConfig, now = Date.now()) {
   if (isMemberActive(user, now)) {
     const q = config.membership.quota;
@@ -104,7 +106,13 @@ function getMemberQuota(user, config = AppConfig, now = Date.now()) {
 }
 
 /**
- * 某用户当前可用额度 = 免费额度 + 会员额度 + 邀请奖励额度
+ * 某用户当前可用额度（2026-10-21 会员新口径，用户已确认）：
+ * - 有效会员（状态机 member）：不设业务额度，四项一律取防滥用安全上限
+ *   config.safetyCaps（礼薄 1000 / 每薄 5000 / 送礼 10000 / 亲友 5000，
+ *   数字放配置、界面不展示、用户平时碰不到）；收礼池保留邀请奖励部分
+ *   （每薄已是安全上限，池实际不会被消耗，保留叠加口径便于对账）。
+ * - 非会员（含 grace 缓冲期与 expired）：免费额度 + 邀请奖励额度，
+ *   与既有到期规则一致——到期回落免费口径、超额记录只读、邀请池继续生效。
  * recordsPerEvent：每礼薄上限（邀请不增加此项）
  * receivePool：用户级收礼额度池（邀请奖励来源）
  * @param {object} [inviteOpts] {successfulInvites, settings}：邀请侧入参；
@@ -113,12 +121,22 @@ function getMemberQuota(user, config = AppConfig, now = Date.now()) {
  */
 function getEffectiveQuota(user, config = AppConfig, now = Date.now(), inviteOpts = {}) {
   const free = config.freeQuota;
-  const member = getMemberQuota(user, config, now);
   const invite = getInviteRewardQuota(
     user && user._id,
     inviteOpts.successfulInvites || 0,
     inviteOpts.settings || inviteSettingsFromConfig(config)
   );
+  if (user && isMemberActive(user, now)) {
+    const caps = config.safetyCaps || { books: 1000, perBook: 5000, giftRecords: 10000, contacts: 5000 };
+    return {
+      receiveEvents: caps.books,
+      recordsPerEvent: caps.perBook,
+      receivePool: invite.receivePool || 0,
+      giftRecords: caps.giftRecords,
+      contacts: caps.contacts,
+    };
+  }
+  const member = getMemberQuota(user, config, now); // 非有效会员恒为 0（保留旧公式衔接）
   return {
     receiveEvents: free.receiveEvents + member.receiveEvents + invite.receiveEvents,
     recordsPerEvent: free.recordsPerEvent + member.recordsPerEvent,

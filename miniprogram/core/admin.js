@@ -20,6 +20,7 @@ const audit = require('./audit');
 const errors = require('./errors');
 const { maskUserId } = require('./admin-mask');
 const feedback = require('./feedback');
+const points = require('./points');
 const StaticConfig = require('../config/app-config');
 
 /** 内部：用脱敏短号找回真实用户（骨架实现：全表扫描比对；生产需建索引） */
@@ -257,6 +258,8 @@ membershipFeatures: { ...StaticConfig.membership.features, ...(doc.membershipFea
 memberOnlyFeatures: doc.memberOnlyFeatures || [...StaticConfig.memberOnlyFeatures],
 inviteReward: await quota.resolveInviteSettings(db),
 pricing: doc.pricing || [],
+points: await points.resolvePointsSettings(db),
+paymentPlatforms: doc.paymentPlatforms || { ...(StaticConfig.payment ? StaticConfig.payment.platforms : {}) },
 updatedAt: doc.updatedAt || null,
 };
 }
@@ -279,7 +282,9 @@ return updatedAt;
 
 /**
 * 修改会员价格档位（仅管理员）
-* plans: [{id, name, priceFen(分), days}]，最多10个，id 唯一；
+* plans: [{id, name, priceFen(分), days, grantPoints?, recommended?, onShelf?}]，
+* 最多10个，id 唯一；grantPoints=购买赠送积分（缺省0），recommended=标"推荐"
+* （缺省false），onShelf=上架开关（缺省true，false 即一键下架）。
 * 空数组表示清空（回到"价格待定"占位）。价格数字本身待用户定价，
 * 本接口只负责落库+校验+审计，不内置任何价格。
 */
@@ -301,7 +306,24 @@ throw badConfig('价格（分）必须为0~100000000的整数');
 if (!Number.isInteger(p.days) || p.days < 1 || p.days > 3650) {
 throw badConfig('天数必须为1~3650的整数');
 }
-return { id, name, priceFen: p.priceFen, days: p.days};
+let grantPoints = 0;
+if (p.grantPoints!== undefined) {
+if (!Number.isInteger(p.grantPoints) || p.grantPoints < 0 || p.grantPoints > 100000) {
+throw badConfig('赠送积分必须为0~100000的整数');
+}
+grantPoints = p.grantPoints;
+}
+let recommended = false;
+if (p.recommended!== undefined) {
+if (typeof p.recommended!== 'boolean') throw badConfig('推荐标记必须为开/关');
+recommended = p.recommended;
+}
+let onShelf = true;
+if (p.onShelf!== undefined) {
+if (typeof p.onShelf!== 'boolean') throw badConfig('上架开关必须为开/关');
+onShelf = p.onShelf;
+}
+return { id, name, priceFen: p.priceFen, days: p.days, grantPoints, recommended, onShelf};
 });
 const updatedAt = await writeConfigPatch(db, actorId, { pricing: clean}, `修改会员价格档位：共${clean.length}个档位`);
 return { pricing: clean, updatedAt};
@@ -417,6 +439,87 @@ changed.push('成功邀请上限');
 }
 const updatedAt = await writeConfigPatch(db, actorId, { inviteReward: next }, `修改邀请奖励设置：${changed.join('、')}`);
 return { inviteReward: next, updatedAt };
+}
+
+/**
+* 修改积分规则（仅管理员，任务P2）：registerGrant（注册赠送）/ photoImportCost
+* （拍照录入单价）/ packs（积分礼包，可多档增删）至少给一项，按项合并
+* （未传的项保持生效值）。校验口径与 updatePricing 一致；落库后
+* points.resolvePointsSettings 立即读到新值（下单/页面即时生效），并写审计。
+*/
+async function updatePointsSettings(db, actorId, { registerGrant, photoImportCost, packs } = {}) {
+await requireAdmin(db, actorId);
+if (registerGrant === undefined && photoImportCost === undefined && packs === undefined) {
+throw badConfig('没有要修改的积分规则');
+}
+const current = await points.resolvePointsSettings(db);
+const next = { registerGrant: current.registerGrant, photoImportCost: current.photoImportCost, packs: current.packs };
+const changed = [];
+if (registerGrant !== undefined) {
+if (!Number.isInteger(registerGrant) || registerGrant < 0 || registerGrant > 100000) {
+throw badConfig('注册赠送积分必须为0~100000的整数');
+}
+next.registerGrant = registerGrant;
+changed.push('注册赠送');
+}
+if (photoImportCost !== undefined) {
+if (!Number.isInteger(photoImportCost) || photoImportCost < 0 || photoImportCost > 100000) {
+throw badConfig('拍照录入单价必须为0~100000的整数');
+}
+next.photoImportCost = photoImportCost;
+changed.push('拍照录入单价');
+}
+if (packs !== undefined) {
+if (!Array.isArray(packs) || packs.length > 10) throw badConfig('积分礼包必须是数组（最多10个）');
+const seen = new Set();
+next.packs = packs.map((p) => {
+if (!p || typeof p !== 'object') throw badConfig('礼包格式不对');
+const id = String(p.id || '');
+if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(id)) throw badConfig(`礼包id不合法:${id}`);
+if (seen.has(id)) throw badConfig(`礼包id重复:${id}`);
+seen.add(id);
+const name = String(p.name || '').trim();
+if (!name || name.length > 20) throw badConfig('礼包名称不能为空且不超过20字');
+if (!Number.isInteger(p.priceFen) || p.priceFen < 0 || p.priceFen > 100000000) {
+throw badConfig('礼包价格（分）必须为0~100000000的整数');
+}
+if (!Number.isInteger(p.points) || p.points < 1 || p.points > 100000) {
+throw badConfig('礼包积分必须为1~100000的整数');
+}
+return { id, name, priceFen: p.priceFen, points: p.points };
+});
+changed.push('积分礼包');
+}
+const updatedAt = await writeConfigPatch(db, actorId, { points: next }, `修改积分规则：${changed.join('、')}`);
+return { points: next, updatedAt };
+}
+
+/**
+* 修改支付平台开关（仅管理员，任务P2）：platforms 形如
+* {ios:{purchaseEnabled}, android:{purchaseEnabled}}，按终端合并
+* （未传的终端保持生效值）。购买页在 data-service 侧用「静态配置 +
+* 本段覆盖」合并后调 payment.resolvePlatformPurchaseEnabled 决定入口显隐；
+* 改开关不动任何页面代码（应对某终端虚拟商品规则变化时先行关闭）。
+*/
+const KNOWN_PAY_PLATFORMS = ['ios', 'android'];
+async function updatePaymentPlatforms(db, actorId, platforms) {
+await requireAdmin(db, actorId);
+if (!platforms || typeof platforms !== 'object' || Array.isArray(platforms)) throw badConfig('平台开关必须是对象');
+const keys = Object.keys(platforms);
+if (keys.length === 0) throw badConfig('平台开关不能为空');
+for (const k of keys) {
+if (!KNOWN_PAY_PLATFORMS.includes(k)) throw badConfig(`未知终端:${k}`);
+const v = platforms[k];
+if (!v || typeof v !== 'object' || typeof v.purchaseEnabled !== 'boolean') {
+throw badConfig(`终端${k}的购买开关必须为开/关`);
+}
+}
+const doc = (await readConfigDoc(db)) || {};
+const base = doc.paymentPlatforms || (StaticConfig.payment ? StaticConfig.payment.platforms : {});
+const merged = { ...base };
+for (const k of keys) merged[k] = { ...(base[k] || {}), purchaseEnabled: platforms[k].purchaseEnabled };
+const updatedAt = await writeConfigPatch(db, actorId, { paymentPlatforms: merged }, `修改支付平台开关：${keys.join('、')}`);
+return { paymentPlatforms: merged, updatedAt };
 }
 
 // ================= 补全项（任务M：第3/4/6/7/10/11项接真接口） =================
@@ -680,6 +783,8 @@ updateFeatureSwitches,
 updateMemberOnlyFeatures,
 updateQuotaSettings,
 updateInviteSettings,
+updatePointsSettings,
+updatePaymentPlatforms,
 searchAccounts,
 importUsage,
 feedbackList,

@@ -1,0 +1,17 @@
+/* 购买页专属样式：状态区积分行 / 套餐卡 / 推荐高亮 / 礼包置灰 */
+.points-row { display: flex; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.35); }
+.points-label { color: rgba(255,255,255,.85); font-size: 13px; }
+.points-val { color: #fff; font-size: 16px; font-weight: 600; margin-left: 10px; flex: 1; }
+.chev.light { color: rgba(255,255,255,.8); }
+
+.plan-card { position: relative; }
+.plan-hot { border: 2px solid #F0575A; }
+.badge-hot { position: absolute; top: 0; right: 16px; background: #F0575A; color: #fff; font-size: 11px; padding: 2px 10px; border-radius: 0 0 8px 8px; }
+.plan-main { display: flex; align-items: baseline; justify-content: space-between; padding-right: 8px; }
+.plan-name { font-size: 17px; font-weight: 600; color: #333; }
+.plan-price { font-size: 20px; font-weight: 700; color: #F0575A; }
+.plan-sub { color: #999; font-size: 13px; margin-top: 6px; }
+.plan-buy { margin-top: 12px; text-align: center; }
+.plan-buy, .pack-buy { border: 1.5px solid #F0575A; }
+
+.locked { opacity: .45; }

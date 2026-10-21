@@ -91,6 +91,59 @@ test('三次提醒时间点', async () => {
   assert.eq(pts[1], expireAt, '第2个应为到期当天');
 });
 
+test('会员额度新口径：有效会员取安全上限（不设业务额度）', async () => {
+  const cfg = core.config;
+  const member = {
+    _id: 'u', membership: { status: 'member', expireAt: Date.now() + 30 * 86400e3, graceUntil: null },
+  };
+  const q = core.quota.getEffectiveQuota(member);
+  assert.eq(q.receiveEvents, cfg.safetyCaps.books, '礼薄数=安全上限');
+  assert.eq(q.recordsPerEvent, cfg.safetyCaps.perBook, '每薄笔数=安全上限（一本 5000 笔）');
+  assert.eq(q.giftRecords, cfg.safetyCaps.giftRecords, '送礼=安全上限');
+  assert.eq(q.contacts, cfg.safetyCaps.contacts, '亲友=安全上限');
+});
+
+test('邀请奖励额度与会员额度的叠加：免费叠池、会员封顶、到期回落免费+池', async () => {
+  const cfg = core.config;
+  const nowTs = Date.now();
+  const opts = { successfulInvites: 2 }; // 2 次成功邀请：池 +20、送礼 +10
+  const freeUser = { _id: 'u', membership: { status: 'free', expireAt: null, graceUntil: null } };
+  const free = core.quota.getEffectiveQuota(freeUser, cfg, nowTs, opts);
+  assert.eq(free.receiveEvents, 3, '免费：礼薄仍为 3（邀请不增礼薄数）');
+  assert.eq(free.recordsPerEvent, 30, '免费：每薄仍为 30');
+  assert.eq(free.receivePool, 20, '免费：邀请池生效 +20');
+  assert.eq(free.giftRecords, 40, '免费：送礼 30+10');
+  assert.eq(free.contacts, 50, '免费：亲友仍为 50');
+  const memberUser = { _id: 'u', membership: { status: 'member', expireAt: nowTs + 30 * 86400e3, graceUntil: null } };
+  const mem = core.quota.getEffectiveQuota(memberUser, cfg, nowTs, opts);
+  assert.eq(mem.receiveEvents, cfg.safetyCaps.books, '会员：礼薄封顶安全上限');
+  assert.eq(mem.recordsPerEvent, cfg.safetyCaps.perBook, '会员：每薄封顶安全上限');
+  assert.eq(mem.giftRecords, cfg.safetyCaps.giftRecords, '会员：送礼封顶安全上限');
+  assert.eq(mem.contacts, cfg.safetyCaps.contacts, '会员：亲友封顶安全上限');
+  assert.eq(mem.receivePool, 20, '会员：邀请池保留叠加口径');
+  const expiredUser = { _id: 'u', membership: { status: 'member', expireAt: nowTs - 40 * 86400e3, graceUntil: null } };
+  assert.eq(core.quota.getMembershipState(expiredUser, cfg, nowTs), 'expired', '前提：已过缓冲期');
+  const back = core.quota.getEffectiveQuota(expiredUser, cfg, nowTs, opts);
+  assert.eq(back.receiveEvents, 3, '到期回落：礼薄回到免费 3');
+  assert.eq(back.giftRecords, 40, '到期回落：送礼回到免费+池');
+  assert.eq(back.receivePool, 20, '到期回落：邀请池继续生效');
+});
+
+test('导出：免费用户可导出自己全部数据（导出对所有用户免费，无会员门禁）', async () => {
+  const db = await h.newDB();
+  const owner = await h.newUser(db, 'free_exporter'); // 免费用户
+  const c = await core.contacts.createContact(db, owner, owner, { name: '甲' });
+  const ev = await core.receive.createEvent(db, owner, owner, { name: '宴', tagId: 'qita', date: '2026-10-01' });
+  await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
+  await core.gifts.createGift(db, owner, owner, { contactId: c._id, tagId: 'shengri', amount: 200, date: '2026-09-01' });
+  const sc = await core.export.checkExportScope(db, owner, owner);
+  assert(sc.ok && sc.reason === 'owner', '本人导出范围应放行');
+  const data = await core.export.exportData(db, owner, owner);
+  assert.eq(data.events.length, 1, '免费用户可导出礼薄');
+  assert.eq(data.records.length, 1, '免费用户可导出收礼记录');
+  assert.eq(data.gifts.length, 1, '免费用户可导出送礼记录');
+});
+
 test('无成功邀请时邀请奖励额度为0', async () => {
   const q = core.quota.getInviteRewardQuota('anyone');
   assert.eq(q.receiveEvents, 0, '邀请奖励不增加礼薄个数');

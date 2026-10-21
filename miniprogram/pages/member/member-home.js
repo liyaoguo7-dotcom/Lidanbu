@@ -1,6 +1,7 @@
 /**
  * 礼单簿 · 会员与额度（阶段3）
- * 会员卡片 / 专属功能 / 额度使用 / 价格占位（不猜价）/ 三次提醒 / 超额只读提示 / 一键导出
+ * 会员卡片 / 专属功能 / 额度使用 / 三次提醒 / 超额只读提示 / 一键导出
+ * 价格只在购买页（会员与积分）一处展示，本页只放入口（任务P2 收口）
  */
 const dataService = require('../../services/data-service.js');
 const AppConfig = require('../../config/app-config.js');
@@ -20,8 +21,6 @@ Page({
     quota: null,
     used: null,
     reminders: [],
-    plans: [],
-    priceNote: '会员价格与档位即将公布，敬请期待。',
     overQuotaNote: '',
   },
 
@@ -32,12 +31,11 @@ Page({
 
   async refresh() {
     try {
-      const [usage, reminders, plans] = await Promise.all([
+      // 价格只在购买页一处展示（任务P2 收口）：本页不再取档位、不展示价格
+      const [usage, reminders] = await Promise.all([
         dataService.getQuotaUsage(),
         dataService.getReminderInfo(),
-        dataService.getPricing(),
       ]);
-      this.setData({ plans });
       const q = usage.quota || {};
       this.setData({
         state: usage.state,

@@ -14,6 +14,7 @@ Page({
   data: {
     isMember: false,
     memberText: '',
+    pointsBalance: 0,
     landscapeOn: false,
     demoMode: false,
     demoStateText: '',
@@ -58,6 +59,11 @@ Page({
     try {
       const unreadCount = await dataService.getUnreadCount();
       this.setData({ unreadCount });
+    } catch (e) { /* 忽略 */ }
+    // 积分余额（会员卡与积分行展示；积分不过期，与会员状态无关）
+    try {
+      const pointsBalance = await dataService.getPointsBalance();
+      this.setData({ pointsBalance });
     } catch (e) { /* 忽略 */ }
     try {
       const st = await dataService.getCancellationStatus();
@@ -127,6 +133,10 @@ Page({
 
   onNotifications() {
     wx.navigateTo({ url: '/pages/mine/notifications' });
+  },
+
+  onPoints() {
+    wx.navigateTo({ url: '/pages/mine/points/points' });
   },
 
   onFeedback() {

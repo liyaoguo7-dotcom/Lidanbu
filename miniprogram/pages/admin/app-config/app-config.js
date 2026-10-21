@@ -23,6 +23,8 @@ const SECTIONS = {
   pricing: { title: '额度与会员价格设置' },
   switches: { title: '功能开关' },
   features: { title: '会员专属功能清单设置' },
+  points: { title: '会员与积分配置' },
+  platforms: { title: '支付平台开关' },
 };
 const QUOTA_FIELDS = [
   { key: 'receiveEvents', label: '收礼礼薄（个）' },
@@ -46,6 +48,8 @@ Page({
     quotaFields: QUOTA_FIELDS, switchFields: SWITCH_FIELDS, featureFields: FEATURE_FIELDS,
     freeQuota: {}, memberQuota: {}, plans: [], features: {}, memberOnly: [],
     pricingFromStatic: false, saving: false,
+    pointsCfg: { registerGrant: '', photoImportCost: '' }, packs: [],
+    platforms: { ios: true, android: true },
   },
 
   async onLoad(query) {
@@ -55,21 +59,34 @@ Page({
     this.setData({ title: meta.title, section });
     try {
       const cfg = await ds.adminGetConfig();
-      let plans = (cfg.pricing || []).map((p) => ({
+      const planView = (p) => ({
         id: p.id, name: p.name, yuan: formatAmount(p.priceFen), days: String(p.days),
-      }));
+        grantPoints: String(p.grantPoints || 0), recommended: !!p.recommended, onShelf: p.onShelf !== false,
+      });
+      let plans = (cfg.pricing || []).map(planView);
       let pricingFromStatic = false;
       if (plans.length === 0) {
         // 平台未落库时先展示静态占位档；保存后即以平台配置为准
-        plans = (AppConfig.pricing || []).map((p) => ({
-          id: p.id, name: p.name, yuan: formatAmount(p.priceFen), days: String(p.days),
-        }));
+        plans = (AppConfig.pricing || []).map(planView);
         pricingFromStatic = true;
       }
+      const pts = cfg.points || {};
+      const pf = cfg.paymentPlatforms || {};
       this.setData({
         freeQuota: { ...cfg.freeQuota }, memberQuota: { ...cfg.memberQuota },
         features: { ...cfg.membershipFeatures }, memberOnly: [...(cfg.memberOnlyFeatures || [])],
         plans, pricingFromStatic, loading: false,
+        pointsCfg: {
+          registerGrant: String(pts.registerGrant !== undefined ? pts.registerGrant : ''),
+          photoImportCost: String(pts.photoImportCost !== undefined ? pts.photoImportCost : ''),
+        },
+        packs: (pts.packs || []).map((p) => ({
+          id: p.id, name: p.name, yuan: formatAmount(p.priceFen), points: String(p.points),
+        })),
+        platforms: {
+          ios: !pf.ios || pf.ios.purchaseEnabled !== false,
+          android: !pf.android || pf.android.purchaseEnabled !== false,
+        },
       });
     } catch (e) {
       this.setData({ loading: false, error: ds.friendly(e) });
@@ -85,8 +102,15 @@ Page({
     this.setData({ [`plans[${idx}].${field}`]: e.detail.value });
   },
   onAddPlan() {
-    const plans = [...this.data.plans, { id: `plan${Date.now().toString(36)}`, name: '新档位', yuan: '1.00', days: '30' }];
+    const plans = [...this.data.plans, {
+      id: `plan${Date.now().toString(36)}`, name: '新档位', yuan: '1.00', days: '30',
+      grantPoints: '0', recommended: false, onShelf: true,
+    }];
     this.setData({ plans });
+  },
+  onPlanToggle(e) {
+    const { idx, field } = e.currentTarget.dataset;
+    this.setData({ [`plans[${idx}].${field}`]: e.detail.value });
   },
   onDelPlan(e) {
     const plans = this.data.plans.filter((_, i) => i !== Number(e.currentTarget.dataset.idx));
@@ -137,7 +161,12 @@ Page({
         if (priceFen === null) throw new Error(`第 ${i + 1} 个档位价格不正确`);
         const days = Number(p.days);
         if (!Number.isInteger(days) || days < 1) throw new Error(`第 ${i + 1} 个档位天数不正确`);
-        return { id: p.id, name: p.name.trim(), priceFen, days };
+        const grantPoints = Number(p.grantPoints);
+        if (!Number.isInteger(grantPoints) || grantPoints < 0) throw new Error(`第 ${i + 1} 个档位赠送积分不正确`);
+        return {
+          id: p.id, name: p.name.trim(), priceFen, days, grantPoints,
+          recommended: !!p.recommended, onShelf: p.onShelf !== false,
+        };
       });
     } catch (e) {
       wx.showToast({ title: e.message, icon: 'none' });
@@ -159,5 +188,56 @@ Page({
   onSaveFeatures() {
     const features = [...this.data.memberOnly];
     this.confirmSave('会员专属功能清单', () => ds.adminUpdateMemberOnlyFeatures(features));
+  },
+
+  // —— 积分规则（任务P2） ——
+  onPointsInput(e) {
+    this.setData({ [`pointsCfg.${e.currentTarget.dataset.key}`]: e.detail.value });
+  },
+  onPackInput(e) {
+    const { idx, field } = e.currentTarget.dataset;
+    this.setData({ [`packs[${idx}].${field}`]: e.detail.value });
+  },
+  onAddPack() {
+    const packs = [...this.data.packs, {
+      id: `pack${Date.now().toString(36)}`, name: '积分包', yuan: '5.00', points: '5',
+    }];
+    this.setData({ packs });
+  },
+  onDelPack(e) {
+    const packs = this.data.packs.filter((_, i) => i !== Number(e.currentTarget.dataset.idx));
+    this.setData({ packs });
+  },
+  onSavePoints() {
+    let payload;
+    try {
+      const registerGrant = this.num(this.data.pointsCfg.registerGrant, '注册赠送积分');
+      const photoImportCost = this.num(this.data.pointsCfg.photoImportCost, '拍照录入单价');
+      const packs = this.data.packs.map((p, i) => {
+        const priceFen = yuanToFen(p.yuan);
+        if (!p.name.trim()) throw new Error(`第 ${i + 1} 个礼包名称不能为空`);
+        if (priceFen === null) throw new Error(`第 ${i + 1} 个礼包价格不正确`);
+        const pts = Number(p.points);
+        if (!Number.isInteger(pts) || pts < 1) throw new Error(`第 ${i + 1} 个礼包积分不正确`);
+        return { id: p.id, name: p.name.trim(), priceFen, points: pts };
+      });
+      payload = { registerGrant, photoImportCost, packs };
+    } catch (e) {
+      wx.showToast({ title: e.message, icon: 'none' });
+      return;
+    }
+    this.confirmSave('积分规则', () => ds.adminUpdatePointsSettings(payload));
+  },
+
+  // —— 支付平台开关（任务P2） ——
+  onPlatformToggle(e) {
+    this.setData({ [`platforms.${e.currentTarget.dataset.key}`]: e.detail.value });
+  },
+  onSavePlatforms() {
+    const platforms = {
+      ios: { purchaseEnabled: !!this.data.platforms.ios },
+      android: { purchaseEnabled: !!this.data.platforms.android },
+    };
+    this.confirmSave('支付平台开关', () => ds.adminUpdatePaymentPlatforms(platforms));
   },
 });

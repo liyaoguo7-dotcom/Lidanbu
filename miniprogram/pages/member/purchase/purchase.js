@@ -1,14 +1,35 @@
 /**
- * 礼单簿 · 购买会员（任务K）
- * 档位与价格全部从配置读（老板平台配置优先，否则静态占位价），本页不写死价格。
- * 购买走 core/payment 的建单→调起支付→回调发货链路；本地演示为模拟支付，
+ * 礼单簿 · 会员与积分购买页（任务P2：套餐与积分礼包同页）
+ *
+ * 价格/赠分/礼包全部从配置读（老板平台配置优先），本页不写死任何数字；
+ * 视图状态（下架过滤、非会员礼包置灰、平台开关）由 services/purchase-view
+ * 的纯函数算好，页面只渲染。平台开关在 data-service 侧合并配置后判定，
+ * 本页只读结果：关闭时隐藏购买按钮、改显配置里的大白话提示。
+ * 购买走 core/payment 的建单→调起→回调发货链路；本地演示为模拟支付，
  * 真实环境换微信虚拟支付适配器，本页不改。
  */
 const dataService = require('../../../services/data-service.js');
+const { buildPurchaseView } = require('../../../services/purchase-view.js');
+
+const STATE_TEXT = {
+  free: '免费用户',
+  member: '会员中',
+  grace: '会员已到期（缓冲期）',
+  expired: '会员已过期',
+};
 
 Page({
   data: {
+    loading: true,
+    stateText: '',
+    expireText: '',
+    pointsBalance: 0,
+    photoImportCost: 0,
     plans: [],
+    packs: [],
+    packsLocked: true,
+    buyEnabled: true,
+    platformDisabledTip: '',
     buyingId: '',
     doneText: '',
   },
@@ -18,24 +39,48 @@ Page({
     await this.refresh();
   },
 
+  /** 本机平台（'ios'/'android'/…）：只用来问配置开关，判断逻辑不在本页 */
+  devicePlatform() {
+    try {
+      const info = wx.getDeviceInfo ? wx.getDeviceInfo() : wx.getSystemInfoSync();
+      return String((info && info.platform) || '').toLowerCase();
+    } catch (e) { return ''; }
+  },
+
   async refresh() {
     try {
-      const plans = await dataService.getPricing();
-      this.setData({ plans });
+      const d = await dataService.getPurchasePageData(this.devicePlatform());
+      const view = buildPurchaseView({
+        plans: d.plans, packs: d.packs, state: d.state, purchaseEnabled: d.purchaseEnabled,
+      });
+      this.setData({
+        loading: false,
+        stateText: STATE_TEXT[d.state] || d.state,
+        expireText: d.expireAt ? new Date(d.expireAt).toLocaleDateString('zh-CN') : '',
+        pointsBalance: d.pointsBalance,
+        photoImportCost: d.photoImportCost,
+        plans: view.plans,
+        packs: view.packs,
+        packsLocked: view.packsLocked,
+        buyEnabled: view.buyEnabled,
+        platformDisabledTip: d.platformDisabledTip,
+      });
     } catch (e) {
+      this.setData({ loading: false });
       wx.showToast({ title: e.message, icon: 'none' });
     }
   },
 
-  async onBuy(e) {
+  async onBuyPlan(e) {
     const planId = e.currentTarget.dataset.id;
     if (this.data.buyingId) return;
     this.setData({ buyingId: planId, doneText: '' });
     try {
       const r = await dataService.purchaseMembership(planId);
       if (r.delivered) {
-        this.setData({ doneText: '开通成功！会员已经生效，新的到期日可以在"我的—会员"里查看。' });
+        this.setData({ doneText: '开通成功！会员已经生效，赠送的积分也到账啦。' });
         wx.showToast({ title: '开通成功', icon: 'success' });
+        await this.refresh();
       } else {
         wx.showToast({ title: '支付未完成，请重试', icon: 'none' });
       }
@@ -43,6 +88,35 @@ Page({
       wx.showToast({ title: err.message, icon: 'none' });
     }
     this.setData({ buyingId: '' });
+  },
+
+  async onBuyPack(e) {
+    // 非会员：礼包置灰，点击只给委婉提示并滚到套餐区，不发起购买
+    if (this.data.packsLocked) {
+      wx.showToast({ title: '积分礼包是会员的小福利，先开通会员就能买啦', icon: 'none' });
+      wx.pageScrollTo({ selector: '#plans-section', duration: 300 });
+      return;
+    }
+    const packId = e.currentTarget.dataset.id;
+    if (this.data.buyingId) return;
+    this.setData({ buyingId: packId, doneText: '' });
+    try {
+      const r = await dataService.purchasePointsPack(packId);
+      if (r.delivered) {
+        this.setData({ doneText: '购买成功！积分已经到账，去「我的—积分」能看到这笔流水。' });
+        wx.showToast({ title: '购买成功', icon: 'success' });
+        await this.refresh();
+      } else {
+        wx.showToast({ title: '支付未完成，请重试', icon: 'none' });
+      }
+    } catch (err) {
+      wx.showToast({ title: err.message, icon: 'none' });
+    }
+    this.setData({ buyingId: '' });
+  },
+
+  onPoints() {
+    wx.navigateTo({ url: '/pages/mine/points/points' });
   },
 
   onOrders() {

@@ -25,5 +25,7 @@
 | invite.png | 14 邀请奖励设置与数据 | 真数据页（core/admin.inviteStats / updateInviteSettings） |
 | share-overview.png | 15 家庭共享概况 | 真数据页（core/admin.shareOverview） |
 
+任务P2 新增：`../admin-points-config.png`（存 docs/screens/ 根目录）——16/17 项「会员与积分配置」「支付平台开关」的合并存档图（app-config 的 points/platforms 两分区），复刻源在本目录 `src/app-config-points.html`。
+
 铁律：所有页面只看统计数字与会员状态，不含任何礼金、联系人、备注内容；用户号一律脱敏。
 新增接口一律在 core 侧校验管理员身份（appConfig 文档 adminIds），页面拿不到数据即报错提示。

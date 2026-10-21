@@ -46,13 +46,38 @@ Page({
         const photoPath = res.tempFilePaths[0];
         wx.showLoading({ title: '识别中...' });
         try {
-          const items = await dataService.recognizePhoto(photoPath, kind);
+          const r = await dataService.recognizePhoto(photoPath, kind, { eventId: eventId || '' });
           wx.hideLoading();
-          saveImport({ kind, eventId: eventId || '', eventName: '', photoPath, items });
+          saveImport({ kind, eventId: eventId || '', eventName: '', photoPath, items: r.items, jobId: r.jobId });
           wx.navigateTo({ url: '/pages/import/import-review' });
         } catch (e) {
           wx.hideLoading();
-          // 失败不计费：本次识别不收取任何费用；可直接重新拍照重试
+          if (e.code === 'insufficient-points') {
+            // 积分不足：识别前就被拦下，没扣积分；引导去购买页补充
+            wx.showModal({
+              title: '积分不够啦',
+              content: e.message || '积分不够啦，先去补充一点积分再来拍照吧。',
+              confirmText: '去补充积分',
+              cancelText: '算了',
+              success: (r) => {
+                if (r.confirm) wx.navigateTo({ url: '/pages/member/purchase' });
+              },
+            });
+            return;
+          }
+          if (e.code === 'member-required') {
+            wx.showModal({
+              title: '会员专属功能',
+              content: '「拍照导入」是会员专属功能，开通会员后即可使用。',
+              confirmText: '去看看',
+              cancelText: '再想想',
+              success: (r) => {
+                if (r.confirm) wx.switchTab({ url: '/pages/mine/mine' });
+              },
+            });
+            return;
+          }
+          // 识别失败不计费：本次识别不收取任何费用；可直接重新拍照重试
           wx.showModal({
             title: '没认出来',
             content: '这张照片有点糊，没认出来，这次不收任何费用。把礼单放平、光线亮一点，再拍一张试试～',

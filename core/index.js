@@ -21,8 +21,7 @@ module.exports = {
   inviteReward: require('./invite-reward'), // 邀请得名额（绑定/发放/汇总）
   payment: require('./payment'), // 支付与会员订单（适配层+模拟支付，高风险）
   payAdapter: require('./pay-adapter'), // 支付适配层（Mock / 微信虚拟支付骨架）
-  invitation: require('./invitation'), // 电子请柬 + 回执（阶段4）
-  invitationStyles: require('./invitation-styles'), // 请柬 4 种风格常量（页面与效果图共用口径）
+  points: require('./points'), // 积分账户（余额/流水/赠送/消耗/返还，原子幂等，高风险）
   admin: require('./admin'), // 老板平台聚合接口（15项全真接口，只返回数字与会员状态）
   restriction: require('./restriction'), // 异常用户限制标记与写入口拦截点
   ocr: require('./ocr-adapter'), // 拍照导入 OCR 适配层（本轮仅 Mock，纯 JS 无微信依赖）

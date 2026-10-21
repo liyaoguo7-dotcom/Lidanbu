@@ -10,8 +10,17 @@
 <view class="card member-card" bindtap="onMemberCard">
   <text class="m-title songti">会员卡片</text>
   <text class="m-desc">{{memberText}}</text>
+  <text class="m-desc">积分余额：{{pointsBalance}} 分（不过期）</text>
   <view class="m-btn" wx:if="{{!isMember}}">开通会员</view>
   <view class="m-badge" wx:if="{{isMember}}">会员有效</view>
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onPoints">
+    <text class="form-val">我的积分</text>
+    <text class="ph">{{pointsBalance}} 分</text>
+    <text class="chev">›</text>
+  </view>
 </view>
 
 <view class="section-title">会员专属功能</view>

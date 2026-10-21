@@ -52,17 +52,14 @@
     "pages/landscape/rotate/rotate",
     "pages/mine-cancel/mine-cancel",
     "pages/invite/invite-reward",
-    "pages/invitation/list/list",
-    "pages/invitation/edit/edit",
-    "pages/invitation/preview/preview",
-    "pages/invitation/guest/guest",
-    "pages/invitation/stats/stats",
     "pages/privacy/privacy",
     "pages/mine/notifications",
+    "pages/mine/points/points",
     "pages/mine/feedback",
     "pages/mine/faq",
     "pages/mine/about"
   ],
+  "navigateToMiniProgramAppIdList": [],
   "subpackages": [
     {
       "root": "packages/fonts",
@@ -73,7 +70,9 @@
   "preloadRule": {
     "pages/receive/receive": {
       "network": "wifi",
-      "packages": ["fonts"]
+      "packages": [
+        "fonts"
+      ]
     },
     "pages/mine/mine": {
       "network": "wifi",

@@ -46,6 +46,16 @@ Page({
     });
   },
 
+  /** 电子请柬：跳转合作小程序（自制请柬已取消）；未配置目标时提示敬请期待 */
+  goExternalInvitation() {
+    const ext = dataService.getExternalInvitation();
+    if (!ext || !ext.appId) {
+      wx.showToast({ title: '敬请期待', icon: 'none' });
+      return;
+    }
+    wx.navigateToMiniProgram({ appId: ext.appId, path: '' });
+  },
+
   onEntry(e) {
     const id = e.currentTarget.dataset.id;
     if ((id === 'share' || id === 'photo') && !this.data.isMember) {
@@ -54,7 +64,7 @@ Page({
     }
     if (id === 'share') { wx.navigateTo({ url: '/pages/share/share-home' }); return; }
     if (id === 'photo') { wx.navigateTo({ url: '/pages/import/import-home' }); return; }
-    if (id === 'invite') { wx.navigateTo({ url: '/pages/invitation/list/list' }); return; }
+    if (id === 'invite') { this.goExternalInvitation(); return; }
     if (id === 'export') { wx.navigateTo({ url: '/pages/export/export-home' }); return; }
   },
 

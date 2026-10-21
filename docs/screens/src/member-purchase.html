@@ -1,0 +1,73 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:375px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#333; font-size:15px; padding-bottom:16px; }
+.nav { background:#F0E6D4; height:88px; position:relative; }
+.nav .back { position:absolute; left:14px; bottom:12px; font-size:22px; color:#333; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.card { background:#FFF; border-radius:12px; margin:12px; }
+.member-card { padding:16px; background:linear-gradient(135deg,#F0575A,#e04447); }
+.m-title { color:#fff; font-size:16px; font-weight:600; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.points-row { display:flex; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.35); }
+.points-label { color:rgba(255,255,255,.85); font-size:13px; }
+.points-val { color:#fff; font-size:16px; font-weight:600; margin-left:10px; flex:1; }
+.chev { color:#C2C2C2; font-size:18px; }
+.chev.light { color:rgba(255,255,255,.8); }
+.section-title { padding:4px 12px 0; font-size:13px; color:#999; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.plan-card { position:relative; padding:16px; }
+.plan-hot { border:2px solid #F0575A; }
+.badge-hot { position:absolute; top:0; right:16px; background:#F0575A; color:#fff; font-size:11px; padding:2px 10px; border-radius:0 0 8px 8px; }
+.plan-main { display:flex; align-items:baseline; justify-content:space-between; padding-right:8px; }
+.plan-name { font-size:17px; font-weight:600; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.plan-price { font-size:20px; font-weight:700; color:#F0575A; }
+.plan-sub { color:#999; font-size:13px; margin-top:6px; }
+.m-btn { margin-top:12px; background:#fff; color:#F0575A; font-size:13px; font-weight:600; padding:8px 22px; border-radius:20px; text-align:center; border:1.5px solid #F0575A; }
+.form-row { display:flex; align-items:center; padding:0 16px; min-height:58px; border-bottom:1px solid #F0F0F0; }
+.form-row:last-child { border-bottom:none; }
+.form-label { width:82px; flex:none; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.form-val { flex:1; }
+.ph { color:#C2C2C2; }
+.tip { display:flex; margin:4px 12px; padding:10px 12px; background:#fff; border-radius:12px; font-size:12px; color:#999; line-height:1.6; }
+.locked { opacity:.45; }
+</style></head><body>
+<div class="nav"><span class="back">‹</span><div class="title">会员与积分</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+<div class="card member-card">
+  <div class="m-title">免费用户</div>
+  <div class="points-row"><span class="points-label">积分余额</span><span class="points-val">15 分</span><span class="chev light">›</span></div>
+</div>
+<div class="section-title">会员套餐</div>
+<div class="card plan-card">
+  <div class="plan-main"><span class="plan-name">月卡</span><span class="plan-price">¥10.00</span></div>
+  <div class="plan-sub">30 天 · 赠 10 积分</div>
+  <div class="m-btn">购买</div>
+</div>
+<div class="card plan-card">
+  <div class="plan-main"><span class="plan-name">半年卡</span><span class="plan-price">¥49.00</span></div>
+  <div class="plan-sub">180 天 · 赠 50 积分</div>
+  <div class="m-btn">购买</div>
+</div>
+<div class="card plan-card plan-hot">
+  <div class="badge-hot">推荐</div>
+  <div class="plan-main"><span class="plan-name">年卡</span><span class="plan-price">¥70.00</span></div>
+  <div class="plan-sub">365 天 · 赠 100 积分</div>
+  <div class="m-btn">购买</div>
+</div>
+<div class="card plan-card">
+  <div class="plan-main"><span class="plan-name">十年卡</span><span class="plan-price">¥198.00</span></div>
+  <div class="plan-sub">3650 天 · 赠 500 积分</div>
+  <div class="m-btn">购买</div>
+</div>
+<div class="tip">会员权益：横置礼单本（6 种样式 · 3 种字体）· 拍照录入 · 家庭共享邀请 · 记账额度不限量</div>
+<div class="section-title">积分礼包</div>
+<div class="locked">
+  <div class="card">
+    <div class="form-row"><span class="form-label">积分包</span><span class="form-val">¥5.00</span><span class="ph">5 积分</span></div>
+  </div>
+</div>
+<div class="tip">先开通会员才能买积分包哦</div>
+<div class="card">
+  <div class="form-row"><span class="form-label">我的订单</span><span class="form-val ph">查看购买记录与状态</span><span class="chev">›</span></div>
+  <div class="form-row"><span class="form-label">我的积分</span><span class="form-val ph">余额与每一笔流水</span><span class="chev">›</span></div>
+</div>
+<div class="tip">现在是演示环境：点击购买会模拟支付成功，不会产生真实扣费。价格以本页显示为准，后台可随时调整。</div>
+</body></html>

@@ -17,6 +17,9 @@
       <view class="form-row"><text class="form-label">名称</text><input class="form-val" value="{{item.name}}" data-idx="{{index}}" data-field="name" bindinput="onPlanInput" /></view>
       <view class="form-row"><text class="form-label">价格（元）</text><input class="form-val" type="digit" value="{{item.yuan}}" data-idx="{{index}}" data-field="yuan" bindinput="onPlanInput" /></view>
       <view class="form-row"><text class="form-label">天数</text><input class="form-val" type="number" value="{{item.days}}" data-idx="{{index}}" data-field="days" bindinput="onPlanInput" /></view>
+      <view class="form-row"><text class="form-label">赠送积分</text><input class="form-val" type="number" value="{{item.grantPoints}}" data-idx="{{index}}" data-field="grantPoints" bindinput="onPlanInput" /></view>
+      <view class="form-row"><text class="form-label">标推荐</text><switch checked="{{item.recommended}}" data-idx="{{index}}" data-field="recommended" bindchange="onPlanToggle" /></view>
+      <view class="form-row"><text class="form-label">上架</text><switch checked="{{item.onShelf}}" data-idx="{{index}}" data-field="onShelf" bindchange="onPlanToggle" /><text class="ph">关掉即一键下架，购买页不显示</text></view>
       <view class="del" bindtap="onDelPlan" data-idx="{{index}}">删除这个档位</view>
     </view>
     <view class="add" bindtap="onAddPlan">＋ 添加档位</view>
@@ -34,6 +37,37 @@
   </view>
   <button class="btn-primary" bindtap="onSaveSwitches" loading="{{saving}}">保存功能开关</button>
   <view class="note">邀请奖励开关在「邀请奖励设置与数据」页里改。</view>
+</block>
+
+<!-- 积分规则 -->
+<block wx:if="{{!loading && !error && section === 'points'}}">
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-weight:bold">积分规则</text></view>
+    <view class="form-row"><text class="form-label" style="width:170px">新用户注册赠送（分）</text><input class="form-val" type="number" value="{{pointsCfg.registerGrant}}" data-key="registerGrant" bindinput="onPointsInput" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">拍照录入单价（分/次）</text><input class="form-val" type="number" value="{{pointsCfg.photoImportCost}}" data-key="photoImportCost" bindinput="onPointsInput" /></view>
+  </view>
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-weight:bold">积分礼包（仅会员可买）</text></view>
+    <view class="plan" wx:for="{{packs}}" wx:key="id">
+      <view class="form-row"><text class="form-label">名称</text><input class="form-val" value="{{item.name}}" data-idx="{{index}}" data-field="name" bindinput="onPackInput" /></view>
+      <view class="form-row"><text class="form-label">价格（元）</text><input class="form-val" type="digit" value="{{item.yuan}}" data-idx="{{index}}" data-field="yuan" bindinput="onPackInput" /></view>
+      <view class="form-row"><text class="form-label">积分</text><input class="form-val" type="number" value="{{item.points}}" data-idx="{{index}}" data-field="points" bindinput="onPackInput" /></view>
+      <view class="del" bindtap="onDelPack" data-idx="{{index}}">删除这个礼包</view>
+    </view>
+    <view class="add" bindtap="onAddPack">＋ 添加礼包</view>
+  </view>
+  <button class="btn-primary" bindtap="onSavePoints" loading="{{saving}}">保存积分规则</button>
+  <view class="note">积分不过期；改单价/赠送只影响之后的新订单与新注册，历史流水不变。</view>
+</block>
+
+<!-- 支付平台开关 -->
+<block wx:if="{{!loading && !error && section === 'platforms'}}">
+  <view class="card">
+    <view class="form-row"><text class="form-label" style="width:170px">iPhone（iOS）购买入口</text><switch checked="{{platforms.ios}}" data-key="ios" bindchange="onPlatformToggle" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">安卓（Android）购买入口</text><switch checked="{{platforms.android}}" data-key="android" bindchange="onPlatformToggle" /></view>
+  </view>
+  <button class="btn-primary" bindtap="onSavePlatforms" loading="{{saving}}">保存平台开关</button>
+  <view class="note">关掉某个终端后，该终端的购买页只显示提示、不出现购买按钮；改开关不用改任何页面代码。</view>
 </block>
 
 <!-- 会员专属清单 -->

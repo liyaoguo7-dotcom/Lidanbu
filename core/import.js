@@ -1,5 +1,20 @@
 /**
- * 礼单簿 · 拍照导入写入（阶段4，本轮改整批原子）
+ * 礼单簿 · 拍照导入（阶段4 写入整批原子；2026-10-21 接积分门禁）
+ *
+ * 任务流（startImportTask → writeImport），顺序铁律：会员 → 积分 → 识别 → 写入。
+ * - 会员门禁：拍照录入是会员专属（memberOnlyFeatures 含 photoImport），
+ *   非会员在识别前就被 memberRequired 拦下，不查积分、不调识别。
+ * - 积分预检：识别前先查余额 < 单价（AppConfig.points.photoImportCost，
+ *   老板平台可覆盖）→ 直接抛 insufficient-points（委婉文案），
+ *   不产生任务、不调识别、不扣款。
+ * - 扣费时机与语义（本轮二选一已定）：**识别成功产出结果后才扣费**。
+ *   以 refId='import:'+jobId 调 points.spend（kind='photo_import'），
+ *   spend 本身按 refId 幂等——同一 job 重复走完整流程只扣一次。
+ *   识别失败 = 还没扣，天然"失败不扣"，不需要返还路径。
+ * - 额度拦截返还：writeImport 整批被额度拦截（quota-exceeded）时，
+ *   按同一 refId 调 points.refund 全额返还该任务已扣积分（refund 幂等，
+ *   只退一次；没扣过则跳过）。其他校验失败不退（识别已成功、费用已发生，
+ *   用户改好条目可重新整批写入，同一 job 不会再扣）。
  *
  * 确认写入的唯一入口：validateTarget + writeImport。
  * - 收礼必须先选定礼薄（未选抛错，页面不得进拍照）。
@@ -16,6 +31,8 @@ const receive = require('./receive');
 const quota = require('./quota');
 const errors = require('./errors');
 const restriction = require('./restriction');
+const ocr = require('./ocr-adapter');
+const points = require('./points');
 const { COLLECTIONS } = require('./models');
 const AppConfig = require('../miniprogram/config/app-config');
 
@@ -31,6 +48,77 @@ function _fail(message, itemIndex, code) {
   if (code) e.code = code;
   if (Number.isInteger(itemIndex)) e.itemIndex = itemIndex;
   return e;
+}
+
+function _newJobId() {
+  return `imp_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * 开始一次拍照导入任务：会员门禁 → 积分预检 → 识别 → 识别成功后扣费。
+ * 一个任务（一个 jobId）只扣一次：重复以同一 jobId 走完整流程时，
+ * points.spend 按 refId 幂等返回首次扣费结果，不重复扣。
+ * @param opts { jobId?, kind, eventId?, imagePath, provider?, fail? }
+ *   jobId 由页面生成并随待确认数据暂存（重试同一任务时复用）；
+ *   缺省在此生成。fail 仅供演示/测试触发 MockOCR 失败态。
+ * @returns { jobId, items, cost, duplicated }
+ *   cost 为本次任务单价（积分）；duplicated=true 表示该 job 此前已扣过费。
+ * @throws memberRequired（非会员）| pointsDenied insufficient-points（余额不足，
+ *   识别前拦截，无扣款）| OCR 识别错误（未扣款）
+ */
+async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, imagePath, provider, fail } = {}) {
+  await restriction.assertWritable(db, actorId);
+  validateTarget(kind, eventId);
+
+  /* —— 第一关：会员门禁（与导入页现行口径一致：member / grace 可用） —— */
+  const owner = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
+  if (!owner) throw new Error('账本主人不存在');
+  const state = quota.getMembershipState(owner, AppConfig);
+  if (state !== 'member' && state !== 'grace') {
+    throw errors.memberRequired('拍照导入');
+  }
+
+  /* —— 第二关：积分预检（余额 < 单价直接拦下，不识别、不扣款） —— */
+  const settings = await points.resolvePointsSettings(db, AppConfig);
+  const cost = settings.photoImportCost;
+  if (cost > 0) {
+    const balance = await points.getBalance(db, ownerId);
+    if (balance < cost) throw errors.pointsDenied('insufficient-points');
+  }
+
+  /* —— 第三关：识别（失败抛错，此时尚未扣费，天然不扣） —— */
+  const items = await ocr.recognize(imagePath, { kind, provider, fail });
+
+  /* —— 识别成功 → 扣费（refId 绑定 job，幂等只扣一次） —— */
+  const id = jobId || _newJobId();
+  let duplicated = false;
+  if (cost > 0) {
+    const r = await points.spend(db, ownerId, cost, {
+      kind: 'photo_import',
+      refId: `import:${id}`,
+      note: '拍照录入',
+    });
+    duplicated = !!r.duplicated;
+  }
+  return { jobId: id, items, cost, duplicated };
+}
+
+/**
+ * 额度拦截时的积分返还：按 job 的原始扣费流水全额退（金额以原扣为准，
+ * 不读现行配置，避免中途改价退错数）。points.refund 幂等——重复调用
+ * 只退一次；该 job 没扣过费（单价为 0 / 识别前被拦）时静默跳过。
+ * 返还本身失败不影响导入结果的如实返回（流水可事后对账）。
+ */
+async function _refundImportCharge(db, ownerId, jobId) {
+  if (!jobId) return;
+  try {
+    const refId = `import:${jobId}`;
+    const entries = await db.collection(COLLECTIONS.PointsLedger)
+      .find({ userId: ownerId, kind: 'photo_import', refId });
+    const spent = (entries || []).find((e) => e.delta < 0);
+    if (!spent) return;
+    await points.refund(db, ownerId, -spent.delta, { refId, note: '导入被额度拦截，自动返还' });
+  } catch (e) { /* 返还失败不拦导入结果返回；points.refund 幂等可重试 */ }
 }
 
 /**
@@ -105,6 +193,12 @@ async function _recordImportJob(db, ownerId, kind, eventId, result) {
 
 async function writeImport(db, actorId, ownerId, args) {
   const result = await _writeImportInner(db, actorId, ownerId, args);
+  // 整批被额度拦截 → 该任务已扣的积分全额自动返还（只退一次；
+  // 其他失败不退：识别已成功、费用已发生，改好条目可用同一 job 重写）
+  if (result.rawError && args.jobId
+    && String(result.rawError.code || '').startsWith('quota-exceeded')) {
+    await _refundImportCharge(db, ownerId, args.jobId);
+  }
   await _recordImportJob(db, ownerId, args.kind, args.eventId, result);
   return result;
 }
@@ -175,4 +269,4 @@ async function _writeImportInner(db, actorId, ownerId, { kind, eventId, items })
   return { written, total, rawError: null };
 }
 
-module.exports = { validateTarget, writeImport };
+module.exports = { validateTarget, writeImport, startImportTask };

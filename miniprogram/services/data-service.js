@@ -51,7 +51,7 @@ function friendly(err) {
   const msg = err.message || String(err);
   // core 抛出的已是用户可读文案（errors.js），直接透出；兜底未知错误
   // 卖惨文案以"呜呜"开头，也须透出（此前会被吞成"操作失败"，已修复）
-  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|请柬|请填写|请选择|反馈|注销|呜呜/.test(msg)) return msg;
+  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|积分|请填写|请选择|反馈|注销|呜呜/.test(msg)) return msg;
   return '操作失败，请重试';
 }
 
@@ -64,9 +64,12 @@ function presentOrder(o) {
   const dstr = (ts) => (ts ? new Date(ts).toLocaleDateString('zh-CN') : '');
   return {
     id: o._id,
+    kind: o.kind || 'plan',
+    kindText: o.kind === 'pointsPack' ? '积分礼包' : '会员套餐',
     planId: o.planId,
     planName: o.planName,
     days: o.days,
+    pointsAmount: o.pointsAmount || 0,
     amountText: core.format.formatAmount(o.amountFen),
     status: o.status,
     statusText: ORDER_STATUS_TEXT[o.status] || o.status,
@@ -88,6 +91,9 @@ async function ensureUser() {
     };
     await col.insert(user);
     try { wx.setStorageSync(USER_KEY, _userId); } catch (e) { /* ignore */ }
+    // 新用户注册赠送积分（core/points 幂等：refId 固定，重复初始化只发一次；
+    // 赠送失败不拦注册主流程）
+    try { await core.points.grantRegisterBonus(_db, _userId, AppConfig); } catch (e) { /* ignore */ }
   }
   return user;
 }
@@ -326,6 +332,111 @@ const service = {
     return list.map(presentOrder);
   },
 
+  // —— 积分账户（任务P2：余额/流水/礼包购买/购买页聚合） ——
+  /** 当前积分余额（积分不过期，会员到期后保留） */
+  async getPointsBalance() {
+    try {
+      return await core.points.getBalance(_db, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+
+  /** 我的积分流水（最新在上）：来源/消耗文案 + ±数 + 时间 + 关联订单号，可对账 */
+  async getPointsLedger() {
+    const KIND_TEXT = {
+      register_grant: '注册赠送',
+      plan_grant: '购买套餐赠送',
+      plan_grant_reversal: '订单退款回收',
+      pack_purchase: '购买积分礼包',
+      pack_purchase_reversal: '积分礼包退款回收',
+      photo_import: '拍照录入',
+      photo_refund: '识别失败返还',
+      manual: '其他调整',
+    };
+    try {
+      const list = await core.points.listLedger(_db, _userId, { limit: 100 });
+      const pad = (n) => String(n).padStart(2, '0');
+      const timeText = (ts) => {
+        if (!ts) return '';
+        const d = new Date(ts);
+        return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      };
+      return list.map((e) => ({
+        id: e._id,
+        delta: e.delta,
+        deltaText: (e.delta > 0 ? '+' : '') + e.delta,
+        kind: e.kind,
+        kindText: KIND_TEXT[e.kind] || '积分变动',
+        note: e.note || '',
+        refId: e.refId || '',
+        balanceAfter: e.balanceAfter,
+        createdText: timeText(e.createdAt),
+      }));
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+
+  /** 生效积分规则（数字全部读配置：注册赠送/拍照单价/礼包档位，礼包金额已格式化） */
+  async getPointsSettings() {
+    const s = await core.points.resolvePointsSettings(_db);
+    return {
+      registerGrant: s.registerGrant,
+      photoImportCost: s.photoImportCost,
+      packs: (s.packs || []).map((p) => ({ ...p, priceText: core.format.formatAmount(p.priceFen) })),
+    };
+  },
+
+  /**
+   * 购买积分礼包：仅会员可买（core 下单层校验，非会员不产生订单）。
+   * 本地演示走 Mock 模拟支付，链路与套餐购买同构。
+   */
+  async purchasePointsPack(packId) {
+    try {
+      const adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
+      const r = await core.payment.purchasePointsPack(_db, _userId, packId, { adapter });
+      return { delivered: r.delivered, order: presentOrder(r.order) };
+    } catch (e) {
+      if (e && (e.code === 'points-pack-member-only' || e.code === 'points-pack-not-found')) {
+        throw new Error(e.message);
+      }
+      throw new Error(friendly(e));
+    }
+  },
+
+  /**
+   * 购买页聚合数据（任务P2）：会员状态 + 积分余额 + 套餐 + 礼包 +
+   * 本终端购买开关。平台开关的生效值 = 静态配置 ← 老板平台
+   * appConfig 文档 paymentPlatforms 覆盖，合并后交 core 的纯函数判定，
+   * 页面只读结果、不写死任何平台判断。
+   * @param {string} platform 设备平台（wx.getDeviceInfo().platform，如 'ios'/'android'）
+   */
+  async getPurchasePageData(platform) {
+    const membership = await this.getMembership();
+    const pointsBalance = await this.getPointsBalance();
+    const plans = await this.getPricing();
+    const settings = await this.getPointsSettings();
+    let platformOverrides = null;
+    try {
+      const doc = await _db.collection(core.models.COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+      platformOverrides = doc && doc.paymentPlatforms;
+    } catch (e) { /* 读不到覆盖就用静态配置 */ }
+    const mergedConfig = {
+      ...AppConfig,
+      payment: {
+        ...(AppConfig.payment || {}),
+        platforms: { ...((AppConfig.payment || {}).platforms || {}), ...(platformOverrides || {}) },
+      },
+    };
+    return {
+      state: membership.state,
+      expireAt: membership.expireAt,
+      pointsBalance,
+      plans,
+      packs: settings.packs,
+      photoImportCost: settings.photoImportCost,
+      purchaseEnabled: core.payment.resolvePlatformPurchaseEnabled(mergedConfig, platform),
+      platformDisabledTip: (AppConfig.payment && AppConfig.payment.platformDisabledTip) || '',
+    };
+  },
+
   // —— 家庭共享（阶段3） ——
   /** 发起邀请：{ switches, scope:{events:[], gifts} }；会员专属 */
   async shareInvite({ switches, scope }) {
@@ -475,12 +586,28 @@ const service = {
   },
 
   // —— 拍照导入（阶段4；OCR 厂商未拍板，本轮只走 MockOCR） ——
-  /** 识别照片 → [{ name, amountFen, note, raw }]（可编辑） */
-  async recognizePhoto(imagePath, kind) {
+  /**
+   * 开始拍照导入任务 → { jobId, items, cost }
+   * core 任务流顺序：会员门禁 → 积分预检 → 识别 → 识别成功后扣积分。
+   * 抛错带 code：'member-required'（非会员）/ 'insufficient-points'（积分不足，
+   * 识别前拦截、未扣款），页面据此弹不同引导；识别失败为普通错误（未扣款）。
+   * opts.jobId 复用同一任务时传入（重试不重复扣费）；opts.eventId 收礼必传。
+   */
+  async recognizePhoto(imagePath, kind, opts = {}) {
     try {
-      return await core.ocr.recognize(imagePath, { kind });
+      const r = await core.importer.startImportTask(_db, _userId, _userId, {
+        jobId: opts.jobId || '',
+        kind,
+        eventId: opts.eventId || '',
+        imagePath,
+        provider: opts.provider,
+        fail: opts.fail,
+      });
+      return { jobId: r.jobId, items: r.items, cost: r.cost };
     } catch (e) {
-      throw new Error(friendly(e));
+      const err = new Error(friendly(e));
+      if (e && e.code) err.code = e.code;
+      throw err;
     }
   },
   // —— 收礼礼薄（事件）——
@@ -616,12 +743,13 @@ const service = {
    * err.itemIndex 为出问题那条的下标，页面据此高亮定位），
    * 额度类错误消息为卖惨文案，直接展示。
    */
-  async importWrite({ kind, eventId, items }) {
-    const r = await core.importer.writeImport(_db, _userId, _userId, { kind, eventId, items });
+  async importWrite({ kind, eventId, items, jobId }) {
+    const r = await core.importer.writeImport(_db, _userId, _userId, { kind, eventId, items, jobId });
     if (r.rawError) {
       const err = new Error(friendly(r.rawError));
       err.written = r.written;
       err.total = r.total;
+      if (r.rawError.code) err.code = r.rawError.code;
       if (Number.isInteger(r.rawError.itemIndex)) err.itemIndex = r.rawError.itemIndex;
       throw err;
     }
@@ -798,71 +926,20 @@ const service = {
     try { return await core.admin.updateInviteSettings(_db, _userId, patch); }
     catch (e) { throw new Error(friendly(e)); }
   },
+  async adminUpdatePointsSettings(patch) {
+    try { return await core.admin.updatePointsSettings(_db, _userId, patch); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminUpdatePaymentPlatforms(platforms) {
+    try { return await core.admin.updatePaymentPlatforms(_db, _userId, platforms); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
 
-  // —— 电子请柬（阶段4）——
-  // 基础功能：不设会员门禁、不限额度（core/invitation.js 不查会员与额度）。
-  // 客人打开分享链接即可看请柬、填回执；guestKey 用当前用户标识尽力去重
-  //（云环境到位后即真实 openid，本地演示模式为本机演示用户 id，口径一致）。
-  getInvitationStyles() { return core.invitationStyles.STYLES; },
-  getInvitationStyle(styleId) { return core.invitationStyles.getStyle(styleId); },
-  getInvitationTypes() { return core.invitation.TYPES; },
-  getAttendOptions() { return core.invitation.ATTEND_OPTIONS; },
-  invitationTypeName(typeId) { return core.invitation.typeName(typeId); },
-  invitationAttendName(attendId) { return core.invitation.attendName(attendId); },
-
-  /** 我的请柬列表（附回执概况） */
-  async listInvitations() {
-    try {
-      return await core.invitation.listInvitations(_db, _userId);
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  async createInvitation(fields) {
-    try {
-      return await core.invitation.createInvitation(_db, _userId, fields);
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  async updateInvitation(invitationId, patch) {
-    try {
-      return await core.invitation.updateInvitation(_db, _userId, invitationId, patch);
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  /** 删除请柬（连带回执）；页面须先用统一删除弹窗确认再调 */
-  async deleteInvitation(invitationId) {
-    try {
-      return await core.invitation.deleteInvitation(_db, _userId, invitationId);
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  /** 读一份请柬：主人预览与客人打开共用（core 侧不设 owner 校验） */
-  async getInvitation(invitationId) {
-    try {
-      return await core.invitation.getInvitation(_db, invitationId);
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  /** 客人提交回执（重复提交更新同一条） */
-  async submitRsvp(invitationId, { guestName, attend, count, note }) {
-    try {
-      return await core.invitation.submitRsvp(_db, invitationId, {
-        guestName, attend, count, note, guestKey: _userId,
-      });
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  /** 我在这份请柬提交过的回执（客人页回填） */
-  async getMyRsvp(invitationId) {
-    try {
-      return await core.invitation.getMyRsvp(_db, invitationId, _userId);
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  /** 回执统计（仅主人，core 校验 owner） */
-  async getRsvpStats(invitationId) {
-    try {
-      return await core.invitation.getRsvpStats(_db, _userId, invitationId);
-    } catch (e) { throw new Error(friendly(e)); }
-  },
-  /** 一键把回执客人加入亲友录（仅主人；返回 duplicateWarning 供页面提醒） */
-  async addRsvpGuestToContacts(invitationId, rsvpId) {
-    try {
-      return await core.invitation.addRsvpGuestToContacts(_db, _userId, invitationId, rsvpId);
-    } catch (e) { throw new Error(friendly(e)); }
+  // —— 电子请柬（2026-10-21 用户决定：取消自制请柬，改为跳转外部小程序） ——
+  /** 外部请柬小程序配置 { miniprogramName, appId }（app-config.externalInvitation；
+   * appId 为空表示尚未配置，首页入口点按提示「敬请期待」） */
+  getExternalInvitation() {
+    return AppConfig.externalInvitation || { miniprogramName: '', appId: '' };
   },
 };
 

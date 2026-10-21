@@ -61,7 +61,9 @@ const AppConfig = {
       photoImport: true,   // 拍照导入：会员功能
       redLedgerMode: true, // 经典红字大写横置礼簿模式：会员功能
     },
-    // 会员额度（数字待定价时一起定；此处为占位，阶段1逻辑按此结构读取）
+    // 【历史兼容字段】会员额度旧口径：自 2026-10-21 起有效会员额度改走
+    // safetyCaps（不设业务额度、只设防滥用上限），getEffectiveQuota 不再读本段；
+    // 本段仅供老板平台配置页展示/历史数据兼容，勿在新逻辑中引用。
     quota: {
       receiveEvents: 30,     // 会员：礼薄数（占位，待定）
       recordsPerEvent: 500,  // 会员：每礼薄记录数（占位，待定）
@@ -79,14 +81,61 @@ const AppConfig = {
   },
 
   /** 会员价格档位（静态默认；老板平台 appConfig 文档的 pricing 段可覆盖，覆盖优先）
-   * ⚠️ 下面两个价格是【占位价，待用户定价】，不是正式售价：
-   * 定价后由老板平台写入真实档位即可，页面与下单代码一律从配置读、不得写死价格。
-   * 字段与老板平台 updatePricing 校验口径一致：{id, name, priceFen(分), days}。
+   * 价格/天数/赠送积分/推荐标记/上架开关全部放配置（用户 2026-10-21 确认口径），
+   * 页面与下单代码一律从配置读、不得写死任何数字；改价走老板平台 updatePricing。
+   * 字段与老板平台 updatePricing 校验口径一致：
+   * {id, name, priceFen(分), days, grantPoints(购买赠送积分), recommended(标"推荐"), onShelf(上架开关)}。
+   * onShelf=false 即"一键下架"：购买页不显示、下单被拒（与不存在同口径）。
    */
   pricing: [
-    { id: 'monthly', name: '月卡', priceFen: 100, days: 30 },   // 占位价待用户定（现为 ¥1.00 占位）
-    { id: 'yearly', name: '年卡', priceFen: 1000, days: 365 },  // 占位价待用户定（现为 ¥10.00 占位）
+    { id: 'month', name: '月卡', priceFen: 1000, days: 30, grantPoints: 10, recommended: false, onShelf: true },
+    { id: 'halfYear', name: '半年卡', priceFen: 4900, days: 180, grantPoints: 50, recommended: false, onShelf: true },
+    { id: 'year', name: '年卡', priceFen: 7000, days: 365, grantPoints: 100, recommended: true, onShelf: true },
+    { id: 'decade', name: '十年卡', priceFen: 19800, days: 3650, grantPoints: 500, recommended: false, onShelf: true },
   ],
+
+  /** 积分规则（用户 2026-10-21 确认口径；数字全放配置，老板平台可覆盖 appConfig 文档 points 段）
+   * - registerGrant：新用户注册赠送积分（只发一次，refId 固定保证幂等）
+   * - photoImportCost：拍照录入每次消耗积分（仅会员可用且须积分足够，扣费在 core/points 原子幂等）
+   * - packs：积分礼包（仅会员可买；非会员购买页置灰引导先开会员）。可多档增删。
+   * 积分不过期；会员到期后保留，续费后继续可用。
+   */
+  points: {
+    registerGrant: 15,
+    photoImportCost: 5,
+    packs: [
+      { id: 'pack5', name: '积分包', priceFen: 500, points: 5 },
+    ],
+  },
+
+  /** 电子请柬（2026-10-21 用户决定：取消自制请柬，首页入口改为跳转合作小程序）
+   * - miniprogramName / appId 由用户提供后填入；appId 为空时入口点按提示「敬请期待」。
+   * - 填 appId 时须同步把该 AppID 加入 app.json 顶层 navigateToMiniProgramAppIdList
+   *   （微信要求：该列表最多 10 个，且跳转目标需要在提审时声明，未声明会跳转失败）。 */
+  externalInvitation: {
+    miniprogramName: '',
+    appId: '',
+  },
+
+  /** 支付平台开关（按终端控制购买入口显隐，页面读 resolvePlatformPurchaseEnabled 决定，
+   * 不改页面代码即可开关某终端购买入口——如 iOS 虚拟商品规则变化时先行关闭） */
+  payment: {
+    platforms: {
+      ios: { purchaseEnabled: true },
+      android: { purchaseEnabled: true },
+    },
+    /** 某终端购买入口关闭时，购买页显示的大白话提示（可改文案，不改页面代码） */
+    platformDisabledTip: '这台设备上暂时不能购买，会员和积分在其他设备上也能正常用，换台设备试试吧',
+  },
+
+  /** 会员防滥用安全上限（用户 2026-10-21 确认口径：会员不设业务额度，
+   * 只在后台悄悄设很高的安全上限防滥用；用户平时碰不到，界面不展示） */
+  safetyCaps: {
+    books: 1000,       // 礼薄总数安全上限
+    perBook: 5000,     // 每本礼薄记录数安全上限
+    giftRecords: 10000, // 送礼记录安全上限
+    contacts: 5000,    // 亲友数安全上限
+  },
 
   /** 邀请奖励额度（用户 2026-10-20 决定：保留并正式开启，不再冻结）
    *

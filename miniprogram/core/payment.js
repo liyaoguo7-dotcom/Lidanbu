@@ -29,6 +29,18 @@
  *   未消耗时长 = deliveredExpireAt − max(退款时刻, baseAt)；只回收其中的
  *   整天数（不足 1 天的零头不回收），且回收后 expireAt 不低于本单发货前
  *   的 prevExpireAt（不吃掉更早订单的时段）。
+ *   赠送积分回收（2026-10-21 新口径）：按"未消耗才回收"——退款时余额
+ *   ≥ 本单赠送额才整额扣回（plan_grant_reversal 流水）；不足只写审计不强扣。
+ *
+ * 套餐赠送积分（2026-10-21 新口径）：档位 grantPoints 在下单时快照进订单，
+ * 发货成功时经 points.grant(kind=plan_grant, refId=outTradeNo) 幂等入账，
+ * 与会员时长幂等并列：重复回调既不重复加时长，也不重复送分。
+ *
+ * 积分礼包订单（kind='pointsPack'，任务P2）：礼包在配置 points.packs，
+ * 价格/积分下单时快照（pointsAmount）；仅会员可买（member/grace，
+ * 非会员在下单层拒绝、不产生订单）；发货不发时长，只经
+ * points.grant(kind=pack_purchase, refId=outTradeNo) 幂等入账；
+ * 退款回收走 pack_purchase_reversal，规则与套餐赠分一致（未消耗才回收）。
  *
  * 到期提醒：判定与分发已由任务L在 core/notify.js 实现
  *   checkMembershipReminders(db, userId) —— 经 notify(db, userId, type,
@@ -40,6 +52,8 @@ const { COLLECTIONS, now } = require('./models');
 const AppConfig = require('../config/app-config');
 const audit = require('./audit');
 const errors = require('./errors');
+const points = require('./points');
+const quota = require('./quota');
 
 const DAY = 86400e3;
 let tradeSeq = 0;
@@ -57,18 +71,47 @@ function genOutTradeNo(nowTs) {
   return `LD${nowTs.toString(36)}${tradeSeq.toString(36)}${rand.toString(36)}`.toUpperCase();
 }
 
+/** 档位字段归一化：新字段缺省兜底（存量档位无 grantPoints/recommended/onShelf 时按 0/false/true） */
+function normalizePlan(p) {
+  return {
+    id: p.id,
+    name: p.name,
+    priceFen: p.priceFen,
+    days: p.days,
+    grantPoints: Number.isInteger(p.grantPoints) ? p.grantPoints : 0,
+    recommended: !!p.recommended,
+    onShelf: p.onShelf !== false, // 只有显式 false 才算下架（一键下架口径）
+  };
+}
+
 /**
  * 生效价格档位：老板平台配置（appConfig 文档 pricing 非空）优先，
- * 否则静态配置占位档。返回干净副本 [{id, name, priceFen, days}]。
+ * 否则静态配置档位。返回干净副本（含 grantPoints/recommended/onShelf）。
+ * 注意：下架档位（onShelf=false）仍在返回列表里（后台要看得到），
+ * 购买页负责不显示、createOrder 负责拒绝下单。
  */
 async function resolvePricing(db, config = AppConfig) {
   if (db) {
     const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
     if (doc && Array.isArray(doc.pricing) && doc.pricing.length > 0) {
-      return doc.pricing.map((p) => ({ id: p.id, name: p.name, priceFen: p.priceFen, days: p.days }));
+      return doc.pricing.map(normalizePlan);
     }
   }
-  return ((config && config.pricing) || []).map((p) => ({ id: p.id, name: p.name, priceFen: p.priceFen, days: p.days }));
+  return ((config && config.pricing) || []).map(normalizePlan);
+}
+
+/**
+ * 某终端（平台）的购买入口是否开启：读 config.payment.platforms。
+ * 页面据此 + 设备平台决定购买入口显隐，开关在配置里，改开关不动页面代码。
+ * 未配置该终端时默认开启；只有显式 purchaseEnabled===false 才关闭。
+ * @param {object} [config] 配置对象（缺省静态 AppConfig；老板平台覆盖由调用方合并后传入）
+ * @param {string} platform 'ios' | 'android'（大小写不敏感）
+ */
+function resolvePlatformPurchaseEnabled(config = AppConfig, platform = '') {
+  const platforms = (config && config.payment && config.payment.platforms) || {};
+  const entry = platforms[String(platform || '').toLowerCase()];
+  if (entry && entry.purchaseEnabled === false) return false;
+  return true;
 }
 
 async function loadUser(db, userId) {
@@ -87,13 +130,80 @@ async function createOrder(db, userId, planId, opts = {}) {
   await loadUser(db, userId);
   const plans = await resolvePricing(db, config);
   const plan = plans.find((p) => p.id === planId);
-  if (!plan) throw payError('plan-not-found', errors.userMessage('plan-not-found'));
+  // 档位不存在与已下架同口径拒绝（下架档位购买页不显示；绕过页面直接下单也拒）
+  if (!plan || plan.onShelf === false) throw payError('plan-not-found', errors.userMessage('plan-not-found'));
   const doc = {
     userId,
+    kind: 'plan', // 订单种类：'plan' 会员套餐 | 'pointsPack' 积分礼包（见 models 字典）
     planId: plan.id,
     planName: plan.name,
     amountFen: plan.priceFen, // 快照：之后改价不影响本单，回调按此验金额
     days: plan.days,
+    grantPoints: plan.grantPoints || 0, // 赠送积分快照：之后改配置不影响本单，发货时按此入账
+    status: 'pending',
+    channel: opts.channel || 'mock',
+    outTradeNo: genOutTradeNo(nowTs),
+    createdAt: nowTs,
+    paidAt: null,
+    baseAt: null,
+    prevExpireAt: null,
+    deliveredExpireAt: null,
+    refundedAt: null,
+    reclaimedDays: null,
+  };
+  const { _id } = await db.collection(COLLECTIONS.Order).insert(doc);
+  return { ...doc, _id };
+}
+
+/** 积分礼包字段归一化（配置 points.packs 的一项） */
+function normalizePack(p) {
+  return { id: p.id, name: p.name, priceFen: p.priceFen, points: p.points };
+}
+
+/**
+ * 生效积分礼包：老板平台 appConfig 文档 points 段优先，否则静态配置
+ * （与 points.resolvePointsSettings 同一口径，数字全部读配置不写死）。
+ */
+async function resolvePointsPacks(db, config = AppConfig) {
+  const settings = await points.resolvePointsSettings(db, config);
+  return (settings.packs || []).map(normalizePack);
+}
+
+/**
+ * 积分礼包购买门禁：仅会员可买。会员口径与"我的"页一致——
+ * member（有效期内）与 grace（到期缓冲期）都算会员；free / expired 拒绝，
+ * 抛 errors.pointsDenied('points-pack-member-only')，页面据此引导先开会员。
+ */
+async function assertMemberForPointsPack(db, userId, config = AppConfig, nowTs = now()) {
+  const user = await loadUser(db, userId);
+  const state = quota.getMembershipState(user, config, nowTs);
+  if (state !== 'member' && state !== 'grace') {
+    throw errors.pointsDenied('points-pack-member-only');
+  }
+  return user;
+}
+
+/**
+ * 积分礼包建单：先验会员门禁（非会员在下单层直接拒绝、不产生订单），
+ * 再把礼包价格/积分快照进订单（kind='pointsPack'），之后改配置不影响本单。
+ * @returns {object} 订单文档（含 _id 与 outTradeNo）
+ */
+async function createPointsPackOrder(db, userId, packId, opts = {}) {
+  const config = opts.config || AppConfig;
+  const nowTs = opts.now !== undefined ? opts.now : now();
+  await assertMemberForPointsPack(db, userId, config, nowTs);
+  const packs = await resolvePointsPacks(db, config);
+  const pack = packs.find((p) => p.id === packId);
+  if (!pack) throw payError('points-pack-not-found', errors.userMessage('points-pack-not-found'));
+  const doc = {
+    userId,
+    kind: 'pointsPack',
+    planId: pack.id,
+    planName: pack.name,
+    amountFen: pack.priceFen, // 快照：回调按此验金额
+    days: 0, // 积分礼包不发会员时长
+    grantPoints: 0, // 套餐赠分字段对礼包不用，积分走 pointsAmount 快照
+    pointsAmount: pack.points, // 积分快照：发货时经 points.grant 幂等入账
     status: 'pending',
     channel: opts.channel || 'mock',
     outTradeNo: genOutTradeNo(nowTs),
@@ -120,8 +230,26 @@ async function handleNotify(db, payload, opts = {}) {
   const order = await col.findOne({ outTradeNo: payload.outTradeNo });
   if (!order) return { ok: false, reason: 'order-not-found' };
   if (!payload.paid) return { ok: false, reason: 'not-paid' };
-  // 幂等：重复回调直接确认成功，绝不重复发货
-  if (order.status === 'paid') return { ok: true, delivered: false, duplicated: true, expireAt: order.deliveredExpireAt };
+  // 幂等：重复回调直接确认成功，绝不重复发货（会员时长不重复叠加）。
+  // 赠送积分在 points 侧以 outTradeNo 为 refId 幂等，这里顺手补账：
+  // 万一首次发货时赠分未落账，重复回调时自动补上，仍只送一次。
+  if (order.status === 'paid') {
+    if (order.kind === 'pointsPack') {
+      // 积分礼包：重复回调只补账不重发（points.grant 以订单号幂等）
+      if (order.pointsAmount > 0) {
+        await points.grant(db, order.userId, order.pointsAmount, {
+          kind: 'pack_purchase', refId: order.outTradeNo, note: `购买${order.planName}`,
+        });
+      }
+      return { ok: true, delivered: false, duplicated: true, points: order.pointsAmount || 0 };
+    }
+    if (order.grantPoints > 0) {
+      await points.grant(db, order.userId, order.grantPoints, {
+        kind: 'plan_grant', refId: order.outTradeNo, note: `购买${order.planName}赠送`,
+      });
+    }
+    return { ok: true, delivered: false, duplicated: true, expireAt: order.deliveredExpireAt };
+  }
   if (order.status !== 'pending') return { ok: false, reason: 'order-not-payable' };
   // 金额以订单快照为准，不一致拒绝发货（订单保持 pending，可由正确回调再发）
   if (payload.amountFen !== order.amountFen) {
@@ -131,6 +259,23 @@ async function handleNotify(db, payload, opts = {}) {
       detail: '支付回调金额与订单快照不一致，已拒绝发货',
     });
     return { ok: false, reason: 'amount-mismatch' };
+  }
+
+  // 积分礼包发货：不发会员时长，只把快照积分经 points.grant 幂等入账
+  // （kind='pack_purchase'、refId=订单号，与套餐赠分并列的对账口径）
+  if (order.kind === 'pointsPack') {
+    await col.update({ _id: order._id }, { status: 'paid', paidAt: nowTs });
+    if (order.pointsAmount > 0) {
+      await points.grant(db, order.userId, order.pointsAmount, {
+        kind: 'pack_purchase', refId: order.outTradeNo, note: `购买${order.planName}`,
+      });
+    }
+    await audit.log(db, {
+      ownerId: order.userId, actorId: 'pay-notify', action: 'payment',
+      targetType: 'order', targetId: order._id,
+      detail: `积分礼包订单支付成功，已发放 ${order.pointsAmount || 0} 积分`,
+    });
+    return { ok: true, delivered: true, duplicated: false, points: order.pointsAmount || 0 };
   }
 
   // 发货：从现有到期日叠加（base = max(现在, 现有到期日)），与 admin.setMemberPlan 同口径
@@ -146,6 +291,13 @@ async function handleNotify(db, payload, opts = {}) {
     status: 'paid', paidAt: nowTs,
     baseAt: base, prevExpireAt, deliveredExpireAt: newExpireAt,
   });
+  // 套餐赠送积分入账：金额取订单快照 grantPoints，refId=outTradeNo 与时长幂等并列——
+  // 同一订单的重复回调只送一次（points.grant 内部幂等，双保险）
+  if (order.grantPoints > 0) {
+    await points.grant(db, order.userId, order.grantPoints, {
+      kind: 'plan_grant', refId: order.outTradeNo, note: `购买${order.planName}赠送`,
+    });
+  }
   await audit.log(db, {
     ownerId: order.userId, actorId: 'pay-notify', action: 'payment',
     targetType: 'order', targetId: order._id,
@@ -171,6 +323,25 @@ async function purchase(db, userId, planId, opts = {}) {
   if (!adapter) throw payError('pay-no-adapter', '支付通道未配置');
   const nowTs = opts.now !== undefined ? opts.now : now();
   const order = await createOrder(db, userId, planId, { ...opts, channel: adapter.channel, now: nowTs });
+  return runOrderPayment(db, order, adapter, { ...opts, now: nowTs });
+}
+
+/**
+ * 购买积分礼包（编排与 purchase 同构）：建单（内含会员门禁）→ 调起 →
+ * 成功回调发货积分；非会员在建单层被拒，不产生订单。
+ */
+async function purchasePointsPack(db, userId, packId, opts = {}) {
+  const adapter = opts.adapter;
+  if (!adapter) throw payError('pay-no-adapter', '支付通道未配置');
+  const nowTs = opts.now !== undefined ? opts.now : now();
+  const order = await createPointsPackOrder(db, userId, packId, { ...opts, channel: adapter.channel, now: nowTs });
+  return runOrderPayment(db, order, adapter, { ...opts, now: nowTs });
+}
+
+/** 建单后的共用编排：通道建单 → 调起支付 → 成功走回调发货 / 失败取消只改状态 */
+async function runOrderPayment(db, order, adapter, opts = {}) {
+  const nowTs = opts.now !== undefined ? opts.now : now();
+  const userId = order.userId;
   const ch = await adapter.createOrder(order);
   if (ch && ch.channelTradeNo) {
     await db.collection(COLLECTIONS.Order).update({ _id: order._id }, { channelTradeNo: ch.channelTradeNo });
@@ -193,7 +364,7 @@ async function purchase(db, userId, planId, opts = {}) {
   await audit.log(db, {
     ownerId: userId, actorId: userId, action: 'payment',
     targetType: 'order', targetId: order._id,
-    detail: status === 'cancelled' ? '会员订单支付已取消' : '会员订单支付失败',
+    detail: `${order.kind === 'pointsPack' ? '积分礼包' : '会员'}订单支付${status === 'cancelled' ? '已取消' : '失败'}`,
   });
   const fresh = await db.collection(COLLECTIONS.Order).findOne({ _id: order._id });
   return { order: fresh, delivered: false, reason: status };
@@ -230,12 +401,37 @@ async function refund(db, orderId, opts = {}) {
     );
   }
   await col.update({ _id: order._id }, { status: 'refunded', refundedAt: nowTs, reclaimedDays });
+  // 积分回收（口径：未消耗才回收，与套餐赠分同一规则）：余额 ≥ 本单积分额
+  // 时整额扣回（套餐走 plan_grant_reversal、积分礼包走 pack_purchase_reversal，
+  // 均幂等只回收一次）；余额不足——积分已被花掉一部分——只在审计里记明，
+  // 不强扣、不把余额扣成负数。
+  let pointsReclaimed = 0;
+  let pointsNote = '';
+  const reclaimAmount = order.kind === 'pointsPack' ? (order.pointsAmount || 0) : (order.grantPoints || 0);
+  if (reclaimAmount > 0) {
+    const balance = await points.getBalance(db, order.userId);
+    if (balance >= reclaimAmount) {
+      const rv = await points.reverseGrant(db, order.userId, reclaimAmount, {
+        refId: order.outTradeNo,
+        note: order.kind === 'pointsPack' ? '积分礼包退款回收' : '订单退款回收赠送积分',
+        reversalKind: order.kind === 'pointsPack' ? 'pack_purchase_reversal' : 'plan_grant_reversal',
+      });
+      if (!rv.duplicated) {
+        pointsReclaimed = reclaimAmount;
+        pointsNote = `，回收积分 ${pointsReclaimed} 分`;
+      }
+    } else {
+      pointsNote = `，积分已部分消耗（余额 ${balance} < 本单积分 ${reclaimAmount}），按口径不强扣`;
+    }
+  }
   await audit.log(db, {
     ownerId: order.userId, actorId: opts.actorId || 'system', action: 'refund',
     targetType: 'order', targetId: order._id,
-    detail: `会员订单退款（占位处理，未真实退款），回收会员 ${reclaimedDays} 天`,
+    detail: order.kind === 'pointsPack'
+      ? `积分礼包订单退款（占位处理，未真实退款）${pointsNote}`
+      : `会员订单退款（占位处理，未真实退款），回收会员 ${reclaimedDays} 天${pointsNote}`,
   });
-  return { ok: true, reclaimedDays, expireAt: reclaimedDays > 0 ? newExpireAt : currentExpireAt };
+  return { ok: true, reclaimedDays, pointsReclaimed, expireAt: reclaimedDays > 0 ? newExpireAt : currentExpireAt };
 }
 
 /** 我的订单（最新在上）：只查本人，他人订单天然不可见 */
@@ -253,10 +449,14 @@ async function getOrderForUser(db, userId, orderId) {
 
 module.exports = {
   resolvePricing,
+  resolvePlatformPurchaseEnabled,
   createOrder,
+  resolvePointsPacks,
+  createPointsPackOrder,
   handleNotify,
   processNotify,
   purchase,
+  purchasePointsPack,
   refund,
   listOrders,
   getOrderForUser,

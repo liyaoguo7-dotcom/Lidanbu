@@ -22,6 +22,7 @@ Page({
     kindLabel: '送礼',
     eventId: '',
     eventName: '',
+    jobId: '', // 导入任务号（识别时生成；写入时传回 core，额度拦截靠它自动返还积分）
     photoPath: '',
     items: [], // { name, amountText, note, contactId, unknown, type, tagId, tagName, date }
     tags: [],        // 送礼场合选项
@@ -64,6 +65,7 @@ Page({
       kindLabel: pending.kind === 'receive' ? '收礼' : '送礼',
       eventId: pending.eventId || '',
       eventName: pending.eventName || '',
+      jobId: pending.jobId || '',
       photoPath: pending.photoPath || '',
       items,
       tags,
@@ -307,13 +309,25 @@ Page({
         kind: this.data.kind,
         eventId: this.data.eventId,
         items: payload,
+        jobId: this.data.jobId,
       });
       wx.hideLoading();
       this.setData({ writing: false, done: true, doneCount: r.written });
     } catch (e) {
       wx.hideLoading();
       this.setData({ writing: false });
-      if (Number.isInteger(e.itemIndex) && e.itemIndex >= 0 && e.itemIndex < items.length) {
+      if (e.code === 'insufficient-points') {
+        // 积分相关拦截：给出去购买页补充积分的入口（额度拦截时积分已由 core 自动返还）
+        wx.showModal({
+          title: '积分不够啦',
+          content: e.message || '积分不够啦，先去补充一点积分再来导入吧。',
+          confirmText: '去补充积分',
+          cancelText: '算了',
+          success: (r) => {
+            if (r.confirm) wx.navigateTo({ url: '/pages/member/purchase' });
+          },
+        });
+      } else if (Number.isInteger(e.itemIndex) && e.itemIndex >= 0 && e.itemIndex < items.length) {
         // 整批未写入：定位到出问题的那条（额度不足时定位第一条放不下的）
         this._locateError(e.itemIndex, e.message || '有一条没通过，改好再整批导入。');
       } else {

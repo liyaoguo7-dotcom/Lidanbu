@@ -1,7 +1,7 @@
 /**
  * 礼单簿 · 云环境初始化脚本（一次性）
  *
- * 用途：新云环境第一次部署时，建齐 18 个集合 + 写入默认 appConfig。
+ * 用途：新云环境第一次部署时，建齐 17 个集合 + 写入默认 appConfig。
  * 用法（详见同目录 README.md）：
  *   1. 在微信开发者工具里把本目录作为云函数上传部署；
  *   2. 在云开发控制台「云函数 → init → 云端测试」里调用一次（入参 {}）；
@@ -20,7 +20,8 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 
-/** 18 个集合（与 core/models.js 的 COLLECTIONS 一一对应，名字一字不差；2026-10-21 由 13 扩为 18） */
+/** 17 个集合（与 core/models.js 的 COLLECTIONS 一一对应，名字一字不差；
+ * 2026-10-21 自制请柬下线删 invitations/rsvps，并补上此前漏列的 pointsLedger） */
 const COLLECTIONS = [
   'users',
   'contacts',
@@ -36,8 +37,7 @@ const COLLECTIONS = [
   'inviteBindings',     // 邀请绑定（防重复绑定，注销不删）
   'inviteRewardGrants', // 邀请奖励发放记录（额度的唯一真源）
   'orders',             // 会员购买订单（支付适配层；回调验签+金额比对后才发货）
-  'invitations',        // 电子请柬（阶段4）
-  'rsvps',              // 请柬回执（客人提交走云函数校验，用户端直连仍关死）
+  'pointsLedger',       // 积分流水（余额对账真源）
   'notifications',      // 站内通知（会员提醒/奖励到账/共享变更）
   'feedbacks',          // 意见反馈（老板平台反馈列表读此集合）
 ];

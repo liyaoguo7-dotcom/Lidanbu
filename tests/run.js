@@ -26,8 +26,10 @@ require('./test-landscape-route');
 require('./test-font-source');
 require('./test-invite-reward');
 require('./test-demo-seed');
-require('./test-invitation');
+require('./test-import-points');
 require('./test-payment');
+require('./test-points');
+require('./test-points-pack');
 require('./test-notify-feedback-cancel');
 require('./test-offline-hint');
 

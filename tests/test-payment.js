@@ -20,24 +20,31 @@ async function expireAtOf(db, userId) {
   return u.membership && u.membership.expireAt;
 }
 
-test('支付：生效档位默认来自静态配置占位价（月卡/年卡两档）', async () => {
+test('支付：生效档位默认来自静态配置（月/半年/年/十年四档，用户已定价）', async () => {
   const db = await h.newDB();
   const plans = await core.payment.resolvePricing(db);
-  assert.eq(plans.length, 2, '默认两档');
-  assert.eq(plans[0].id, AppConfig.pricing[0].id, '档位与静态配置一致');
+  assert.eq(plans.length, 4, '默认四档');
+  assert.eq(plans.map((p) => p.id).join(','), 'month,halfYear,year,decade', '档位顺序与静态配置一致');
   assert.eq(plans[0].priceFen, AppConfig.pricing[0].priceFen, '价格与静态配置一致');
-  assert.eq(plans[1].days, 365, '年卡 365 天');
+  assert.eq(plans[0].grantPoints, 10, '月卡赠 10 积分');
+  assert.eq(plans[1].grantPoints, 50, '半年卡赠 50 积分');
+  assert.eq(plans[2].days, 365, '年卡 365 天');
+  assert.eq(plans[2].grantPoints, 100, '年卡赠 100 积分');
+  assert(plans[2].recommended === true, '年卡带"推荐"标记');
+  assert.eq(plans[3].days, 3650, '十年卡 3650 天');
+  assert.eq(plans[3].grantPoints, 500, '十年卡赠 500 积分');
+  assert(plans.every((p) => p.onShelf === true), '四档默认全部上架');
 });
 
 test('支付：下单金额=配置价，改注入配置后新单金额随变', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u1');
-  const o1 = await core.payment.createOrder(db, uid, 'monthly', { now: T0 });
+  const o1 = await core.payment.createOrder(db, uid, 'month', { now: T0 });
   assert.eq(o1.amountFen, AppConfig.pricing[0].priceFen, '下单金额等于配置价');
   assert.eq(o1.days, AppConfig.pricing[0].days, '下单天数等于配置');
   assert.eq(o1.status, 'pending', '新单为待支付');
-  const custom = { ...AppConfig, pricing: [{ id: 'monthly', name: '月卡', priceFen: 777, days: 31 }] };
-  const o2 = await core.payment.createOrder(db, uid, 'monthly', { now: T0, config: custom });
+  const custom = { ...AppConfig, pricing: [{ id: 'month', name: '月卡', priceFen: 777, days: 31 }] };
+  const o2 = await core.payment.createOrder(db, uid, 'month', { now: T0, config: custom });
   assert.eq(o2.amountFen, 777, '改配置后新单金额随变');
   assert.eq(o2.days, 31, '改配置后新单天数随变');
   assert(o1.outTradeNo !== o2.outTradeNo, '业务单号唯一');
@@ -71,7 +78,7 @@ test('支付：下单档位不存在被拒（plan-not-found），不产生订单
 test('支付成功：未到期会员从原到期日叠加天数', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u4', { status: 'member', expireAt: T0 + 5 * DAY, graceUntil: null });
-  const r = await core.payment.purchase(db, uid, 'monthly', { adapter: mockOk(), now: T0 });
+  const r = await core.payment.purchase(db, uid, 'month', { adapter: mockOk(), now: T0 });
   assert(r.delivered, '应发货');
   assert.eq(r.order.status, 'paid', '订单已支付');
   assert.eq(r.order.paidAt, T0, '支付时刻已记录');
@@ -83,7 +90,7 @@ test('支付成功：已过期用户从今天起算', async () => {
   const uid = await h.newUser(db, 'pay_u5', { status: 'member', expireAt: T0 - 40 * DAY, graceUntil: null });
   const before = await db.collection(COLLECTIONS.User).findOne({ _id: uid });
   assert.eq(core.quota.getMembershipState(before, AppConfig, T0), 'expired', '前提：已过缓冲期');
-  const r = await core.payment.purchase(db, uid, 'monthly', { adapter: mockOk(), now: T0 });
+  const r = await core.payment.purchase(db, uid, 'month', { adapter: mockOk(), now: T0 });
   assert(r.delivered, '应发货');
   assert.eq(await expireAtOf(db, uid), T0 + 30 * DAY, '到期日 = 今天 + 30 天');
   const after = await db.collection(COLLECTIONS.User).findOne({ _id: uid });
@@ -95,7 +102,7 @@ test('支付成功：缓冲期（grace）内续费从今天起算并立即恢复
   const uid = await h.newUser(db, 'pay_u6', { status: 'member', expireAt: T0 - 5 * DAY, graceUntil: null });
   const before = await db.collection(COLLECTIONS.User).findOne({ _id: uid });
   assert.eq(core.quota.getMembershipState(before, AppConfig, T0), 'grace', '前提：在缓冲期内');
-  const r = await core.payment.purchase(db, uid, 'yearly', { adapter: mockOk(), now: T0 });
+  const r = await core.payment.purchase(db, uid, 'year', { adapter: mockOk(), now: T0 });
   assert(r.delivered, '应发货');
   assert.eq(await expireAtOf(db, uid), T0 + 365 * DAY, 'grace 内续费从今天起算 + 365 天（与手工开通同一口径）');
   const after = await db.collection(COLLECTIONS.User).findOne({ _id: uid });
@@ -105,7 +112,7 @@ test('支付成功：缓冲期（grace）内续费从今天起算并立即恢复
 test('支付：重复回调幂等，会员时长只加一次', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u7');
-  const r = await core.payment.purchase(db, uid, 'monthly', { adapter: mockOk(), now: T0, duplicateNotify: true });
+  const r = await core.payment.purchase(db, uid, 'month', { adapter: mockOk(), now: T0, duplicateNotify: true });
   assert(r.delivered, '首次回调应发货');
   assert(r.duplicated, '第二次回调应被识别为重复');
   assert.eq(await expireAtOf(db, uid), T0 + 30 * DAY, '重复回调后时长只加一次');
@@ -118,7 +125,7 @@ test('支付：重复回调幂等，会员时长只加一次', async () => {
 test('支付：回调金额与订单快照不一致，拒绝发货并写审计', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u8');
-  const order = await core.payment.createOrder(db, uid, 'monthly', { now: T0 });
+  const order = await core.payment.createOrder(db, uid, 'month', { now: T0 });
   const r = await core.payment.handleNotify(db, { outTradeNo: order.outTradeNo, amountFen: order.amountFen + 1, paid: true }, { now: T0 });
   assert(!r.ok && r.reason === 'amount-mismatch', '金额不符应拒绝');
   const fresh = await db.collection(COLLECTIONS.Order).findOne({ _id: order._id });
@@ -134,7 +141,7 @@ test('支付：回调金额与订单快照不一致，拒绝发货并写审计',
 test('支付失败：订单置 failed，不发货', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u9');
-  const r = await core.payment.purchase(db, uid, 'monthly', {
+  const r = await core.payment.purchase(db, uid, 'month', {
     adapter: new core.payAdapter.MockPayAdapter({ result: 'fail' }), now: T0,
   });
   assert(!r.delivered, '失败不应发货');
@@ -145,7 +152,7 @@ test('支付失败：订单置 failed，不发货', async () => {
 test('支付取消：订单置 cancelled，不发货', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u10');
-  const r = await core.payment.purchase(db, uid, 'monthly', {
+  const r = await core.payment.purchase(db, uid, 'month', {
     adapter: new core.payAdapter.MockPayAdapter({ result: 'cancel' }), now: T0,
   });
   assert(!r.delivered, '取消不应发货');
@@ -156,7 +163,7 @@ test('支付取消：订单置 cancelled，不发货', async () => {
 test('退款：本单时段尚未开始（整期未消耗），整期回收', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u11', { status: 'member', expireAt: T0 + 10 * DAY, graceUntil: null });
-  const r = await core.payment.purchase(db, uid, 'monthly', { adapter: mockOk(), now: T0 });
+  const r = await core.payment.purchase(db, uid, 'month', { adapter: mockOk(), now: T0 });
   assert.eq(await expireAtOf(db, uid), T0 + 40 * DAY, '前提：已叠加到 +40 天');
   const rf = await core.payment.refund(db, r.order._id, { actorId: uid, now: T0 });
   assert(rf.ok, '退款应成功（占位处理）');
@@ -170,7 +177,7 @@ test('退款：本单时段尚未开始（整期未消耗），整期回收', as
 test('退款：本单时段已部分消耗，按未消耗整天回收（零头不回收）', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pay_u12');
-  const r = await core.payment.purchase(db, uid, 'monthly', { adapter: mockOk(), now: T0 });
+  const r = await core.payment.purchase(db, uid, 'month', { adapter: mockOk(), now: T0 });
   assert.eq(await expireAtOf(db, uid), T0 + 30 * DAY, '前提：到期 +30 天');
   // 10.5 天后退款：未消耗 19.5 天 → 只回收 19 个整天
   const rf = await core.payment.refund(db, r.order._id, { actorId: uid, now: T0 + 10.5 * DAY });
@@ -186,7 +193,7 @@ test('订单可见性：他人订单不可见、不可取、不可退款', async
   const db = await h.newDB();
   const a = await h.newUser(db, 'pay_ua');
   const b = await h.newUser(db, 'pay_ub');
-  const r = await core.payment.purchase(db, a, 'monthly', { adapter: mockOk(), now: T0 });
+  const r = await core.payment.purchase(db, a, 'month', { adapter: mockOk(), now: T0 });
   const listB = await core.payment.listOrders(db, b);
   assert.eq(listB.length, 0, '他人订单列表为空');
   const listA = await core.payment.listOrders(db, a);
@@ -214,6 +221,21 @@ test('支付适配层：微信虚拟支付骨架未接真实支付（pay-not-imp
   assert(n.paid && n.outTradeNo === 'LD1' && n.amountFen === 100, '发货推送报文归一化形状正确');
 });
 
+test('支付：赠送积分随订单快照入账，改配置后已下单仍按快照送分', async () => {
+  const db = await h.newDB();
+  const uid = await h.newUser(db, 'pay_u14');
+  const order = await core.payment.createOrder(db, uid, 'month', { now: T0 });
+  assert.eq(order.grantPoints, AppConfig.pricing[0].grantPoints, '下单时赠分已快照');
+  // 下单后老板平台把赠分改成大数字，已下单不应跟着变
+  await db.collection(COLLECTIONS.AppConfig).insert({
+    _id: 'singleton',
+    pricing: [{ id: 'month', name: '月卡', priceFen: order.amountFen, days: 30, grantPoints: 999, recommended: false, onShelf: true }],
+  });
+  const r = await core.payment.handleNotify(db, { outTradeNo: order.outTradeNo, amountFen: order.amountFen, paid: true }, { now: T0 });
+  assert(r.ok && r.delivered, '回调应发货');
+  assert.eq(await core.points.getBalance(db, uid), order.grantPoints, '入账的是快照赠分，不是改后的配置');
+});
+
 test('支付提醒衔接：发货更新到期日后，任务L提醒判定按新周期走', async () => {
   const db = await h.newDB();
   // 到期前 10 天：第一次检查应发出"到期前 15 天"提醒（其触发点已过）
@@ -221,7 +243,7 @@ test('支付提醒衔接：发货更新到期日后，任务L提醒判定按新�
   const f1 = await core.notify.checkMembershipReminders(db, uid, T0);
   assert(f1.fired.includes('membershipExpiring'), '临近到期应发出到期前提醒');
   // 续费 30 天后，新到期日在 40 天后：同一时刻再检查，不应误发新提醒
-  await core.payment.purchase(db, uid, 'monthly', { adapter: mockOk(), now: T0 });
+  await core.payment.purchase(db, uid, 'month', { adapter: mockOk(), now: T0 });
   const f2 = await core.notify.checkMembershipReminders(db, uid, T0);
   assert.eq(f2.fired.length, 0, '续费后按新到期日判定，不误发');
   // 到新周期的到期前 15 天触发点（+25 天）再检查，应按新到期日发出一次
@@ -231,7 +253,7 @@ test('支付提醒衔接：发货更新到期日后，任务L提醒判定按新�
   assert(!f4.fired.includes('membershipExpiring'), '同一提醒不重复发（dedupeKey）');
 });
 
-test('支付：会员页面源码无写死价格（扫描）+ 占位价注释断言', async () => {
+test('支付：会员页面源码无写死价格（扫描）+ 配置字段断言', async () => {
   const files = [
     'miniprogram/pages/member/member-home.js',
     'miniprogram/pages/member/member-home.wxml',
@@ -246,6 +268,8 @@ test('支付：会员页面源码无写死价格（扫描）+ 占位价注释断
     assert(!bad.test(src), `${f} 不得出现写死价格字面量`);
   }
   const cfgSrc = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/config/app-config.js'), 'utf8');
-  assert(cfgSrc.includes('占位价'), '静态配置须注明占位价待用户定');
-  assert.eq(AppConfig.pricing.length, 2, '静态占位档两档（月卡/年卡）');
+  assert(cfgSrc.includes('grantPoints') && cfgSrc.includes('onShelf'), '静态配置档位须带赠送积分与上架开关字段');
+  assert.eq(AppConfig.pricing.length, 4, '静态档位四档（月/半年/年/十年）');
+  assert(AppConfig.points.registerGrant > 0 && AppConfig.points.photoImportCost > 0, '积分规则数字在配置里');
+  assert(AppConfig.safetyCaps.perBook >= 5000, '安全上限在配置里（每本 5000 笔）');
 });

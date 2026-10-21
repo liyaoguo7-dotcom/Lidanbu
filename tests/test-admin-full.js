@@ -171,12 +171,12 @@ test('admin补全：订单列表与收入汇总（脱敏、按档位聚合、退
   await seedAdmin(db);
   const buyer = await newUser(db, 'buyer_openid_009');
   const adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
-  const buy = await core.payment.purchase(db, buyer, 'monthly', { adapter });
+  const buy = await core.payment.purchase(db, buyer, 'month', { adapter });
   assert(buy.delivered, '模拟支付发货成功');
-  const buy2 = await core.payment.purchase(db, buyer, 'yearly', { adapter });
+  const buy2 = await core.payment.purchase(db, buyer, 'year', { adapter });
   assert(buy2.delivered, '第二单发货成功');
   await core.payment.refund(db, buy2.order._id, { actorId: buyer });
-  await core.payment.createOrder(db, buyer, 'monthly'); // 待支付单
+  await core.payment.createOrder(db, buyer, 'month'); // 待支付单
 
   const stats = await admin.orderStats(db, BOSS);
   assert.eq(stats.totalOrders, 3, '订单总数');
@@ -184,8 +184,8 @@ test('admin补全：订单列表与收入汇总（脱敏、按档位聚合、退
   assert.eq(stats.byStatus.refunded, 1, '已退款 1');
   assert.eq(stats.byStatus.pending, 1, '待支付 1');
   assert.eq(stats.paidRevenueFen, core.config.pricing[0].priceFen, '已付收入=月卡占位价');
-  assert.eq(stats.refundedFen, core.config.pricing[1].priceFen, '退款金额=年卡占位价');
-  const monthly = stats.byPlan.find((p) => p.planId === 'monthly');
+  assert.eq(stats.refundedFen, core.config.pricing[2].priceFen, '退款金额=年卡价格');
+  const monthly = stats.byPlan.find((p) => p.planId === 'month');
   assert.eq(monthly.orders, 2, '月卡共 2 单');
   assert.eq(monthly.paidCount, 1, '月卡已付 1 单');
   assertNoLeak(stats, 'orderStats');
@@ -259,7 +259,7 @@ test('admin补全：限制标记拦截全部写入口、读不受影响、解除
     ['记送礼', () => core.gifts.createGift(db, ownerA, ownerA, { contactId, tagId: 'qita', amount: 100, date: '2026-10-03' })],
     ['改送礼', () => core.gifts.updateGift(db, ownerA, ownerA, 'whatever', { amount: 200 })],
     ['拍照导入写入', () => core.importer.writeImport(db, ownerA, ownerA, { kind: 'gift', items: [{ contactId, amountFen: 100 }] })],
-    ['建请柬', () => core.invitation.createInvitation(db, ownerA, { title: 'T', eventDate: '2026-11-01', hostName: 'H' })],
+    ['拍照导入任务', () => core.importer.startImportTask(db, ownerA, ownerA, { kind: 'gift', imagePath: 'x.jpg' })],
     ['共享邀请', () => core.share.invite(db, ownerA, { switches: { view: true }, scope: { events: [eventId], gifts: false } })],
   ];
   for (const [label, fn] of writes) {
@@ -287,8 +287,8 @@ test('admin补全：配置编辑落库生效（价格/额度）+审计，支付�
   const db = await newDB();
   await seedAdmin(db);
   await admin.updatePricing(db, BOSS, [
-    { id: 'monthly', name: '月卡', priceFen: 100, days: 30 },
-    { id: 'yearly', name: '年卡', priceFen: 1000, days: 365 },
+    { id: 'month', name: '月卡', priceFen: 100, days: 30 },
+    { id: 'year', name: '年卡', priceFen: 1000, days: 365 },
   ]);
   await admin.updateQuotaSettings(db, BOSS, { freeQuota: { giftRecords: 66 } });
 
@@ -299,7 +299,7 @@ test('admin补全：配置编辑落库生效（价格/额度）+审计，支付�
   assert.eq(cfg.freeQuota.giftRecords, 66, '额度改动落库');
 
   const buyer = await newUser(db, 'buyer2_openid');
-  const order = await core.payment.createOrder(db, buyer, 'yearly');
+  const order = await core.payment.createOrder(db, buyer, 'year');
   assert.eq(order.amountFen, 1000, '下单取到平台新价（页面/下单不写死价格）');
 
   const trail = await admin.auditTrail(db, BOSS, { action: 'config' });
