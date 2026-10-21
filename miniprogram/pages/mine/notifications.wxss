@@ -1,0 +1,27 @@
+/* 通知中心 */
+.n-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 4px;
+}
+.n-head-t { font-size: 13px; color: #999; }
+.n-head-a { font-size: 13px; color: #F0575A; padding: 6px 0 6px 16px; }
+.n-item {
+  display: flex; align-items: flex-start;
+  padding: 14px 16px; min-height: 44px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.n-item:last-child { border-bottom: none; }
+.n-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #F0575A; flex: none; margin: 7px 10px 0 0;
+}
+.n-dot.off { background: transparent; }
+.n-main { flex: 1; }
+.n-row { display: flex; align-items: baseline; justify-content: space-between; }
+.n-title { font-size: 15px; font-weight: 600; }
+.n-title.read { font-weight: 400; color: #666; }
+.n-time { font-size: 11px; color: #C2C2C2; flex: none; margin-left: 10px; }
+.n-body { display: block; font-size: 13px; color: #666; line-height: 1.7; margin-top: 5px; }
+.n-empty { padding: 36px 20px; text-align: center; }
+.n-empty-t { display: block; font-size: 15px; }
+.n-empty-d { display: block; font-size: 12px; color: #C2C2C2; line-height: 1.7; margin-top: 8px; }

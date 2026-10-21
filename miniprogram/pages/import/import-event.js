@@ -84,11 +84,15 @@ Page({
           wx.navigateTo({ url: '/pages/import/import-review' });
         } catch (e) {
           wx.hideLoading();
+          // 失败不计费：本次识别不收取任何费用；可直接重新拍照重试
           wx.showModal({
-            title: '识别失败',
-            content: '识别失败了，这次不收任何费用，换张清楚点的照片试试～',
-            showCancel: false,
-            confirmText: '知道了',
+            title: '没认出来',
+            content: '这张照片有点糊，没认出来，这次不收任何费用。把礼单放平、光线亮一点，再拍一张试试～',
+            confirmText: '重新拍照',
+            cancelText: '算了',
+            success: (r) => {
+              if (r.confirm) this._takePhoto(eventId, eventName);
+            },
           });
         }
       },

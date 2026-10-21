@@ -30,6 +30,10 @@ Page({
     await this.reload();
   },
 
+  goSample() {
+    wx.navigateTo({ url: '/pages/example/gift-example' });
+  },
+
   goLandscape() {
     wx.navigateTo({ url: '/pages/landscape/gift/gift' });
   },

@@ -12,6 +12,7 @@
   left: 24px;
   right: 24px;
   bottom: 26px;
+  bottom: calc(26px + env(safe-area-inset-bottom));
   display: flex;
   gap: 12px;
 }

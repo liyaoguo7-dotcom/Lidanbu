@@ -1,0 +1,62 @@
+<!-- 新建/编辑请柬 -->
+<view class="card">
+  <view class="form-row col">
+    <text class="form-label">类型</text>
+    <view class="chips">
+      <view wx:for="{{types}}" wx:key="id" data-id="{{item.id}}" bindtap="onTypeTap"
+        class="chip {{form.type === item.id ? 'on' : ''}}">{{item.name}}</view>
+    </view>
+  </view>
+  <view class="form-row">
+    <text class="form-label">标题</text>
+    <input class="form-val" placeholder="如：张三与李四的婚礼" placeholder-style="color:#C2C2C2"
+      value="{{form.title}}" bindinput="onTitleInput" maxlength="60" />
+  </view>
+  <view class="form-row">
+    <text class="form-label">日期</text>
+    <picker mode="date" value="{{form.eventDate}}" bindchange="onDateChange" style="flex:1">
+      <view class="form-val"><text class="num">{{form.eventDate || '请选择'}}</text> <text class="chev">›</text></view>
+    </picker>
+  </view>
+  <view class="form-row">
+    <text class="form-label">时间</text>
+    <picker mode="time" value="{{form.eventTime}}" bindchange="onTimeChange" style="flex:1">
+      <view class="form-val"><text class="num">{{form.eventTime || '请选择（可不填）'}}</text> <text class="chev">›</text></view>
+    </picker>
+  </view>
+  <view class="form-row">
+    <text class="form-label">地点</text>
+    <input class="form-val" placeholder="请输入地址" placeholder-style="color:#C2C2C2"
+      value="{{form.address}}" bindinput="onAddressInput" maxlength="120" />
+  </view>
+  <view class="form-row" bindtap="onMapTap">
+    <text class="form-label">地图定位</text>
+    <text class="form-val ph">在地图上选位置（即将上线）</text>
+    <text class="chev">›</text>
+  </view>
+  <view class="form-row">
+    <text class="form-label">主人名</text>
+    <input class="form-val" placeholder="邀请人姓名" placeholder-style="color:#C2C2C2"
+      value="{{form.hostName}}" bindinput="onHostInput" maxlength="30" />
+  </view>
+  <view class="form-row col">
+    <text class="form-label">祝福语</text>
+    <textarea class="blessing" placeholder="写一句邀请的话，如：诚邀您携家人光临，共同见证幸福时刻。"
+      placeholder-style="color:#C2C2C2" value="{{form.blessing}}" bindinput="onBlessingInput" maxlength="200" />
+  </view>
+</view>
+
+<view class="section-title">选个风格（点一下就换，预览页就是最终样子）</view>
+<view class="style-grid">
+  <view wx:for="{{styles}}" wx:key="id" data-id="{{item.id}}" bindtap="onStyleTap"
+    class="style-cell {{form.styleId === item.id ? 'on' : ''}}"
+    style="background:{{item.colors.paper}};border-color:{{form.styleId === item.id ? item.colors.primary : item.colors.line}};color:{{item.colors.ink}}">
+    <view class="style-seal" style="background:{{item.colors.primary}}">{{item.sealText}}</view>
+    <view class="style-name" style="font-family:{{item.fontStack}}">{{item.name}}</view>
+    <view class="style-tag">{{item.tagline}}</view>
+    <view wx:if="{{form.styleId === item.id}}" class="style-check" style="color:{{item.colors.primary}}">✓ 已选</view>
+  </view>
+</view>
+
+<view style="height:96px"></view>
+<view class="btn-primary btn-bottom" bindtap="onSave">{{id ? '保存修改' : '生成请柬'}}</view>

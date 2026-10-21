@@ -1,0 +1,48 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;height:844px;overflow:hidden;background:#2E4038;font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;position:relative;color:#3E4A42}
+.panel{position:absolute;inset:26px 22px;background:#F7F1E3;border-radius:170px 170px 10px 10px;border:1.5px solid #B08D46;box-shadow:inset 0 0 0 6px #F7F1E3,inset 0 0 0 7.5px rgba(176,141,70,.55)}
+/* 藤蔓角花（原创：手工曲线茎 + 叶，镜像四角） */
+.vine{position:absolute;width:96px;height:120px;z-index:2}
+.vine.tl{top:120px;left:34px}.vine.tr{top:120px;right:34px;transform:scaleX(-1)}
+.vine.bl{bottom:40px;left:34px;transform:scaleY(-1)}.vine.br{bottom:40px;right:34px;transform:scale(-1)}
+.wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:128px 56px 74px;z-index:3}
+.mono{width:64px;height:64px;border:1.5px solid #B08D46;transform:rotate(45deg);display:flex;align-items:center;justify-content:center}
+.mono span{transform:rotate(-45deg);font-size:19px;color:#8C6D2F;letter-spacing:1px}
+.en{margin-top:30px;font-family:Georgia,serif;font-size:11px;letter-spacing:5px;text-indent:5px;color:#9A7B3F}
+.names{margin-top:16px;font-size:32px;letter-spacing:3px;color:#33463B}
+.names .amp{font-family:Georgia,serif;font-style:italic;font-size:23px;color:#B08D46;margin:0 7px}
+.event{margin-top:12px;font-size:16px;letter-spacing:12px;text-indent:12px;color:#5A6B5E}
+.rule{display:flex;align-items:center;gap:8px;margin:26px 0 4px;width:170px}
+.rule .l{flex:1;height:1px;background:#B08D46}.rule .r{flex:1;height:1px;background:#B08D46}
+.rule .d{width:6px;height:6px;border:1.5px solid #B08D46;transform:rotate(45deg)}
+.bless{margin-top:12px;font-size:13.5px;line-height:2.1;color:#68766B;text-align:center;letter-spacing:1px}
+.info{margin-top:26px;text-align:center;line-height:2.15;font-size:14.5px;color:#3E4A42}
+.info .big{font-size:17px;color:#33463B;letter-spacing:1px}
+.info .sub{font-size:12.5px;color:#93A08F}
+.host{margin-top:24px;font-size:13.5px;letter-spacing:3px;color:#8C6D2F}
+.btn{margin-top:auto;width:216px;height:45px;border-radius:22.5px;background:#2E4038;color:#E9D9AC;display:flex;align-items:center;justify-content:center;font-size:14.5px;letter-spacing:5px;text-indent:5px;border:1px solid #B08D46}
+.vb{white-space:nowrap;font-size:16.5px !important;letter-spacing:0 !important;margin-top:6px}
+</style></head><body>
+<div class="panel"></div>
+<svg class="vine tl" viewBox="0 0 96 120"><g fill="none" stroke="#B08D46" stroke-width="1.7"><path d="M4,116 C4,70 10,40 34,22 C50,10 66,8 88,10"/><path d="M14,74 C6,66 4,56 6,46 C15,50 20,60 14,74Z"/><path d="M26,44 C18,36 17,26 20,17 C28,22 31,32 26,44Z"/><path d="M48,20 C44,11 45,3 50,-3 C56,3 56,13 48,20Z" transform="translate(0,4)"/><circle cx="80" cy="14" r="3.2"/><circle cx="66" cy="10" r="2.4" opacity=".7"/><path d="M8,96 C16,92 22,94 28,100" opacity=".7"/></g></svg>
+<svg class="vine tr" viewBox="0 0 96 120"><g fill="none" stroke="#B08D46" stroke-width="1.7"><path d="M4,116 C4,70 10,40 34,22 C50,10 66,8 88,10"/><path d="M14,74 C6,66 4,56 6,46 C15,50 20,60 14,74Z"/><path d="M26,44 C18,36 17,26 20,17 C28,22 31,32 26,44Z"/><path d="M48,20 C44,11 45,3 50,-3 C56,3 56,13 48,20Z" transform="translate(0,4)"/><circle cx="80" cy="14" r="3.2"/><circle cx="66" cy="10" r="2.4" opacity=".7"/><path d="M8,96 C16,92 22,94 28,100" opacity=".7"/></g></svg>
+<svg class="vine bl" viewBox="0 0 96 120"><g fill="none" stroke="#B08D46" stroke-width="1.7"><path d="M4,116 C4,70 10,40 34,22 C50,10 66,8 88,10"/><path d="M14,74 C6,66 4,56 6,46 C15,50 20,60 14,74Z"/><path d="M26,44 C18,36 17,26 20,17 C28,22 31,32 26,44Z"/><path d="M48,20 C44,11 45,3 50,-3 C56,3 56,13 48,20Z" transform="translate(0,4)"/><circle cx="80" cy="14" r="3.2"/><circle cx="66" cy="10" r="2.4" opacity=".7"/><path d="M8,96 C16,92 22,94 28,100" opacity=".7"/></g></svg>
+<svg class="vine br" viewBox="0 0 96 120"><g fill="none" stroke="#B08D46" stroke-width="1.7"><path d="M4,116 C4,70 10,40 34,22 C50,10 66,8 88,10"/><path d="M14,74 C6,66 4,56 6,46 C15,50 20,60 14,74Z"/><path d="M26,44 C18,36 17,26 20,17 C28,22 31,32 26,44Z"/><path d="M48,20 C44,11 45,3 50,-3 C56,3 56,13 48,20Z" transform="translate(0,4)"/><circle cx="80" cy="14" r="3.2"/><circle cx="66" cy="10" r="2.4" opacity=".7"/><path d="M8,96 C16,92 22,94 28,100" opacity=".7"/></g></svg>
+<div class="wrap">
+  <div class="mono"><span>张·李</span></div>
+  <div class="en">WEDDING&nbsp;INVITATION</div>
+  <div class="names">张三<span class="amp">&</span>李四</div>
+  <div class="event">结婚典礼</div>
+  <div class="rule"><div class="l"></div><div class="d"></div><div class="r"></div></div>
+  <div class="bless">谨备薄酌，敬候光临<br>愿与您共享这场秋日的喜事</div>
+  <div class="info">
+    <div class="big">2026年11月8日 星期日</div>
+    <div>午宴 12:00 恭候 · 12:30 入席</div>
+    <div class="big vb">义乌市幸福里国际酒店 · 三楼宴会厅</div>
+    <div class="sub">义乌市江东街道幸福路 88 号</div>
+  </div>
+  <div class="host">张建国 · 王秀英 敬邀</div>
+  <div class="btn">填写回执</div>
+</div>
+</body></html>

@@ -23,6 +23,10 @@ const MockOCR = {
   name: 'mock',
   async recognize(imagePath, opts = {}) {
     if (!imagePath) throw new Error('请先拍照');
+    // 可控失败态（演示/测试用）：opts.fail=true 或图片路径含 mockfail 时模拟识别失败
+    if (opts.fail === true || String(imagePath).includes('mockfail')) {
+      throw new Error('这张照片没认出来');
+    }
     const kind = opts.kind === 'receive' ? 'receive' : 'gift';
     if (kind === 'receive') {
       return [

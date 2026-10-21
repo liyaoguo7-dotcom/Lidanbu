@@ -182,6 +182,6 @@ Page({
   },
 
   goSample() {
-    wx.showToast({ title: '示例页占位', icon: 'none' });
+    wx.navigateTo({ url: '/pages/example/receive-example' });
   },
 });

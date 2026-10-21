@@ -20,6 +20,7 @@ Page({
     quota: null,
     used: null,
     reminders: [],
+    plans: [],
     priceNote: '会员价格与档位即将公布，敬请期待。',
     overQuotaNote: '',
   },
@@ -31,10 +32,12 @@ Page({
 
   async refresh() {
     try {
-      const [usage, reminders] = await Promise.all([
+      const [usage, reminders, plans] = await Promise.all([
         dataService.getQuotaUsage(),
         dataService.getReminderInfo(),
+        dataService.getPricing(),
       ]);
+      this.setData({ plans });
       const q = usage.quota || {};
       this.setData({
         state: usage.state,
@@ -52,13 +55,13 @@ Page({
     }
   },
 
+  /** 开通/续费：去购买页（档位与价格都从配置读，本页不写死价格） */
   onBuy() {
-    wx.showModal({
-      title: '开通会员',
-      content: this.data.priceNote,
-      showCancel: false,
-      confirmText: '知道了',
-    });
+    wx.navigateTo({ url: '/pages/member/purchase/purchase' });
+  },
+
+  onOrders() {
+    wx.navigateTo({ url: '/pages/member/orders/orders' });
   },
 
   onExport() {

@@ -22,6 +22,9 @@ Page({
       { icon: '/images/icons/book.svg', title: '横置红字礼单本', desc: '经典红字大写，横置翻阅，仪式感拉满' },
     ],
     inviteRewardEnabled: false,
+    unreadCount: 0,
+    cancelPending: null, // { cancelAtText, remainingDays } 待注销提示（冷静期内）
+    version: AppConfig.version || '',
   },
 
   async onLoad() {
@@ -51,6 +54,25 @@ Page({
         demoStateText: DEMO_STATE_LABELS[m.state] || m.state,
       });
     } catch (e) { /* 演示期忽略 */ }
+    // 通知未读数（顺带触发会员三提醒判定，见 core/notify）+ 待注销提示
+    try {
+      const unreadCount = await dataService.getUnreadCount();
+      this.setData({ unreadCount });
+    } catch (e) { /* 忽略 */ }
+    try {
+      const st = await dataService.getCancellationStatus();
+      if (st.status === 'pendingCancel') {
+        const d = new Date(st.cancelAt);
+        this.setData({
+          cancelPending: {
+            cancelAtText: `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`,
+            remainingDays: st.remainingDays,
+          },
+        });
+      } else {
+        this.setData({ cancelPending: null });
+      }
+    } catch (e) { /* 忽略 */ }
   },
 
   /** 演示专用：切换会员状态（免费/会员/会员已到期），切换后全局按新状态走现行规则 */
@@ -101,6 +123,22 @@ Page({
 
   onInviteReward() {
     wx.navigateTo({ url: '/pages/invite/invite-reward' });
+  },
+
+  onNotifications() {
+    wx.navigateTo({ url: '/pages/mine/notifications' });
+  },
+
+  onFeedback() {
+    wx.navigateTo({ url: '/pages/mine/feedback' });
+  },
+
+  onFaq() {
+    wx.navigateTo({ url: '/pages/mine/faq' });
+  },
+
+  onAbout() {
+    wx.navigateTo({ url: '/pages/mine/about' });
   },
 
   onPrivacy() {

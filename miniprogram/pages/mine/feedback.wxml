@@ -1,0 +1,27 @@
+<!-- 意见反馈 -->
+<view class="section-title">想说点什么</view>
+<view class="card fb-box">
+  <textarea class="fb-input" value="{{content}}" bindinput="onInput"
+    maxlength="{{maxLength}}" placeholder="用着哪里不顺手、想要什么新功能，都可以写在这里告诉我们"
+    auto-height="{{false}}"></textarea>
+  <view class="fb-count">{{content.length}}/{{maxLength}}</view>
+</view>
+
+<view class="section-title">截图（可不传，最多 {{maxImages}} 张）</view>
+<view class="card fb-imgs">
+  <view class="fb-thumb" wx:for="{{images}}" wx:key="*this">
+    <image class="fb-img" src="{{item}}" mode="aspectFill" />
+    <view class="fb-del" data-idx="{{index}}" bindtap="onRemoveImage">×</view>
+  </view>
+  <view class="fb-add" wx:if="{{images.length < maxImages}}" bindtap="onAddImage">
+    <text class="fb-plus">+</text>
+    <text class="fb-add-t">加截图</text>
+  </view>
+</view>
+
+<view class="tip"><text>反馈只用来改进产品，不会关联你的账本内容一起发送。</text></view>
+
+<view style="height:110px"></view>
+<view class="btn-bottom">
+  <view class="btn-primary" bindtap="onSubmit">{{submitting ? '提交中…' : '提交反馈'}}</view>
+</view>

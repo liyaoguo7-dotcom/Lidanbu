@@ -36,6 +36,17 @@
 // 'admin.updateFeatureSwitches': (db, params, actorId) => core.admin.updateFeatureSwitches(db, actorId, params.features),
 // 'admin.updateMemberOnlyFeatures': (db, params, actorId) => core.admin.updateMemberOnlyFeatures(db, actorId, params.features),
 // 'admin.updateQuotaSettings': (db, params, actorId) => core.admin.updateQuotaSettings(db, actorId, params),
+// 'admin.updateInviteSettings': (db, params, actorId) => core.admin.updateInviteSettings(db, actorId, params),
+// // 任务M 补全项（core 内一律 requireAdmin）：
+// 'admin.searchAccounts': (db, params, actorId) => core.admin.searchAccounts(db, actorId, params),
+// 'admin.importUsage': (db, params, actorId) => core.admin.importUsage(db, actorId, params),
+// 'admin.feedbackList': (db, params, actorId) => core.admin.feedbackList(db, actorId, params),
+// 'admin.feedbackSetStatus': (db, params, actorId) => core.admin.feedbackSetStatus(db, actorId, params.feedbackId, params.status),
+// 'admin.orderList': (db, params, actorId) => core.admin.orderList(db, actorId, params),
+// 'admin.orderStats': (db, params, actorId) => core.admin.orderStats(db, actorId),
+// 'admin.listAdmins': (db, params, actorId) => core.admin.listAdmins(db, actorId),
+// 'admin.auditTrail': (db, params, actorId) => core.admin.auditTrail(db, actorId, params),
+// 'admin.setUserRestricted': (db, params, actorId) => core.admin.setUserRestricted(db, actorId, params.userId, params),
 //};
 //
 // exports.main = async (event) => {

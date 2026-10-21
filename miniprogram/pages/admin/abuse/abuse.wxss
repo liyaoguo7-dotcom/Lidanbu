@@ -1,0 +1,3 @@
+@import "../admin-common.wxss";
+.btn-danger { background: #C0392B; color: #fff; border-radius: 28px; margin: 12px 0 4px; font-size: 15px; }
+.btn-ghost { background: #fff; color: #333; border: 1px solid #DDD; border-radius: 28px; margin: 8px 0 4px; font-size: 15px; }

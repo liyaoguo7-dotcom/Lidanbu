@@ -1,0 +1,66 @@
+/* 收礼示例页：版式与真实收礼页一致（礼薄行/记录行/详情行同口径） */
+.example-bar {
+  margin: 12px 12px 0;
+  padding: 8px 12px;
+  background: #FDF3D8;
+  color: #9A7B2D;
+  border-radius: 8px;
+  font-size: 12.5px;
+  text-align: center;
+}
+.example-note {
+  margin: 14px 16px;
+  font-size: 12.5px;
+  color: #999;
+  text-align: center;
+}
+.total-line {
+  margin: 12px 16px 4px;
+  font-size: 13px;
+  color: #999;
+}
+.list { padding-bottom: 8px; }
+.event-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+}
+.event-row + .event-row { margin-top: 0; }
+.pat {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #F1E6D3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.pat.baishi { background: #E8EAED; }
+.pat-img { width: 40px; height: 40px; }
+.mid { flex: 1; margin-left: 12px; }
+.line1 { display: flex; justify-content: space-between; align-items: baseline; }
+.nm { font-size: 16px; }
+.dt { font-size: 12px; color: #999; }
+.line2 { margin-top: 5px; font-size: 13px; color: #999; }
+.line2 .amt { color: #E05353; }
+.more { color: #C2C2C2; font-size: 18px; margin-left: 8px; }
+.back-row {
+  margin: 12px 16px 2px;
+  font-size: 14px;
+  color: #E05353;
+  padding: 6px 0;
+}
+.rec-row {
+  display: flex;
+  align-items: center;
+  padding: 13px 2px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.rec-row:last-child { border-bottom: none; }
+.rec-name { flex: 1; font-size: 15px; }
+.rec-type { font-size: 12.5px; color: #999; margin-right: 14px; }
+.rec-amt { font-size: 15px; color: #333; }
+.strong { font-weight: 600; }
+.red { color: #E05353; }
+.ph { color: #C2C2C2; }

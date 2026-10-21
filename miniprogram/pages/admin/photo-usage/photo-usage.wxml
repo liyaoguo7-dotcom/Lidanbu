@@ -1,0 +1,27 @@
+<view class="warn-banner">只看用量数字：导入次数、成功率、失败原因大类。没有图片，没有识别内容。</view>
+<view class="card row-between">
+  <text>统计粒度</text>
+  <view>
+    <text class="pill {{granularity === 'day' ? 'pill-on' : ''}}" bindtap="onGran" data-g="day">按日</text>
+    <text class="pill {{granularity === 'week' ? 'pill-on' : ''}}" bindtap="onGran" data-g="week">按周</text>
+  </view>
+</view>
+<view wx:if="{{loading}}"><view class="note">加载中…</view></view>
+<view wx:if="{{!loading && stats}}">
+  <view class="stat-grid">
+    <view class="stat-card"><view class="stat-num">{{stats.total}}</view><view class="stat-label">导入总次数</view></view>
+    <view class="stat-card"><view class="stat-num">{{stats.successRate}}%</view><view class="stat-label">成功率</view></view>
+    <view class="stat-card"><view class="stat-num">{{stats.success}}</view><view class="stat-label">成功</view></view>
+    <view class="stat-card"><view class="stat-num">{{stats.failed + stats.partial}}</view><view class="stat-label">失败/部分</view></view>
+  </view>
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-weight:bold">失败原因分布</text></view>
+    <view class="form-row" wx:for="{{stats.failReasons}}" wx:key="reason"><text class="form-label">{{item.name}}</text><text class="form-val">{{item.count}} 次</text></view>
+    <view wx:if="{{stats.failReasons.length === 0}}" class="note">暂无失败记录。</view>
+  </view>
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-weight:bold">{{granularity === 'day' ? '按日明细' : '按周明细（周一为起点）'}}</text></view>
+    <view class="form-row" wx:for="{{stats.byPeriod}}" wx:key="key"><text class="form-label">{{item.key}}</text><text class="form-val">共 {{item.total}} · 成功 {{item.success}} · 失败 {{item.failed}} · 部分 {{item.partial}}</text></view>
+    <view wx:if="{{stats.byPeriod.length === 0}}" class="note">暂无导入记录。</view>
+  </view>
+</view>

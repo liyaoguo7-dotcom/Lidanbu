@@ -1,0 +1,2 @@
+@import "../admin-common.wxss";
+.pill-on { background: #F0575A; color: #fff; border-color: #F0575A; }

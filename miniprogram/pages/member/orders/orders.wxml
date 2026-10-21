@@ -1,0 +1,14 @@
+<!-- 我的订单 -->
+<view class="section-title">我的订单</view>
+<view class="card" wx:if="{{orders.length}}">
+  <view class="form-row" wx:for="{{orders}}" wx:key="id">
+    <text class="form-label">{{item.planName}}</text>
+    <text class="form-val num">¥{{item.amountText}}</text>
+    <text class="ph">{{item.statusText}}</text>
+    <text class="ph">{{item.paidText || item.createdText}}</text>
+  </view>
+</view>
+<view class="tip" wx:if="{{!orders.length}}">还没有订单。</view>
+
+<view style="height:100px"></view>
+<view class="btn-bottom"><view class="btn-primary" bindtap="onBuy">去开通会员</view></view>

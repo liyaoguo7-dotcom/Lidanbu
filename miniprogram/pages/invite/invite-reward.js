@@ -9,7 +9,7 @@
 const dataService = require('../../services/data-service.js');
 
 function statusText(r) {
-  if (r.status === 'granted') return `已发放：收礼额度池 +${r.poolGranted} 条、送礼 +${r.giftsGranted} 条`;
+  if (r.status === 'granted') return `已发放：收礼名额 +${r.poolGranted} 条、送礼 +${r.giftsGranted} 条`;
   if (r.status === 'bound') return '已绑定，等对方记下第一笔';
   return '未发放';
 }

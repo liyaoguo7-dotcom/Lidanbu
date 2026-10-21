@@ -1,0 +1,50 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;height:844px;overflow:hidden;background:#F5EEE0;font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;position:relative;color:#5D4630}
+/* 上下木纹带（原创：手工波浪木纹线） */
+.band{position:absolute;left:0;right:0;height:86px;background:#C29A67}
+.band.top{top:0}.band.bot{bottom:0}
+.band .edge{position:absolute;left:0;right:0;height:5px;background:#A87F4E}
+.band.top .edge{bottom:0}.band.bot .edge{top:0}
+.wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:118px 48px 116px}
+.tag{margin-top:2px;background:#A87F4E;color:#FBF6EA;font-size:12px;letter-spacing:5px;text-indent:5px;padding:5px 14px;border-radius:3px}
+.branch{margin-top:24px}
+.names{margin-top:20px;font-size:33px;letter-spacing:4px;color:#4E3A24}
+.names .amp{font-size:23px;color:#A87F4E;margin:0 7px}
+.event{margin-top:12px;font-size:15.5px;letter-spacing:13px;text-indent:13px;color:#7A5C38}
+.rule{display:flex;align-items:center;gap:10px;margin:26px 0 4px;width:190px}
+.rule .l{flex:1;border-top:2px dotted #C2A173}.rule .r{flex:1;border-top:2px dotted #C2A173}
+.rule .d{width:8px;height:8px;border-radius:50%;background:#A87F4E}
+.bless{margin-top:12px;font-size:14px;line-height:2.15;color:#7A6547;text-align:center;letter-spacing:1px}
+.info{margin-top:26px;text-align:center;line-height:2.2;font-size:15px;color:#5D4630;background:rgba(255,255,255,.5);border:1.5px dashed #C2A173;border-radius:10px;padding:14px 22px}
+.info .big{font-size:17.5px;color:#4E3A24;letter-spacing:1px}
+.info .sub{font-size:12.5px;color:#A08660}
+.host{margin-top:24px;font-size:14px;letter-spacing:3px;color:#7A5C38}
+.btn{margin-top:auto;width:220px;height:46px;border-radius:23px;background:#A87F4E;color:#FBF6EA;display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:6px;text-indent:6px}
+.vb{white-space:nowrap;font-size:15.5px !important;letter-spacing:0 !important;margin-top:4px}
+</style></head><body>
+<div class="band top">
+  <svg width="390" height="86"><g fill="none" stroke="#A87F4E" stroke-width="1.6" opacity=".65"><path d="M-10,18 C80,10 160,26 240,17 C300,11 350,20 400,14"/><path d="M-10,40 C70,48 150,32 230,42 C310,51 350,38 400,44"/><path d="M-10,63 C90,55 170,70 250,60 C320,52 360,64 400,58"/><ellipse cx="86" cy="30" rx="16" ry="5.5"/><ellipse cx="86" cy="30" rx="8" ry="2.6"/><ellipse cx="312" cy="52" rx="13" ry="4.5"/></g></svg>
+  <div class="edge"></div>
+</div>
+<div class="band bot">
+  <div class="edge"></div>
+  <svg width="390" height="86"><g fill="none" stroke="#A87F4E" stroke-width="1.6" opacity=".65"><path d="M-10,24 C80,16 160,32 240,23 C300,17 350,26 400,20"/><path d="M-10,48 C70,56 150,40 230,50 C310,59 350,46 400,52"/><path d="M-10,70 C90,63 170,77 250,67 C320,59 360,71 400,65"/><ellipse cx="200" cy="36" rx="15" ry="5"/><ellipse cx="200" cy="36" rx="7.5" ry="2.4"/></g></svg>
+</div>
+<div class="wrap">
+  <div class="tag">喜 帖</div>
+  <svg class="branch" width="150" height="56" viewBox="0 0 150 56"><g fill="none" stroke="#A87F4E" stroke-width="1.8"><path d="M8,46 C50,40 100,22 142,8"/><path d="M42,38 C36,28 36,19 40,11 C49,16 51,27 42,38Z"/><path d="M74,29 C70,19 71,10 76,3 C84,9 84,20 74,29Z"/><path d="M104,19 C108,10 114,4 122,2 C124,11 118,19 104,19Z"/><circle cx="128" cy="16" r="3.4"/><circle cx="116" cy="24" r="2.6" opacity=".75"/></g></svg>
+  <div class="names">张三<span class="amp">&</span>李四</div>
+  <div class="event">结婚典礼</div>
+  <div class="rule"><div class="l"></div><div class="d"></div><div class="r"></div></div>
+  <div class="bless">山野有情，岁月有喜<br>诚邀您来坐一坐，吃一顿热乎的喜宴</div>
+  <div class="info">
+    <div class="big">2026年11月8日 星期日</div>
+    <div>午宴 12:00 恭候 · 12:30 入席</div>
+    <div class="big vb">义乌市幸福里国际酒店 · 三楼宴会厅</div>
+    <div class="sub">义乌市江东街道幸福路 88 号</div>
+  </div>
+  <div class="host">张建国 · 王秀英 敬邀</div>
+  <div class="btn">填写回执</div>
+</div>
+</body></html>

@@ -1,0 +1,26 @@
+<!-- 我的请柬列表 -->
+<view wx:if="{{loaded && list.length === 0}}" class="card empty">
+  <view class="empty-title songti">还没有电子请柬</view>
+  <view class="empty-desc">办婚礼、满月、升学、乔迁、寿宴时，建一份请柬发给亲友，\n谁来、来几个人，回执里一目了然。</view>
+  <view class="btn-primary empty-btn" bindtap="onCreate">新建一份请柬</view>
+</view>
+
+<view class="card inv-item" wx:for="{{list}}" wx:key="_id" data-id="{{item._id}}" bindtap="onItemTap">
+  <view class="inv-dot" style="background:{{item.stylePrimary}}"></view>
+  <view class="inv-main">
+    <view class="inv-title songti">{{item.title}}</view>
+    <view class="inv-sub">{{item.typeName}} · {{item.dateText}}</view>
+    <view class="inv-sub">已回复 {{item.rsvpCount}} 人 · 确定参加 {{item.attendPeople}} 人</view>
+  </view>
+  <view class="inv-ops">
+    <text class="op" catchtap="onStats" data-id="{{item._id}}">回执</text>
+    <text class="op" catchtap="onEdit" data-id="{{item._id}}">编辑</text>
+    <text class="op del" catchtap="onDelete" data-id="{{item._id}}">删除</text>
+  </view>
+</view>
+
+<view style="height:110px"></view>
+<view class="fab" bindtap="onCreate">＋</view>
+
+<confirm-modal show="{{showDelModal}}" title="删除请柬" content="{{delContent}}"
+  bind:confirm="onDelConfirm" bind:cancel="onDelCancel" />

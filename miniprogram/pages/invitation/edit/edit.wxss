@@ -1,0 +1,27 @@
+/* 新建/编辑请柬 */
+.form-row.col { flex-direction: column; align-items: stretch; padding-top: 12px; padding-bottom: 12px; }
+.form-row.col .form-label { margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 7px 14px; border-radius: 16px; font-size: 13px;
+  background: #F5F6F4; color: #333;
+}
+.chip.on { background: #F1E6D3; color: #E05353; font-weight: 600; }
+.blessing {
+  width: 100%; min-height: 64px; font-size: 15px; line-height: 1.6;
+  background: #FAFAFA; border-radius: 8px; padding: 8px 10px; box-sizing: border-box;
+}
+.style-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 12px 0; }
+.style-cell {
+  width: calc(50% - 5px); box-sizing: border-box;
+  border: 1px solid; border-radius: 12px; padding: 14px 10px 12px; text-align: center;
+  background: #fff;
+}
+.style-cell.on { border-width: 2px; }
+.style-seal {
+  width: 30px; height: 30px; margin: 0 auto; border-radius: 6px;
+  color: #fff; font-size: 16px; line-height: 30px; text-align: center;
+}
+.style-name { margin-top: 8px; font-size: 15px; font-weight: 600; }
+.style-tag { margin-top: 3px; font-size: 11px; color: #999; }
+.style-check { margin-top: 5px; font-size: 12px; font-weight: 600; }

@@ -1,0 +1,25 @@
+<view class="warn-banner">这里的金额是会员订单金额（平台收入），不是用户账本里的礼金。用户只显示脱敏编号。</view>
+<view wx:if="{{stats}}" class="stat-grid">
+  <view class="stat-card"><view class="stat-num">{{stats.totalOrders}}</view><view class="stat-label">订单总数</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.paidText}}</view><view class="stat-label">已支付收入</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.refundedText}}</view><view class="stat-label">已退款金额</view></view>
+  <view class="stat-card"><view class="stat-num">{{stats.byStatus.paid}}</view><view class="stat-label">已支付订单数</view></view>
+</view>
+<view wx:if="{{stats}}" class="card">
+  <view class="form-row"><text class="form-val" style="font-weight:bold">按档位</text></view>
+  <view class="form-row" wx:for="{{stats.byPlan}}" wx:key="planId"><text class="form-label">{{item.planName}}</text><text class="form-val">{{item.paidCount}} 单 · {{item.revenueText}}</text></view>
+  <view wx:if="{{stats.byPlan.length === 0}}" class="note">暂无订单。</view>
+</view>
+<view class="card row-between">
+  <text class="pill {{filter === item.id ? 'pill-on' : ''}}" wx:for="{{filters}}" wx:key="id" bindtap="onFilter" data-id="{{item.id}}">{{item.name}}</text>
+</view>
+<view wx:if="{{loading}}"><view class="note">加载中…</view></view>
+<view class="card" wx:for="{{list}}" wx:key="orderId">
+  <view class="row-between">
+    <text>{{item.planName}} · {{item.amountText}}</text>
+    <text class="pill">{{item.statusName}}</text>
+  </view>
+  <view class="note">{{item.timeText}} · 用户 <text class="mask">{{item.userId}}</text></view>
+  <view class="note">单号 {{item.outTradeNo}}<text wx:if="{{item.refundedAt}}"> · 已退款</text></view>
+</view>
+<view wx:if="{{!loading && list.length === 0}}" class="note">暂无订单。</view>

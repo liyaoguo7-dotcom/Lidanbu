@@ -1,0 +1,56 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'MSZ';src:url('../../landscape/fonts/mashanzheng.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:390px;height:844px;overflow:hidden;background:#7E1B1B;font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;position:relative;color:#F3E3BC}
+/* 外框：金色双线 */
+.frame{position:absolute;inset:14px;border:2px solid #C9A24B;pointer-events:none}
+.frame2{position:absolute;inset:20px;border:1px solid rgba(201,162,75,.65);pointer-events:none}
+/* 回纹带（原创回纹：手工 SVG 图案平铺） */
+.meander{position:absolute;left:26px;right:26px;height:14px;opacity:.85}
+.meander.top{top:28px}.meander.bot{bottom:28px;transform:scaleY(-1)}
+/* 祥云角花（原创螺旋云纹，手工路径） */
+.cloud{position:absolute;width:64px;height:44px;opacity:.9}
+.cloud.tl{top:44px;left:30px}.cloud.tr{top:44px;right:30px;transform:scaleX(-1)}
+.cloud.bl{bottom:44px;left:30px;transform:scaleY(-1)}.cloud.br{bottom:44px;right:30px;transform:scale(-1)}
+.wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:86px 44px 70px}
+.xi{width:118px;height:118px;border:1.5px solid #C9A24B;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:64px;color:#E9C767;background:rgba(0,0,0,.12);box-shadow:inset 0 0 0 5px #7E1B1B,inset 0 0 0 6.5px rgba(201,162,75,.6)}
+.invite{margin-top:20px;font-size:14px;letter-spacing:10px;color:#E9C767;text-indent:10px}
+.names{margin-top:16px;font-family:'MSZ',serif;font-size:43px;color:#F7ECD2;letter-spacing:2px}
+.names .amp{font-size:26px;color:#E9C767;margin:0 6px}
+.event{margin-top:12px;font-size:19px;letter-spacing:12px;text-indent:12px;color:#F3E3BC}
+.rule{display:flex;align-items:center;gap:10px;margin:26px 0 6px;width:100%}
+.rule .l{flex:1;height:1px;background:linear-gradient(90deg,transparent,#C9A24B)}
+.rule .r{flex:1;height:1px;background:linear-gradient(90deg,#C9A24B,transparent)}
+.rule .d{width:7px;height:7px;background:#C9A24B;transform:rotate(45deg)}
+.bless{margin-top:10px;font-size:14.5px;line-height:2;color:#EBD9AC;text-align:center;letter-spacing:1px}
+.info{margin-top:24px;text-align:center;line-height:2.15;font-size:15.5px;color:#F3E3BC}
+.info .big{font-size:19px;color:#fff;letter-spacing:1px}
+.info .sub{font-size:13px;color:#D9BE82}
+.host{margin-top:22px;font-size:14px;letter-spacing:3px;color:#E9C767}
+.btn{margin-top:auto;width:230px;height:46px;border:1.5px solid #C9A24B;border-radius:23px;display:flex;align-items:center;justify-content:center;font-size:15px;letter-spacing:6px;text-indent:6px;color:#7E1B1B;background:#E9C767;font-weight:bold}
+.vb{white-space:nowrap;font-size:16.5px !important;letter-spacing:0 !important;margin-top:6px}
+</style></head><body>
+<div class="frame"></div><div class="frame2"></div>
+<svg class="meander top" width="338" height="14" preserveAspectRatio="none"><defs><pattern id="md" width="16" height="14" patternUnits="userSpaceOnUse"><path d="M1,13 V3 H13 V9 H6 V6" fill="none" stroke="#C9A24B" stroke-width="1.6"/></pattern></defs><rect width="338" height="14" fill="url(#md)"/></svg>
+<svg class="meander bot" width="338" height="14" preserveAspectRatio="none"><rect width="338" height="14" fill="url(#md)"/></svg>
+<svg class="cloud tl" viewBox="0 0 64 44"><g fill="none" stroke="#C9A24B" stroke-width="2"><path d="M6,38 a10,10 0 1,1 10,-10 a8,8 0 1,1 8,8 a6,6 0 1,0 6,-6"/><path d="M34,36 a7,7 0 1,1 7,-7" opacity=".7"/></g></svg>
+<svg class="cloud tr" viewBox="0 0 64 44"><g fill="none" stroke="#C9A24B" stroke-width="2"><path d="M6,38 a10,10 0 1,1 10,-10 a8,8 0 1,1 8,8 a6,6 0 1,0 6,-6"/><path d="M34,36 a7,7 0 1,1 7,-7" opacity=".7"/></g></svg>
+<svg class="cloud bl" viewBox="0 0 64 44"><g fill="none" stroke="#C9A24B" stroke-width="2"><path d="M6,38 a10,10 0 1,1 10,-10 a8,8 0 1,1 8,8 a6,6 0 1,0 6,-6"/><path d="M34,36 a7,7 0 1,1 7,-7" opacity=".7"/></g></svg>
+<svg class="cloud br" viewBox="0 0 64 44"><g fill="none" stroke="#C9A24B" stroke-width="2"><path d="M6,38 a10,10 0 1,1 10,-10 a8,8 0 1,1 8,8 a6,6 0 1,0 6,-6"/><path d="M34,36 a7,7 0 1,1 7,-7" opacity=".7"/></g></svg>
+<div class="wrap">
+  <div class="xi">囍</div>
+  <div class="invite">诚 邀</div>
+  <div class="names">张三<span class="amp">&</span>李四</div>
+  <div class="event">结婚典礼</div>
+  <div class="rule"><div class="l"></div><div class="d"></div><div class="r"></div></div>
+  <div class="bless">两姓联姻，一堂缔约<br>良缘永结，匹配同称<br>诚邀您携家人共同见证，分享这份喜悦</div>
+  <div class="info">
+    <div class="big">2026年11月8日 · 星期日</div>
+    <div>午宴 12:00 恭候 &nbsp;·&nbsp; 12:30 入席</div>
+    <div class="big vb">义乌市幸福里国际酒店 · 三楼宴会厅</div>
+    <div class="sub">义乌市江东街道幸福路 88 号</div>
+  </div>
+  <div class="host">张建国 · 王秀英 &nbsp;敬邀</div>
+  <div class="btn">填写回执</div>
+</div>
+</body></html>

@@ -4,12 +4,12 @@
 <block wx:if="{{enabled && summary}}">
   <view class="card">
     <view class="form-row"><text class="form-val" style="font-size:17px;font-weight:600">邀请好友一起记账，双方都有奖励</text></view>
-    <view class="form-row"><text class="form-val" style="line-height:1.7">把你的邀请码发给还没用过礼单簿的朋友，对方绑定后记下第一笔（新建 1 个礼薄并记 1 条收礼，或记 1 条送礼），你就能获得收礼额度池 +{{summary.perInvite.receivePool}} 条、送礼 +{{summary.perInvite.giftRecords}} 条。</text></view>
+    <view class="form-row"><text class="form-val" style="line-height:1.7">把你的邀请码发给还没用过礼单簿的朋友，对方绑定后完成第一步（新建 1 个礼薄并添加一位收礼亲友，或添加一位送礼亲友，用这位亲友记上一笔），你就能获得收礼名额 +{{summary.perInvite.receivePool}} 条、送礼 +{{summary.perInvite.giftRecords}} 条。</text></view>
   </view>
 
   <view class="section-title">我的奖励</view>
   <view class="card">
-    <view class="form-row"><text class="form-label">已得奖励</text><text class="form-val">收礼额度池 +{{summary.poolEarned}} 条 · 送礼 +{{summary.giftsEarned}} 条</text></view>
+    <view class="form-row"><text class="form-label">已得奖励</text><text class="form-val">收礼名额 +{{summary.poolEarned}} 条 · 送礼 +{{summary.giftsEarned}} 条</text></view>
     <view class="form-row"><text class="form-label">成功邀请</text><text class="form-val">{{summary.successfulInvites}} / {{summary.maxSuccessfulInvites}} 次</text></view>
     <view style="padding:0 16px 12px">
       <view style="height:6px;border-radius:3px;background:#F0E6D4">
@@ -48,5 +48,5 @@
       <text class="form-val">{{item.statusText}} · {{item.dateText}}</text>
     </view>
   </view>
-  <view class="tip">奖励额度发放后立即计入你的可用额度（收礼额度池为所有礼薄共用），在「我的」和额度详情里都能看到。</view>
+  <view class="tip">奖励额度发放后立即计入你的可用额度（收礼名额为所有礼薄共用），在「我的」和额度详情里都能看到。</view>
 </block>

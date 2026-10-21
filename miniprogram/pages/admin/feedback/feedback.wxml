@@ -1,0 +1,21 @@
+<view class="warn-banner">反馈是用户主动写给我们的内容，可以看；提交人只显示脱敏编号。</view>
+<view class="card row-between">
+  <text class="pill {{filter === item.id ? 'pill-on' : ''}}" wx:for="{{filters}}" wx:key="id" bindtap="onFilter" data-id="{{item.id}}">{{item.name}}</text>
+  <text class="note">共 {{total}} 条</text>
+</view>
+<view wx:if="{{loading}}"><view class="note">加载中…</view></view>
+<view class="card" wx:for="{{list}}" wx:key="_id" bindtap="onSelect" data-id="{{item._id}}">
+  <view class="row-between">
+    <text class="mask">{{item.userId}}</text>
+    <text class="pill">{{item.status === 'handled' ? '已处理' : '待处理'}}</text>
+  </view>
+  <view class="fb-content">{{item.content}}</view>
+  <view class="note">{{item.timeText}}<text wx:if="{{item.images.length}}"> · 附图 {{item.images.length}} 张</text></view>
+</view>
+<view wx:if="{{!loading && list.length === 0}}" class="note">暂无反馈。</view>
+<view wx:if="{{selected}}" class="card">
+  <view class="form-row"><text class="form-val" style="font-weight:bold">反馈详情</text></view>
+  <view class="fb-content">{{selected.content}}</view>
+  <view class="note">提交人：{{selected.userId}} · {{selected.timeText}} · 状态：{{selected.status === 'handled' ? '已处理' : '待处理'}}</view>
+  <button class="btn-primary" bindtap="onToggleStatus">{{selected.status === 'handled' ? '改回待处理' : '标记为已处理'}}</button>
+</view>

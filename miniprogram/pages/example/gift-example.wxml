@@ -1,0 +1,39 @@
+<!-- 送礼示例页（假数据，只读；版式与真实送礼列表页一致） -->
+<view class="example-bar">示例 · 里面的数据都是假的，让你先看看长什么样</view>
+
+<!-- 送礼列表 -->
+<block wx:if="{{view === 'list'}}">
+  <view class="card summary">
+    <text>共计：</text><text class="red num">{{totalCount}} 笔 {{totalText}}</text>
+  </view>
+  <view class="card">
+    <view class="gift-row" wx:for="{{gifts}}" wx:key="index" data-i="{{index}}" bindtap="openGift">
+      <view class="pat {{item.isBaishi ? 'baishi' : ''}}"><image class="pat-img" src="{{item.icon}}" mode="aspectFit" /></view>
+      <view class="mid">
+        <text class="nm songti">{{item.name}}</text>
+        <text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text>
+      </view>
+      <text class="amt num">-{{item.amountText}}</text>
+    </view>
+  </view>
+  <view class="example-note">点任意一条记录，可以看详情页长什么样。</view>
+</block>
+
+<!-- 送礼详情（只读样式，与真实送礼详情同版式，无修改/删除按钮） -->
+<block wx:if="{{view === 'detail'}}">
+  <view class="back-row" bindtap="backToList">‹ 返回示例列表</view>
+  <view class="card pat-card">
+    <view class="pat-big {{gift.isBaishi ? 'baishi' : ''}}">
+      <image class="pat-img" src="{{gift.icon}}" mode="aspectFit" />
+    </view>
+    <text class="songti pat-name {{gift.isBaishi ? 'baishi' : ''}}">{{gift.tagName}}</text>
+  </view>
+  <view class="card">
+    <view class="form-row"><text class="form-label">场合</text><text class="form-val">{{gift.tagName}}</text></view>
+    <view class="form-row"><text class="form-label">日期</text><text class="form-val num">{{gift.date}}</text></view>
+    <view class="form-row"><text class="form-label">姓名</text><text class="form-val">{{gift.name}}</text></view>
+    <view class="form-row"><text class="form-label">金额</text><text class="form-val strong num">-{{gift.amountText}}</text></view>
+    <view class="form-row"><text class="form-label">备注</text><text class="form-val {{gift.remarkText === '无' ? 'ph' : ''}}">{{gift.remarkText}}</text></view>
+  </view>
+  <view class="example-note">这是示例详情，只能看；正式使用时，下面会有"修改""删除"按钮。</view>
+</block>

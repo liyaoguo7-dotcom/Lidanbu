@@ -1,0 +1,15 @@
+<!-- 常见问题 -->
+<view class="card" style="padding:6px 0">
+  <view class="qa" wx:for="{{faqs}}" wx:key="q">
+    <view class="qa-q" data-idx="{{index}}" bindtap="onToggle">
+      <text class="qa-qt">{{item.q}}</text>
+      <text class="chev">{{openIdx === index ? '˄' : '›'}}</text>
+    </view>
+    <view class="qa-a" wx:if="{{openIdx === index}}">
+      <text>{{item.a}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="tip"><text>没找到答案？去「我的 — 意见反馈」写给我们。</text></view>
+<view style="height:30px"></view>

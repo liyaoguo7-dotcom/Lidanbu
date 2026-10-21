@@ -24,7 +24,7 @@
 .sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
   background: #fff; border-radius: 16px 16px 0 0;
-  z-index: 21; padding-bottom: 20px;
+  z-index: 21; padding-bottom: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom));
 }
 .sname { text-align: center; font-size: 17px; font-weight: 600; padding: 18px 0 6px; }
 .sopt { text-align: center; height: 58px; line-height: 58px; font-size: 15px; border-top: 2px solid #F4F4F4; }

@@ -1,0 +1,24 @@
+<!-- 通知中心 -->
+<view class="card" wx:if="{{!loading && items.length}}" style="padding:6px 0">
+  <view class="n-head">
+    <text class="n-head-t">全部消息</text>
+    <text class="n-head-a" wx:if="{{unread}}" bindtap="onMarkAll">全部已读</text>
+  </view>
+  <view class="n-item" wx:for="{{items}}" wx:key="_id" data-id="{{item._id}}" bindtap="onTapItem">
+    <view class="n-dot {{item.read ? 'off' : ''}}"></view>
+    <view class="n-main">
+      <view class="n-row">
+        <text class="n-title {{item.read ? 'read' : ''}}">{{item.title}}</text>
+        <text class="n-time">{{item.timeText}}</text>
+      </view>
+      <text class="n-body">{{item.body}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="card n-empty" wx:if="{{!loading && !items.length}}">
+  <text class="n-empty-t">暂时没有新消息</text>
+  <text class="n-empty-d">会员快到期、邀请奖励到账、家人共享有变化时，我们会第一时间在这里告诉你。</text>
+</view>
+
+<view style="height:30px"></view>

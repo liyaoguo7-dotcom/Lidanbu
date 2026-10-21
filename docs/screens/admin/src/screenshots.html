@@ -1,0 +1,37 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:375px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; color:#333; font-size:15px; }
+.nav { background:#F0E6D4; height:88px; position:relative; }
+.nav .back { position:absolute; left:14px; bottom:12px; font-size:22px; color:#333; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
+.card { background:#FFF; border-radius:12px; margin:12px; }
+.form-row { display:flex; align-items:center; padding:0 16px; min-height:58px; border-bottom:1px solid #F0F0F0; }
+.form-row:last-child { border-bottom:none; }
+.form-label { width:82px; flex:none; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.form-val { flex:1; }
+.note { font-size:13px; color:#999; margin:12px 16px; line-height:1.6; }
+.warn-banner { background:#FFF7E6; border:1px solid #F5DFA8; color:#8A6D1B; font-size:14px; border-radius:12px; margin:12px; padding:14px 16px; line-height:1.6; }
+.stat-grid { display:flex; flex-wrap:wrap; padding:4px; }
+.stat-card { flex:1 1 40%; background:#FFF; border-radius:12px; margin:8px; padding:18px 12px; text-align:center; }
+.stat-num { font-size:26px; font-weight:bold; color:#333; }
+.stat-label { font-size:13px; color:#999; margin-top:6px; }
+.mask { font-family:monospace; font-size:13px; color:#666; }
+.pill { display:inline-block; font-size:12px; border:1px solid #E0E0E0; border-radius:14px; padding:4px 12px; margin:4px 6px 4px 0; color:#666; }
+.pill.on { background:#F0575A; color:#fff; border-color:#F0575A; }
+.pill.danger { color:#C0392B; border-color:#C0392B; }
+.row-between { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; }
+.btn-primary { background:#F0575A; color:#fff; border-radius:28px; margin:12px; padding:13px 0; text-align:center; font-size:15px; }
+.btn-danger { background:#C0392B; color:#fff; border-radius:28px; margin:12px 12px 0; padding:13px 0; text-align:center; font-size:15px; }
+.btn-ghost { background:#fff; color:#333; border:1px solid #DDD; border-radius:28px; margin:8px 12px 12px; padding:13px 0; text-align:center; font-size:15px; }
+.fb-content { font-size:14px; color:#333; line-height:1.6; padding:4px 16px 8px; }
+.ph { color:#C2C2C2; }
+.sw { width:48px; height:28px; border-radius:14px; background:#07C160; position:relative; flex:none; }
+.sw::after { content:""; position:absolute; right:2px; top:2px; width:24px; height:24px; border-radius:50%; background:#fff; }
+.sw.off { background:#E0E0E0; } .sw.off::after { right:auto; left:2px; }
+.chk { width:20px; height:20px; border-radius:50%; background:#F0575A; color:#fff; font-size:13px; text-align:center; line-height:20px; flex:none; }
+.chk.off { background:#fff; border:1px solid #CCC; color:#fff; }
+.del { color:#C0392B; font-size:13px; padding:8px 16px; }
+.add { color:#F0575A; font-size:14px; padding:10px 16px; }
+</style></head><body>
+<div class="nav"><span class="back">‹</span><div class="title">示例截图管理</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div><div class="warn-banner">静态清单：示例页素材已随产品上线；替换素材走代码仓库更新，本页不提供上传。</div><div class="card"><div class="form-row"><span class="form-val" style="font-weight:bold">产品内示例页（已上线，用户可点开）</span></div><div class="form-row"><span class="form-label" style="width:130px">收礼示例页</span><span class="form-val"><span class="pill">已上线</span><div class="note" style="margin:6px 0 0">假数据真实页面，收礼空状态「点击查看示例」进入</div></span></div><div class="form-row"><span class="form-label" style="width:130px">送礼示例页</span><span class="form-val"><span class="pill">已上线</span><div class="note" style="margin:6px 0 0">假数据真实页面，送礼空状态「点击查看示例」进入</div></span></div></div><div class="card"><div class="form-row"><span class="form-val" style="font-weight:bold">主流程页面截图存档（docs/screens/，22 张）</span></div><div class="form-row"><span class="form-label" style="width:130px">页面截图</span><span class="form-val"><span class="pill">已存档</span><div class="note" style="margin:6px 0 0">收礼、送礼、往来、竖线树、共享、导出、会员、邀请等</div></span></div></div><div class="card"><div class="form-row"><span class="form-val" style="font-weight:bold">横置礼单本截图存档（docs/screens/landscape/，10 张）</span></div><div class="form-row"><span class="form-label" style="width:130px">定版图</span><span class="form-val"><span class="pill">已存档</span><div class="note" style="margin:6px 0 0">请横屏页、6 种收礼样式、送礼横置、半屏详情、样式面板</div></span></div></div><div class="note">空状态「点击查看示例」进入的是假数据真实页面（可点、可滑），不是图片占位。</div></body></html>

@@ -1,0 +1,12 @@
+/* 常见问题 */
+.qa { border-bottom: 1px solid #F0F0F0; }
+.qa:last-child { border-bottom: none; }
+.qa-q {
+  display: flex; align-items: center;
+  padding: 0 16px; min-height: 58px;
+}
+.qa-qt { flex: 1; font-size: 15px; }
+.qa-a {
+  padding: 0 16px 16px;
+  font-size: 13px; color: #666; line-height: 1.8;
+}

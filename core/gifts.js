@@ -8,6 +8,7 @@ const { COLLECTIONS, now } = require('./models');
 const authz = require('./authz');
 const quota = require('./quota');
 const audit = require('./audit');
+const restriction = require('./restriction');
 const { today } = require('./receive');
 
 async function getOwner(db, ownerId) {
@@ -15,6 +16,7 @@ async function getOwner(db, ownerId) {
 }
 
 async function createGift(db, actorId, ownerId, { contactId, tagId, amount, remark = '', date }) {
+  await restriction.assertWritable(db, actorId);
   const c = await authz.check(db, actorId, 'add', { kind: 'giftRecord', ownerId });
   if (!c.ok) throw errors.permDenied(c.reason);
 
@@ -36,6 +38,7 @@ async function createGift(db, actorId, ownerId, { contactId, tagId, amount, rema
 }
 
 async function updateGift(db, actorId, ownerId, giftId, patch) {
+  await restriction.assertWritable(db, actorId);
   const g = await db.collection(COLLECTIONS.GiftRecord).findOne({ _id: giftId, ownerId });
   if (!g) throw new Error('记录不存在');
   const c = await authz.check(db, actorId, 'edit', { kind: 'giftRecord', ownerId });
@@ -51,6 +54,7 @@ async function updateGift(db, actorId, ownerId, giftId, patch) {
 }
 
 async function deleteGift(db, actorId, ownerId, giftId) {
+  await restriction.assertWritable(db, actorId);
   const g = await db.collection(COLLECTIONS.GiftRecord).findOne({ _id: giftId, ownerId });
   if (!g) throw new Error('记录不存在');
   const c = await authz.check(db, actorId, 'delete', { kind: 'giftRecord', ownerId });

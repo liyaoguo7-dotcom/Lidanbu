@@ -1,0 +1,51 @@
+<!-- 收礼示例页（假数据，只读；版式与真实收礼页一致） -->
+<view class="example-bar">示例 · 里面的数据都是假的，让你先看看长什么样</view>
+
+<!-- 礼薄列表 -->
+<block wx:if="{{view === 'list'}}">
+  <view class="total-line"><text>共计：{{books.length}}本</text></view>
+  <view class="list">
+    <view class="event-row card" wx:for="{{books}}" wx:key="_id" data-id="{{item._id}}" bindtap="openBook">
+      <view class="pat {{item.isBaishi ? 'baishi' : ''}}">
+        <image class="pat-img" src="{{item.icon}}" mode="aspectFit" />
+      </view>
+      <view class="mid">
+        <view class="line1">
+          <text class="nm songti">{{item.name}}</text>
+          <text class="dt num">{{item.date}}</text>
+        </view>
+        <view class="line2">
+          <text class="cnt">共{{item.count}}笔 ｜ </text><text class="amt num">￥{{item.amtText}}</text>
+        </view>
+      </view>
+      <text class="more">›</text>
+    </view>
+  </view>
+  <view class="example-note">点任意一本礼薄，可以继续看里面的记录长什么样。</view>
+</block>
+
+<!-- 某本礼薄的记录列表 -->
+<block wx:if="{{view === 'records'}}">
+  <view class="back-row" bindtap="backToList">‹ 返回示例礼薄</view>
+  <view class="card">
+    <view class="rec-row" wx:for="{{records}}" wx:key="index" data-i="{{index}}" bindtap="openRecord">
+      <text class="rec-name songti">{{item.name}}</text>
+      <text class="rec-type">{{item.type}}</text>
+      <text class="rec-amt num">+{{item.amountText}}</text>
+    </view>
+  </view>
+  <view class="example-note">点任意一条记录，可以看详情页长什么样。</view>
+</block>
+
+<!-- 记录详情（只读样式，与真实收礼详情同版式，无修改/删除按钮） -->
+<block wx:if="{{view === 'detail'}}">
+  <view class="back-row" bindtap="backToRecords">‹ 返回记录列表</view>
+  <view class="card">
+    <view class="form-row"><text class="form-label">姓名</text><text class="form-val">{{record.name}}</text></view>
+    <view class="form-row"><text class="form-label">类型</text><text class="form-val">{{record.type}}</text></view>
+    <view class="form-row"><text class="form-label">日期</text><text class="form-val num">{{record.date}}</text></view>
+    <view class="form-row"><text class="form-label">金额</text><text class="form-val strong red num">+{{record.amountText}}</text></view>
+    <view class="form-row"><text class="form-label">备注</text><text class="form-val {{record.remarkText === '无' ? 'ph' : ''}}">{{record.remarkText}}</text></view>
+  </view>
+  <view class="example-note">这是示例详情，只能看；正式使用时，下面会有"修改""删除"按钮。</view>
+</block>

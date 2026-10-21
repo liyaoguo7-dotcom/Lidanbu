@@ -47,6 +47,28 @@
   </view>
 </view>
 
+<!-- 待注销提示：冷静期内显示，去注销页可撤销 -->
+<view class="warn-banner" wx:if="{{cancelPending}}" bindtap="onLogout">
+  你的账号已申请注销，将在 {{cancelPending.cancelAtText}} 执行（还剩 {{cancelPending.remainingDays}} 天）。点这里可以撤销 ›
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onNotifications">
+    <text class="form-val">通知</text>
+    <view class="badge" wx:if="{{unreadCount}}">{{unreadCount > 99 ? '99+' : unreadCount}}</view>
+    <text class="chev">›</text>
+  </view>
+  <view class="form-row" bindtap="onFeedback">
+    <text class="form-val">意见反馈</text><text class="chev">›</text>
+  </view>
+  <view class="form-row" bindtap="onFaq">
+    <text class="form-val">常见问题</text><text class="chev">›</text>
+  </view>
+  <view class="form-row" bindtap="onAbout">
+    <text class="form-val">关于我们</text><text class="chev">›</text>
+  </view>
+</view>
+
 <view class="card">
   <view class="form-row" bindtap="onService">
     <text class="form-val">联系客服</text><text class="chev">›</text>
@@ -61,6 +83,6 @@
 </view>
 <!-- 老板平台开发期隐藏入口：连点版本号 5 次进入。生产部署方式待定（上线前必须加管理员身份校验+二次验证）。 -->
 <view style="text-align:center;padding:6px 0 4px" bindtap="onVersionTap">
-  <text style="font-size:11px;color:#D8D8D8">v0.5.0-dev</text>
+  <text style="font-size:11px;color:#D8D8D8">{{version}}</text>
 </view>
 <view style="height:30px"></view>

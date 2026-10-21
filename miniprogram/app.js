@@ -46,6 +46,27 @@ App({
     } catch (e) {
       console.error('[礼单簿] 数据服务初始化失败', e);
     }
+    this.watchNetwork();
+  },
+
+  /** 弱网/离线提示（大白话）：本地模式数据本来就在本机，断网可继续记；
+   *  云模式断网时提示联网后再试。只在网络状态变化时提示，不反复打扰。 */
+  watchNetwork() {
+    if (typeof wx === 'undefined' || !wx.onNetworkStatusChange) return;
+    const local = !!(AppConfig.demo && AppConfig.demo.localMode);
+    const hint = local
+      ? '现在没有网络，礼单簿可以先记在本机，数据都在你的手机里'
+      : '现在没有网络，联网后再试一次吧';
+    wx.onNetworkStatusChange((res) => {
+      if (!res.isConnected) wx.showToast({ title: hint, icon: 'none', duration: 2600 });
+    });
+    if (wx.getNetworkType) {
+      wx.getNetworkType({
+        success: (res) => {
+          if (res.networkType === 'none') wx.showToast({ title: hint, icon: 'none', duration: 2600 });
+        },
+      });
+    }
   },
 
   onShow(options) {

@@ -53,3 +53,86 @@
   font-size: 15px;
 }
 .add-plus { font-size: 20px; margin-right: 6px; }
+
+/* 原图固定在上方（滚动条目时始终可见） */
+.photo-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+/* 校验失败定位到的条目 */
+.item-error {
+  border: 1.5px solid #F0575A;
+}
+.item-err {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: #F0575A;
+}
+.pick-btn {
+  flex: none;
+  font-size: 13px;
+  color: #F0575A;
+  border: 1px solid #F0575A;
+  border-radius: 14px;
+  padding: 5px 12px;
+  margin-left: 8px;
+}
+.form-picker { flex: 1; }
+.form-picker .chev { color: #C2C2C2; }
+/* 结果页 */
+.result-card {
+  margin-top: 60px;
+  padding: 36px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.result-big { font-size: 20px; }
+.result-count { font-size: 16px; margin-top: 14px; }
+.result-sub { font-size: 13px; color: #999; margin-top: 8px; }
+.result-btn { width: 100%; margin-top: 18px; text-align: center; }
+/* 亲友选择器 */
+.picker-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 60;
+}
+.picker-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 16px 16px 26px;
+  padding-bottom: calc(26px + env(safe-area-inset-bottom));
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+}
+.picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.picker-title { font-size: 16px; }
+.picker-close { font-size: 22px; color: #999; padding: 0 6px; }
+.picker-search { margin-top: 12px; }
+.picker-list { margin-top: 8px; max-height: 38vh; }
+.picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 2px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.picker-name { font-size: 15px; }
+.picker-remark { font-size: 12px; color: #C2C2C2; }
+.picker-empty { text-align: center; color: #C2C2C2; font-size: 13px; padding: 18px 0; }
+.picker-new { margin-top: 14px; text-align: center; }

@@ -13,6 +13,8 @@
     "pages/import/import-home",
     "pages/import/import-event",
     "pages/import/import-review",
+    "pages/example/receive-example",
+    "pages/example/gift-example",
     "pages/receive/receive",
     "pages/receive-add/receive-add",
     "pages/receive-detail/receive-detail",
@@ -27,6 +29,13 @@
     "pages/admin/invite/invite",
     "pages/admin/share-overview/share-overview",
     "pages/admin/app-config/app-config",
+    "pages/admin/account/account",
+    "pages/admin/photo-usage/photo-usage",
+    "pages/admin/feedback/feedback",
+    "pages/admin/orders/orders",
+    "pages/admin/screenshots/screenshots",
+    "pages/admin/admins/admins",
+    "pages/admin/abuse/abuse",
     "pages/admin/todo/todo",
     "pages/share/share-home",
     "pages/share/share-invite",
@@ -36,12 +45,23 @@
     "pages/export/export-home",
     "pages/export/export-history",
     "pages/member/member-home",
+    "pages/member/purchase/purchase",
+    "pages/member/orders/orders",
     "pages/landscape/receive/receive",
     "pages/landscape/gift/gift",
     "pages/landscape/rotate/rotate",
     "pages/mine-cancel/mine-cancel",
     "pages/invite/invite-reward",
-    "pages/privacy/privacy"
+    "pages/invitation/list/list",
+    "pages/invitation/edit/edit",
+    "pages/invitation/preview/preview",
+    "pages/invitation/guest/guest",
+    "pages/invitation/stats/stats",
+    "pages/privacy/privacy",
+    "pages/mine/notifications",
+    "pages/mine/feedback",
+    "pages/mine/faq",
+    "pages/mine/about"
   ],
   "subpackages": [
     {
@@ -57,7 +77,9 @@
     },
     "pages/mine/mine": {
       "network": "wifi",
-      "packages": ["fonts"]
+      "packages": [
+        "fonts"
+      ]
     }
   },
   "sitemapLocation": "sitemap.json",

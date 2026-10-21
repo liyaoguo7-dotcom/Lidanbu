@@ -1,0 +1,12 @@
+/* 关于我们 */
+.ab-head {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 34px 24px 10px; text-align: center;
+}
+.ab-logo { width: 64px; height: 64px; }
+.ab-name { font-size: 20px; font-weight: 600; margin-top: 12px; }
+.ab-desc { font-size: 13px; color: #999; line-height: 1.7; margin-top: 8px; }
+.ab-ver { font-size: 12px; color: #C2C2C2; margin-top: 10px; }
+.ab-credit { padding: 16px; }
+.ab-credit-t { display: block; font-size: 13px; color: #999; }
+.ab-credit-d { display: block; font-size: 12px; color: #C2C2C2; line-height: 1.7; margin-top: 6px; }

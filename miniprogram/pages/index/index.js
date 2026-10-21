@@ -54,7 +54,7 @@ Page({
     }
     if (id === 'share') { wx.navigateTo({ url: '/pages/share/share-home' }); return; }
     if (id === 'photo') { wx.navigateTo({ url: '/pages/import/import-home' }); return; }
-    if (id === 'invite') { wx.showToast({ title: '电子请柬（阶段4）', icon: 'none' }); return; }
+    if (id === 'invite') { wx.navigateTo({ url: '/pages/invitation/list/list' }); return; }
     if (id === 'export') { wx.navigateTo({ url: '/pages/export/export-home' }); return; }
   },
 

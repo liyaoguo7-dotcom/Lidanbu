@@ -30,7 +30,7 @@
 <view class="empty" wx:if="{{shown.length === 0 && !searching}}">
   <image class="empty-icon" src="/images/icons/folder.svg" mode="aspectFit" />
   <text class="empty-text">还没有记录，请点击下方红色＋按钮添加</text>
-  <text class="empty-sample">点击查看示例</text>
+  <text class="empty-sample" bindtap="goSample">点击查看示例</text>
 </view>
 
 <view class="empty" wx:if="{{shown.length === 0 && searching}}">

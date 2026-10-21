@@ -19,6 +19,8 @@ const MESSAGES = {
   'out-of-scope:event': '超出授权范围',
   'out-of-scope:contact': '超出授权范围',
   'member-cannot-touch-owner-contacts': '无权操作账本主人的亲友录',
+  'user-restricted': '该账号已被限制，暂时不能记账或修改，如有疑问请联系客服',
+  'invitation-not-owner': '只能操作自己创建的请柬',
   'sharing-paused': '共享已暂停：账本主人会员已过期，续费后自动恢复',
   'grace-readonly': '账本主人会员已到期，共享当前为只读',
   // —— 额度类（v3.1 第0章第17条：委婉"卖惨"文案，不报剩余数） ——
@@ -37,6 +39,11 @@ const MESSAGES = {
   'invite-condition-incomplete': '还差一点：新建 1 个礼薄并记 1 条收礼，或记 1 条送礼，就能为邀请人点亮奖励',
   'invite-cap-reached': '邀请人的奖励名额已达上限',
   'invite-device-duplicate': '这台设备已经参与过邀请奖励啦',
+  // —— 支付/订单类 ——
+  'plan-not-found': '这个会员档位已经下架啦，看看其他档位吧',
+  'order-not-found': '订单不存在',
+  'not-order-owner': '无权查看该订单',
+  'pay-not-implemented': '支付通道正在接入中，请稍后再试',
 };
 
 function userMessage(reason) {

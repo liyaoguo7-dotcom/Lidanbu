@@ -36,13 +36,43 @@ function _makeDb() {
   return new WxStorageDB();
 }
 
+/** 网络类错误识别（云函数调用失败/请求超时等）→ 给大白话网络文案，不透内部信息 */
+function isNetworkError(err) {
+  if (!err) return false;
+  const msg = String((err && (err.errMsg || err.message)) || err);
+  return /request:fail|callFunction:fail|timeout|timed out|Network|network|net::|ERR_|socket|连接失败|网络/.test(msg);
+}
+
+const NETWORK_HINT = '网络不太顺，请检查网络后再试一次';
+
 function friendly(err) {
   if (!err) return '操作失败，请重试';
+  if (isNetworkError(err)) return NETWORK_HINT;
   const msg = err.message || String(err);
   // core 抛出的已是用户可读文案（errors.js），直接透出；兜底未知错误
   // 卖惨文案以"呜呜"开头，也须透出（此前会被吞成"操作失败"，已修复）
-  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|呜呜/.test(msg)) return msg;
+  if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|请柬|请填写|请选择|反馈|注销|呜呜/.test(msg)) return msg;
   return '操作失败，请重试';
+}
+
+/** 订单 → 页面展示形状（金额走 formatAmount 两位小数；日期只到天，与全站口径一致） */
+const ORDER_STATUS_TEXT = {
+  pending: '待支付', paid: '已开通', failed: '支付失败', cancelled: '已取消', refunded: '已退款',
+};
+function presentOrder(o) {
+  if (!o) return null;
+  const dstr = (ts) => (ts ? new Date(ts).toLocaleDateString('zh-CN') : '');
+  return {
+    id: o._id,
+    planId: o.planId,
+    planName: o.planName,
+    days: o.days,
+    amountText: core.format.formatAmount(o.amountFen),
+    status: o.status,
+    statusText: ORDER_STATUS_TEXT[o.status] || o.status,
+    createdText: dstr(o.createdAt),
+    paidText: dstr(o.paidAt),
+  };
 }
 
 async function ensureUser() {
@@ -142,6 +172,10 @@ const service = {
       const saved = wx.getStorageSync(USER_KEY);
       if (saved) _userId = saved;
     } catch (e) { /* ignore */ }
+    // 注销冷静期到期执行（本地模式的触发点；云端改定时任务，见 core/account）
+    if (_userId) {
+      try { await core.account.executeCancellationIfDue(_db, _userId); } catch (e) { /* 忽略 */ }
+    }
     await ensureUser();
     await seedDemo();
   },
@@ -263,6 +297,35 @@ const service = {
     });
   },
 
+  // —— 支付与会员订单（任务K：适配层 + 模拟支付） ——
+  /** 生效价格档位：老板平台配置优先、否则静态占位价；金额已格式化，页面不写死价格 */
+  async getPricing() {
+    const plans = await core.payment.resolvePricing(_db);
+    return plans.map((p) => ({ ...p, priceText: core.format.formatAmount(p.priceFen) }));
+  },
+
+  /**
+   * 购买会员：本地演示走 Mock 模拟支付（默认成功，走与真实通道相同的
+   * 建单→调起→回调发货链路）；真实环境换 WechatVirtualPayAdapter，
+   * 本方法与页面均不改（见 core/pay-adapter.js、docs/T0.3）。
+   */
+  async purchaseMembership(planId) {
+    try {
+      const adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
+      const r = await core.payment.purchase(_db, _userId, planId, { adapter });
+      return { delivered: r.delivered, order: presentOrder(r.order) };
+    } catch (e) {
+      if (e && e.code === 'plan-not-found') throw new Error('这个会员档位已经下架啦，看看其他档位吧');
+      throw new Error(friendly(e));
+    }
+  },
+
+  /** 我的订单（最新在上，金额两位小数） */
+  async listMyOrders() {
+    const list = await core.payment.listOrders(_db, _userId);
+    return list.map(presentOrder);
+  },
+
   // —— 家庭共享（阶段3） ——
   /** 发起邀请：{ switches, scope:{events:[], gifts} }；会员专属 */
   async shareInvite({ switches, scope }) {
@@ -357,12 +420,58 @@ const service = {
     return _db.collection(core.models.COLLECTIONS.ExportJob)
       .find({ ownerId: _userId }, { sort: { createdAt: -1 }, limit: 50 });
   },
-  /** 账号注销（⚠️ 待用户确认，确认前不上线） */
-  async requestCancel() {
-    if (!AppConfig.accountCancellation || !AppConfig.accountCancellation.enabled) {
-      throw new Error('账号注销功能待确认，暂未开放');
-    }
-    return core.account.purgeUserOnCancellation(_db, _userId);
+  // —— 账号注销全流程（任务L；⚠️ 开关关闭时申请被拒，确认前不上线） ——
+  /** 提交注销申请（进入冷静期）；开关未开放时抛"暂未开放" */
+  async applyCancellation() {
+    try {
+      return await core.account.requestCancellation(_db, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 撤销注销（冷静期内） */
+  async revokeCancellation() {
+    try {
+      return await core.account.revokeCancellation(_db, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 注销状态：{status, cancelAt, remainingDays, enabled}（"我的"页待注销提示用） */
+  async getCancellationStatus() {
+    return core.account.getCancellationStatus(_db, _userId);
+  },
+
+  // —— 通知中心（任务L） ——
+  /** 顺带触发一次会员三提醒判定（到点才发、去重，见 core/notify） */
+  async _refreshReminders() {
+    try { await core.notify.checkMembershipReminders(_db, _userId); } catch (e) { /* 忽略 */ }
+  },
+  /** 我的通知列表（最新在上，含已读标记） */
+  async listNotifications() {
+    await this._refreshReminders();
+    return core.notify.listNotifications(_db, _userId);
+  },
+  /** 未读通知数（"我的"页红点）；页面打开时顺带判定会员提醒 */
+  async getUnreadCount() {
+    await this._refreshReminders();
+    return core.notify.unreadCount(_db, _userId);
+  },
+  /** 标一条已读（只能标自己的） */
+  async markNotificationRead(notificationId) {
+    return core.notify.markRead(_db, _userId, notificationId);
+  },
+  /** 全部标已读 */
+  async markAllNotificationsRead() {
+    return core.notify.markAllRead(_db, _userId);
+  },
+
+  // —— 意见反馈（任务L） ——
+  /** 提交反馈：文字必填、截图可选（本轮存占位，云联调后由页面先上传再传 fileID） */
+  async submitFeedback({ content, images } = {}) {
+    try {
+      return await core.feedback.submitFeedback(_db, _userId, { content, images });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 我提交过的反馈 */
+  async listMyFeedback() {
+    return core.feedback.listMyFeedback(_db, _userId);
   },
 
   // —— 拍照导入（阶段4；OCR 厂商未拍板，本轮只走 MockOCR） ——
@@ -502,8 +611,9 @@ const service = {
     return col.findOne({ _id: contactId, ownerId: oid });
   },
   /**
-   * 确认写入识别结果；逐条写，首条失败即停。
-   * 成功返回 { written, total }；失败抛错（err.written/err.total 为已写入/总数），
+   * 确认写入识别结果；core 整批原子校验：任一条不合格整批不写。
+   * 成功返回 { written, total }；失败抛错（err.written/err.total 为已写入/总数，
+   * err.itemIndex 为出问题那条的下标，页面据此高亮定位），
    * 额度类错误消息为卖惨文案，直接展示。
    */
   async importWrite({ kind, eventId, items }) {
@@ -512,6 +622,7 @@ const service = {
       const err = new Error(friendly(r.rawError));
       err.written = r.written;
       err.total = r.total;
+      if (Number.isInteger(r.rawError.itemIndex)) err.itemIndex = r.rawError.itemIndex;
       throw err;
     }
     return { written: r.written, total: r.total };
@@ -625,6 +736,138 @@ const service = {
   async adminShareOverview({ limit } = {}) {
     return core.admin.shareOverview(_db, { limit });
   },
+  // —— 老板平台补全（任务M）：以下接口 core 侧一律校验管理员身份
+  // （只认 appConfig 文档 adminIds；本地演示需先把演示用户写进名单）——
+  async adminSearchAccounts(opts = {}) {
+    try { return await core.admin.searchAccounts(_db, _userId, opts); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminImportUsage(opts = {}) {
+    try { return await core.admin.importUsage(_db, _userId, opts); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminFeedbackList(opts = {}) {
+    try { return await core.admin.feedbackList(_db, _userId, opts); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminFeedbackSetStatus(feedbackId, status) {
+    try { return await core.admin.feedbackSetStatus(_db, _userId, feedbackId, status); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminOrderList(opts = {}) {
+    try { return await core.admin.orderList(_db, _userId, opts); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminOrderStats() {
+    try { return await core.admin.orderStats(_db, _userId); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminListAdmins() {
+    try { return await core.admin.listAdmins(_db, _userId); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminAuditTrail(opts = {}) {
+    try { return await core.admin.auditTrail(_db, _userId, opts); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminSetUserRestricted(maskedUserId, input) {
+    try { return await core.admin.setUserRestricted(_db, _userId, maskedUserId, input); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminGetConfig() {
+    try { return await core.admin.getConfig(_db, _userId); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminUpdatePricing(plans) {
+    try { return await core.admin.updatePricing(_db, _userId, plans); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminUpdateFeatureSwitches(features) {
+    try { return await core.admin.updateFeatureSwitches(_db, _userId, features); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminUpdateMemberOnlyFeatures(features) {
+    try { return await core.admin.updateMemberOnlyFeatures(_db, _userId, features); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminUpdateQuotaSettings(patch) {
+    try { return await core.admin.updateQuotaSettings(_db, _userId, patch); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminUpdateInviteSettings(patch) {
+    try { return await core.admin.updateInviteSettings(_db, _userId, patch); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+
+  // —— 电子请柬（阶段4）——
+  // 基础功能：不设会员门禁、不限额度（core/invitation.js 不查会员与额度）。
+  // 客人打开分享链接即可看请柬、填回执；guestKey 用当前用户标识尽力去重
+  //（云环境到位后即真实 openid，本地演示模式为本机演示用户 id，口径一致）。
+  getInvitationStyles() { return core.invitationStyles.STYLES; },
+  getInvitationStyle(styleId) { return core.invitationStyles.getStyle(styleId); },
+  getInvitationTypes() { return core.invitation.TYPES; },
+  getAttendOptions() { return core.invitation.ATTEND_OPTIONS; },
+  invitationTypeName(typeId) { return core.invitation.typeName(typeId); },
+  invitationAttendName(attendId) { return core.invitation.attendName(attendId); },
+
+  /** 我的请柬列表（附回执概况） */
+  async listInvitations() {
+    try {
+      return await core.invitation.listInvitations(_db, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async createInvitation(fields) {
+    try {
+      return await core.invitation.createInvitation(_db, _userId, fields);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  async updateInvitation(invitationId, patch) {
+    try {
+      return await core.invitation.updateInvitation(_db, _userId, invitationId, patch);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 删除请柬（连带回执）；页面须先用统一删除弹窗确认再调 */
+  async deleteInvitation(invitationId) {
+    try {
+      return await core.invitation.deleteInvitation(_db, _userId, invitationId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 读一份请柬：主人预览与客人打开共用（core 侧不设 owner 校验） */
+  async getInvitation(invitationId) {
+    try {
+      return await core.invitation.getInvitation(_db, invitationId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 客人提交回执（重复提交更新同一条） */
+  async submitRsvp(invitationId, { guestName, attend, count, note }) {
+    try {
+      return await core.invitation.submitRsvp(_db, invitationId, {
+        guestName, attend, count, note, guestKey: _userId,
+      });
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 我在这份请柬提交过的回执（客人页回填） */
+  async getMyRsvp(invitationId) {
+    try {
+      return await core.invitation.getMyRsvp(_db, invitationId, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 回执统计（仅主人，core 校验 owner） */
+  async getRsvpStats(invitationId) {
+    try {
+      return await core.invitation.getRsvpStats(_db, _userId, invitationId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 一键把回执客人加入亲友录（仅主人；返回 duplicateWarning 供页面提醒） */
+  async addRsvpGuestToContacts(invitationId, rsvpId) {
+    try {
+      return await core.invitation.addRsvpGuestToContacts(_db, _userId, invitationId, rsvpId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
 };
+
+// 供测试与 app.js 网络提示复用（不属于页面接口）
+service._isNetworkError = isNetworkError;
+service.NETWORK_HINT = NETWORK_HINT;
 
 module.exports = service;

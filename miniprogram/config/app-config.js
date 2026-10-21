@@ -78,6 +78,16 @@ const AppConfig = {
     },
   },
 
+  /** 会员价格档位（静态默认；老板平台 appConfig 文档的 pricing 段可覆盖，覆盖优先）
+   * ⚠️ 下面两个价格是【占位价，待用户定价】，不是正式售价：
+   * 定价后由老板平台写入真实档位即可，页面与下单代码一律从配置读、不得写死价格。
+   * 字段与老板平台 updatePricing 校验口径一致：{id, name, priceFen(分), days}。
+   */
+  pricing: [
+    { id: 'monthly', name: '月卡', priceFen: 100, days: 30 },   // 占位价待用户定（现为 ¥1.00 占位）
+    { id: 'yearly', name: '年卡', priceFen: 1000, days: 365 },  // 占位价待用户定（现为 ¥10.00 占位）
+  ],
+
   /** 邀请奖励额度（用户 2026-10-20 决定：保留并正式开启，不再冻结）
    *
    * 规则摘要：
@@ -117,8 +127,27 @@ const AppConfig = {
    * landscapeMode: 经典红字大写横置礼簿模式
    */
 
-  /** 账号注销（阶段3）：⚠️ 待用户确认，确认前不上线（enabled 保持 false） */
-  accountCancellation: { enabled: false },
+  /** 账号注销（阶段3 + 任务L 全流程）：⚠️ 待用户确认，确认前不上线（enabled 保持 false，
+   * 开关关闭时申请入口直接拒绝）；coolingOffDays 为冷静期天数，冷静期内可撤销，期满执行清理 */
+  accountCancellation: { enabled: false, coolingOffDays: 7 },
+
+  /** 版本号（"我的—关于我们"读这里；发版时只改这一处） */
+  version: 'v0.5.0-dev',
+
+  /** 通知（任务L）：订阅消息模板 ID 占位——云联调时按类型填入公众平台申请的
+   * 模板 ID 后，core/notify 的订阅通道自动启用；留空则只走站内通知 */
+  notify: {
+    subscribeTemplates: {
+      membershipExpiring: '',
+      membershipExpired: '',
+      graceEnding: '',
+      inviteRewardGranted: '',
+      shareChanged: '',
+    },
+  },
+
+  /** 意见反馈（任务L）：正文最长字数 */
+  feedback: { maxLength: 500 },
   /** 本地演示模式（阶段2 2A）：true=用微信本地存储演示，false=走云开发。
    * 正式发布前必须设为 false，见 docs/发布检查清单。 */
   demo: { localMode: true },

@@ -1,0 +1,21 @@
+@import "../card.wxss";
+/* 请柬预览 */
+.inv-page { min-height: 100vh; padding-bottom: 10px; }
+.hint { text-align: center; font-size: 12px; color: #999; margin: 2px 0 10px; }
+.share-cover {
+  margin: 0 12px 12px; border-radius: 12px; padding: 16px 18px; color: #fff;
+}
+.sc-type { font-size: 12px; letter-spacing: 3px; opacity: .85; }
+.sc-title { margin-top: 6px; font-size: 19px; font-weight: 600; line-height: 1.4; }
+.sc-sub { margin-top: 5px; font-size: 13px; opacity: .9; }
+.share-btn { border: none; }
+.share-btn::after { border: none; }
+.ops-row { display: flex; gap: 12px; margin: 14px 24px 0; }
+.op-btn {
+  flex: 1; height: 48px; line-height: 48px; text-align: center;
+  background: #fff; color: #333; font-size: 15px; border-radius: 24px;
+  border: 1px solid #E8E0D0;
+}
+.empty { padding: 28px 20px; text-align: center; }
+.empty-title { font-size: 17px; }
+.empty-desc { margin-top: 8px; font-size: 13px; color: #999; }

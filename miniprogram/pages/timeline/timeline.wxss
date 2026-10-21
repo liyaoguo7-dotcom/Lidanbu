@@ -70,11 +70,14 @@
   color: #333;
   font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
 }
-/* 钢笔线条图标（禁用表情符号） */
+/* 钢笔线条图标（禁用表情符号）
+   图标本体 28rpx 不变；用 padding 扩可点区到 88rpx 见方、负 margin 抵消布局位移，
+   保证可点区域 ≥44px 而版式与定版图逐像素一致（2026-10-21 质量回归修复）。 */
 .tpen {
   width: 28rpx;
   height: 28rpx;
-  margin-left: 12rpx;
+  padding: 30rpx 30rpx 30rpx 42rpx;
+  margin: -30rpx -30rpx -30rpx -30rpx;
   vertical-align: -4rpx;
 }
 .tamt {

@@ -1,19 +1,59 @@
 <!-- 注销账号 -->
-<view class="warn-banner">⚠️ 本功能待用户确认，确认前不上线。以下为预定方案展示。</view>
+<view class="warn-banner" wx:if="{{!enabled}}">⚠️ 本功能待用户确认，确认前不上线。以下为预定方案展示。</view>
 
-<view class="section-title">注销后会发生什么</view>
-<view class="card">
-  <view class="form-row"><text class="form-val">删除你的全部账本数据：亲友、礼薄、收礼/送礼记录、共享关系、导入导出任务</text></view>
-  <view class="form-row"><text class="form-val">审计日志仅保留不含金额和姓名的流水</text></view>
-  <view class="form-row"><text class="form-val">删除后无法恢复；注销前建议先导出备份</text></view>
-</view>
-
-<view class="card">
-  <view class="form-row" bindtap="onToggleConfirm">
-    <text class="check {{confirmed ? 'on' : ''}}">{{confirmed ? '✓' : ''}}</text>
-    <text class="form-val" style="margin-left:10px">我已了解上述后果，并已导出备份</text>
+<!-- 冷静期中：显示状态与撤销 -->
+<block wx:if="{{pending}}">
+  <view class="section-title">注销申请已提交</view>
+  <view class="card">
+    <view class="form-row"><text class="form-val">你的账号正在注销冷静期，将在 {{pending.cancelAtText}} 执行注销（还剩 {{pending.remainingDays}} 天）。</text></view>
+    <view class="form-row"><text class="form-val">冷静期内账号可以正常使用；到期后将按下方说明删除全部账本数据，不能恢复。</text></view>
   </view>
-</view>
+  <view style="height:100px"></view>
+  <view class="btn-bottom"><view class="btn-primary" bindtap="onRevoke">撤销注销，继续使用</view></view>
+</block>
 
-<view style="height:100px"></view>
-<view class="btn-bottom"><view class="btn-danger-outline" bindtap="onCancel">确认注销</view></view>
+<block wx:elif="{{step === 1}}">
+  <view class="section-title">注销后会发生什么</view>
+  <view class="card">
+    <view class="form-row"><text class="form-val">删除你的全部账本数据：亲友、礼薄、收礼/送礼记录、导入导出任务、站内通知和你提交过的反馈</text></view>
+    <view class="form-row"><text class="form-val">家庭共享随之解除：你共享给家人的账本会关闭，你在家人账本里的成员身份会被移除</text></view>
+    <view class="form-row"><text class="form-val">会员资格随注销一并终止，不退费</text></view>
+    <view class="form-row"><text class="form-val">审计日志仅保留不含金额和姓名的流水；为防有人靠注销重注册重复领奖励，邀请绑定与发放记录只保留编号和数量，不含任何账本内容（与隐私政策口径一致）</text></view>
+    <view class="form-row"><text class="form-val">删除后无法恢复；注销前建议先导出备份（下一步可以一键导出）</text></view>
+  </view>
+  <view style="height:100px"></view>
+  <view class="btn-bottom"><view class="btn-danger-outline" bindtap="onToExport">我知道了，继续</view></view>
+</block>
+
+<block wx:elif="{{step === 2}}">
+  <view class="section-title">先备份，再注销</view>
+  <view class="card">
+    <view class="form-row"><text class="form-val">建议先把账本导出成 Excel 留底。注销执行后，所有记录都会被删除，没有后悔药。</text></view>
+  </view>
+  <view class="card">
+    <view class="form-row" bindtap="onGoExport">
+      <text class="form-val">去导出备份</text><text class="chev">›</text>
+    </view>
+  </view>
+  <view style="height:100px"></view>
+  <view class="btn-bottom">
+    <view class="btn-primary" wx:if="{{exported}}" bindtap="onExportDone">已导出，继续注销</view>
+    <view class="btn-danger-outline" wx:else bindtap="onSkipExport">不导出，直接继续</view>
+  </view>
+</block>
+
+<block wx:elif="{{step === 3}}">
+  <view class="section-title">冷静期与最后确认</view>
+  <view class="card">
+    <view class="form-row"><text class="form-val">提交后先进入 {{coolingOffDays}} 天冷静期：期间账号照常使用，随时可以回到这一页撤销注销；冷静期结束当天自动执行删除。</text></view>
+    <view class="form-row"><text class="form-val">执行后无法恢复，会员资格一并终止且不退费。</text></view>
+  </view>
+  <view class="card">
+    <view class="form-row" bindtap="onToggleConfirm">
+      <text class="check {{confirmed ? 'on' : ''}}">{{confirmed ? '✓' : ''}}</text>
+      <text class="form-val" style="margin-left:10px">我已了解上述后果，并确认申请注销</text>
+    </view>
+  </view>
+  <view style="height:100px"></view>
+  <view class="btn-bottom"><view class="btn-danger-outline" bindtap="onApply">{{submitting ? '提交中…' : '提交注销申请'}}</view></view>
+</block>

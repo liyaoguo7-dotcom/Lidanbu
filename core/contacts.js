@@ -9,12 +9,14 @@ const { COLLECTIONS, now } = require('./models');
 const authz = require('./authz');
 const quota = require('./quota');
 const audit = require('./audit');
+const restriction = require('./restriction');
 
 async function getOwner(db, ownerId) {
   return db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
 }
 
 async function createContact(db, actorId, ownerId, { name, remark = '' }) {
+  await restriction.assertWritable(db, actorId);
   if (!name || !name.trim()) throw new Error('姓名必填');
   // 授权：成员不可动主人亲友录（authz 内部已实现）
   const c = await authz.check(db, actorId, 'add', { kind: 'contact', ownerId });
@@ -35,6 +37,7 @@ async function createContact(db, actorId, ownerId, { name, remark = '' }) {
 }
 
 async function updateContact(db, actorId, ownerId, contactId, { name, remark }) {
+  await restriction.assertWritable(db, actorId);
   const c = await authz.check(db, actorId, 'edit', { kind: 'contact', ownerId, contactId });
   if (!c.ok) throw errors.permDenied(c.reason);
   const user = await getOwner(db, ownerId);
@@ -60,6 +63,7 @@ async function countImpact(db, ownerId, contactId) {
  * 连带永久删除其全部往来记录（v3.1 第零章#3），审计留痕。
  */
 async function deleteContact(db, actorId, ownerId, contactId, confirmed = false) {
+  await restriction.assertWritable(db, actorId);
   const impact = await countImpact(db, ownerId, contactId);
   if (!confirmed) return { confirmed: false, ...impact };
 

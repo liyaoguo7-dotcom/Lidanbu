@@ -4,7 +4,8 @@
  *
  * 集合一览：
  * User / Contact / ReceiveEvent / ReceiveRecord / GiftRecord /
- * ShareMembership / ShareGrant / AuditLog / ImportJob / ExportJob / AppConfig
+ * ShareMembership / ShareGrant / AuditLog / ImportJob / ExportJob / AppConfig /
+ * Invitation / Rsvp
  */
 
 const COLLECTIONS = {
@@ -20,14 +21,21 @@ const COLLECTIONS = {
   ExportJob: 'exportJobs',
   AppConfig: 'appConfig',
   InviteBinding: 'inviteBindings', // 邀请关系绑定记录（防重复绑定/防刷，注销后保留以防重复计数）
+  Order: 'orders', // 会员购买订单（支付适配层+模拟支付；真实支付接入后仍用此集合）
+  Invitation: 'invitations', // 电子请柬（阶段4）
+  Rsvp: 'rsvps', // 请柬回执（阶段4）
   // —— 老板平台预留（只存数量与时间，不存账本内容）——
   InviteRewardGrant: 'inviteRewardGrants', // 邀请奖励发放记录
+  Notification: 'notifications', // 站内通知（通知中心，任务L）
+  Feedback: 'feedbacks', // 用户意见反馈（任务L；老板平台反馈列表读此集合）
 };
 
 /**
  * 实体字段说明（code 注释即字典；完整版见 docs/数据字典.md）
  *
- * User: {_id(openid), nickname?, inviteCode(我的邀请码,懒生成), membership:{status:'free'|'member', expireAt: timestamp|null, graceUntil: timestamp|null}, createdAt}
+ * User: {_id(openid), nickname?, inviteCode(我的邀请码,懒生成), membership:{status:'free'|'member', expireAt: timestamp|null, graceUntil: timestamp|null},
+ *   cancelStatus?:'pendingCancel'(已申请注销、冷静期内), cancelApplyAt?, cancelAt?(冷静期满执行时刻),
+ *   restricted?:{status:boolean, reason, by(操作的管理员), at}(老板平台异常用户限制标记；status=true 时核心写入口全拦，只拦写不拦读), createdAt}
  * Contact: {_id, ownerId, name, remark, createdBy(创建者openid), seed?(true=演示种子联系人，普通新建无此字段), createdAt}  // 只有姓名+备注，无手机号
  * ReceiveEvent: {_id, ownerId, name, tagId(10选1), date(YYYY-MM-DD), remark, createdAt}
  * ReceiveRecord: {_id, ownerId, eventId, contactId(稳定ID), amount(分), type(红包/现金/转账/微信/支付宝), remark, date, createdBy(openid), createdAt}
@@ -36,7 +44,9 @@ const COLLECTIONS = {
  * ShareGrant: {_id, membershipId, switches:{view,add,edit,del,export}, scope:{events:[eventId], gifts:bool}, updatedAt}
  *   // view 恒 true；export 默认 false；新建事件默认不共享（不自动进 scope.events）
  * AuditLog: {_id, ownerId, actorId, action, targetType, targetId, detail(不含金额/姓名原文的摘要), createdAt}
- * ImportJob: {_id, ownerId, kind:'gift'|'receive', eventId?, status, createdAt}  // 阶段4用，T1.1只建模
+ * ImportJob: {_id, ownerId, kind:'gift'|'receive', eventId?, status:'success'|'failed'|'partial',
+ *   failReason:'quota'|'validation'|'write-error'|null, itemCount(本批条数), createdAt}
+ *   // writeImport 每次确认写入都记一条（只记条数级，供老板平台用量统计；不含姓名/金额/备注）
  * ExportJob: {_id, ownerId, scope, status, createdAt}  // 阶段3用，T1.1只建模
  * AppConfig: {_id:'singleton', freeQuota, membership, memberOnlyFeatures(会员专属功能清单),
  *   inviteReward(老板平台可覆盖:{enabled, perInvite:{receivePool,giftRecords}, maxSuccessfulInvites}), updatedAt}
@@ -47,6 +57,23 @@ const COLLECTIONS = {
  *   giftsGranted(发放的送礼数), deviceId(领取时设备指纹占位,可空), grantedAt}  // 只存数量与时间，不存账本内容；老板平台用
  * ShareOverview（派生视图，非集合，老板平台用）: {ownerId, memberCount, activeMemberCount,
  *   authorizedEventCount, updatedAt}  // 只存数量，不读账本内容
+ * Invitation: {_id, ownerId, type:'wedding'|'baby'|'school'|'housewarming'|'birthday'|'other',
+ *   title, eventDate(YYYY-MM-DD), eventTime(HH:mm,可空), address,
+ *   mapLoc:{name, latitude, longitude}|null, hostName, blessing,
+ *   styleId('guochao'|'cream'|'french'|'wood'), createdAt}
+ * Rsvp: {_id, invitationId, guestName, attend:'attend'|'absent'|'undecided',
+ *   count(参加人数；非参加为 0), note, guestKey(openid 尽力去重，可空),
+ *   contactId(一键加入亲友录后回填，未加为 null), createdAt}
+ * Notification: {_id, userId(接收人), type:'membershipExpiring'|'membershipExpired'|'graceEnding'|'inviteRewardGranted'|'shareChanged',
+ *   title, body, read:boolean, dedupeKey?(内部去重键，会员提醒/奖励到账防重复发), createdAt}
+ * Feedback: {_id, userId(提交人), content(正文), images:[截图占位路径/云文件ID，最多3张],
+ *   status:'pending'|'handled'(与老板平台反馈列表"待处理/已处理"口径一致), createdAt}
+ * Order: {_id, userId, planId, planName, amountFen(分,下单时快照), days(购买天数快照),
+ *   status:'pending'|'paid'|'failed'|'cancelled'|'refunded', channel:'mock'|'wxvirtual',
+ *   outTradeNo(业务单号,唯一), channelTradeNo?(渠道单号), createdAt, paidAt|null,
+ *   baseAt(发货叠加基准时刻)|null, prevExpireAt(发货前到期时刻)|null,
+ *   deliveredExpireAt(发货后到期时刻)|null, refundedAt|null, reclaimedDays(退款回收天数)|null}
+ *   // 金额以订单快照为准,回调金额与快照不一致拒绝发货;同一 outTradeNo 重复回调只发货一次
  */
 
 function now() {

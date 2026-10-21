@@ -12,10 +12,12 @@ require('./test-form-state');
 require('./test-format');
 require('./test-amount-scan');
 require('./test-import');
+require('./test-example-pages');
 require('./test-export-xlsx');
 require('./test-wanglai');
 require('./test-admin');
 require('./test-admin-config');
+require('./test-admin-full');
 require('./test-cloud-export');
 require('./test-uppercase');
 require('./test-stage3');
@@ -24,6 +26,10 @@ require('./test-landscape-route');
 require('./test-font-source');
 require('./test-invite-reward');
 require('./test-demo-seed');
+require('./test-invitation');
+require('./test-payment');
+require('./test-notify-feedback-cancel');
+require('./test-offline-hint');
 
 (async () => {
   console.log('礼单簿 阶段1 本地测试（内存数据库）\n');

@@ -45,3 +45,10 @@
 }
 .switch.on .dot { left: 22px; }
 .footer { text-align: center; font-size: 11px; color: #C2C2C2; padding: 18px 0 8px; }
+.badge {
+  min-width: 18px; height: 18px; border-radius: 9px;
+  background: #F0575A; color: #fff;
+  font-size: 11px; line-height: 18px; text-align: center;
+  padding: 0 5px; margin-right: 6px; flex: none;
+  box-sizing: border-box;
+}

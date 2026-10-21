@@ -1,0 +1,23 @@
+<!-- 关于我们 -->
+<view class="ab-head">
+  <image class="ab-logo" src="/images/icons/book.svg" mode="aspectFit" />
+  <text class="ab-name songti">礼单簿</text>
+  <text class="ab-desc">本子虽小，人情事大——帮你把每一笔人情往来记得清清楚楚。</text>
+  <text class="ab-ver">版本号 {{version}}</text>
+</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onPrivacy">
+    <text class="form-val">隐私政策</text><text class="chev">›</text>
+  </view>
+  <view class="form-row" bindtap="onAgreement">
+    <text class="form-val">用户协议</text><text class="chev">›</text>
+  </view>
+</view>
+
+<view class="card ab-credit">
+  <text class="ab-credit-t">开源字体授权</text>
+  <text class="ab-credit-d">{{fontCredit}}</text>
+</view>
+
+<view style="height:30px"></view>

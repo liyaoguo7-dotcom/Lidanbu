@@ -10,8 +10,18 @@
 
 const { COLLECTIONS, now } = require('./models');
 const audit = require('./audit');
+const restriction = require('./restriction');
 const quota = require('./quota');
 const errors = require('./errors');
+const notify = require('./notify');
+
+/** 共享变更通知（任务L）：通知失败绝不影响共享操作本身 */
+async function notifyShareChanged(db, userId, action) {
+  if (!userId) return;
+  try {
+    await notify.notify(db, userId, 'shareChanged', { action });
+  } catch (e) { /* 忽略 */ }
+}
 
 const SWITCH_IDS = ['view', 'add', 'edit', 'del', 'export'];
 
@@ -37,6 +47,7 @@ function normalizeScope(input = {}) {
  * @returns {{membershipId}}
  */
 async function invite(db, ownerId, { switches, scope }) {
+  await restriction.assertWritable(db, ownerId);
   // 会员门禁：有效会员才能发起邀请（缓冲期内不算有效，不能新邀请）
   const inviter = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
   if (!quota.isMemberActive(inviter || {})) {
@@ -64,6 +75,7 @@ async function invite(db, ownerId, { switches, scope }) {
 
 /** 接受邀请（成员操作） */
 async function accept(db, membershipId, memberId) {
+  await restriction.assertWritable(db, memberId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
   if (!ms) throw new Error('邀请不存在');
   if (ms.status !== 'pending') throw new Error('邀请已处理');
@@ -72,11 +84,13 @@ async function accept(db, membershipId, memberId) {
     { memberId, status: 'active' }
   );
   await audit.log(db, { ownerId: ms.ownerId, actorId: memberId, action: 'share', targetType: 'member', targetId: membershipId, detail: '接受共享邀请' });
+  await notifyShareChanged(db, ms.ownerId, 'inviteAccepted'); // 通知主人：家人加入了
   return { ok: true };
 }
 
 /** 修改成员权限（主人操作，立即生效） */
 async function updateGrant(db, ownerId, membershipId, { switches, scope }) {
+  await restriction.assertWritable(db, ownerId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
   if (!ms) throw new Error('成员关系不存在');
   const patch = { updatedAt: now() };
@@ -91,6 +105,7 @@ async function updateGrant(db, ownerId, membershipId, { switches, scope }) {
   }
   await db.collection(COLLECTIONS.ShareGrant).update({ membershipId }, patch);
   await audit.log(db, { ownerId, actorId: ownerId, action: 'grant', targetType: 'member', targetId: membershipId, detail: '修改成员权限' });
+  await notifyShareChanged(db, ms.memberId, 'grantUpdated'); // 通知成员：权限变了
   return { ok: true };
 }
 
@@ -99,11 +114,13 @@ async function updateGrant(db, ownerId, membershipId, { switches, scope }) {
  * 其此前新增的记录保留在主人账本，createdBy 保留"谁加的"
  */
 async function removeMember(db, ownerId, membershipId) {
+  await restriction.assertWritable(db, ownerId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
   if (!ms) throw new Error('成员关系不存在');
   await db.collection(COLLECTIONS.ShareMembership).update({ _id: membershipId }, { status: 'removed' });
   // 记录保留：不删除 ReceiveRecord/GiftRecord，createdBy 原样保留
   await audit.log(db, { ownerId, actorId: ownerId, action: 'share', targetType: 'member', targetId: membershipId, detail: '移除成员，其新增记录保留' });
+  await notifyShareChanged(db, ms.memberId, 'memberRemoved'); // 通知被移除的成员
   return { ok: true };
 }
 

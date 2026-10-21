@@ -13,6 +13,7 @@ const { COLLECTIONS, now } = require('./models');
 const authz = require('./authz');
 const quota = require('./quota');
 const audit = require('./audit');
+const restriction = require('./restriction');
 
 async function getOwner(db, ownerId) {
   return db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
@@ -26,6 +27,7 @@ function today() {
 /* ---------- 收礼事件（礼薄） ---------- */
 
 async function createEvent(db, actorId, ownerId, { name, tagId, date, remark = '' }) {
+  await restriction.assertWritable(db, actorId);
   if (!name || !name.trim()) throw new Error('礼薄名称必填');
   // 只有主人可建事件（成员开关只作用于明细，见文件头口径）
   if (actorId !== ownerId) throw new Error('无权限：仅账本主人可新建礼薄');
@@ -46,6 +48,7 @@ async function createEvent(db, actorId, ownerId, { name, tagId, date, remark = '
 }
 
 async function updateEvent(db, actorId, ownerId, eventId, patch) {
+  await restriction.assertWritable(db, actorId);
   if (actorId !== ownerId) throw new Error('无权限：仅账本主人可修改礼薄');
   const user = await getOwner(db, ownerId);
   const q = await quota.checkEditAllowed(db, user, 'event', eventId);
@@ -63,6 +66,7 @@ async function updateEvent(db, actorId, ownerId, eventId, patch) {
 }
 
 async function deleteEvent(db, actorId, ownerId, eventId) {
+  await restriction.assertWritable(db, actorId);
   if (actorId !== ownerId) throw new Error('无权限：仅账本主人可删除礼薄');
   const n = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId, eventId });
   await db.collection(COLLECTIONS.ReceiveRecord).remove({ ownerId, eventId });
@@ -82,6 +86,7 @@ async function listEvents(db, actorId, ownerId) {
 /* ---------- 收礼明细记录 ---------- */
 
 async function createRecord(db, actorId, ownerId, eventId, { contactId, amount, type, remark = '', date }) {
+  await restriction.assertWritable(db, actorId);
   const c = await authz.check(db, actorId, 'add', { kind: 'receiveRecord', ownerId, eventId });
   if (!c.ok) throw errors.permDenied(c.reason);
 
@@ -104,6 +109,7 @@ async function createRecord(db, actorId, ownerId, eventId, { contactId, amount, 
 }
 
 async function updateRecord(db, actorId, ownerId, recordId, patch) {
+  await restriction.assertWritable(db, actorId);
   const rec = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: recordId, ownerId });
   if (!rec) throw new Error('记录不存在');
   const c = await authz.check(db, actorId, 'edit', { kind: 'receiveRecord', ownerId, eventId: rec.eventId });
@@ -119,6 +125,7 @@ async function updateRecord(db, actorId, ownerId, recordId, patch) {
 }
 
 async function deleteRecord(db, actorId, ownerId, recordId) {
+  await restriction.assertWritable(db, actorId);
   const rec = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: recordId, ownerId });
   if (!rec) throw new Error('记录不存在');
   const c = await authz.check(db, actorId, 'delete', { kind: 'receiveRecord', ownerId, eventId: rec.eventId });

@@ -1,48 +1,101 @@
-<!-- 拍照导入：识别结果核对 -->
-<view class="card">
-  <view class="photo-row" bindtap="previewPhoto">
-    <image class="photo-thumb" src="{{photoPath}}" mode="aspectFill" />
-    <view class="photo-meta">
-      <text class="photo-title songti">原图对照</text>
-      <text class="photo-sub">{{kindLabel}}{{eventName ? ' · ' + eventName : ''}} · 点图片放大看</text>
+<!-- 拍照导入：识别结果核对（对照原图编辑，整批确认导入） -->
+<block wx:if="{{!done}}">
+  <!-- 原图：固定在上方，滚动条目时始终可见，点开大图对照 -->
+  <view class="card photo-sticky">
+    <view class="photo-row" bindtap="previewPhoto">
+      <image class="photo-thumb" src="{{photoPath}}" mode="aspectFill" />
+      <view class="photo-meta">
+        <text class="photo-title songti">原图对照</text>
+        <text class="photo-sub">{{kindLabel}}{{eventName ? ' · ' + eventName : ''}} · 点图片放大看</text>
+      </view>
+      <text class="chev">›</text>
     </view>
-    <text class="chev">›</text>
   </view>
+
+  <view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">对着原图逐条核对：姓名可以从亲友录选，金额、{{kind === 'receive' ? '类型' : '场合'}}、日期、备注都能改；错的删掉，不够再补录。全部改好点底部"全部确认导入"，一次写进账本。</text></view>
+
+  <view wx:for="{{items}}" wx:key="index" id="item-{{index}}" class="card item-card {{errorIndex === index ? 'item-error' : ''}}">
+    <view class="item-head">
+      <text class="item-no songti">第{{index + 1}}条</text>
+      <text class="item-err" wx:if="{{errorIndex === index}}">这条要改一下</text>
+      <text class="item-del" data-i="{{index}}" bindtap="onDeleteItem">删除</text>
+    </view>
+    <view class="form-row">
+      <text class="form-label">姓名</text>
+      <input class="form-val" placeholder="请输入姓名" placeholder-style="color:#C2C2C2"
+        value="{{item.name}}" data-i="{{index}}" bindinput="onNameInput" bindblur="onNameBlur" />
+      <text class="pick-btn" data-i="{{index}}" bindtap="openPicker">选亲友</text>
+    </view>
+    <view class="unknown-row" wx:if="{{item.unknown}}">
+      <text class="unknown-hint">「{{item.name}}」不在亲友录</text>
+      <text class="unknown-btn" data-i="{{index}}" bindtap="onBuildContact">先建亲友</text>
+    </view>
+    <view class="form-row">
+      <text class="form-label">金额</text>
+      <input class="form-val num" type="digit" placeholder="请输入金额" placeholder-style="color:#C2C2C2"
+        value="{{item.amountText}}" data-i="{{index}}" bindinput="onAmountInput" bindblur="onAmountBlur" />
+    </view>
+    <view class="form-row" wx:if="{{kind === 'receive'}}">
+      <text class="form-label">类型</text>
+      <picker class="form-picker" mode="selector" range="{{recordTypes}}" data-i="{{index}}" bindchange="onTypeChange">
+        <view class="form-val">{{item.type}}<text class="chev"> ›</text></view>
+      </picker>
+    </view>
+    <view class="form-row" wx:else>
+      <text class="form-label">场合</text>
+      <picker class="form-picker" mode="selector" range="{{tags}}" range-key="name" data-i="{{index}}" bindchange="onTagChange">
+        <view class="form-val">{{item.tagName}}<text class="chev"> ›</text></view>
+      </picker>
+    </view>
+    <view class="form-row">
+      <text class="form-label">日期</text>
+      <picker class="form-picker" mode="date" value="{{item.date}}" data-i="{{index}}" bindchange="onDateChange">
+        <view class="form-val num">{{item.date}}<text class="chev"> ›</text></view>
+      </picker>
+    </view>
+    <view class="form-row">
+      <text class="form-label">备注</text>
+      <input class="form-val" placeholder="可不填" placeholder-style="color:#C2C2C2"
+        value="{{item.note}}" data-i="{{index}}" bindinput="onNoteInput" />
+    </view>
+  </view>
+
+  <view class="add-row" bindtap="onAddItem">
+    <text class="add-plus">＋</text><text>补录一条</text>
+  </view>
+
+  <view style="height:90px"></view>
+  <view class="btn-primary btn-bottom" bindtap="onConfirmWrite">全部确认导入</view>
+</block>
+
+<!-- 导入结果：显示成功条数 -->
+<view wx:if="{{done}}" class="card result-card">
+  <text class="result-big songti">导入完成</text>
+  <text class="result-count num">成功导入 {{doneCount}} 条{{kindLabel}}记录</text>
+  <text class="result-sub">都已经记进账本啦，回到列表就能看到。</text>
+  <view class="btn-primary result-btn" bindtap="goViewRecords">看看记好的</view>
+  <view class="btn-outline result-btn" bindtap="goAgain">再导入一份</view>
 </view>
 
-<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">识别结果可直接改：姓名、金额、备注都能改；错的删掉，不够再补录。确认无误点底部"确认写入"。</text></view>
-
-<view wx:for="{{items}}" wx:key="index" class="card item-card">
-  <view class="item-head">
-    <text class="item-no songti">第{{index + 1}}条</text>
-    <text class="item-del" data-i="{{index}}" bindtap="onDeleteItem">删除</text>
-  </view>
-  <view class="form-row">
-    <text class="form-label">姓名</text>
-    <input class="form-val" placeholder="请输入姓名" placeholder-style="color:#C2C2C2"
-      value="{{item.name}}" data-i="{{index}}" bindinput="onNameInput" bindblur="onNameBlur" />
-  </view>
-  <view class="unknown-row" wx:if="{{item.unknown}}">
-    <text class="unknown-hint">「{{item.name}}」不在亲友录</text>
-    <text class="unknown-btn" data-i="{{index}}" bindtap="onBuildContact">先建亲友</text>
-  </view>
-  <view class="form-row">
-    <text class="form-label">金额</text>
-    <input class="form-val num" type="digit" placeholder="请输入金额" placeholder-style="color:#C2C2C2"
-      value="{{item.amountText}}" data-i="{{index}}" bindinput="onAmountInput" bindblur="onAmountBlur" />
-  </view>
-  <view class="form-row">
-    <text class="form-label">备注</text>
-    <input class="form-val" placeholder="可不填" placeholder-style="color:#C2C2C2"
-      value="{{item.note}}" data-i="{{index}}" bindinput="onNoteInput" />
+<!-- 从亲友录选亲友 -->
+<view class="picker-mask" wx:if="{{pickerOpen}}" bindtap="closePicker">
+  <view class="picker-sheet" catchtap="noop">
+    <view class="picker-head">
+      <text class="picker-title songti">选择亲友</text>
+      <text class="picker-close" bindtap="closePicker">×</text>
+    </view>
+    <view class="searchbox picker-search">
+      <input placeholder="搜索姓名" placeholder-style="color:#C2C2C2" value="{{pickerKeyword}}" bindinput="onPickerSearch" style="flex:1;font-size:14px" />
+    </view>
+    <scroll-view class="picker-list" scroll-y>
+      <view class="picker-row" wx:for="{{pickerList}}" wx:key="_id" data-id="{{item._id}}" data-name="{{item.name}}" bindtap="pickContact">
+        <text class="picker-name">{{item.name}}</text>
+        <text class="picker-remark">{{item.remark || ''}}</text>
+      </view>
+      <view class="picker-empty" wx:if="{{pickerList.length === 0}}">没找到这位亲友</view>
+    </scroll-view>
+    <view class="btn-primary picker-new" bindtap="pickerBuildNew">新建亲友</view>
   </view>
 </view>
-
-<view class="add-row" bindtap="onAddItem">
-  <text class="add-plus">＋</text><text>补录一条</text>
-</view>
-
-<view style="height:90px"></view>
-<view class="btn-primary btn-bottom" bindtap="onConfirmWrite">确认写入</view>
 
 <contact-sheet show="{{addSheetOpen}}" bind:confirm="onAddConfirm" bind:cancel="onAddCancel" />

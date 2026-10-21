@@ -38,10 +38,12 @@ page {
   left: 0;
   right: 0;
   bottom: 26px;
+  bottom: calc(26px + env(safe-area-inset-bottom));
 }
 .fab {
   position: fixed;
   bottom: 88px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
   left: 50%;
   margin-left: -29px;
   width: 58px;

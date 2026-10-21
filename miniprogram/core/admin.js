@@ -11,14 +11,15 @@
 * 2. 所有返回对象只含白名单字段，逐个字段手写构造，绝不 spread 数据库文档；
 * 3. userId 一律脱敏短号对外展示，内部用 mask 解析回真实 id。
 *
-* 骨架范围：阶段5第1/2/12/14/15项的数字部分；其余项（反馈列表、订单收入、
-* 功能开关等）后续再加，不要一次做完。
+* 范围：15 项全部接真接口（任务M 补全第3/4/6/7/10/11项与配置写接口）。
+* 新增接口一律 requireAdmin（只认 appConfig 文档 adminIds 名单）。
 */
 const { COLLECTIONS, now} = require('./models');
 const quota = require('./quota');
 const audit = require('./audit');
 const errors = require('./errors');
 const { maskUserId } = require('./admin-mask');
+const feedback = require('./feedback');
 const StaticConfig = require('../config/app-config');
 
 /** 内部：用脱敏短号找回真实用户（骨架实现：全表扫描比对；生产需建索引） */
@@ -418,6 +419,252 @@ const updatedAt = await writeConfigPatch(db, actorId, { inviteReward: next }, `�
 return { inviteReward: next, updatedAt };
 }
 
+// ================= 补全项（任务M：第3/4/6/7/10/11项接真接口） =================
+//
+// 共同纪律（与文件头铁律一致）：
+// - 全部接口先 requireAdmin（只认 appConfig 文档 adminIds，无名单一律拒绝）；
+// - 返回只含白名单字段、逐个手写构造；userId/actorId 一律脱敏；
+// - 账号查询只返回条数级汇总（各集合 count），绝不返回记录行；
+// - 订单金额是平台订单数据（非用户账本礼金），按任务口径可列；
+// - 反馈正文是用户主动提交给平台的文字，按任务口径可显示。
+
+function pageSlice(all, { page = 1, pageSize = 20 } = {}) {
+const p = Math.max(1, page | 0);
+const ps = Math.min(100, Math.max(1, pageSize | 0));
+return { p, ps, items: all.slice((p - 1) * ps, p * ps) };
+}
+
+/** 审计 actor 脱敏：'admin:openid' 保留前缀只脱敏后段；短系统标识原样 */
+function maskActorId(actorId) {
+const s = String(actorId || '');
+const i = s.indexOf(':');
+if (i >= 0) return `${s.slice(0, i + 1)}${maskUserId(s.slice(i + 1))}`;
+if (s.length <= 8) return s; // system / pay-notify 等系统标识
+return maskUserId(s);
+}
+
+/**
+* 账号查询（第3项，客服用）：按脱敏编号片段或注册时间段查用户。
+* 每条只回：脱敏编号、注册时间、会员状态、条数汇总、受限状态。
+* @returns {{total, page, pageSize, items: [{userId, createdAt, memberState,
+* counts: {events, records, gifts, contacts}, restricted, restrictReason}]}}
+*/
+async function searchAccounts(db, actorId, { maskedId, from, to, page, pageSize } = {}) {
+await requireAdmin(db, actorId);
+let users = await db.collection(COLLECTIONS.User).find({}, { sort: { createdAt: -1 } });
+if (maskedId) {
+const frag = String(maskedId).toLowerCase();
+users = users.filter((u) => maskUserId(u._id).toLowerCase().includes(frag));
+}
+if (Number.isFinite(from)) users = users.filter((u) => (u.createdAt || 0) >= from);
+if (Number.isFinite(to)) users = users.filter((u) => (u.createdAt || 0) <= to);
+const total = users.length;
+const { p, ps, items: pageUsers } = pageSlice(users, { page, pageSize });
+const items = [];
+for (const u of pageUsers) {
+items.push({
+userId: maskUserId(u._id),
+createdAt: u.createdAt || null,
+memberState: quota.getMembershipState(u),
+counts: {
+events: await countCol(db, 'ReceiveEvent', { ownerId: u._id }),
+records: await countCol(db, 'ReceiveRecord', { ownerId: u._id }),
+gifts: await countCol(db, 'GiftRecord', { ownerId: u._id }),
+contacts: await countCol(db, 'Contact', { ownerId: u._id }),
+},
+restricted: !!(u.restricted && u.restricted.status === true),
+restrictReason: (u.restricted && u.restricted.reason) || '',
+});
+}
+return { total, page: p, pageSize: ps, items };
+}
+
+/** 周期键：day → 'YYYY-MM-DD'（本地）；week → 该周周一的 'YYYY-MM-DD' */
+function periodKey(ts, granularity) {
+const d = new Date(ts);
+if (granularity === 'week') {
+const day = (d.getDay() + 6) % 7; // 距周一的天数
+d.setDate(d.getDate() - day);
+}
+const m = `${d.getMonth() + 1}`.padStart(2, '0');
+const dd = `${d.getDate()}`.padStart(2, '0');
+return `${d.getFullYear()}-${m}-${dd}`;
+}
+
+/**
+* 拍照导入用量（第4项）：按日/周聚合 ImportJob。
+* 只有次数、成功率、失败大类分布——无图片、无识别内容、无账本字段。
+* @returns {{total, success, failed, partial, successRate,
+* byPeriod: [{key, total, success, failed, partial}],
+* failReasons: [{reason, count}]}}
+*/
+async function importUsage(db, actorId, { granularity = 'day' } = {}) {
+await requireAdmin(db, actorId);
+if (!['day', 'week'].includes(granularity)) throw badConfig('统计粒度只能是 day 或 week');
+const jobs = await db.collection(COLLECTIONS.ImportJob).find({});
+let success = 0;
+let failed = 0;
+let partial = 0;
+const periods = new Map();
+const reasons = new Map();
+for (const j of jobs) {
+const st = j.status === 'success' ? 'success' : j.status === 'partial' ? 'partial' : 'failed';
+if (st === 'success') success += 1; else if (st === 'partial') partial += 1; else failed += 1;
+const key = periodKey(j.createdAt || 0, granularity);
+const row = periods.get(key) || { key, total: 0, success: 0, failed: 0, partial: 0 };
+row.total += 1;
+row[st] += 1;
+periods.set(key, row);
+if (st !== 'success') {
+const r = j.failReason || 'validation';
+reasons.set(r, (reasons.get(r) || 0) + 1);
+}
+}
+const total = jobs.length;
+return {
+total, success, failed, partial,
+successRate: total > 0 ? Math.round((success / total) * 1000) / 10 : 0,
+byPeriod: [...periods.values()].sort((a, b) => (a.key < b.key ? -1 : 1)),
+failReasons: [...reasons.entries()].map(([reason, count]) => ({ reason, count }))
+.sort((a, b) => b.count - a.count),
+};
+}
+
+/** 用户反馈列表（第6项）：转 core/feedback 的管理员列表（userId 已脱敏） */
+async function feedbackList(db, actorId, opts = {}) {
+await requireAdmin(db, actorId);
+return feedback.listFeedbackForAdmin(db, opts);
+}
+
+/** 用户反馈标记处理状态（第6项）：写审计 */
+async function feedbackSetStatus(db, actorId, feedbackId, status) {
+await requireAdmin(db, actorId);
+const r = await feedback.setFeedbackStatus(db, feedbackId, status);
+if (!r.ok) throw new Error('admin:feedback-not-found');
+await audit.log(db, {
+ownerId: actorId, actorId, action: 'feedback', targetType: 'feedback',
+targetId: String(feedbackId), detail: status === 'handled' ? '反馈标记为已处理' : '反馈标记为待处理',
+});
+return r;
+}
+
+function orderRow(o) {
+return {
+orderId: o._id,
+outTradeNo: o.outTradeNo,
+userId: maskUserId(o.userId),
+planName: o.planName,
+amountFen: o.amountFen,
+days: o.days,
+status: o.status,
+channel: o.channel,
+createdAt: o.createdAt,
+paidAt: o.paidAt || null,
+refundedAt: o.refundedAt || null,
+};
+}
+
+/**
+* 会员订单列表（第7项）：脱敏用户、档位名、订单金额、状态、时间。
+* 订单金额是平台订单数据，不是用户账本礼金，可按任务口径列出。
+*/
+async function orderList(db, actorId, { page, pageSize, status } = {}) {
+await requireAdmin(db, actorId);
+let orders = await db.collection(COLLECTIONS.Order).find({}, { sort: { createdAt: -1 } });
+if (status) orders = orders.filter((o) => o.status === status);
+const total = orders.length;
+const { p, ps, items } = pageSlice(orders, { page, pageSize });
+return { total, page: p, pageSize: ps, items: items.map(orderRow) };
+}
+
+/**
+* 会员收入汇总（第7项）：按状态计数、按档位聚合。
+* revenueFen = 当前 paid 订单金额合计；refundedFen = 已退款订单金额合计。
+*/
+async function orderStats(db, actorId) {
+await requireAdmin(db, actorId);
+const orders = await db.collection(COLLECTIONS.Order).find({});
+const byStatus = { pending: 0, paid: 0, failed: 0, cancelled: 0, refunded: 0 };
+let paidRevenueFen = 0;
+let refundedFen = 0;
+const planMap = new Map();
+for (const o of orders) {
+if (byStatus[o.status] !== undefined) byStatus[o.status] += 1;
+if (o.status === 'paid') paidRevenueFen += o.amountFen || 0;
+if (o.status === 'refunded') refundedFen += o.amountFen || 0;
+const row = planMap.get(o.planId) || {
+planId: o.planId, planName: o.planName, orders: 0, paidCount: 0, revenueFen: 0,
+};
+row.orders += 1;
+if (o.status === 'paid') { row.paidCount += 1; row.revenueFen += o.amountFen || 0; }
+planMap.set(o.planId, row);
+}
+return {
+totalOrders: orders.length,
+byStatus,
+paidRevenueFen,
+refundedFen,
+netRevenueFen: paidRevenueFen,
+byPlan: [...planMap.values()],
+};
+}
+
+/** 管理员名单（第10项）：只读展示（脱敏），名单维护仍走云数据库直写（现行口径） */
+async function listAdmins(db, actorId) {
+await requireAdmin(db, actorId);
+const doc = (await readConfigDoc(db)) || {};
+const ids = Array.isArray(doc.adminIds) ? doc.adminIds : [];
+return { admins: ids.map((id) => maskUserId(id)), count: ids.length };
+}
+
+/**
+* 操作记录（第10项）：AuditLog 查询，可按 action 过滤。
+* actor 一律脱敏；detail 本就是不含账本内容的摘要，原样带出。
+*/
+async function auditTrail(db, actorId, { action, page, pageSize } = {}) {
+await requireAdmin(db, actorId);
+const query = action ? { action } : {};
+const all = await db.collection(COLLECTIONS.AuditLog).find(query, { sort: { createdAt: -1 } });
+const total = all.length;
+const { p, ps, items } = pageSlice(all, { page, pageSize });
+return {
+total, page: p, pageSize: ps,
+items: items.map((a) => ({
+action: a.action,
+targetType: a.targetType,
+detail: a.detail || '',
+actorId: maskActorId(a.actorId),
+createdAt: a.createdAt,
+})),
+};
+}
+
+/**
+* 异常用户限制（第11项）：给用户打/摘 restricted 标记并写审计。
+* 标记生效后，core/restriction.assertWritable 在全部核心写入口拦截该用户。
+* @param {{restricted:boolean, reason?:string}} input 限制时 reason 必填（≤100字）
+*/
+async function setUserRestricted(db, actorId, maskedUserId, { restricted, reason } = {}) {
+await requireAdmin(db, actorId);
+if (typeof restricted !== 'boolean') throw badConfig('限制状态必须为开/关');
+const cleanReason = String(reason || '').trim();
+if (restricted && !cleanReason) throw badConfig('限制用户时必须填写原因');
+if (cleanReason.length > 100) throw badConfig('限制原因不超过100字');
+const user = await findUserByMask(db, maskedUserId);
+const at = now();
+await db.collection(COLLECTIONS.User).update(
+{ _id: user._id },
+{ restricted: { status: restricted, reason: restricted ? cleanReason : '', by: actorId, at } }
+);
+await audit.log(db, {
+ownerId: actorId, actorId,
+action: restricted ? 'restrict' : 'unrestrict',
+targetType: 'user', targetId: maskedUserId,
+detail: restricted ? `限制用户记账：${cleanReason}` : '解除用户限制',
+});
+return { userId: maskedUserId, restricted, reason: restricted ? cleanReason : '' };
+}
+
 module.exports = {
 maskUserId,
 overview,
@@ -433,4 +680,13 @@ updateFeatureSwitches,
 updateMemberOnlyFeatures,
 updateQuotaSettings,
 updateInviteSettings,
+searchAccounts,
+importUsage,
+feedbackList,
+feedbackSetStatus,
+orderList,
+orderStats,
+listAdmins,
+auditTrail,
+setUserRestricted,
 };

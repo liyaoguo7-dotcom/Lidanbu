@@ -37,6 +37,7 @@ const AppConfig = require('../miniprogram/config/app-config');
 const errors = require('./errors');
 const quota = require('./quota');
 const audit = require('./audit');
+const notify = require('./notify');
 const { maskUserId } = require('./admin-mask');
 
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // 去掉易混字符 I/O/0/1
@@ -213,6 +214,12 @@ async function evaluateInvite(db, inviteeId, { deviceId } = {}, config = AppConf
     targetId: grantId,
     detail: `邀请奖励发放：收礼额度池+${poolGranted}、送礼额度+${giftsGranted}`,
   });
+  // 通知邀请人奖励到账（任务L）：通知失败绝不影响发放结果；以 grantId 去重防重复发
+  try {
+    await notify.notify(db, binding.inviterId, 'inviteRewardGranted', {
+      poolGranted, giftsGranted, grantId, dedupeKey: `inviteRewardGranted:${grantId}`,
+    });
+  } catch (e) { /* 忽略 */ }
   return { granted: true, poolGranted, giftsGranted };
 }
 

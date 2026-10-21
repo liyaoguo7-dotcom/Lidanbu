@@ -1,0 +1,17 @@
+<view class="warn-banner">管理员名单只读：增删管理员在云数据库的配置里改，这里只看。所有操作记录的操作者都已脱敏。</view>
+<view class="card">
+  <view class="form-row"><text class="form-val" style="font-weight:bold">管理员账号（{{admins.length}} 人）</text></view>
+  <view class="form-row" wx:for="{{admins}}" wx:key="*this"><text class="mask">{{item}}</text></view>
+  <view wx:if="{{admins.length === 0}}" class="note">名单为空时，任何人都不能执行管理员操作（安全兜底）。</view>
+</view>
+<view class="card">
+  <view class="form-row"><text class="form-label">动作过滤</text><input class="form-val" placeholder="如 config / restrict，可空" value="{{action}}" bindinput="onActionInput" /></view>
+  <button class="btn-primary" bindtap="loadTrail">查询操作记录（共 {{total}} 条）</button>
+</view>
+<view wx:if="{{loading}}"><view class="note">加载中…</view></view>
+<view class="card" wx:for="{{list}}" wx:key="createdAt">
+  <view class="row-between"><text>{{item.actionName}} · {{item.targetType}}</text><text class="note">{{item.timeText}}</text></view>
+  <view class="note">{{item.detail}}</view>
+  <view class="note">操作者 <text class="mask">{{item.actorId}}</text></view>
+</view>
+<view wx:if="{{!loading && list.length === 0}}" class="note">暂无操作记录。</view>

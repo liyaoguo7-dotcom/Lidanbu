@@ -1,8 +1,51 @@
-<view class="warn-banner">配置只读展示。所有配置修改走 AppConfig（改配置不改代码），修改将记入操作记录；云函数管理员身份 + 二次验证待联调，上线前必须有。</view>
-<view class="card">
-  <block wx:for="{{rows}}" wx:key="k">
-    <view wx:if="{{item.group}}" class="form-row" style="background:#FAFAFA"><text style="font-size:13px;color:#999">{{item.group}}</text></view>
-    <view wx:else class="form-row"><text class="form-label" style="width:150px">{{item.k}}</text><text class="form-val">{{item.v}}</text></view>
-  </block>
-</view>
-<view class="note">数字与开关以 AppConfig 为准；价格档位当前为占位，发布前必须填真实价格。</view>
+<view class="warn-banner">在本页改、保存即生效，每次修改都记入操作记录。只有管理员能保存；价格从配置读，不写死在代码里。</view>
+<view wx:if="{{loading}}"><view class="note">加载中…</view></view>
+<view wx:if="{{error}}" class="card"><view class="note">{{error}}（配置读写需要管理员身份：把你的账号加进管理员名单后重试）</view></view>
+
+<!-- 额度与价格 -->
+<block wx:if="{{!loading && !error && section === 'pricing'}}">
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-weight:bold">免费额度</text></view>
+    <view class="form-row" wx:for="{{quotaFields}}" wx:key="key"><text class="form-label" style="width:170px">{{item.label}}</text><input class="form-val" type="number" value="{{freeQuota[item.key]}}" data-group="freeQuota" data-key="{{item.key}}" bindinput="onQuotaInput" /></view>
+    <view class="form-row"><text class="form-val" style="font-weight:bold">会员额度</text></view>
+    <view class="form-row" wx:for="{{quotaFields}}" wx:key="key"><text class="form-label" style="width:170px">{{item.label}}</text><input class="form-val" type="number" value="{{memberQuota[item.key]}}" data-group="memberQuota" data-key="{{item.key}}" bindinput="onQuotaInput" /></view>
+  </view>
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-weight:bold">会员价格档位（价格单位：元）</text></view>
+    <view wx:if="{{pricingFromStatic}}" class="note">当前显示的是占位档位（待定价），保存后以这里为准。</view>
+    <view class="plan" wx:for="{{plans}}" wx:key="id">
+      <view class="form-row"><text class="form-label">名称</text><input class="form-val" value="{{item.name}}" data-idx="{{index}}" data-field="name" bindinput="onPlanInput" /></view>
+      <view class="form-row"><text class="form-label">价格（元）</text><input class="form-val" type="digit" value="{{item.yuan}}" data-idx="{{index}}" data-field="yuan" bindinput="onPlanInput" /></view>
+      <view class="form-row"><text class="form-label">天数</text><input class="form-val" type="number" value="{{item.days}}" data-idx="{{index}}" data-field="days" bindinput="onPlanInput" /></view>
+      <view class="del" bindtap="onDelPlan" data-idx="{{index}}">删除这个档位</view>
+    </view>
+    <view class="add" bindtap="onAddPlan">＋ 添加档位</view>
+  </view>
+  <button class="btn-primary" bindtap="onSavePricing" loading="{{saving}}">保存额度与价格</button>
+</block>
+
+<!-- 功能开关 -->
+<block wx:if="{{!loading && !error && section === 'switches'}}">
+  <view class="card">
+    <view class="form-row" wx:for="{{switchFields}}" wx:key="key">
+      <text class="form-label" style="width:170px">{{item.label}}</text>
+      <switch checked="{{features[item.key]}}" data-key="{{item.key}}" bindchange="onSwitchToggle" />
+    </view>
+  </view>
+  <button class="btn-primary" bindtap="onSaveSwitches" loading="{{saving}}">保存功能开关</button>
+  <view class="note">邀请奖励开关在「邀请奖励设置与数据」页里改。</view>
+</block>
+
+<!-- 会员专属清单 -->
+<block wx:if="{{!loading && !error && section === 'features'}}">
+  <view class="card">
+    <checkbox-group bindchange="onFeatureCheck">
+      <label class="form-row" wx:for="{{featureFields}}" wx:key="key">
+        <text class="form-label" style="width:170px">{{item.label}}</text>
+        <checkbox value="{{item.key}}" checked="{{memberOnly.indexOf(item.key) >= 0}}" />
+      </label>
+    </checkbox-group>
+  </view>
+  <button class="btn-primary" bindtap="onSaveFeatures" loading="{{saving}}">保存会员专属清单</button>
+  <view class="note">勾选的功能只有会员能用；取消勾选后免费用户也能用。</view>
+</block>

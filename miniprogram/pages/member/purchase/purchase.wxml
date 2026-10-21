@@ -1,0 +1,23 @@
+<!-- 购买会员：档位卡片全部由配置渲染 -->
+<view class="section-title">选择会员档位</view>
+<view class="card" wx:if="{{plans.length}}">
+  <view class="form-row" wx:for="{{plans}}" wx:key="id">
+    <text class="form-label">{{item.name}}</text>
+    <text class="form-val num">¥{{item.priceText}}</text>
+    <text class="ph">{{item.days}}天</text>
+    <view class="m-btn" data-id="{{item.id}}" bindtap="onBuy">{{buyingId === item.id ? '处理中…' : '购买'}}</view>
+  </view>
+</view>
+<view class="tip" wx:if="{{!plans.length}}">会员档位即将公布，敬请期待。</view>
+
+<view class="warn-banner" wx:if="{{doneText}}">{{doneText}}</view>
+
+<view class="card">
+  <view class="form-row" bindtap="onOrders">
+    <text class="form-label">我的订单</text>
+    <text class="form-val ph">查看购买记录与状态</text>
+    <text class="chev">›</text>
+  </view>
+</view>
+
+<view class="tip">现在是演示环境：点击购买会模拟支付成功，会员立即生效，不会产生真实扣费。价格为占位价，正式定价公布后以本页显示为准。</view>
