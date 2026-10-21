@@ -36,12 +36,13 @@ test('引导素材：引导页引用分包图路径且三句配文逐字正确',
   assert(wxml.includes('item.img') && wxml.includes('item.caption'), 'wxml 应渲染图片与配文');
 });
 
-test('引导素材：app.json 注册 guide 分包且首页预下载', async () => {
+test('引导素材：app.json 注册 guide 分包（preloadRule 已删，见用例内注）', async () => {
   const app = JSON.parse(read('miniprogram/app.json'));
   const sub = (app.subpackages || []).find((s) => s.root === 'packages/guide');
   assert(sub && Array.isArray(sub.pages), '应注册 packages/guide 纯资源分包');
-  const pre = (app.preloadRule || {})['pages/index/index'];
-  assert(pre && (pre.packages || []).includes('packages/guide'), '首页 preloadRule 应预下载 guide 分包（root 路径 packages/guide）');
+  // preloadRule 已于 2026-10-21 整体删除（开发者工具版本对该配置解析口径与文档不一致，
+  // name 与 root 两种写法均报"未找到"导致启动失败）；预下载仅为提速优化，
+  // 删除后引导/字体分包改为按需加载，功能不变。此处不断言 preloadRule。
 });
 
 test('引导素材：线框示意已清除', async () => {

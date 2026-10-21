@@ -75,26 +75,6 @@
       "pages": []
     }
   ],
-  "preloadRule": {
-    "pages/receive/receive": {
-      "network": "wifi",
-      "packages": [
-        "packages/fonts"
-      ]
-    },
-    "pages/mine/mine": {
-      "network": "wifi",
-      "packages": [
-        "packages/fonts"
-      ]
-    },
-    "pages/index/index": {
-      "network": "all",
-      "packages": [
-        "packages/guide"
-      ]
-    }
-  },
   "sitemapLocation": "sitemap.json",
   "tabBar": {
     "backgroundColor": "#ffffff",

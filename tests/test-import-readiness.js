@@ -121,7 +121,7 @@ test('可运行性：字面跳转地址必须是已注册页面且跳法正确�
   assert(bad.length === 0, bad.join(' | '));
 });
 
-test('可运行性：preloadRule 引用的分包必须是已声明的 root（按路径可解析）', () => {
+test('可运行性：preloadRule 引用的分包必须是已声明的 root（若配置存在；2026-10-21 起因工具版本解析口径不一致已整体删除该配置，功能不受影响）', () => {
   const app = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'));
   const roots = new Set(((app.subpackages || app.subPackages || [])).map((s) => s.root));
   const bad = [];
