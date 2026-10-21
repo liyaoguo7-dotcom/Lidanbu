@@ -120,3 +120,15 @@ test('可运行性：字面跳转地址必须是已注册页面且跳法正确�
   }
   assert(bad.length === 0, bad.join(' | '));
 });
+
+test('可运行性：preloadRule 引用的分包必须是已声明的 root（按路径可解析）', () => {
+  const app = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'));
+  const roots = new Set(((app.subpackages || app.subPackages || [])).map((s) => s.root));
+  const bad = [];
+  for (const [page, rule] of Object.entries(app.preloadRule || {})) {
+    for (const pkg of rule.packages || []) {
+      if (!roots.has(pkg)) bad.push(`${page} -> ${pkg}`);
+    }
+  }
+  assert(bad.length === 0, 'preloadRule 引用了不存在的分包 root: ' + bad.join(' | '));
+});

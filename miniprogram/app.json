@@ -79,19 +79,19 @@
     "pages/receive/receive": {
       "network": "wifi",
       "packages": [
-        "fonts"
+        "packages/fonts"
       ]
     },
     "pages/mine/mine": {
       "network": "wifi",
       "packages": [
-        "fonts"
+        "packages/fonts"
       ]
     },
     "pages/index/index": {
       "network": "all",
       "packages": [
-        "guide"
+        "packages/guide"
       ]
     }
   },

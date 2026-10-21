@@ -41,7 +41,7 @@ test('引导素材：app.json 注册 guide 分包且首页预下载', async () =
   const sub = (app.subpackages || []).find((s) => s.root === 'packages/guide');
   assert(sub && Array.isArray(sub.pages), '应注册 packages/guide 纯资源分包');
   const pre = (app.preloadRule || {})['pages/index/index'];
-  assert(pre && (pre.packages || []).includes('guide'), '首页 preloadRule 应预下载 guide 分包');
+  assert(pre && (pre.packages || []).includes('packages/guide'), '首页 preloadRule 应预下载 guide 分包（root 路径 packages/guide）');
 });
 
 test('引导素材：线框示意已清除', async () => {
