@@ -13,7 +13,7 @@
   </view>
 
   <view class="month-bar" wx:if="{{monthSummary}}">
-    <text class="month-label songti">本月人情往来</text>
+    <text class="month-label">本月人情往来</text>
     <block wx:if="{{monthSummary.hasRecords}}">
       <text>收 <text class="month-recv">¥{{monthSummary.receiveText}}</text></text>
       <text class="month-dot">·</text>
@@ -24,26 +24,44 @@
 
   <view class="card recent-card" wx:if="{{recent.length}}">
     <view class="recent-head">
-      <text class="recent-title songti">最近往来</text>
+      <text class="recent-title">最近往来</text>
       <text class="recent-all" bindtap="goWanglai">查看全部 ></text>
     </view>
-    <view class="recent-row" wx:for="{{recent}}" wx:key="targetUrl" data-url="{{item.targetUrl}}" bindtap="onRecentTap">
-      <view class="recent-main">
-        <view class="recent-name">{{item.contactName}}</view>
-        <view class="recent-sub">{{item.tagName}}<text wx:if="{{item.eventName}}"> · {{item.eventName}}</text></view>
+    <!-- 任务AA：>4 条竖向自动滚动最近 10 条（同时可见 4 条）；不足 4 条静态显示不滚 -->
+    <swiper wx:if="{{recentRolling}}" class="recent-swiper" vertical="{{true}}" autoplay="{{true}}"
+      circular="{{true}}" interval="2800" duration="650" display-multiple-items="4">
+      <swiper-item wx:for="{{recent}}" wx:key="targetUrl">
+        <view class="recent-row" data-url="{{item.targetUrl}}" bindtap="onRecentTap">
+          <view class="recent-main">
+            <view class="recent-name">{{item.contactName}}</view>
+            <view class="recent-sub">{{item.tagName}}<text wx:if="{{item.eventName}}"> · {{item.eventName}}</text></view>
+          </view>
+          <view class="recent-side">
+            <view class="recent-amt {{item.kind === 'receive' ? 'plus' : 'minus'}}">{{item.amountText}}</view>
+            <view class="recent-date">{{item.dateText}}</view>
+          </view>
+        </view>
+      </swiper-item>
+    </swiper>
+    <block wx:else>
+      <view class="recent-row" wx:for="{{recent}}" wx:key="targetUrl" data-url="{{item.targetUrl}}" bindtap="onRecentTap">
+        <view class="recent-main">
+          <view class="recent-name">{{item.contactName}}</view>
+          <view class="recent-sub">{{item.tagName}}<text wx:if="{{item.eventName}}"> · {{item.eventName}}</text></view>
+        </view>
+        <view class="recent-side">
+          <view class="recent-amt {{item.kind === 'receive' ? 'plus' : 'minus'}}">{{item.amountText}}</view>
+          <view class="recent-date">{{item.dateText}}</view>
+        </view>
       </view>
-      <view class="recent-side">
-        <view class="recent-amt {{item.kind === 'receive' ? 'plus' : 'minus'}}">{{item.amountText}}</view>
-        <view class="recent-date">{{item.dateText}}</view>
-      </view>
-    </view>
+    </block>
   </view>
 
   <view class="flex-spacer spacer-top"></view>
 
   <view class="bigcards">
-    <view class="bigcard gift" bindtap="goGifts"><text class="songti">送礼</text></view>
-    <view class="bigcard receive" bindtap="goReceive"><text class="songti">收礼</text></view>
+    <view class="bigcard gift" bindtap="goGifts"><text class="">送礼</text></view>
+    <view class="bigcard receive" bindtap="goReceive"><text class="">收礼</text></view>
   </view>
   <view class="flex-spacer"></view>
   <view class="bottom-gap"></view>

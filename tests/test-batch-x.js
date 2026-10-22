@@ -102,12 +102,13 @@ test('任务X-编辑按钮：修改页底部按钮为「修改」，添加页保
   assert(readMp('pages/receive-record-add/receive-record-add.wxml').includes('>保存</view>'), 'receive-record-add 保持保存');
 });
 
-// ---------- 第 3 项：小喇叭静态（第二批修订：允许慢速闪烁动画，仍禁滚动跑马灯） ----------
-test('任务X-小喇叭：收礼页无滚动跑马灯，仅慢速闪烁动画（任务Y 新规格）', () => {
+// ---------- 第 3 项：小喇叭无滚动跑马灯（闪烁规格以任务AA 最终口径为准，见 test-batch-aa） ----------
+test('任务X-小喇叭：收礼页无滚动跑马灯，硬闪动画定义在 app.wxss', () => {
   const wxss = readMp('pages/receive/receive.wxss');
   assert(!wxss.includes('hornscroll'), 'hornscroll 跑马灯关键帧应删除');
   assert(!wxss.includes('translateX'), '不应有位移滚动动画');
-  assert(wxss.includes('hornBlink'), '应有慢速柔和闪烁动画 hornBlink（任务Y）');
+  assert(readMp('app.wxss').includes('@keyframes hornBlink'), 'hornBlink 定义在 app.wxss 全局');
+  assert(readMp('pages/receive/receive.wxml').includes('horn horn-blink'), '收礼页喇叭带 horn-blink 类');
 });
 
 // ---------- 第 4 项（2026-10-22 晚用户改定）：礼薄详情页取消修改/删除入口 ----------

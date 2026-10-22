@@ -56,17 +56,19 @@
               data-key="{{item.key}}" bindtap="onColTap"
               style="width:{{spec.colW}}px;border-left-color:{{theme.lineColor}};{{selectedKey === item.key ? 'box-shadow:inset 0 0 0 2px ' + theme.highlightBorder + ';background-color:' + theme.highlightBg + ';' : ''}}">
               <block wx:if="{{!item.empty}}">
-                <view class="zone" style="height:{{spec.nameH}}px;margin-top:{{spec.innerPad}}px;">
+                <!-- 三段绝对定位（任务AA 定版，取代流式堆叠）：姓名区钉列顶（上留白=innerPad）、
+                     中段区钉列高正中、金额区钉列底（下偏 amtBottomPad＝innerPad−字体墨迹补偿，
+                     使「整」字墨迹下空白与姓名首字墨迹上空白一致，模型实测量过）。纸面实际
+                     高度随真机屏高浮动，流式堆叠会把差值全堆在金额区下方（真机「整」字悬空的根因）。 -->
+                <view class="zone zone-name" style="top:{{spec.innerPad}}px;height:{{spec.nameH}}px;">
                   <text wx:for="{{item.nameChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
                     style="top:{{ch.topPx}}px;font-size:{{item.nameFontPx}}px;font-family:{{selStack}};color:{{theme.inkColor}};">{{ch.ch}}</text>
                 </view>
-                <view style="height:{{spec.gap}}px;"></view>
-                <view class="zone" style="height:{{spec.midH}}px;">
+                <view class="zone zone-mid" style="height:{{spec.midH}}px;">
                   <text wx:for="{{item.midChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
-                    style="top:{{ch.topPx}}px;font-size:{{item.midFontPx}}px;font-family:{{item.midRole === 'selected' ? selStack : songtiStack}};color:{{item.midBlack ? '#222222' : theme.midColor}};">{{ch.ch}}</text>
+                    style="top:{{ch.topPx}}px;font-size:{{item.midFontPx}}px;font-family:{{songtiStack}};color:{{item.midBlack ? '#222222' : theme.midColor}};">{{ch.ch}}</text>
                 </view>
-                <view style="height:{{spec.gap}}px;"></view>
-                <view class="zone" style="height:{{spec.amtH}}px;">
+                <view class="zone zone-amt" style="bottom:{{spec.amtBottomPad}}px;height:{{spec.amtH}}px;">
                   <text wx:for="{{item.amountChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
                     style="top:{{ch.topPx}}px;font-size:{{item.amountFontPx}}px;font-family:{{selStack}};color:{{theme.inkColor}};">{{ch.ch}}</text>
                 </view>

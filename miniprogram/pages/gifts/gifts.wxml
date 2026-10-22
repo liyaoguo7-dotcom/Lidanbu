@@ -8,7 +8,7 @@
 </view>
 
 <view class="card entry-row" wx:if="{{showLandscapeEntry && !searching}}" bindtap="goLandscape">
-  <text class="entry-title songti">横置礼单本</text>
+  <text class="entry-title">横置礼单本</text>
   <text class="entry-arrow">></text>
 </view>
 

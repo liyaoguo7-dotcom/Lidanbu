@@ -70,15 +70,20 @@ test('横置-白事样式无红色：主题常量（＋/高亮/中段/列线）�
   assert.eq(LC.resolveReceiveTheme('baishi', 'classic'), 'funeral', '白事礼薄强制白事样式');
 });
 
-test('横置-字体分工：礼金随所选字体，贺礼/奠仪恒宋体', () => {
-  assert.eq(LC.fontRoleForMid('礼金'), 'selected', '礼金跟随所选字体');
+test('横置-字体分工：中段词只剩贺礼/奠仪且恒宋体（任务AA 废除「礼金」中段词）', () => {
   assert.eq(LC.fontRoleForMid('贺礼'), 'songti', '贺礼恒宋体');
   assert.eq(LC.fontRoleForMid('奠仪'), 'songti', '奠仪恒宋体');
+  // 旧口径「礼金随所选字体」已废除：任何标签的中段词只会是贺礼/奠仪
   const g = LC.buildColumns([{ id: '1', name: '张三', amountFen: 10000, tagId: 'yasui' }], {});
-  assert.eq(g.columns[0].midText, '礼金', '压岁标签→礼金');
-  assert.eq(g.columns[0].midRole, 'selected', '礼金列 role=selected');
+  assert.eq(g.columns[0].midText, '贺礼', '压岁标签→贺礼（任务AA）');
+  assert.eq(g.columns[0].midRole, 'songti', '贺礼列 role=songti');
   const h = LC.buildColumns([{ id: '1', name: '张三', amountFen: 10000, tagId: 'jiehun' }], {});
+  assert.eq(h.columns[0].midText, '贺礼', '结婚→贺礼');
   assert.eq(h.columns[0].midRole, 'songti', '贺礼列 role=songti');
+  for (const tag of ['shengri', 'qiaoqian', 'tanwang', 'qita']) {
+    const b = LC.buildColumns([{ id: '1', name: '张三', amountFen: 10000, tagId: tag }], {});
+    assert.eq(b.columns[0].midText, '贺礼', `${tag}→贺礼`);
+  }
 });
 
 test('横置-字体回退链：所选字体→楷体→宋体，缺字不出方框', () => {
@@ -185,7 +190,8 @@ test('横置-缩放界内：4字名/5字名/6字金额系数在 (0,1] 且不越�
   assert.eq(a6.text, '壹仟伍佰元整', '6字金额');
   assert(a6.scale > 0 && a6.scale <= 1, '6字金额系数在界内');
   const aLast = a6.chars[a6.chars.length - 1].top;
-  assert(aLast + a6.pitch <= LC.SPEC.AMT_H + 0.01, '6字金额末字不越金额区');
+  // 任务AA 口径：末字字形盒不越金额区（旧 top+pitch 口径已随底锚公式废除）
+  assert(aLast + a6.fontSize <= LC.SPEC.AMT_H + 0.01, '6字金额末字字形盒不越金额区');
   // 2字名占 1、3 字位；1字居中
   const n2 = LC.layoutName('欧阳');
   assert.eq(n2.chars[0].top, 0, '2字名首字第1位');

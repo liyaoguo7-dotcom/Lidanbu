@@ -28,13 +28,11 @@
 .rotate-back-ph { width: 88rpx; }
 .rotate-title {
   flex: 1; text-align: center; font-size: 34rpx; color: #333;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", SimSun, serif;
 }
 .rotate-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 64rpx; }
 .rotate-icon { width: 180rpx; height: 180rpx; margin-bottom: 40rpx; }
 .rotate-main {
   font-size: 38rpx; color: #333; text-align: center; line-height: 1.5;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", SimSun, serif;
 }
 .rotate-sub { margin-top: 28rpx; font-size: 26rpx; color: #999; text-align: center; }
 .rotate-lock { margin-top: 12rpx; font-size: 26rpx; color: #999; text-align: center; }
@@ -58,7 +56,6 @@
 .ticon { width: 18px; height: 18px; margin-right: 6px; }
 .tname {
   font-size: 17px; color: #2B2B2B;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", SimSun, serif;
 }
 .tdate { font-size: 13px; color: #8A8175; margin-left: 4px; }
 .style-btn {
@@ -87,7 +84,9 @@
   flex-shrink: 0; height: 100%; box-sizing: border-box;
   border-left: 1px solid; position: relative;
 }
-.zone { position: relative; width: 100%; }
+.zone { position: absolute; left: 0; right: 0; }
+/* 中段区钉在列高正中（任务AA）：区中心与列中心重合，区内字再居中 → 墨迹中心＝列中心 */
+.zone-mid { top: 50%; transform: translateY(-50%); }
 .vchar {
   position: absolute; left: 50%; transform: translateX(-50%);
   line-height: 1; white-space: nowrap;

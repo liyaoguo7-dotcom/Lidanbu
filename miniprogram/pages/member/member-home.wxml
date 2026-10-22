@@ -1,6 +1,6 @@
 <!-- 会员与额度 -->
 <view class="card member-card">
-  <text class="m-title songti">会员卡片</text>
+  <text class="m-title">会员卡片</text>
   <text class="m-desc">{{stateText}}</text>
   <view class="m-btn" wx:if="{{state === 'free' || state === 'expired'}}" bindtap="onBuy">开通会员</view>
   <view class="m-badge" wx:if="{{state === 'member' || state === 'grace'}}">{{stateText}}</view>
@@ -56,5 +56,4 @@
   </view>
 </view>
 
-<view style="height:100px"></view>
-<view class="btn-bottom"><view class="btn-primary" bindtap="onExport">一键导出账本</view></view>
+<!-- 任务AA：底部悬浮导出按钮已删（导出入口在「我的」与导出页已有），占位一并去掉 -->

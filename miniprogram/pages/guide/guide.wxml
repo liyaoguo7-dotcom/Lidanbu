@@ -5,7 +5,7 @@
   <view class="shot-frame">
     <image class="shot" src="{{item.img}}" mode="widthFix" />
   </view>
-  <text class="g-title songti">{{item.caption}}</text>
+  <text class="g-title">{{item.caption}}</text>
 </view>
 
 <view class="dots">

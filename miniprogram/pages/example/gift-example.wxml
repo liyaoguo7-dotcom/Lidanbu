@@ -26,7 +26,7 @@
     <view class="pat-big {{gift.isBaishi ? 'baishi' : ''}}">
       <image class="pat-img" src="{{gift.icon}}" mode="aspectFit" />
     </view>
-    <text class="songti pat-name {{gift.isBaishi ? 'baishi' : ''}}">{{gift.tagName}}</text>
+    <text class="pat-name {{gift.isBaishi ? 'baishi' : ''}}">{{gift.tagName}}</text>
   </view>
   <view class="card">
     <view class="form-row"><text class="form-label">场合</text><text class="form-val">{{gift.tagName}}</text></view>

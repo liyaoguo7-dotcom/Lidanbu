@@ -20,7 +20,6 @@
   border-radius: 15px;
   padding: 5px 13px;
   background: #fff;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
 }
 .tchip.on { color: #E05353; border-color: #E05353; }
 .custom-range { display: flex; align-items: center; justify-content: center; margin-top: 10px; gap: 8px; }
@@ -56,7 +55,6 @@
 .side-label {
   font-size: 14px;
   color: #333;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
 }
 .side-amount {
   font-size: 22px;
@@ -71,7 +69,6 @@
   font-size: 13px;
   color: #666;
   padding: 10px 0 2px;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
 }
 /* 差额区：淡黄底红字，绝对值无符号 */
 .diff-bar {
@@ -85,7 +82,6 @@
 .diff-label {
   font-size: 15px;
   font-weight: 700;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
 }
 .diff-amount { font-size: 15px; font-weight: 700; margin-left: 8px; }
 .wl-row {

@@ -1,17 +1,11 @@
 /* 收礼主页 */
-.songti, .nm { font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
 
-/* 小喇叭提示条（统一规格 2026-10-22：不滚动、慢速柔和闪烁；过长默认单行省略，
+/* 小喇叭提示条（统一规格 2026-10-22 任务AA 再定版：静态不闪烁、白底；过长默认单行省略，
    点文字展开左右滑动看全文；× 关闭后本次打开期间不再显示，状态只存内存） */
-@keyframes hornBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
 .horn {
   display: flex; align-items: center;
   background: #FFF8E1; border-radius: 8px;
   margin: 12px 12px 0; padding: 8px 10px;
-  animation: hornBlink 2.6s ease-in-out infinite;
 }
 .horn-icon { width: 14px; height: 14px; margin-right: 6px; flex: none; }
 .horn-scroll { flex: 1; min-width: 0; white-space: nowrap; }

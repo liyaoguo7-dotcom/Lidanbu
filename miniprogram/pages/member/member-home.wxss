@@ -1,0 +1,10 @@
+/* 开通会员页专属（任务AA）：功能行标题不得折行——全局 .form-label 宽 82px 放不下
+   「家庭共享邀请」「横置红字礼单本」等六七字标题，本页放宽到 118px 且强制单行；
+   描述文字（.form-val.ph）单行截断省略，不挤压标题。只作用于本页，不动全局口径。 */
+.form-label { width: 118px; white-space: nowrap; }
+.form-val.ph {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

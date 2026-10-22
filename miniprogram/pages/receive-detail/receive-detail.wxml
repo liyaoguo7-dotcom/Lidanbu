@@ -4,8 +4,8 @@
   <view class="pat-big {{isBaishi ? 'baishi' : ''}}">
     <image class="pat-img" src="{{icon}}" mode="aspectFit" />
   </view>
-  <text class="songti pat-name {{isBaishi ? 'baishi' : ''}}">{{tagName}}</text>
-  <text class="event-name songti">{{event.name}}</text>
+  <text class="pat-name {{isBaishi ? 'baishi' : ''}}">{{tagName}}</text>
+  <text class="event-name">{{event.name}}</text>
   <text class="event-date num">{{date}}</text>
 </view>
 

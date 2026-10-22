@@ -9,7 +9,7 @@
       <view class="tagcircle {{item.id === currentId ? (item.id === 'baishi' ? 'active-baishi' : 'active') : ''}}">
         <image class="tagimg" src="{{item.iconPath}}" mode="aspectFit" />
       </view>
-      <text class="tagname songti {{item.id === currentId ? (item.id === 'baishi' ? 'name-baishi' : 'name-active') : ''}}">{{item.name}}</text>
+      <text class="tagname {{item.id === currentId ? (item.id === 'baishi' ? 'name-baishi' : 'name-active') : ''}}">{{item.name}}</text>
     </view>
   </block>
 </view>

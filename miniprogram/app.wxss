@@ -18,7 +18,7 @@ page {
   border-bottom: 1px solid #F0F0F0;
 }
 .form-row:last-child { border-bottom: none; }
-.form-label { width: 82px; flex: none; font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
+.form-label { width: 82px; flex: none; }
 .form-val { flex: 1; }
 .form-val.ph { color: #C2C2C2; }
 .chev { color: #C2C2C2; font-size: 18px; }
@@ -65,12 +65,14 @@ page {
 }
 /* 非 Tab 列表页贴底版 ＋：24px（必须在 .fab 之后定义以覆盖其 bottom） */
 .fab-low { bottom: 24px; bottom: calc(24px + env(safe-area-inset-bottom)); }
-/* 字体规范 v1.1（用户 2026-10-18 确认）：标题/文字标签→宋体风格；金额/日期→黑体（系统无衬线）。不引入外部字体 */
-.songti { font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
+/* 字体口径（2026-10-22 任务AA 用户下令）：全小程序不再用宋体，标题/标签/正文一律默认黑体；
+   唯一例外是横置礼单「贺礼/奠仪」两词的印刷宋体（冻结定版，走 landscape-core 的 songtiStack）。
+   原 .songti 全局类已删除，各页 wxml 的 songti 类名同步清除。 */
 .num { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
 .tip {
   display: flex;
   align-items: flex-start;
+  background: #FFF8E1;
   padding: 8px 14px;
   font-size: 12px;
   color: #999;
@@ -82,14 +84,19 @@ page {
   flex: none;
   margin-top: 2px; /* 与小字行高对齐 */
 }
-/* 小喇叭统一规格（2026-10-22 用户定版）：不滚动、慢速柔和闪烁（opacity 1↔0.6、2.6s）；
-   文字过长默认单行省略，点文字后左右滑动看全文；右侧 × 关闭后本次打开期间不再显示
+/* 小喇叭统一规格（2026-10-22 任务AA 最终定版，用户三次澄清后为准）：
+   淡黄底 #FFF8E1 统一；**硬闪**——整条一下出现一下消失地交替（不要渐变），
+   周期 3s、显示与消失各约一半（关键帧阶跃跳变）；不滚动，文字过长默认单行省略，
+   点文字后左右滑动看全文；右侧 × 关闭后本次打开期间不再显示
    （状态在 services/horn-state.js 只存内存，禁止落 storage） */
 @keyframes hornBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0% { opacity: 1; }
+  49% { opacity: 1; }
+  50% { opacity: 0; }
+  99% { opacity: 0; }
+  100% { opacity: 1; }
 }
-.horn-blink { animation: hornBlink 2.6s ease-in-out infinite; }
+.horn-blink { animation: hornBlink 3s linear infinite; }
 .tip-body { flex: 1; min-width: 0; margin-left: 6px; }
 .tip-txt-ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tip-scroll { flex: 1; min-width: 0; margin-left: 6px; white-space: nowrap; }
@@ -109,7 +116,7 @@ page {
 }
 .search-cancel { color: #F0575A; font-size: 14px; margin-left: 8px; white-space: nowrap; }
 .divider { height: 1px; background: #F0F0F0; }
-.section-title { padding: 4px 12px 0; font-size: 13px; color: #999; font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
+.section-title { padding: 4px 12px 0; font-size: 13px; color: #999; }
 .switch {
   width: 46px; height: 26px; border-radius: 13px;
   background: #DDD; position: relative; flex: none;

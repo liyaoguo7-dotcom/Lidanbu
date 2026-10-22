@@ -11,7 +11,7 @@
 
 <view class="card">
   <block wx:for="{{groups}}" wx:key="key">
-    <view class="group-title songti">{{item.key}}</view>
+    <view class="group-title">{{item.key}}</view>
     <view class="contact-row" wx:for="{{item.items}}" wx:key="_id"
       data-id="{{item._id}}" data-name="{{item.name}}" bindtap="openSheet">
       <text class="nm">{{item.name}}</text>
@@ -28,7 +28,7 @@
 <!-- 半屏详情 -->
 <view class="sheet-mask" wx:if="{{sheetOpen}}" bindtap="closeSheet"></view>
 <view class="sheet" wx:if="{{sheetOpen}}">
-  <view class="sname songti">{{sheetName}}</view>
+  <view class="sname">{{sheetName}}</view>
   <view class="sopt red" bindtap="goWanglai">往来记录</view>
   <view class="sopt" bindtap="goEdit">修改姓名</view>
   <view class="sopt" bindtap="onDelete">删除姓名</view>

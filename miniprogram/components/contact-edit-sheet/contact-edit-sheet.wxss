@@ -21,7 +21,6 @@
 .cs-title {
   flex: 1; text-align: center;
   font-size: 18px; font-weight: 700; color: #333;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
 }
 .cs-card { background: #FFFFFF; border-radius: 12px; margin: 4px 12px 0; }
 .cs-row {
@@ -32,7 +31,6 @@
 .cs-row-last { border-bottom: none; }
 .cs-label {
   width: 82px; flex: none; font-size: 15px; color: #333;
-  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif;
 }
 .cs-input { flex: 1; font-size: 15px; }
 .cs-btns { margin-top: auto; padding: 20px 24px 0; }

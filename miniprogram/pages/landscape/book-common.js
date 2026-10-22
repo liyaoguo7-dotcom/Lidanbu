@@ -198,7 +198,8 @@ function createBookPage(kind) {
       const ev = events.find((e) => e._id === this._eventId) || events[0];
       this._eventId = ev._id;
       this._event = ev;
-      const recs = await dataService.listRecordsFor(this._ownerId || undefined, ev._id);
+      // 横置按记账先后排（创建升序、第一笔最左）：列表接口是最新在前，须翻正（任务AA）
+      const recs = LC.orderForBook(await dataService.listRecordsFor(this._ownerId || undefined, ev._id));
       const rows = [];
       this._recordsById = {};
       for (const r of recs) {
@@ -222,7 +223,8 @@ function createBookPage(kind) {
     },
 
     async _reloadGift() {
-      const gifts = await dataService.listGiftsFor(this._ownerId || undefined);
+      // 同收礼本：横置按记账先后排（创建升序、第一笔最左，任务AA）
+      const gifts = LC.orderForBook(await dataService.listGiftsFor(this._ownerId || undefined));
       const rows = [];
       this._recordsById = {};
       for (const g of gifts) {

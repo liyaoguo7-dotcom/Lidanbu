@@ -1,14 +1,18 @@
-/* 小喇叭提示条（统一规格 2026-10-22：不滚动、慢速柔和闪烁；组件样式隔离，动画在本文件内定义） */
+/* 小喇叭提示条（统一规格 2026-10-22 任务AA 最终定版：淡黄底、硬闪；组件样式隔离，
+   动画在本文件内同名定义一份——关键帧阶跃跳变，周期 3s、显隐各半） */
 @keyframes hornBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0% { opacity: 1; }
+  49% { opacity: 1; }
+  50% { opacity: 0; }
+  99% { opacity: 0; }
+  100% { opacity: 1; }
 }
-
+.tip-bar.horn-blink { animation: hornBlink 3s linear infinite; }
 .tip-bar {
   display: flex;
   align-items: center;
+  background: #FFF8E1;
   padding: 12rpx 24rpx;
-  animation: hornBlink 2.6s ease-in-out infinite;
 }
 
 .horn {

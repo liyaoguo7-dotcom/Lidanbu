@@ -9,7 +9,7 @@
   <image wx:if="{{avatarUrl}}" class="avatar avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
   <view wx:else class="avatar avatar-initial">{{avatarInitial}}</view>
   <view>
-    <text class="uname songti">{{displayName}}</text>
+    <text class="uname">{{displayName}}</text>
     <text class="usub">{{memberStateText}}</text>
   </view>
   <text class="chev profile-chev">›</text>
@@ -17,7 +17,7 @@
 
 <!-- ② 会员与积分卡片 -->
 <view class="card member-card" bindtap="onPurchase">
-  <text class="m-title songti">会员与积分</text>
+  <text class="m-title">会员与积分</text>
   <text class="m-desc">{{memberText}}</text>
   <text class="m-desc">积分余额：{{pointsBalance}} 分（不过期）</text>
   <view class="m-actions">

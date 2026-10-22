@@ -135,8 +135,8 @@ test('任务Z-7：loadFontFace 行为——global 透传、成功后状态 loade
   assert.eq(fm.getState('lxgw'), 'loaded', '状态置 loaded');
 });
 
-// ---------- 第 8 项：横置列内布局 ----------
-test('任务Z-8：金额底锚定（末字贴底）、字号与姓名一致、中段垂直居中', () => {
+// ---------- 第 8 项：横置列内布局（任务AA 修订：金额字形盒底锚） ----------
+test('任务Z-8：金额底锚定（末字字形盒贴区底）、字号与姓名一致、中段区内居中', () => {
   const LC = require('../miniprogram/pages/landscape/landscape-core.js');
   assert.eq(LC.SPEC.AMT_FONT, 22, '金额字号 22');
   assert.eq(LC.SPEC.AMT_FONT, LC.SPEC.NAME_FONT, '金额与姓名字号一致');
@@ -145,12 +145,13 @@ test('任务Z-8：金额底锚定（末字贴底）、字号与姓名一致、�
   for (const fen of [100, 1000, 10000, 100000, 123456]) {
     const a = LC.layoutAmount(fen);
     const last = a.chars[a.chars.length - 1];
-    assert(Math.abs(last.top + a.pitch - LC.SPEC.AMT_H) < 0.011,
-      `${fen}分 末字「整」应落最底字位（top=${last.top}, pitch=${a.pitch}）`);
+    // 任务AA 口径：末字字形盒下缘 = 区高（旧口径 top+pitch 多出 pitch−fontSize 的空档，已废）
+    assert(Math.abs(last.top + a.fontSize - LC.SPEC.AMT_H) < 0.011,
+      `${fen}分 末字「整」字形盒应贴区底（top=${last.top}, fontSize=${a.fontSize}）`);
   }
   const a3 = LC.layoutAmount(100); // 壹元整 3 字
   assert.eq(a3.text, '壹元整', '3 字金额文本');
-  assert.eq(a3.chars[0].top, 24, '3 字金额起始位下移（底锚定）');
+  assert.eq(a3.chars[0].top, 26, '3 字金额起始位（字形盒底锚：96−22−2×24=26）');
   const built = LC.buildColumns([{ id: 'r1', name: '张三', amountFen: 10000, tagId: 'jiehun' }], { fontId: 'lxgw' });
   const mid = built.columns[0].midChars;
   assert.eq(mid.length, 2, '中段两字（贺礼）');

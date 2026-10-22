@@ -1,7 +1,8 @@
 /**
  * 礼单簿 · 会员与额度（阶段3）
- * 会员卡片 / 专属功能 / 额度使用 / 三次提醒 / 超额只读提示 / 一键导出
+ * 会员卡片 / 专属功能 / 额度使用 / 三次提醒 / 超额只读提示
  * 价格只在购买页（会员与积分）一处展示，本页只放入口（任务P2 收口）
+ * 任务AA：底部悬浮导出按钮已删（导出入口在「我的」与导出页已有）
  */
 const dataService = require('../../services/data-service.js');
 const AppConfig = require('../../config/app-config.js');
@@ -60,10 +61,6 @@ Page({
 
   onOrders() {
     wx.navigateTo({ url: '/pages/member/orders/orders' });
-  },
-
-  onExport() {
-    wx.navigateTo({ url: '/pages/export/export-home' });
   },
 
   onLandscape() {

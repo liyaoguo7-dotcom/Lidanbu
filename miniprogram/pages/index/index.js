@@ -28,7 +28,8 @@ Page({
     privacyDeclined: false, // 已弹过窗且未同意 → 显示委婉说明条（只读浏览保留）
     pendingPhoto: false,   // 弹窗同意后要续走的拍照导入
     monthSummary: null,    // 本月小结（任务V）：{hasRecords, receiveText, giftText}
-    recent: [],            // 最近往来（任务V）：空数组时整卡不渲染
+    recent: [],            // 最近往来：取最近 10 条（任务AA）；空数组时整卡不渲染
+    recentRolling: false,  // 任务AA：>4 条时竖向自动滚动（同时可见 4 条），不足则静态
   },
 
   // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
@@ -59,15 +60,17 @@ Page({
     try {
       const [s, recent] = await Promise.all([
         dataService.getHomeSummary(),
-        dataService.getHomeRecent(3),
+        dataService.getHomeRecent(10),
       ]);
+      const list = recent || [];
       this.setData({
         monthSummary: {
           hasRecords: !!s.hasRecords,
           receiveText: formatAmountInt(s.receiveFen),
           giftText: formatAmountInt(s.giftFen),
         },
-        recent: recent || [],
+        recent: list,
+        recentRolling: list.length > 4,
       });
     } catch (e) { /* 演示期忽略 */ }
   },

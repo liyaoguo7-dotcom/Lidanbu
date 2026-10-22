@@ -1,6 +1,6 @@
 <!-- 会员与积分：顶部状态 + 会员套餐（小方块） + 积分礼包（小方块），数字全部由配置渲染 -->
 <view class="card member-card">
-  <text class="m-title songti">{{stateText}}</text>
+  <text class="m-title">{{stateText}}</text>
   <text class="m-desc" wx:if="{{expireText}}">会员到期日：{{expireText}}</text>
   <view class="points-row" bindtap="onPoints">
     <text class="points-label">积分余额</text>

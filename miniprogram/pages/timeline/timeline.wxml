@@ -2,8 +2,8 @@
 <view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
 
 <view class="kindbar">
-  <view class="kind-half songti">送出</view>
-  <view class="kind-half songti">收到</view>
+  <view class="kind-half">送出</view>
+  <view class="kind-half">收到</view>
 </view>
 
 <view class="tl" wx:if="{{items.length > 0}}">

@@ -29,6 +29,10 @@ const SPEC = {
   GAP: 10,
   MID_H: 52, MID_FONT: 22, MID_PITCH: 26,
   AMT_H: 96, AMT_FONT: 22, AMT_PITCH: 24, AMT_SLOTS: 4, // 金额字号 2026-10-22 任务Z 改与姓名一致(22，原20)；字位距/区高不变
+  AMT_BOTTOM_PAD: 4,     // 金额区底距列底（任务AA 模型实测补偿）：对称位本应 =INNER_PAD(6)，但真 LXGW
+                         // 渲染下「整」字墨迹下轴承≈2.5px、姓名首字上轴承≈0.5px，故区底下移 2px 至 4，
+                         // 使两侧墨迹空白同为 ≈6.5px（模型实测主列差 0.5px）；个别姓名用字（如「王」）
+                         // 墨迹上轴承偏大属字形本身，不随版式变
   PLUS_VISUAL: 31,       // ＋视觉直径（约原来的 70%）
   PLUS_TOUCH: 44,        // ＋可点范围（不缩小）
   FONT_CREDIT: '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）',
@@ -51,6 +55,7 @@ function scaledSpec(windowWidth) {
     nameH: r(SPEC.NAME_H), nameFont: r(SPEC.NAME_FONT), namePitch: r(SPEC.NAME_PITCH),
     gap: r(SPEC.GAP), midH: r(SPEC.MID_H), midFont: r(SPEC.MID_FONT), midPitch: r(SPEC.MID_PITCH),
     amtH: r(SPEC.AMT_H), amtFont: r(SPEC.AMT_FONT), amtPitch: r(SPEC.AMT_PITCH),
+    amtBottomPad: r(SPEC.AMT_BOTTOM_PAD),
     plusVisual: r(SPEC.PLUS_VISUAL), plusTouch: r(SPEC.PLUS_TOUCH),
   };
 }
@@ -78,19 +83,19 @@ function selectedStack(fontId) {
 }
 
 /**
- * 中段文字分工（定版规则）：
+ * 中段文字分工（2026-10-22 任务AA 改定）：
+ * - 中段词只剩两个：白事→奠仪、其余全部→贺礼（不再有「礼金」）；
  * - 贺礼 / 奠仪：固定印刷宋体（fontRole='songti'）
- * - 礼金：跟随所选字体（fontRole='selected'）
  * - 姓名 / 金额：跟随所选字体
  */
-function fontRoleForMid(midText) {
-  return midText === '礼金' ? 'selected' : 'songti';
+function fontRoleForMid() {
+  return 'songti';
 }
 
-/** 标签 → 中段文字（v3.1 规则：压岁/探望/其他=礼金，白事=奠仪，其余=贺礼） */
+/** 标签 → 中段文字（任务AA 定版：白事=奠仪，其余一律=贺礼） */
 const MID_BY_TAG = {
   jiehun: '贺礼', shengzi: '贺礼', shengri: '贺礼', shengxue: '贺礼', qiaoqian: '贺礼', dashou: '贺礼',
-  baishi: '奠仪', yasui: '礼金', tanwang: '礼金', qita: '礼金',
+  baishi: '奠仪', yasui: '贺礼', tanwang: '贺礼', qita: '贺礼',
 };
 function midTextForTag(tagId) { return MID_BY_TAG[tagId] || '贺礼'; }
 
@@ -180,26 +185,36 @@ function layoutName(name) {
   };
 }
 
-/** 金额逐字布局：**底锚定**（2026-10-22 任务Z 定版）——不论几字，末字「整」
- * 固定落在金额区最底字位，字少时起始位随之下移（姓名是顶锚定，两者不同，勿混）。
- * ≤4 字字位距 24，起始 top = 96 − 字数×24；超 4 字按比例压缩铺满整区（天然底锚）。 */
+/** 金额逐字布局：**底锚定到字形盒下缘**（2026-10-22 任务AA 再定版，覆盖任务Z 的字位锚）——
+ * 不论几字，末字「整」的字形盒下缘与金额区下缘齐平（top + fontSize = AMT_H），
+ * 其余字按字位距逐字向上回推；字少时起始位随之下移（姓名是顶锚定，两者不同，勿混）。
+ * ≤4 字字位距 24；超 4 字按比例压缩（字位距 = 96/字数、字号等比），下缘仍齐平。
+ * 【任务Z 版为何真机没贴底】旧版按"末字 top + pitch = 区高"锚定，字形盒下缘还差
+ * pitch − fontSize = 2px；且当时列内三段是流式堆叠、金额区并未落在列底（见 book.wxss
+ * 任务AA 的绝对定位三段），双重偏差叠加成真机上「整」字下方大片空白。 */
 function layoutAmount(amountFen) {
   const text = amountToChineseUpper(amountFen);
   const chars = Array.from(text);
   const n = chars.length;
-  if (n <= SPEC.AMT_SLOTS) {
-    const startTop = SPEC.AMT_H - n * SPEC.AMT_PITCH;
-    return {
-      text, scale: 1, fontSize: SPEC.AMT_FONT, pitch: SPEC.AMT_PITCH,
-      chars: chars.map((ch, i) => ({ ch, top: startTop + i * SPEC.AMT_PITCH })),
-    };
-  }
-  const scale = SPEC.AMT_SLOTS / n;
-  const pitch = SPEC.AMT_H / n;
+  const fits = n <= SPEC.AMT_SLOTS;
+  const scale = fits ? 1 : SPEC.AMT_SLOTS / n;
+  const pitch = fits ? SPEC.AMT_PITCH : SPEC.AMT_H / n;
+  const fontSize = fits ? SPEC.AMT_FONT : round2(SPEC.AMT_FONT * scale);
   return {
-    text, scale, fontSize: round2(SPEC.AMT_FONT * scale), pitch,
-    chars: chars.map((ch, i) => ({ ch, top: round2(i * pitch) })),
+    text, scale, fontSize, pitch,
+    chars: chars.map((ch, i) => ({ ch, top: round2(SPEC.AMT_H - fontSize - (n - 1 - i) * pitch) })),
   };
+}
+
+/**
+ * 横置礼单取数顺序（任务AA 定版）：按**记账先后（创建升序）**排，第一笔在最左列。
+ * 列表接口（core listRecords/listGifts）统一 createdAt 倒序（最新在上，给竖排列表用），
+ * 书页必须在这里翻正。Array.prototype.sort 为稳定排序：createdAt 同毫秒并列时，
+ * 倒序列表里并列项保持着创建先后，升序稳定排序后并列项相对序不变，结果仍是创建序。
+ */
+function orderForBook(records) {
+  return [...(Array.isArray(records) ? records : [])]
+    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 }
 
 /**
@@ -231,8 +246,10 @@ function buildColumns(records, opts = {}) {
       nameChars: name.chars, nameFontSize: calibratedSize(name.fontSize, fontId), nameScale: name.scale,
       midText,
       midRole: fontRoleForMid(midText),
-      // 中段区域内垂直居中（2026-10-22 任务Z 定版，原从顶排显得偏上）：
-      // 墨迹高 =(字数-1)×字位距 + 字号，上下留白均分
+      // 中段在**整列绝对正中**（任务AA 定版）：字在本区内先居中（墨迹高
+      // =(字数-1)×字位距 + 字号，上下留白均分），区本身再由 book.wxss 以
+      // top:50%+translateY(-50%) 钉在列高中心——两级居中叠加，墨迹中心＝列中心。
+      // （任务Z 只做了区内居中、区还在流式排布的上半部，真机看着偏中上。）
       midChars: (() => {
         const arr = Array.from(midText);
         const ink = arr.length ? (arr.length - 1) * SPEC.MID_PITCH + SPEC.MID_FONT : 0;
@@ -344,7 +361,7 @@ module.exports = {
   FONTS, fontById, calibratedSize, selectedStack, SONGTI_STACK, KAITI_STACK,
   fontRoleForMid, MID_BY_TAG, midTextForTag,
   THEMES, THEME_LIST, themeById, resolveReceiveTheme,
-  layoutName, layoutAmount, buildColumns, windowRange,
+  layoutName, layoutAmount, orderForBook, buildColumns, windowRange,
   createOrientationMachine, createSelectionStore, permissionsFor,
   detailAmountText, ROTATE_COPY,
 };

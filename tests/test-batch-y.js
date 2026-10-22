@@ -100,12 +100,12 @@ test('任务Y-F喇叭实现：无 storage 持久化、全实例带闪烁/点开�
   for (const p of ['pages/index/index.wxml', 'pages/contacts/contacts.wxml', 'pages/choose-contact/choose-contact.wxml',
     'pages/import/import-home.wxml', 'pages/import/import-event.wxml', 'pages/import/import-review.wxml']) {
     const w = readMp(p);
-    assert(w.includes('horn-blink'), `${p} 喇叭应带慢速闪烁`);
+    assert(w.includes('horn-blink'), `${p} 喇叭应带硬闪类`);
     assert(w.includes('tip-close') && w.includes('onHornClose'), `${p} 喇叭应有关闭叉`);
     assert(w.includes('hornWide') && w.includes('scroll-x'), `${p} 喇叭应支持点开左右滑看全文`);
   }
   const appWxss = readMp('app.wxss');
-  assert(appWxss.includes('@keyframes hornBlink') && appWxss.includes('2.6s'), '闪烁动画周期约 2.6s');
+  assert(appWxss.includes('@keyframes hornBlink') && appWxss.includes('hornBlink 3s'), '硬闪动画周期 3s（任务AA 最终口径）');
   const tb = readMp('components/tip-bar/tip-bar.wxml');
   assert(tb.includes('horn-blink') && tb.includes('onClose') && tb.includes('expanded'), 'tip-bar 组件应同规格');
   const receiveWxml = readMp('pages/receive/receive.wxml');
