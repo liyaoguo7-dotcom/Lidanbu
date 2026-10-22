@@ -2,10 +2,10 @@
  * 任务AA（真机反馈第四批）测试：
  * 1 横置三修：列序按创建升序（第一笔最左）+ 两条取数路径接线、中段词只剩贺礼/奠仪、
  *   金额字形盒底锚、三段绝对定位落位（区顶/区中/区底由 book.wxml+wxss 钉死）；
- * 2 小喇叭最终口径：淡黄底统一 + 硬闪（关键帧阶跃、3s、显隐各半）；
+ * 2 小喇叭：淡黄底统一（硬闪口径已于任务AB 第 8 项作废，新断言在 test-batch-ab）；
  * 3 宋体清零：miniprogram 内 Songti 仅剩横置贺礼/奠仪机制；
  * 4 首页：最近往来取 10 条、>4 条竖向滚动 swiper、大卡下移、字号放大；
- * 5 Tab 图标：162×162 且新线宽已写入 SVG 源；
+ * 5 Tab 图标：162×162（任务AB 第 4 项已重绘为无圈版，新断言在 test-batch-ab）；
  * 6 开通会员页：导出按钮删除、标题不折行样式；
  * 7 字体专项：三款字体内部族名与声明族名一致、均为真 woff2。
  */
@@ -79,23 +79,13 @@ test('任务AA-中段词：全仓横置链路只剩贺礼/奠仪', () => {
   assert.eq(LC.buildColumns([{ id: '1', name: '张', amountFen: 1, tagId: 'qita' }], {}).columns[0].midText, '贺礼', '其他→贺礼');
 });
 
-// ---------- 2 小喇叭最终口径 ----------
-test('任务AA-喇叭：淡黄底统一 + 硬闪关键帧（阶跃、3s、显隐各半）', () => {
+// ---------- 2 小喇叭（任务AB 第 8 项改版：AA 硬闪口径已作废，细节断言移至 test-batch-ab） ----------
+test('任务AA-喇叭：淡黄底统一（闪烁已于任务AB 取消）', () => {
   const app = readMp('app.wxss');
-  assert(app.includes('@keyframes hornBlink'), 'app.wxss 有 hornBlink');
-  assert(app.includes('hornBlink 3s linear infinite'), '周期 3s');
-  assert(app.includes('49% { opacity: 1; }') && app.includes('50% { opacity: 0; }'), '关键帧阶跃跳变（硬闪非渐变）');
   assert(app.includes('.tip {') && app.includes('background: #FFF8E1;'), '.tip 淡黄底');
   assert(readMp('pages/receive/receive.wxss').includes('background: #FFF8E1;'), '收礼页喇叭淡黄底');
-  const tb = readMp('components/tip-bar/tip-bar.wxss');
-  assert(tb.includes('background: #FFF8E1;') && tb.includes('@keyframes hornBlink'), 'tip-bar 淡黄底+自带硬闪（样式隔离）');
-  for (const p of ['pages/index/index.wxml', 'pages/receive/receive.wxml', 'components/tip-bar/tip-bar.wxml']) {
-    assert(readMp(p).includes('horn-blink'), `${p} 带 horn-blink`);
-  }
-  // 首页本月小结条不是喇叭：不得带闪烁类
-  const idx = readMp('pages/index/index.wxml');
-  const monthBar = idx.match(/<view class="month-bar"[^>]*>/)[0];
-  assert(!monthBar.includes('horn-blink'), '本月小结条不闪');
+  assert(readMp('components/tip-bar/tip-bar.wxss').includes('background: #FFF8E1;'), 'tip-bar 淡黄底');
+  assert(!app.includes('hornBlink') && !app.includes('horn-blink'), 'app.wxss 不得再有硬闪（任务AB 取消闪烁）');
 });
 
 // ---------- 3 宋体清零 ----------
@@ -148,19 +138,13 @@ test('任务AA-首页：最近往来取 10 条、竖向滚动 4 条可见、大�
   assert(wxss.includes('.recent-name { font-size: 16px;'), '姓名字号 15→16');
 });
 
-// ---------- 5 Tab 图标 ----------
-test('任务AA-Tab图标：162×162 且 SVG 源线宽已加粗', () => {
+// ---------- 5 Tab 图标（任务AB 第 4 项重绘：无外圈、颜色与亲友录/我的对齐，细节断言在 test-batch-ab） ----------
+test('任务AA-Tab图标：162×162（重绘口径见任务AB）', () => {
   for (const n of ['home', 'home-active', 'wanglai', 'wanglai-active']) {
     const buf = fs.readFileSync(path.join(MP, 'images/tabbar', `${n}.png`));
     assert.eq(buf.readUInt32BE(16), 162, `${n}.png 宽 162`);
     assert.eq(buf.readUInt32BE(20), 162, `${n}.png 高 162`);
   }
-  const srcDir = path.join(__dirname, '..', 'docs', 'tab-icon-sources');
-  const house = fs.readFileSync(path.join(srcDir, 'home-house.svg'), 'utf8');
-  assert(house.includes('stroke-width="31"') && house.includes('stroke-width="47"') && house.includes('stroke-width="43"'),
-    '房子线宽 圆环31/屋顶47/墙43（旧 17/26/24，约 1.8 倍）');
-  const people = fs.readFileSync(path.join(srcDir, 'wanglai-people.svg'), 'utf8');
-  assert(people.includes('stroke-width="31"'), '两人头圆环 31（旧 17）');
 });
 
 // ---------- 6 开通会员页 ----------

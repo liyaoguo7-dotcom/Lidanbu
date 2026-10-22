@@ -4,17 +4,19 @@
  */
 const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
+const { hornMarquee } = require('../../services/horn-marquee.js');
 const { saveImport } = require('../../services/import-state.js');
 
 Page({
-  data: { hornOff: false, hornWide: false },
+  data: { hornOff: false, hornRun: false, hornDur: 0, tipText: '先选类型再拍照：收礼要先选好礼薄，送礼直接拍，按拍照顺序导入' },
 
-  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
-  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
+  /** 长文字慢速左滚判定（任务AB 第 8 项）：按当前 tipText 算，超宽才滚 */
+  _syncHorn() { const m = hornMarquee(this.data.tipText); this.setData({ hornRun: m.run, hornDur: m.dur }); },
   onHornClose() { hornState.dismiss('import-home'); this.setData({ hornOff: true }); },
 
   async onLoad() {
-    this.setData({ hornOff: hornState.isDismissed('import-home') });
+    this.setData({ hornOff: hornState.isDismissed('import-home') }); this._syncHorn();
     await dataService.init();
     try {
       const m = await dataService.getMembership();

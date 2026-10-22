@@ -1,10 +1,14 @@
 /**
- * 礼单簿 · 发起邀请（2026-10-22 改版：走真实微信联系人）
+ * 礼单簿 · 发起邀请（2026-10-22 任务AB 第 7 项改版：取消「生成邀请」一步）
  * 流程：勾 5 开关（仅查看恒开不可取消）→ 选范围（至少一个收礼事件或"送礼"）
- *   → 点「生成邀请」调 core.share.invite 拿到邀请码（= membershipId，不绑定任何亲友，
- *     谁接受谁绑定）→ 页面出现 open-type="share" 红色按钮，发给真实微信好友；
- *     对方点开分享卡片进入 share-view?code=邀请码 即完成接受。
- * 旧流程「先从亲友录 picker 选人」已删除（用户真机反馈：邀请应走微信联系人）。
+ *   → 页面主按钮从一开始就是 open-type="share" 的「邀请家人」，点一次直接
+ *     拉起微信分享发给真实微信好友；对方点开分享卡片进入 share-view?code=邀请码
+ *     即完成接受（邀请码 = membershipId，不绑定任何亲友，谁接受谁绑定）。
+ * 邀请的创建/更新改为**静默预生成**：进入页面时、以及每次勾选变化后，后台
+ *   自动创建（core share.invite）或更新（core share.updateGrant）同一份待发
+ *   邀请，用户无感知、不多点一次。校验未通过（未选范围/非会员等）时不生成，
+ *   按钮置灰并在下方给出原有提示文案。
+ * 旧流程「先从亲友录 picker 选人」与「点生成邀请→再点分享」两步均已删除。
  */
 const dataService = require('../../services/data-service.js');
 
@@ -13,8 +17,12 @@ Page({
     switches: [],   // [{id,name,alwaysOn,on}]
     events: [],     // [{_id,name,checked}]
     giftsOn: false,
-    inviteCode: '', // 生成后 = membershipId
+    inviteCode: '', // 预生成后 = membershipId；为空 = 暂不可发（按钮置灰）
+    inviteHint: '', // 不可发时的提示文案（未选范围/生成失败原因）
   },
+
+  _pendingId: '',   // 已预生成的待发邀请（membershipId），本页内只维护这一份
+  _prepChain: null, // 预生成串行链：勾选连点时排队执行，避免并发建多份
 
   async onLoad() {
     await dataService.init();
@@ -26,6 +34,7 @@ Page({
       switches,
       events: (summary.events || []).map((e) => ({ _id: e._id, name: e.name, checked: false })),
     });
+    this._prepareInvite();
   },
 
   onSwitchToggle(e) {
@@ -35,40 +44,59 @@ Page({
       return { ...s, on: !s.on };
     });
     this.setData({ switches });
+    this._prepareInvite();
   },
 
   onEventToggle(e) {
     const id = e.currentTarget.dataset.id;
     this.setData({
-      events: this.data.events.map((ev) => ev._id === id ? { ...ev, checked: !ev.checked } : ev),
+      events: this.data.events.map((ev) => (ev._id === id ? { ...ev, checked: !ev.checked } : ev)),
     });
+    this._prepareInvite();
   },
 
   onGiftsToggle() {
     this.setData({ giftsOn: !this.data.giftsOn });
+    this._prepareInvite();
   },
 
-  /** 生成邀请：校验范围 → 建 pending 邀请 → 拿到邀请码（之后改勾选需重新生成） */
-  async onCreate() {
-    const eventIds = this.data.events.filter((e) => e.checked).map((e) => e._id);
-    if (eventIds.length === 0 && !this.data.giftsOn) {
-      wx.showToast({ title: '至少勾选一个收礼事件或"送礼"才能发出', icon: 'none' });
-      return;
-    }
+  _payload() {
     const switches = {};
     this.data.switches.forEach((s) => { switches[s.id] = s.on; });
-    wx.showLoading({ title: '生成中' });
+    return {
+      switches,
+      scope: {
+        events: this.data.events.filter((e) => e.checked).map((e) => e._id),
+        gifts: this.data.giftsOn,
+      },
+    };
+  },
+
+  /** 静默预生成：串行执行；未选范围不生成、按钮置灰保留原文案提示 */
+  _prepareInvite() {
+    this._prepChain = (this._prepChain || Promise.resolve())
+      .then(() => this._doPrepare())
+      .catch(() => {});
+    return this._prepChain;
+  },
+
+  async _doPrepare() {
+    const payload = this._payload();
+    if (payload.scope.events.length === 0 && !payload.scope.gifts) {
+      this.setData({ inviteCode: '', inviteHint: '至少勾选一个收礼事件或"送礼"才能发出' });
+      return;
+    }
     try {
-      const r = await dataService.shareInvite({
-        switches,
-        scope: { events: eventIds, gifts: this.data.giftsOn },
-      });
-      wx.hideLoading();
-      this.setData({ inviteCode: r.membershipId });
-      wx.showToast({ title: '邀请已生成', icon: 'success' });
+      if (!this._pendingId) {
+        const r = await dataService.shareInvite(payload);
+        this._pendingId = r.membershipId;
+      } else {
+        await dataService.updateGrant(this._pendingId, payload);
+      }
+      // 期间勾选可能又变了：以最新 payload 为准的结果才写回按钮状态
+      this.setData({ inviteCode: this._pendingId, inviteHint: '' });
     } catch (e) {
-      wx.hideLoading();
-      wx.showModal({ title: '生成失败', content: e.message, showCancel: false });
+      this.setData({ inviteCode: '', inviteHint: (e && e.message) || '邀请准备失败，请重试' });
     }
   },
 

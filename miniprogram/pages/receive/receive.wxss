@@ -1,14 +1,14 @@
 /* 收礼主页 */
 
-/* 小喇叭提示条（统一规格 2026-10-22 任务AA 再定版：静态不闪烁、白底；过长默认单行省略，
-   点文字展开左右滑动看全文；× 关闭后本次打开期间不再显示，状态只存内存） */
+/* 小喇叭提示条（统一规格 2026-10-22 任务AB 第 8 项：淡黄底、常驻不闪烁；文字过长
+   缓慢向左滚动（轨道样式见 app.wxss .horn-marquee/.horn-track）；× 关闭后本次
+   打开期间不再显示，状态只存内存） */
 .horn {
   display: flex; align-items: center;
   background: #FFF8E1; border-radius: 8px;
   margin: 12px 12px 0; padding: 8px 10px;
 }
 .horn-icon { width: 14px; height: 14px; margin-right: 6px; flex: none; }
-.horn-scroll { flex: 1; min-width: 0; white-space: nowrap; }
 .horn-text {
   font-size: 12px; color: #E8912D; line-height: 1.5;
 }

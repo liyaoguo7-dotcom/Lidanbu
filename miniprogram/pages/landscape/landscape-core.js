@@ -22,7 +22,7 @@ const SPEC = {
   MARGIN_V: 48,          // 上/下留白高
   PAPER_H: 294,          // 纸面高（含边框）
   SCROLL_W: 32,          // 左右卷轴位宽
-  COL_W: 64.5,           // 固定列宽
+  COL_W: 56,             // 固定列宽（2026-10-22 任务AB 第 2 项：64.5→56，用户反馈左右间隔太宽、再窄约 13%）
   COLS_PER_SCREEN: 12,   // 一屏列数（格子印满整幅纸面的列数下限）
   INNER_PAD: 6,          // 列内上下各留
   NAME_H: 94, NAME_FONT: 22, NAME_PITCH: 26, NAME_SLOTS: 3, // NAME_H 2026-10-22 晚改版：姓名区延到中段墨迹上方 5px（见 layoutName）
@@ -71,9 +71,18 @@ const SONGTI_STACK = '"Songti SC","STSong","Noto Serif CJK SC",SimSun,serif';
 const KAITI_STACK = '"KaiTi","STKaiti","楷体"';
 
 function fontById(id) { return FONTS.find((f) => f.id === id) || FONTS[0]; }
-/** 经校准后的实际字号 */
+/** 经校准后的实际字号（仅 layout 内部防叠间距/缩字计算用，不得直接作渲染字号） */
 function calibratedSize(basePx, fontId) {
   return round2(basePx * fontById(fontId).calibration);
+}
+/**
+ * 渲染字号（2026-10-22 任务AB 第 1 项，用户定版：姓名/金额不得大于「贺礼/奠仪」）：
+ * 校准只保留在 layoutName/layoutAmount 内部（防叠间距与缩字按校准后尺寸算），
+ * 输出到 CSS 的字号一律封顶中段字号 MID_FONT(22)——三款字体、以及字体加载失败
+ * 回退宋体时，姓名/金额都恒 ≤22、默认字数下恒 =22，绝不再比中段词大。
+ */
+function renderFontSize(nominalPx, fontId) {
+  return Math.min(calibratedSize(nominalPx, fontId), SPEC.MID_FONT);
 }
 /**
  * 所选字体的 font-family 栈：所选字体 → 系统楷体 → 宋体栈。
@@ -104,12 +113,15 @@ function midTextForTag(tagId) { return MID_BY_TAG[tagId] || '贺礼'; }
  * 主题表（6 种样式定版；颜色取自定版图 33–38 实测值）。
  * 纹路覆盖三处：留白（marginTile）+ 纸面背景（paperTile）+ 卷轴（scrollImg 按主题换色）。
  * 白事（funeral）：全页无红色——plus/高亮/中段/列线均为黑灰系，noRed=true 供测试与页面断言。
+ * 2026-10-22 任务AB 第 3/9 项（用户真机反馈"字太淡"）：姓名/金额墨色加深一档
+ * （贺礼类统一 #262019 深褐黑；白事 #2E3237），中段词颜色逐样式加深一档
+ * （深红 #9E2A22 / 深蓝 #3D6A8F / 深金 #8A6520 / 深竹青 #33684C / 白事深灰 #15181B，仍无红）。
  */
 const THEMES = {
   classic: {
     id: 'classic', name: '传统经典', kind: 'festive',
     lineColor: '#B8322A', frameColor: '#B8322A', paperBg: '#FFF8F2', marginBg: '#F9E9DC',
-    midColor: '#B8322A', inkColor: '#2B2B2B', plusBg: '#C0453C',
+    midColor: '#9E2A22', inkColor: '#262019', plusBg: '#C0453C',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-classic.png',
     marginTile: TILES.CLASSIC.margin, paperTile: TILES.CLASSIC.paper, noRed: false,
@@ -117,7 +129,7 @@ const THEMES = {
   blue: {
     id: 'blue', name: '淡蓝水波纹', kind: 'festive',
     lineColor: '#5B8DB0', frameColor: '#5B8DB0', paperBg: '#F4F9FC', marginBg: '#D9E7F1',
-    midColor: '#4A7CA5', inkColor: '#2B2B2B', plusBg: '#7FA8C9',
+    midColor: '#3D6A8F', inkColor: '#262019', plusBg: '#7FA8C9',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-blue.png',
     marginTile: TILES.BLUE.margin, paperTile: TILES.BLUE.paper, noRed: false,
@@ -126,7 +138,7 @@ const THEMES = {
     id: 'pear', name: '梨花白', kind: 'festive',
     // 定版图 35：纸面为红线纸（列线/中段红），留白与卷轴为淡金梨花
     lineColor: '#B8322A', frameColor: '#B8322A', paperBg: '#FFF8F2', marginBg: '#FBF6EC',
-    midColor: '#B8322A', inkColor: '#2B2B2B', plusBg: '#C9A24B',
+    midColor: '#9E2A22', inkColor: '#262019', plusBg: '#C9A24B',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-pear.png',
     marginTile: TILES.PEAR.margin, paperTile: TILES.PEAR.paper, noRed: false,
@@ -134,7 +146,7 @@ const THEMES = {
   cloud: {
     id: 'cloud', name: '祥云金', kind: 'festive',
     lineColor: '#A67C2E', frameColor: '#A67C2E', paperBg: '#FDF8EC', marginBg: '#F5EAD0',
-    midColor: '#A67C2E', inkColor: '#2B2B2B', plusBg: '#C39A3B',
+    midColor: '#8A6520', inkColor: '#262019', plusBg: '#C39A3B',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-cloud.png',
     marginTile: TILES.CLOUD.margin, paperTile: TILES.CLOUD.paper, noRed: false,
@@ -142,7 +154,7 @@ const THEMES = {
   bamboo: {
     id: 'bamboo', name: '竹青', kind: 'festive',
     lineColor: '#3E7C5B', frameColor: '#3E7C5B', paperBg: '#F2F8F3', marginBg: '#DCEDE1',
-    midColor: '#3E7C5B', inkColor: '#2B2B2B', plusBg: '#6FA585',
+    midColor: '#33684C', inkColor: '#262019', plusBg: '#6FA585',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-bamboo.png',
     marginTile: TILES.BAMBOO.margin, paperTile: TILES.BAMBOO.paper, noRed: false,
@@ -150,7 +162,7 @@ const THEMES = {
   funeral: {
     id: 'funeral', name: '白事', kind: 'funeral',
     lineColor: '#3B4046', frameColor: '#3B4046', paperBg: '#FFFFFF', marginBg: '#F2F2F2',
-    midColor: '#222222', inkColor: '#222222', plusBg: '#3B4046',
+    midColor: '#15181B', inkColor: '#2E3237', plusBg: '#3B4046',
     highlightBorder: '#3B4046', highlightBg: 'rgba(59,64,70,0.08)',
     scrollImg: '/assets/scrolls/scroll-funeral.png',
     marginTile: TILES.FUNERAL.margin, paperTile: TILES.FUNERAL.paper, noRed: true,
@@ -246,7 +258,7 @@ function buildColumns(records, opts = {}) {
       empty: false,
       recordId: r.id,
       name: r.name,
-      nameChars: name.chars, nameFontSize: calibratedSize(name.fontSize, fontId), nameScale: name.scale,
+      nameChars: name.chars, nameFontSize: renderFontSize(name.fontSize, fontId), nameScale: name.scale,
       midText,
       midRole: fontRoleForMid(midText),
       // 中段在**整列绝对正中**（任务AA 定版）：字在本区内先居中（墨迹高
@@ -262,7 +274,7 @@ function buildColumns(records, opts = {}) {
       // 送礼页奠仪列：中段字黑色（39 号定版）；其余列用主题中段色（页面层决定）
       midBlack: midText === '奠仪',
       amountText: amt.text,
-      amountChars: amt.chars, amountFontSize: calibratedSize(amt.fontSize, fontId), amountScale: amt.scale,
+      amountChars: amt.chars, amountFontSize: renderFontSize(amt.fontSize, fontId), amountScale: amt.scale,
       amountFen: r.amountFen,
     });
   }
@@ -361,7 +373,7 @@ const ROTATE_COPY = {
 
 module.exports = {
   USE_ENV_SAFE_AREA, SPEC, COL_INNER_H, scaledSpec, round2,
-  FONTS, fontById, calibratedSize, selectedStack, SONGTI_STACK, KAITI_STACK,
+  FONTS, fontById, calibratedSize, renderFontSize, selectedStack, SONGTI_STACK, KAITI_STACK,
   fontRoleForMid, MID_BY_TAG, midTextForTag,
   THEMES, THEME_LIST, themeById, resolveReceiveTheme,
   layoutName, layoutAmount, orderForBook, buildColumns, windowRange,

@@ -1,13 +1,5 @@
-/* 小喇叭提示条（统一规格 2026-10-22 任务AA 最终定版：淡黄底、硬闪；组件样式隔离，
-   动画在本文件内同名定义一份——关键帧阶跃跳变，周期 3s、显隐各半） */
-@keyframes hornBlink {
-  0% { opacity: 1; }
-  49% { opacity: 1; }
-  50% { opacity: 0; }
-  99% { opacity: 0; }
-  100% { opacity: 1; }
-}
-.tip-bar.horn-blink { animation: hornBlink 3s linear infinite; }
+/* 小喇叭提示条（统一规格 2026-10-22 任务AB 第 8 项：淡黄底、常驻不闪烁；组件样式隔离，
+   长文字慢速左滚的轨道/动画在本文件内同名定义一份——约 30px/秒、双份文字无缝循环） */
 .tip-bar {
   display: flex;
   align-items: center;
@@ -27,9 +19,15 @@
   color: #999999;
 }
 
-.text-body { flex: 1; min-width: 0; }
+.horn-marquee { flex: 1; min-width: 0; overflow: hidden; }
+.horn-track { display: inline-flex; white-space: nowrap; will-change: transform; }
+.horn-track.run { animation: hornScroll linear infinite; }
+.horn-cell { padding-right: 48px; }
+@keyframes hornScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
 .ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.text-scroll { flex: 1; min-width: 0; white-space: nowrap; }
 .nowrap { white-space: nowrap; }
 
 .close {

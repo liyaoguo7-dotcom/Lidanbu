@@ -91,7 +91,7 @@ test('任务Y-F喇叭状态：关闭只记内存、复位后恢复（模拟冷�
   assert.eq(hornState.isDismissed('index'), false, '冷启动（模块复位）后恢复显示');
 });
 
-test('任务Y-F喇叭实现：无 storage 持久化、全实例带闪烁/点开滑动/关闭叉', () => {
+test('任务Y-F喇叭实现：无 storage 持久化、全实例带关闭叉（闪烁/点开滑动已于任务AB 第 8 项改版）', () => {
   const hs = readMp('services/horn-state.js');
   assert(!hs.includes('wx.'), 'horn-state 不得碰 wx storage（只存内存）');
   const receiveJs = readMp('pages/receive/receive.js');
@@ -100,16 +100,14 @@ test('任务Y-F喇叭实现：无 storage 持久化、全实例带闪烁/点开�
   for (const p of ['pages/index/index.wxml', 'pages/contacts/contacts.wxml', 'pages/choose-contact/choose-contact.wxml',
     'pages/import/import-home.wxml', 'pages/import/import-event.wxml', 'pages/import/import-review.wxml']) {
     const w = readMp(p);
-    assert(w.includes('horn-blink'), `${p} 喇叭应带硬闪类`);
     assert(w.includes('tip-close') && w.includes('onHornClose'), `${p} 喇叭应有关闭叉`);
-    assert(w.includes('hornWide') && w.includes('scroll-x'), `${p} 喇叭应支持点开左右滑看全文`);
+    assert(w.includes('horn-track') && w.includes('hornRun'), `${p} 喇叭应为慢速左滚结构（任务AB）`);
+    assert(!w.includes('horn-blink') && !w.includes('hornWide'), `${p} 不得再有闪烁/点开滑动（任务AB）`);
   }
-  const appWxss = readMp('app.wxss');
-  assert(appWxss.includes('@keyframes hornBlink') && appWxss.includes('hornBlink 3s'), '硬闪动画周期 3s（任务AA 最终口径）');
   const tb = readMp('components/tip-bar/tip-bar.wxml');
-  assert(tb.includes('horn-blink') && tb.includes('onClose') && tb.includes('expanded'), 'tip-bar 组件应同规格');
+  assert(tb.includes('onClose') && tb.includes('horn-track'), 'tip-bar 组件应同规格（任务AB）');
   const receiveWxml = readMp('pages/receive/receive.wxml');
-  assert(receiveWxml.includes('hornWide') && receiveWxml.includes('toggleHornText'), '收礼页喇叭应支持点开滑动');
+  assert(receiveWxml.includes('horn-track') && receiveWxml.includes('closeHorn'), '收礼页喇叭应为慢速左滚结构（任务AB）');
 });
 
 // ---------- G：列表行距再收紧 ----------

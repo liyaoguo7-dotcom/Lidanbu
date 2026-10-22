@@ -7,6 +7,7 @@
  */
 const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
+const { hornMarquee } = require('../../services/horn-marquee.js');
 const { formatAmount, parseAmountToFen } = require('../../core/format.js');
 const { takeImport } = require('../../services/import-state.js');
 
@@ -19,7 +20,8 @@ function today() {
 
 Page({
   data: {
-    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
+    hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
+    tipText: '', // onLoad 按 kind 生成（类型/场合）后 _syncHorn
     kind: 'gift',
     kindLabel: '送礼',
     eventId: '',
@@ -41,8 +43,9 @@ Page({
     doneCount: 0,
   },
 
-  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
-  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
+  /** 长文字慢速左滚判定（任务AB 第 8 项）：按当前 tipText 算，超宽才滚 */
+  _syncHorn() { const m = hornMarquee(this.data.tipText); this.setData({ hornRun: m.run, hornDur: m.dur }); },
   onHornClose() { hornState.dismiss('import-review'); this.setData({ hornOff: true }); },
 
   async onLoad() {
@@ -67,6 +70,9 @@ Page({
       tagName: other.name,
       date: today(),
     }));
+    const hornText = '对着原图逐条核对：姓名可以从亲友录选，金额、' + (pending.kind === 'receive' ? '类型' : '场合') + '、日期、备注都能改；错的删掉，不够再补录。全部改好点底部"全部确认导入"，一次写进账本。';
+    this.setData({ tipText: hornText });
+    this._syncHorn();
     this.setData({
       kind: pending.kind === 'receive' ? 'receive' : 'gift',
       kindLabel: pending.kind === 'receive' ? '收礼' : '送礼',

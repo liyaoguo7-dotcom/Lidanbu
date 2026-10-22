@@ -1,4 +1,4 @@
-<!-- 自定义 Tab 栏：与原生 tabBar 同款（图标 25px、文字 10px、未选 #404040、含安全区） -->
+<!-- 自定义 Tab 栏：与原生 tabBar 同款（图标 27px、文字 10px、未选 #404040、含安全区） -->
 <view class="tabbar">
   <view wx:for="{{items}}" wx:key="pagePath" class="tabbar-item" data-path="{{item.pagePath}}" bindtap="onTap">
     <image class="tabbar-icon" src="{{item.icon}}" mode="aspectFit" />

@@ -1,7 +1,7 @@
 <!-- 礼单簿 · 首页（阶段2 2A；2026-10-21 版式调整：大卡缩小变淡下移、金刚区下移+图标放大加彩色底衬） -->
 <view class="page-flex">
   <view class="retry-bar" wx:if="{{initFailed}}" bindtap="onRetryInit">网络不太顺，点这里重试</view>
-  <view class="tip horn-blink" wx:if="{{!hornOff}}"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><scroll-view wx:if="{{hornWide}}" class="tip-scroll" scroll-x="true" bindtap="onHornTextTap"><text class="tip-txt-nowrap">{{tipText}}</text></scroll-view><view wx:else class="tip-body" bindtap="onHornTextTap"><text class="tip-txt-ellipsis">{{tipText}}</text></view><text class="tip-close" catchtap="onHornClose">×</text></view>
+  <view class="tip" wx:if="{{!hornOff}}"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><view class="horn-marquee"><view wx:if="{{hornRun}}" class="horn-track run" style="animation-duration:{{hornDur}}s"><text class="tip-txt-nowrap horn-cell">{{tipText}}</text><text class="tip-txt-nowrap horn-cell">{{tipText}}</text></view><text wx:else class="tip-txt-ellipsis">{{tipText}}</text></view><text class="tip-close" catchtap="onHornClose">×</text></view>
 
   <view class="privacy-note" wx:if="{{privacyDeclined && !privacyShow}}">你还没有同意隐私政策与用户协议，账本可以先慢慢看；同意后，拍照导入、换头像这些功能就能用啦。</view>
 

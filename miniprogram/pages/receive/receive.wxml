@@ -1,11 +1,12 @@
 <!-- 收礼主页 -->
-<view class="horn horn-blink" wx:if="{{showHorn}}">
+<view class="horn" wx:if="{{showHorn}}">
   <image class="horn-icon" src="/images/icons/speaker.svg" mode="aspectFit" />
-  <scroll-view wx:if="{{hornWide}}" class="horn-scroll" scroll-x="true" bindtap="toggleHornText">
-    <text class="horn-text horn-nowrap">查看收礼记录，从右往左滑动可以修改、删除礼簿~</text>
-  </scroll-view>
-  <view wx:else class="horn-scroll" bindtap="toggleHornText">
-    <text class="horn-text horn-ellipsis">查看收礼记录，从右往左滑动可以修改、删除礼簿~</text>
+  <view class="horn-marquee" style="margin-left:0">
+    <view wx:if="{{hornRun}}" class="horn-track run" style="animation-duration:{{hornDur}}s">
+      <text class="horn-text horn-nowrap horn-cell">{{hornText}}</text>
+      <text class="horn-text horn-nowrap horn-cell">{{hornText}}</text>
+    </view>
+    <text wx:else class="horn-text horn-ellipsis">{{hornText}}</text>
   </view>
   <text class="horn-close" bindtap="closeHorn">×</text>
 </view>

@@ -13,7 +13,7 @@ def is_red(x, y):
 def measure(col_x0_css, top_css, label):
     # 列内区：content top..bottom（CSS px），列 x 区间内缩 3px 避开红列线
     ct, cb = top_css, top_css + 290
-    x0 = int((col_x0_css + 3) * S); x1 = int((col_x0_css + 61.5) * S)
+    x0 = int((col_x0_css + 3) * S); x1 = int((col_x0_css + 53) * S)
     ink_top = ink_bot = None
     for y in range(int(ct * S), int(cb * S)):
         for x in range(x0, x1):
@@ -32,5 +32,5 @@ def measure(col_x0_css, top_css, label):
 measure(34, 50, '主本·第1列 张三')
 # 校验条：顶 = 390+20+2 = 412；三列依次为 壹元整/壹仟元整/壹仟伍佰元整
 measure(34, 412, '校验·壹元整(3字)')
-measure(34 + 64.5, 412, '校验·壹仟元整(4字)')
-measure(34 + 129, 412, '校验·壹仟伍佰元整(6字)')
+measure(34 + 56, 412, '校验·壹仟元整(4字)')
+measure(34 + 112, 412, '校验·壹仟伍佰元整(6字)')

@@ -66,15 +66,16 @@ test('任务X-共享邀请：invite 不绑定亲友（pending、memberId 空）�
   assert.eq(ms2.memberId, member, '接受者即绑定者');
 });
 
-test('任务X-共享邀请：页面已去 picker、生成邀请后出现微信分享按钮、落地页凭码接受', () => {
+test('任务X-共享邀请：页面已去 picker、主按钮即微信分享（任务AB 取消生成一步）、落地页凭码接受', () => {
   const wxml = readMp('pages/share/share-invite.wxml');
   const js = readMp('pages/share/share-invite.js');
   assert(!wxml.includes('<picker'), '邀请页不应再有亲友录 picker');
   assert(!js.includes('onContactChange'), '邀请页 js 不应再有选亲友逻辑');
-  assert(wxml.includes('生成邀请'), '应有「生成邀请」按钮');
-  assert(wxml.includes('open-type="share"'), '生成后应出现 open-type=share 的微信分享按钮');
-  assert(wxml.includes('邀请家人（发给微信好友）'), '分享按钮文案');
-  assert(wxml.includes('{{inviteCode}}'), '应展示邀请码文字兜底');
+  assert(!wxml.includes('生成邀请') && !js.includes('onCreate'), '不得再有「生成邀请」按钮/步骤（任务AB 第 7 项）');
+  assert(wxml.includes('open-type="share"'), '主按钮应为 open-type=share 的微信分享按钮');
+  assert(wxml.includes('>邀请家人</button>'), '分享按钮文案为「邀请家人」');
+  assert(wxml.includes('disabled="{{!inviteCode}}"'), '未预生成成功时按钮置灰');
+  assert(js.includes('_prepareInvite') && js.includes('updateGrant'), 'js 应静默预生成并在勾选变化后更新同一份邀请');
   assert(js.includes('onShareAppMessage'), '页面应实现 onShareAppMessage');
   assert(js.includes('/pages/share/share-view?code='), '分享 path 应带 code 落到 share-view');
   const view = readMp('pages/share/share-view.js');
@@ -103,12 +104,11 @@ test('任务X-编辑按钮：修改页底部按钮为「修改」，添加页保
 });
 
 // ---------- 第 3 项：小喇叭无滚动跑马灯（闪烁规格以任务AA 最终口径为准，见 test-batch-aa） ----------
-test('任务X-小喇叭：收礼页无滚动跑马灯，硬闪动画定义在 app.wxss', () => {
-  const wxss = readMp('pages/receive/receive.wxss');
-  assert(!wxss.includes('hornscroll'), 'hornscroll 跑马灯关键帧应删除');
-  assert(!wxss.includes('translateX'), '不应有位移滚动动画');
-  assert(readMp('app.wxss').includes('@keyframes hornBlink'), 'hornBlink 定义在 app.wxss 全局');
-  assert(readMp('pages/receive/receive.wxml').includes('horn horn-blink'), '收礼页喇叭带 horn-blink 类');
+test('任务X-小喇叭：收礼页喇叭结构（硬闪已于任务AB 第 8 项改版为慢速左滚）', () => {
+  assert(!readMp('app.wxss').includes('hornBlink'), 'app.wxss 不得再有硬闪（任务AB 取消闪烁）');
+  assert(readMp('app.wxss').includes('@keyframes hornScroll'), '慢滚动画 hornScroll 定义在 app.wxss 全局（任务AB）');
+  assert(readMp('pages/receive/receive.wxml').includes('class="horn"'), '收礼页喇叭为 .horn 结构');
+  assert(!readMp('pages/receive/receive.wxml').includes('horn-blink'), '收礼页喇叭不带闪烁类（任务AB）');
 });
 
 // ---------- 第 4 项（2026-10-22 晚用户改定）：礼薄详情页取消修改/删除入口 ----------

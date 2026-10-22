@@ -1,4 +1,5 @@
-/* 自定义 Tab 栏样式：对齐原生 tabBar（高 50px + 安全区、白底、顶部分隔线） */
+/* 自定义 Tab 栏样式：与微信原生 tabBar 逐项对齐（栏高 50px、图标 27px、文字 10px + 安全区、白底、顶部分隔线）；
+   图标尺寸固定 27px，与原生栏完全一致，页面间切换不得有大小变化（2026-10-22 任务AB 第 5 项） */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
   height: 50px; padding-bottom: env(safe-area-inset-bottom);
@@ -8,5 +9,5 @@
 .tabbar-item {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.tabbar-icon { width: 25px; height: 25px; }
+.tabbar-icon { width: 27px; height: 27px; }
 .tabbar-text { font-size: 10px; line-height: 1.2; margin-top: 2px; }

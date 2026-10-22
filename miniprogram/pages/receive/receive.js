@@ -9,6 +9,7 @@
 const dataService = require('../../services/data-service.js');
 const landscapeRoute = require('../../services/landscape-route.js');
 const hornState = require('../../services/horn-state.js');
+const { hornMarquee } = require('../../services/horn-marquee.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
 const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
@@ -21,7 +22,8 @@ Page({
     totalCount: 0,
     totalText: '0.00',
     showHorn: true,
-    hornWide: false, // 小喇叭展开态（点文字左右滑动看全文）
+    hornText: '查看收礼记录，从右往左滑动可以修改、删除礼簿~',
+    hornRun: false, hornDur: 0, // 小喇叭长文字慢速左滚（任务AB 第 8 项）
     showDelModal: false,
     delContent: '',
     delEventId: '',
@@ -36,6 +38,8 @@ Page({
     try { this._membership = await dataService.getMembership(); } catch (e) { this._membership = null; }
     // 小喇叭关闭状态只存内存（horn-state）：本次打开期间不再显示，下次冷启动恢复
     this.setData({ showHorn: !hornState.isDismissed('receive') });
+    const hm = hornMarquee(this.data.hornText);
+    this.setData({ hornRun: hm.run, hornDur: hm.dur });
     await this.reload();
   },
 
@@ -71,10 +75,6 @@ Page({
   closeHorn() {
     hornState.dismiss('receive'); // 只记内存，冷启动自动恢复显示（不落 storage）
     this.setData({ showHorn: false });
-  },
-
-  toggleHornText() {
-    this.setData({ hornWide: !this.data.hornWide });
   },
 
   // ---- 右滑 ----

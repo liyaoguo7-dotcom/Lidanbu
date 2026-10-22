@@ -86,6 +86,9 @@ function createBookPage(kind) {
       await this._loadPermissions();
       this._syncOrientation();
       await this.reload();
+      // 字体在列渲染后才就绪的机型上，已排版文字可能不自动刷新（任务AB 第 6 项）：
+      // 加载成功后用同内容再 setData 一次列模型，强制按新字体重排。
+      if (ok) this._convertCols();
       this.setData({ ready: true });
     },
 
@@ -261,11 +264,11 @@ function createBookPage(kind) {
       this._convertCols();
     },
 
-    /** 全量列渲染模型：基准 px × scale 换算成实际 px（字号含字体校准系数，buildColumns 已处理） */
+    /** 全量列渲染模型：基准 px × scale 换算成实际 px（字号已在 buildColumns 封顶中段字号，任务AB 第 1 项） */
     _convertCols() {
       const spec = this.data.spec;
       const s = spec.scale;
-      const midSelPx = LC.round2(LC.calibratedSize(LC.SPEC.MID_FONT, this.data.fontId) * s);
+      const midSelPx = LC.round2(LC.renderFontSize(LC.SPEC.MID_FONT, this.data.fontId) * s);
       const midSongPx = LC.round2(LC.SPEC.MID_FONT * s);
       const cols = this.data.allColumns.map((c) => {
         if (c.empty) return c;

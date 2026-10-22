@@ -5,6 +5,7 @@
  */
 const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
+const { hornMarquee } = require('../../services/horn-marquee.js');
 
 function pinyinInitial(name) {
   // 演示期简易分组：取首字，按常见姓氏映射；未知归 '#'
@@ -19,7 +20,7 @@ function pinyinInitial(name) {
 
 Page({
   data: {
-    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
+    hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
     groups: [],
     keyword: '',
     tipText: '小技巧：点击姓名可查询来往记录哦～',
@@ -34,12 +35,13 @@ Page({
     editRemark: '',
   },
 
-  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
-  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
+  /** 长文字慢速左滚判定（任务AB 第 8 项）：按当前 tipText 算，超宽才滚 */
+  _syncHorn() { const m = hornMarquee(this.data.tipText); this.setData({ hornRun: m.run, hornDur: m.dur }); },
   onHornClose() { hornState.dismiss('contacts'); this.setData({ hornOff: true }); },
 
   async onLoad() {
-    this.setData({ hornOff: hornState.isDismissed('contacts') });
+    this.setData({ hornOff: hornState.isDismissed('contacts') }); this._syncHorn();
     await dataService.init();
   },
 

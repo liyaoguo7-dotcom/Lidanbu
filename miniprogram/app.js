@@ -66,6 +66,15 @@ App({
       wx.cloud.init({ env: this.globalData.cloudEnvId, traceUser: true });
     }
 
+    // 横置字体分包预下载（任务AB 第 6 项）：启动即后台拉 fonts 分包（名称与
+    // app.json subpackages 的 name 一致），用户进横置页时字体文件已就位，
+    // loadFontFace/@font-face 不必再等分包下载；API 不存在/失败一律静默。
+    if (typeof wx.preDownloadSubpackage === 'function') {
+      try {
+        wx.preDownloadSubpackage({ name: 'fonts', success: () => {}, fail: () => {} });
+      } catch (e) { /* 忽略 */ }
+    }
+
     // 静默初始化（任务Q1）：直接进首页、后台建/取身份，失败只置状态不拦截
     await this.runInit();
     this.watchNetwork();

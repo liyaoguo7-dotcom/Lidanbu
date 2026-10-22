@@ -92,7 +92,7 @@ test('字体来源-manager 按优先级逐个尝试：缓存失败才试分包�
   assert.eq(tried.length, 2, '按顺序试了两个来源');
   assert(tried[0].indexOf('/userData/') >= 0, '先试缓存');
   assert(tried[1].indexOf('/packages/fonts/') >= 0, '后试分包');
-  assert.eq(st._map.get('landscape.fontLoaded.lxgw'), 1, '成功写缓存标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v3.lxgw'), 1, '成功写缓存标记');
 });
 
 test('字体来源-manager 全部来源失败：回退且不抛错、不写标记', async () => {
@@ -104,7 +104,7 @@ test('字体来源-manager 全部来源失败：回退且不抛错、不写标�
   const fm = createFontManager({ wxApi, storage: st });
   assert.eq(await fm.load('lxgw'), false, '全失败返回 false');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.lxgw'), undefined, '不写已加载标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v3.lxgw'), undefined, '不写已加载标记（下次重试）');
 });
 
 test('字体来源-manager 云直链兜底：分包失败后 https 云来源成功', async () => {

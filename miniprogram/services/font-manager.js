@@ -21,7 +21,12 @@ const { createFontSource, SUBPACKAGE_ROOT } = require('./font-source.js');
 /** 本地字体路径前缀（现为分包路径；保留此导出兼容旧引用，来源细节以 font-source 为准） */
 const FONT_SRC_BASE = SUBPACKAGE_ROOT;
 
-const LOADED_KEY_PREFIX = 'landscape.fontLoaded.';
+/** 已加载标记键（带字体构建版本段）：旧版坏字体文件（如 AA 前龙藏 TTF 套 woff2 名）
+ * 若曾"加载成功"写下旧键，版本段一变旧键自然失效，强制用当前文件重载
+ * （2026-10-22 任务AB 第 6 项：三款字体真机仍不可用的机制修复之一）。
+ * 字体文件再重建时必须同步 bump 此版本号。 */
+const FONT_BUILD = 'v3';
+const LOADED_KEY_PREFIX = `landscape.fontLoaded.${FONT_BUILD}.`;
 
 function defaultStorage() {
   return {
@@ -119,6 +124,7 @@ function defaultManager() {
 module.exports = {
   createFontManager,
   FONT_SRC_BASE,
+  FONT_BUILD,
   LOADED_KEY_PREFIX,
   /** 页面便捷入口：确保所选字体就绪（永不抛错） */
   ensureSelected(fontId) { return defaultManager().ensureSelected(fontId); },

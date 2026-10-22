@@ -84,22 +84,21 @@ page {
   flex: none;
   margin-top: 2px; /* 与小字行高对齐 */
 }
-/* 小喇叭统一规格（2026-10-22 任务AA 最终定版，用户三次澄清后为准）：
-   淡黄底 #FFF8E1 统一；**硬闪**——整条一下出现一下消失地交替（不要渐变），
-   周期 3s、显示与消失各约一半（关键帧阶跃跳变）；不滚动，文字过长默认单行省略，
-   点文字后左右滑动看全文；右侧 × 关闭后本次打开期间不再显示
-   （状态在 services/horn-state.js 只存内存，禁止落 storage） */
-@keyframes hornBlink {
-  0% { opacity: 1; }
-  49% { opacity: 1; }
-  50% { opacity: 0; }
-  99% { opacity: 0; }
-  100% { opacity: 1; }
+/* 小喇叭统一规格（2026-10-22 任务AB 第 8 项，用户第三次改口径，以此为准，AA 硬闪作废）：
+   淡黄底 #FFF8E1 统一；**不闪烁、常驻显示**，右侧 × 关闭后本次打开期间不再显示
+   （状态在 services/horn-state.js 只存内存，禁止落 storage）；
+   文字放得下静态居左，放不下**缓慢向左滚动**（约 30px/秒）：轨道内同一文字
+   放两份、间距 48px，动画 translateX(0 → -50%) 无缝循环，时长由
+   services/horn-marquee.js 按文字宽算好内联注入。点开滑动看全文的旧交互已取消。 */
+.horn-marquee { flex: 1; min-width: 0; overflow: hidden; margin-left: 6px; }
+.horn-track { display: inline-flex; white-space: nowrap; will-change: transform; }
+.horn-track.run { animation: hornScroll linear infinite; }
+.horn-cell { padding-right: 48px; }
+@keyframes hornScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
-.horn-blink { animation: hornBlink 3s linear infinite; }
-.tip-body { flex: 1; min-width: 0; margin-left: 6px; }
 .tip-txt-ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tip-scroll { flex: 1; min-width: 0; margin-left: 6px; white-space: nowrap; }
 .tip-txt-nowrap { white-space: nowrap; }
 .tip-close { flex: none; color: #C2C2C2; font-size: 16px; line-height: 1; padding: 1px 2px 0 10px; }
 .searchbar { display: flex; align-items: center; padding: 10px 12px; }

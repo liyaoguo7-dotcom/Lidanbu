@@ -5,23 +5,25 @@
  */
 const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
+const { hornMarquee } = require('../../services/horn-marquee.js');
 const { wxStorage, savePick } = require('../../services/form-state.js');
 
 Page({
   data: {
-    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
+    hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
     contacts: [],
     keyword: '',
     tipText: '若亲友姓名不在列表中，请点击下方红色按钮添加',
     addSheetOpen: false,
   },
 
-  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
-  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
+  /** 长文字慢速左滚判定（任务AB 第 8 项）：按当前 tipText 算，超宽才滚 */
+  _syncHorn() { const m = hornMarquee(this.data.tipText); this.setData({ hornRun: m.run, hornDur: m.dur }); },
   onHornClose() { hornState.dismiss('choose-contact'); this.setData({ hornOff: true }); },
 
   async onLoad(options) {
-    this.setData({ hornOff: hornState.isDismissed('choose-contact') });
+    this.setData({ hornOff: hornState.isDismissed('choose-contact') }); this._syncHorn();
     await dataService.init();
     this.from = (options && options.from) || '';
   },

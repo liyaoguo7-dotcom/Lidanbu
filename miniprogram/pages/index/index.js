@@ -8,13 +8,14 @@
  */
 const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
+const { hornMarquee } = require('../../services/horn-marquee.js');
 const privacyGuard = require('../../services/privacy-guard.js');
 const guideState = require('../../services/guide-state.js');
 const { formatAmountInt } = require('../../core/format.js');
 
 Page({
   data: {
-    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
+    hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
     tipText: '点击拍照导入，可一键识别纸质礼单',
     entries: [
       { id: 'share', icon: '/images/icons/family.svg', name: '家庭共享' },
@@ -32,12 +33,13 @@ Page({
     recentRolling: false,  // 任务AA：>4 条时竖向自动滚动（同时可见 4 条），不足则静态
   },
 
-  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
-  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
+  /** 长文字慢速左滚判定（任务AB 第 8 项）：按当前 tipText 算，超宽才滚 */
+  _syncHorn() { const m = hornMarquee(this.data.tipText); this.setData({ hornRun: m.run, hornDur: m.dur }); },
   onHornClose() { hornState.dismiss('index'); this.setData({ hornOff: true }); },
 
   async onLoad() {
-    this.setData({ hornOff: hornState.isDismissed('index') });
+    this.setData({ hornOff: hornState.isDismissed('index') }); this._syncHorn();
     const r = await dataService.init();
     this.setData({ initFailed: !(r && r.ok) });
     // 首次使用引导：只显示一次（storage 标记），未看过先去引导页

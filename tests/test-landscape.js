@@ -13,8 +13,8 @@ function memStorage() {
   return { get: (k) => (m.has(k) ? m.get(k) : ''), set: (k, v) => m.set(k, v), _map: m };
 }
 
-test('横置-定版数值：列宽64.5/三段94+52+96/墨迹间距5/列内总高258', () => {
-  assert.eq(LC.SPEC.COL_W, 64.5, '列宽');
+test('横置-定版数值：列宽56/三段94+52+96/墨迹间距5/列内总高258', () => {
+  assert.eq(LC.SPEC.COL_W, 56, '列宽（任务AB 第 2 项：64.5→56 再窄一档）');
   assert.eq(LC.SPEC.NAME_H, 94, '姓名区');
   assert.eq(LC.SPEC.MID_H, 52, '中段区');
   assert.eq(LC.SPEC.AMT_H, 96, '金额区');
@@ -108,13 +108,13 @@ test('横置-字体加载失败：回退标记、不抛错、成功后写缓存�
   assert.eq(ok, false, '离线加载返回 false');
   assert.eq(fm.getState('lxgw'), 'failed', '失败状态');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.lxgw'), undefined, '失败不写缓存标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v3.lxgw'), undefined, '失败不写缓存标记（下次重试）');
 
   const okWx = { loadFontFace: (o) => o.success() };
   const fm2 = createFontManager({ wxApi: okWx, storage: st });
   assert.eq(await fm2.load('lxgw'), true, '加载成功');
   assert.eq(fm2.isFallback('lxgw'), false, '成功后非回退');
-  assert.eq(st._map.get('landscape.fontLoaded.lxgw'), 1, '成功写缓存标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v3.lxgw'), 1, '成功写缓存标记');
 
   const fm3 = createFontManager({ wxApi: {}, storage: memStorage() });
   assert.eq(await fm3.load('longcang'), false, '无 loadFontFace 时安全回退不抛错');
