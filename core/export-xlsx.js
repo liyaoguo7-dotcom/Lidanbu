@@ -16,8 +16,13 @@
  * 金额规则（总指挥第三轮指令）：
  * - 金额列写数值单元格：cell.value = 分/100（单次换算），
  *   cell.numFmt = '0.00'；用户在 Excel 里可直接 SUM，显示为 1000.00。
- * - 求和类数字（概览 sheet 的收礼总额/送礼总额）在服务端用整数分
- *   累加，换算（/100）只做一次，不经过浮点累加。
+ * - 求和（每张表的表尾合计行）在服务端用整数分累加，换算（/100）
+ *   只做一次，不经过浮点累加。
+ *
+ * 分组铁律（2026-10-22 任务Z 第 14 项，用户明确要求）：不管勾选范围大小，
+ * 永远只生成一个 .xlsx；内部分组用多个工作表——送礼一个表（表名「送礼记录」），
+ * 每个收礼礼薄一个表（表名「礼薄名（收礼）」）；每张表保留既有列结构，
+ * 表尾带合计行（合计金额 + 共 X 笔）。
  */
 
 const ExcelJS = require('exceljs');
@@ -45,6 +50,45 @@ function fmtDateTime(ts) {
 
 function boldHeader(ws) {
   ws.getRow(1).font = { bold: true };
+}
+
+/** 工作表名清洗：Excel 禁用字符 \ / ? * [ ] : 替换为「·」，最长 31 字 */
+function cleanSheetBase(name) {
+  const s = String(name || '').replace(/[\\/?*[\]:]/g, '·').trim();
+  return s || '礼薄';
+}
+
+/** 生成不重复的工作表名（同名礼薄依次加 -2、-3 后缀），并登记到 used 集合 */
+function uniqueSheetName(base, used) {
+  let candidate = base.slice(0, 31);
+  let i = 2;
+  while (used.has(candidate)) {
+    const suffix = `-${i}`;
+    candidate = base.slice(0, 31 - suffix.length) + suffix;
+    i += 1;
+  }
+  used.add(candidate);
+  return candidate;
+}
+
+/**
+ * 表尾合计行（任务Z 第 14 项）：首列写「合计」，金额列写整数分累加后
+ * 一次换算的数值（0.00 格式），末列（备注）写「共 X 笔」；整行加粗。
+ * @param {object} ws 已设好 columns 的 worksheet
+ * @param {Array} rowsFen 本表各行金额（整数分）
+ */
+function addTotalRow(ws, rowsFen) {
+  const totalFen = rowsFen.reduce((s, v) => s + (Number(v) || 0), 0);
+  const row = ws.addRow({});
+  const firstKey = ws.columns[0] && ws.columns[0].key;
+  const lastKey = ws.columns[ws.columns.length - 1] && ws.columns[ws.columns.length - 1].key;
+  if (firstKey) row.getCell(firstKey).value = '合计';
+  const amtCell = row.getCell('amount');
+  amtCell.value = toYuan(totalFen);
+  amtCell.numFmt = '0.00';
+  if (lastKey && lastKey !== 'amount') row.getCell(lastKey).value = `共 ${rowsFen.length} 笔`;
+  row.font = { bold: true };
+  return row;
 }
 
 /**
@@ -95,21 +139,52 @@ async function buildXlsx(db, actorId, ownerId, opts = {}) {
   wb.creator = '礼单簿';
   wb.created = new Date();
 
-  // —— 收礼 sheet（日期从新到旧，与产品列表"最新在上"一致）——
-  const wsR = wb.addWorksheet('收礼');
-  wsR.columns = [
-    { header: '礼薄名称', key: 'eventName', width: 20 },
-    { header: '场合', key: 'tag', width: 10 },
-    { header: '姓名', key: 'name', width: 12 },
-    { header: '金额（元）', key: 'amount', width: 14 },
-    { header: '类型', key: 'type', width: 10 },
-    { header: '日期', key: 'date', width: 14 },
-    { header: '备注', key: 'remark', width: 24 },
-  ];
-  [...records]
-    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-    .forEach((r) => {
-      const ev = eventById[r.eventId] || {};
+  const usedNames = new Set();
+  const byDateDesc = (a, b) => String(b.date || '').localeCompare(String(a.date || ''));
+
+  // —— 送礼一个表（表名「送礼记录」；日期从新到旧，与产品列表"最新在上"一致）——
+  if (opts.includeGifts !== false) {
+    const wsG = wb.addWorksheet(uniqueSheetName('送礼记录', usedNames));
+    wsG.columns = [
+      { header: '姓名', key: 'name', width: 12 },
+      { header: '场合', key: 'tag', width: 10 },
+      { header: '金额（元）', key: 'amount', width: 14 },
+      { header: '日期', key: 'date', width: 14 },
+      { header: '备注', key: 'remark', width: 24 },
+    ];
+    [...gifts].sort(byDateDesc).forEach((g) => {
+      const row = wsG.addRow({
+        name: nameOf[g.contactId] || '',
+        tag: tagNameOf(g.tagId),
+        amount: toYuan(g.amount),
+        date: g.date || '',
+        remark: g.remark || '',
+      });
+      markAmountCell(wsG, row);
+    });
+    boldHeader(wsG);
+    addTotalRow(wsG, gifts.map((g) => g.amount));
+  }
+
+  // —— 每个收礼礼薄一个表（表名「礼薄名（收礼）」），列结构与原「收礼」表一致 ——
+  const recordsByEvent = {};
+  records.forEach((r) => {
+    if (!recordsByEvent[r.eventId]) recordsByEvent[r.eventId] = [];
+    recordsByEvent[r.eventId].push(r);
+  });
+  events.forEach((ev) => {
+    const wsR = wb.addWorksheet(uniqueSheetName(`${cleanSheetBase(ev.name)}（收礼）`, usedNames));
+    wsR.columns = [
+      { header: '礼薄名称', key: 'eventName', width: 20 },
+      { header: '场合', key: 'tag', width: 10 },
+      { header: '姓名', key: 'name', width: 12 },
+      { header: '金额（元）', key: 'amount', width: 14 },
+      { header: '类型', key: 'type', width: 10 },
+      { header: '日期', key: 'date', width: 14 },
+      { header: '备注', key: 'remark', width: 24 },
+    ];
+    const rows = [...(recordsByEvent[ev._id] || [])].sort(byDateDesc);
+    rows.forEach((r) => {
       const row = wsR.addRow({
         eventName: ev.name || '',
         tag: tagNameOf(ev.tagId),
@@ -121,54 +196,9 @@ async function buildXlsx(db, actorId, ownerId, opts = {}) {
       });
       markAmountCell(wsR, row);
     });
-  boldHeader(wsR);
-
-  // —— 送礼 sheet ——
-  const wsG = wb.addWorksheet('送礼');
-  wsG.columns = [
-    { header: '姓名', key: 'name', width: 12 },
-    { header: '场合', key: 'tag', width: 10 },
-    { header: '金额（元）', key: 'amount', width: 14 },
-    { header: '日期', key: 'date', width: 14 },
-    { header: '备注', key: 'remark', width: 24 },
-  ];
-  [...gifts]
-    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-    .forEach((g) => {
-      const row = wsG.addRow({
-        name: nameOf[g.contactId] || '',
-        tag: tagNameOf(g.tagId),
-        amount: toYuan(g.amount),
-        date: g.date || '',
-        remark: g.remark || '',
-      });
-      markAmountCell(wsG, row);
-    });
-  boldHeader(wsG);
-
-  // —— 概览 sheet（当前账本数据情况；成员只看已授权部分）——
-  const wsO = wb.addWorksheet('概览');
-  wsO.columns = [
-    { header: '项目', key: 'k', width: 22 },
-    { header: '数值', key: 'v', width: 30 },
-  ];
-  // 总额在整数分上累加（全程整数运算，无浮点误差），换算（/100）只做一次
-  const totalReceiveFen = records.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-  const totalGiftFen = gifts.reduce((s, g) => s + (Number(g.amount) || 0), 0);
-  [
-    ['导出时间', fmtDateTime(Date.now()), false],
-    ['导出范围', actorId === ownerId ? '全部' : '已授权部分', false],
-    ['礼薄数', events.length, false],
-    ['收礼记录数', records.length, false],
-    ['送礼记录数', gifts.length, false],
-    ['联系人数（导出范围内）', contactIds.size, false],
-    ['收礼总额（元）', toYuan(totalReceiveFen), true],
-    ['送礼总额（元）', toYuan(totalGiftFen), true],
-  ].forEach(([k, v, isAmount]) => {
-    const row = wsO.addRow({ k, v });
-    if (isAmount) row.getCell(2).numFmt = '0.00';
+    boldHeader(wsR);
+    addTotalRow(wsR, rows.map((r) => r.amount));
   });
-  boldHeader(wsO);
 
   const buf = await wb.xlsx.writeBuffer();
   return Buffer.isBuffer(buf) ? buf : Buffer.from(buf);

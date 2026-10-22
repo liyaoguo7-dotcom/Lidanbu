@@ -1,4 +1,7 @@
-/** 导出 xlsx 生成引擎测试（阶段3）：真文件 + 成员过滤 + 金额数值型 */
+/** 导出 xlsx 生成引擎测试（阶段3；2026-10-22 任务Z 第 14 项按新分组口径重写）：
+ * 分组铁律——永远一个文件；送礼一个表「送礼记录」，每个收礼礼薄一个表
+ * 「礼薄名（收礼）」；每表保留既有列结构 + 表尾合计行（合计金额 + 共 X 笔）；
+ * 金额数值单元格 0.00 格式、整数分累加一次换算。 */
 const { test, assert } = require('./fw');
 const ExcelJS = require('exceljs');
 const core = require('../core');
@@ -32,7 +35,7 @@ function sheet(wb, name) {
   return ws;
 }
 
-test('主人导出：Buffer 非空、PK 头、3 个 sheet', async () => {
+test('主人导出：一个文件、多张表（送礼记录 + 每礼薄一表），表名断言', async () => {
   const db = await newDB();
   const { owner } = await setup(db);
   const buf = await buildXlsx(db, owner, owner);
@@ -41,81 +44,79 @@ test('主人导出：Buffer 非空、PK 头、3 个 sheet', async () => {
   assert(buf[0] === 0x50 && buf[1] === 0x4b, 'zip 魔数 PK');
   const wb = await loadBuf(buf);
   const names = wb.worksheets.map((w) => w.name);
-  assert.eq(names.join(','), '收礼,送礼,概览', 'sheet 名与顺序');
+  assert.eq(names.join(','), '送礼记录,张三的婚宴（收礼）,李四的寿宴（收礼）', 'sheet 名与顺序（单文件多表）');
+  assert(!wb.getWorksheet('概览'), '旧的概览表已取消（合计改到各表表尾）');
+  assert(!wb.getWorksheet('收礼') && !wb.getWorksheet('送礼'), '旧的合并表已取消');
 });
 
-test('主人导出：行数、金额数值型 + 0.00 格式、概览数字', async () => {
+test('主人导出：送礼表列结构/金额数值型/合计行；礼薄表按本合计', async () => {
   const db = await newDB();
   const { owner } = await setup(db);
   const wb = await loadBuf(await buildXlsx(db, owner, owner));
 
-  const wsR = sheet(wb, '收礼');
-  assert.eq(wsR.rowCount, 3, '收礼=表头+2条');
-  // 日期倒序：2026-10-02 的李四在前
-  assert.eq(wsR.getCell('A2').value, '李四的寿宴', '礼薄名称');
-  assert.eq(wsR.getCell('B2').value, '大寿', '场合标签名');
-  assert.eq(wsR.getCell('C2').value, '李四', '姓名');
-  const d2 = wsR.getCell('D2');
-  assert.eq(typeof d2.value, 'number', '金额是数值型不是文本');
-  assert.eq(d2.value, 200, '金额值=20000分/100');
-  assert.eq(d2.numFmt, '0.00', '数字格式 0.00');
-  assert.eq(wsR.getCell('E2').value, '微信', '类型');
-  const d3 = wsR.getCell('D3');
-  assert.eq(d3.value, 1000, '第二条金额');
-  assert.eq(d3.numFmt, '0.00', '数字格式');
-
-  const wsG = sheet(wb, '送礼');
-  assert.eq(wsG.rowCount, 3, '送礼=表头+2条');
+  // —— 送礼记录：表头 + 2 条 + 合计行 ——
+  const wsG = sheet(wb, '送礼记录');
+  assert.eq(wsG.rowCount, 4, '送礼=表头+2条+合计行');
   const g2 = wsG.getCell('C2');
   assert.eq(typeof g2.value, 'number', '送礼金额数值型');
   assert.eq(g2.value, 300, '送礼金额（日期倒序，9-02 在前）');
   assert.eq(g2.numFmt, '0.00', '数字格式');
   assert.eq(wsG.getCell('B2').value, '结婚', '送礼场合');
+  assert.eq(wsG.getCell('A4').value, '合计', '合计行首列');
+  const gTotal = wsG.getCell('C4');
+  assert.eq(gTotal.value, 800, '送礼合计=（50000+30000）分/100');
+  assert.eq(gTotal.numFmt, '0.00', '合计数字格式');
+  assert.eq(wsG.getCell('E4').value, '共 2 笔', '合计行笔数');
 
-  const wsO = sheet(wb, '概览');
-  const v = (cell) => wsO.getCell(cell).value;
-  assert.eq(v('B3'), '全部', '导出范围');
-  assert.eq(v('B4'), 2, '礼薄数');
-  assert.eq(v('B5'), 2, '收礼记录数');
-  assert.eq(v('B6'), 2, '送礼记录数');
-  assert.eq(v('B7'), 2, '联系人数');
-  assert.eq(v('B8'), 1200, '收礼总额=120000分/100');
-  assert.eq(wsO.getCell('B8').numFmt, '0.00', '总额数字格式');
-  assert.eq(v('B9'), 800, '送礼总额');
-  assert.eq(wsO.getCell('B9').numFmt, '0.00', '总额数字格式');
+  // —— 礼薄表：列结构保留（含礼薄名称列）、只含本薄记录、表尾合计 ——
+  const wsA = sheet(wb, '张三的婚宴（收礼）');
+  assert.eq(wsA.rowCount, 3, '婚宴=表头+1条+合计行');
+  assert.eq(wsA.getCell('A2').value, '张三的婚宴', '礼薄名称');
+  assert.eq(wsA.getCell('B2').value, '结婚', '场合标签名');
+  assert.eq(wsA.getCell('C2').value, '张三', '姓名');
+  const d2 = wsA.getCell('D2');
+  assert.eq(typeof d2.value, 'number', '金额是数值型不是文本');
+  assert.eq(d2.value, 1000, '金额值=100000分/100');
+  assert.eq(d2.numFmt, '0.00', '数字格式 0.00');
+  assert.eq(wsA.getCell('E2').value, '现金', '类型');
+  assert.eq(wsA.getCell('A3').value, '合计', '合计行首列');
+  assert.eq(wsA.getCell('D3').value, 1000, '本薄合计');
+  assert.eq(wsA.getCell('D3').numFmt, '0.00', '合计数字格式');
+  assert.eq(wsA.getCell('G3').value, '共 1 笔', '合计行笔数');
+
+  const wsB = sheet(wb, '李四的寿宴（收礼）');
+  assert.eq(wsB.rowCount, 3, '寿宴=表头+1条+合计行');
+  assert.eq(wsB.getCell('C2').value, '李四', '姓名');
+  assert.eq(wsB.getCell('D2').value, 200, '金额');
+  assert.eq(wsB.getCell('D3').value, 200, '本薄合计');
 });
 
-test('金额列：SUM 公式可求和、无浮点误差（100005分→1000.05）', async () => {
+test('金额列：数值可求和、无浮点误差（100005分→1000.05），合计行整数分累加', async () => {
   const db = await newDB();
   const { owner } = await setup(db);
-  // 加一条 100005 分的记录，专测浮点敏感值
   const c = await core.contacts.createContact(db, owner, owner, { name: '王五' });
   const ev = await core.receive.createEvent(db, owner, owner, { name: '王五的满月宴', tagId: 'shengzi', date: '2026-10-03' });
   await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100005, type: '现金', date: '2026-10-03' });
+  await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 5, type: '现金', date: '2026-10-04' });
 
   const wb = await loadBuf(await buildXlsx(db, owner, owner));
-  const wsR = sheet(wb, '收礼');
-  // 日期倒序：10-03 的王五在最前（第 2 行）
-  const d2 = wsR.getCell('D2');
-  assert.eq(typeof d2.value, 'number', '数值型');
-  assert.eq(d2.numFmt, '0.00', '数字格式');
-  assert(d2.value === 100005 / 100, `值与存储的分一致（实际${d2.value}）`);
-  assert(d2.value === 1000.05, '无浮点误差：100005分 → 1000.05');
+  const wsR = sheet(wb, '王五的满月宴（收礼）');
+  // 日期倒序：10-04（5分）在第 2 行，10-03（100005分）在第 3 行
+  const d3 = wsR.getCell('D3');
+  assert.eq(typeof d3.value, 'number', '数值型');
+  assert.eq(d3.numFmt, '0.00', '数字格式');
+  assert(d3.value === 100005 / 100, `值与存储的分一致（实际${d3.value}）`);
+  assert(d3.value === 1000.05, '无浮点误差：100005分 → 1000.05');
+  // 合计行（第 4 行）=（100005+5）分一次换算
+  assert.eq(wsR.getCell('D4').value, (100005 + 5) / 100, '合计=整数分累加后一次换算');
+  assert.eq(wsR.getCell('G4').value, '共 2 笔', '笔数');
 
-  // 在工作表内对金额列写 SUM 公式：公式落盘后重读，断言存在且引用范围正确
-  const last = wsR.rowCount; // 表头+3条=4
-  const range = `D2:D${last}`;
-  wsR.getCell('H2').value = { formula: `SUM(${range})` };
+  // SUM 公式落盘重读：引用数据行范围（不含合计行）
+  wsR.getCell('H2').value = { formula: 'SUM(D2:D3)' };
   const buf2 = await wb.xlsx.writeBuffer();
   const wb2 = await loadBuf(Buffer.isBuffer(buf2) ? buf2 : Buffer.from(buf2));
-  const f = wb2.getWorksheet('收礼').getCell('H2').value;
-  assert(f && f.formula === `SUM(${range})`, 'SUM 公式存在且引用金额列全范围');
-
-  // 值校验：按列求和，与按分累加的期望一致
-  let sum = 0;
-  const wsR2 = wb2.getWorksheet('收礼');
-  for (let r = 2; r <= last; r++) sum += wsR2.getCell(`D${r}`).value;
-  assert(sum === (100005 + 20000 + 100000) / 100, '列内求和值正确');
+  const f = wb2.getWorksheet('王五的满月宴（收礼）').getCell('H2').value;
+  assert(f && f.formula === 'SUM(D2:D3)', 'SUM 公式存在且引用金额列数据范围');
 });
 
 test('成员无 export 开关：被拒绝', async () => {
@@ -130,47 +131,63 @@ test('成员无 export 开关：被拒绝', async () => {
   assert.eq(err.code, 'switch-off:export', '原因码');
 });
 
-test('成员有 export 开关：只能导出授权事件，概览只算授权部分', async () => {
+test('成员有 export 开关：只能导出授权礼薄，表与合计只算授权部分', async () => {
   const db = await newDB();
   const { owner, evA } = await setup(db);
   const { member } = await setupMember(db, owner, {
     events: [evA], gifts: true, switches: { view: true, export: true },
   });
   const wb = await loadBuf(await buildXlsx(db, member, owner));
-
-  const wsR = sheet(wb, '收礼');
-  assert.eq(wsR.rowCount, 2, '只含授权事件的1条收礼');
-  assert.eq(wsR.getCell('A2').value, '张三的婚宴', '未授权的寿宴不在文件里');
-  const d2 = wsR.getCell('D2');
-  assert.eq(d2.value, 1000, '金额数值');
-  assert.eq(d2.numFmt, '0.00', '数字格式');
-
-  const wsG = sheet(wb, '送礼');
-  assert.eq(wsG.rowCount, 3, 'scope.gifts=true 时送礼全含');
-
-  const wsO = sheet(wb, '概览');
-  assert.eq(wsO.getCell('B3').value, '已授权部分', '导出范围标注');
-  assert.eq(wsO.getCell('B4').value, 1, '礼薄数只算授权');
-  assert.eq(wsO.getCell('B5').value, 1, '收礼记录数只算授权');
-  assert.eq(wsO.getCell('B8').value, 1000, '收礼总额只算授权');
-  assert.eq(wsO.getCell('B8').numFmt, '0.00', '总额数字格式');
+  const names = wb.worksheets.map((w) => w.name);
+  assert.eq(names.join(','), '送礼记录,张三的婚宴（收礼）', '未授权的寿宴不生成表');
+  const wsA = sheet(wb, '张三的婚宴（收礼）');
+  assert.eq(wsA.rowCount, 3, '只含授权事件的1条收礼+合计行');
+  assert.eq(wsA.getCell('D2').value, 1000, '金额数值');
+  assert.eq(wsA.getCell('D3').value, 1000, '合计只算授权部分');
+  const wsG = sheet(wb, '送礼记录');
+  assert.eq(wsG.rowCount, 4, 'scope.gifts=true 时送礼全含（表头+2条+合计）');
+  assert.eq(wsG.getCell('C4').value, 800, '送礼合计');
 });
 
-test('成员 scope.gifts=false：送礼 sheet 只有表头', async () => {
+test('成员 scope.gifts=false：送礼表无数据行（合计 0 笔）', async () => {
   const db = await newDB();
   const { owner, evA } = await setup(db);
   const { member } = await setupMember(db, owner, {
     events: [evA], gifts: false, switches: { view: true, export: true },
   });
-  const wb = await loadBuf(await buildXlsx(db, member, owner));
-  assert.eq(sheet(wb, '送礼').rowCount, 1, '无送礼数据行');
-  assert.eq(sheet(wb, '概览').getCell('B6').value, 0, '送礼记录数=0');
+  const wb = await loadBuf(await buildXlsx(db, member, owner, { includeGifts: false }));
+  assert(!wb.getWorksheet('送礼记录'), 'includeGifts=false 时不生成送礼表');
+  const wb2 = await loadBuf(await buildXlsx(db, member, owner));
+  const wsG = sheet(wb2, '送礼记录');
+  assert.eq(wsG.rowCount, 2, '表头+合计行，无数据行');
+  assert.eq(wsG.getCell('C2').value, 0, '合计金额为 0');
+  assert.eq(wsG.getCell('E2').value, '共 0 笔', '合计笔数为 0');
 });
 
-test('主人可按 eventIds 过滤礼薄', async () => {
+test('主人可按 eventIds 过滤礼薄；只勾送礼时只有一个表', async () => {
   const db = await newDB();
   const { owner, evA } = await setup(db);
   const wb = await loadBuf(await buildXlsx(db, owner, owner, { eventIds: [evA] }));
-  assert.eq(sheet(wb, '收礼').rowCount, 2, '只导出指定礼薄');
-  assert.eq(sheet(wb, '收礼').getCell('A2').value, '张三的婚宴', '礼薄对');
+  const names = wb.worksheets.map((w) => w.name);
+  assert.eq(names.join(','), '送礼记录,张三的婚宴（收礼）', '只导出指定礼薄');
+  assert.eq(sheet(wb, '张三的婚宴（收礼）').rowCount, 3, '表头+1条+合计行');
+
+  const wb2 = await loadBuf(await buildXlsx(db, owner, owner, { eventIds: [] }));
+  assert.eq(wb2.worksheets.length, 1, '不勾任何礼薄时只剩送礼一个表');
+  assert.eq(wb2.worksheets[0].name, '送礼记录', '唯一的表是送礼记录');
+});
+
+test('礼薄名含 Excel 禁用字符或同名：表名清洗且不重复', async () => {
+  const db = await newDB();
+  const { owner } = await setup(db);
+  // 账本内礼薄名本身不许重名；这里用清洗后同名的两个不同原名测表名去重
+  const ev1 = await core.receive.createEvent(db, owner, owner, { name: '张/三:婚礼?', tagId: 'jiehun', date: '2026-10-05' });
+  const ev2 = await core.receive.createEvent(db, owner, owner, { name: '张?三/婚礼*', tagId: 'jiehun', date: '2026-10-06' });
+  assert(ev1._id !== ev2._id, '两个清洗后同名的礼薄');
+  const wb = await loadBuf(await buildXlsx(db, owner, owner, { eventIds: [ev1._id, ev2._id], includeGifts: false }));
+  const names = wb.worksheets.map((w) => w.name);
+  assert.eq(names.length, 2, '两个礼薄两张表');
+  assert(names.every((n) => !/[\\/?*[\]:]/.test(n)), '表名不含禁用字符');
+  assert(names[0] !== names[1], '同名礼薄表名不重复');
+  assert(names.every((n) => n.length <= 31), '表名不超过 31 字');
 });

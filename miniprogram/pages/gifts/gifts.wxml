@@ -37,4 +37,8 @@
   <text class="empty-text">没有找到"{{keyword}}"相关记录</text>
 </view>
 
-<view class="fab fab-low" bindtap="goAdd">＋</view>
+<view class="fab" bindtap="goAdd">＋</view>
+
+<!-- 底部自定义 Tab 栏（任务Z 第 1 项）：占位避免内容被栏遮挡，本页不高亮任何一项 -->
+<view class="tabbar-spacer"></view>
+<tab-bar selected="{{-1}}"></tab-bar>

@@ -28,7 +28,7 @@ App({
     }
     if (r && r.ok) {
       this.globalData.initState = { status: 'ready' };
-      // 被邀请人首次打开：如带有邀请码，静默绑定邀请关系（失败不打扰启动）
+      // 被邀请人首次打开：如带有 inviter 参数，静默绑定邀请关系（失败不打扰启动）
       try { await dataService.bindPendingInvite(); } catch (e) { /* 忽略 */ }
     } else {
       this.globalData.initState = { status: 'failed', reason: (r && r.reason) || 'network' };
@@ -41,11 +41,12 @@ App({
     return this.runInit();
   },
 
-  /** 捕获分享进入时携带的邀请码（path 上的 inviteCode 参数），存起来待 init 后绑定 */
+  /** 捕获分享进入时携带的邀请人参数（path 上的 inviter 参数，用户不可见；
+   *  任务Z 第 5 项去码化后唯一入口），存起来待 init 后静默绑定 */
   captureInvite(options) {
     const q = (options && options.query) || {};
-    const code = q.inviteCode || q.code;
-    if (code) dataService.setPendingInviteCode(code);
+    const inviter = q.inviter;
+    if (inviter) dataService.setPendingInviteCode(inviter);
   },
 
   async onLaunch(options) {
@@ -91,7 +92,7 @@ App({
   },
 
   onShow(options) {
-    // 热启动经分享卡片进入时同样捕获邀请码并尝试绑定
+    // 热启动经分享卡片进入时同样捕获 inviter 参数并尝试绑定
     this.captureInvite(options);
     if (dataService.bindPendingInvite) dataService.bindPendingInvite();
   },

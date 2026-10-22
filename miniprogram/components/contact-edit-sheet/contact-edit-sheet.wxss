@@ -1,11 +1,12 @@
-/* 修改亲友信息面板（2026-10-22 重做：与添加亲友同口径——约 80vh、左右排字段、底部整宽红按钮） */
+/* 修改亲友信息面板（2026-10-22 重做：左右排字段、底部整宽红按钮；
+   高度 2026-10-22 任务Z 第 9 项：用户反馈太高，80vh → 60vh；添加版 contact-sheet 维持 80vh 不动） */
 .cs-mask {
   position: fixed; left: 0; top: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,.35); z-index: 40;
 }
 .cs-sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
-  height: 80vh;
+  height: 60vh;
   background: #F6F6F6; border-radius: 16px 16px 0 0;
   z-index: 41; box-sizing: border-box;
   padding-bottom: 26px; padding-bottom: calc(26px + env(safe-area-inset-bottom));

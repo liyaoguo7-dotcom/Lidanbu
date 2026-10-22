@@ -106,12 +106,13 @@ test('"我的"页行序：资料条→会员积分卡→共享/横置/导出→�
   assert(wxml.includes('{{displayName}}') && !wxml.includes('>我<'), '资料条显示昵称且不再写死"我"');
 });
 
-test('邀请页合并：标题「邀请分享」，右上角分享走同一带码链接', async () => {
+test('邀请页合并：标题「邀请分享」，分享走 inviter 参数链接（任务Z 去码化）', async () => {
   const j = JSON.parse(read('miniprogram/pages/invite/invite-reward.json'));
   assert(j.navigationBarTitleText === '邀请分享', '页面标题为邀请分享');
   const js = read('miniprogram/pages/invite/invite-reward.js');
   assert(js.includes('onShareAppMessage'), '有右上角分享');
-  assert(js.includes('/pages/index/index?inviteCode='), '分享路径带邀请码（与页内邀请同一链接）');
+  assert(js.includes('/pages/index/index?inviter='), '分享路径带 inviter 参数（用户不可见，任务Z 第 5 项）');
+  assert(!js.includes('inviteCode='), '不得再用 inviteCode 参数');
 });
 
 test('首页接线：重试条 + 隐私弹窗 + 拍照前守卫', async () => {

@@ -40,7 +40,7 @@ function createBookPage(kind) {
       fontLoaded: false,
       titleName: '', titleDate: '', titleIcon: '',
       allColumns: [], cols: [], scrollLeft: 0, paperInnerW: 0,
-      styleRightPx: 110, // 「样式」按钮右偏移（避让微信胶囊，_applyOrientation 按胶囊实测位置刷新）
+      styleRightPx: 120, // 「样式」按钮右偏移（避让微信胶囊，_applyOrientation 按胶囊实测位置刷新；任务Z 再左移 10px：110→120）
       selectedKey: '',
       detailOpen: false, detail: null,
       panelOpen: false,
@@ -91,6 +91,11 @@ function createBookPage(kind) {
 
     async onShow() {
       if (!this.data.ready) return;
+      // 字体加载曾失败时在回页时重试一次（任务Z 第 7 项）：成功后重排一次让新字体立即生效
+      if (!this.data.fontLoaded) {
+        const okFont = await fontManager.ensureSelected(this.data.fontId);
+        if (okFont) { this.setData({ fontLoaded: true }); this._convertCols(); }
+      }
       // 返回本页时窗口方向可能已经变了（如去竖屏添加页期间手机一直竖置）：
       // 后台页收不到 onResize，必须在 onShow 用当前窗口尺寸重同步方向，
       // 否则 isLandscape/spec 是旧值，礼单会被竖着渲染（2026-10-22 真机问题根因）。
@@ -144,7 +149,7 @@ function createBookPage(kind) {
       let styleRightPx = this.data.styleRightPx;
       try {
         const mb = wx.getMenuButtonBoundingClientRect();
-        if (mb && mb.left) styleRightPx = (w - mb.left) + 12;
+        if (mb && mb.left) styleRightPx = (w - mb.left) + 22; // 胶囊左缘外 12px 避让 + 任务Z 再左移 10px
       } catch (e) { /* 忽略，用兜底值 */ }
       this.setData({ spec, safePadL: padL, safePadR: padR, styleRightPx });
       this._syncTileView();

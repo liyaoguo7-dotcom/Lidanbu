@@ -27,7 +27,7 @@
       </view>
       <view class="mid">
         <view class="line1">
-          <text class="nm songti">{{item.name}}</text>
+          <text class="nm">{{item.name}}</text>
           <text class="dt num">{{item.date}}</text>
         </view>
         <view class="line2">
@@ -45,7 +45,11 @@
   <text class="empty-sample" bindtap="goSample">点击查看示例</text>
 </view>
 
-<view class="fab fab-low" bindtap="goAdd">＋</view>
+<view class="fab" bindtap="goAdd">＋</view>
+
+<!-- 底部自定义 Tab 栏（任务Z 第 1 项）：占位避免内容被栏遮挡，本页不高亮任何一项 -->
+<view class="tabbar-spacer"></view>
+<tab-bar selected="{{-1}}"></tab-bar>
 
 <confirm-modal show="{{showDelModal}}" title="删除礼薄" content="{{delContent}}"
   bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />

@@ -29,6 +29,6 @@
   </view>
 </view>
 
-<view class="tip">导出为 Excel（.xlsx）文件。成员账号仅导出已授权给你的部分，且需要账本主人为你打开"可导出"权限。</view>
+<view class="tip">导出为一个 Excel（.xlsx）文件：送礼一个表，每个礼薄各一个表。生成后会直接打开预览，点右上角「···」可以转发、保存到手机或用其他应用打开。成员账号仅导出已授权给你的部分，且需要账本主人为你打开"可导出"权限。</view>
 <view style="height:100px"></view>
-<view class="btn-bottom"><view class="btn-primary" bindtap="onExport">导出并发送至微信</view></view>
+<view class="btn-bottom"><view class="btn-primary" bindtap="onExport">导出并预览</view></view>

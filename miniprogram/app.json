@@ -79,19 +79,19 @@
   "tabBar": {
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
-    "color": "#7A7E83",
+    "color": "#404040",
     "list": [
       {
         "pagePath": "pages/index/index",
         "text": "首页",
-        "iconPath": "images/tabbar/wanglai.png",
-        "selectedIconPath": "images/tabbar/wanglai-active.png"
+        "iconPath": "images/tabbar/home.png",
+        "selectedIconPath": "images/tabbar/home-active.png"
       },
       {
         "pagePath": "pages/wanglai/wanglai",
         "text": "往来",
-        "iconPath": "images/tabbar/home.png",
-        "selectedIconPath": "images/tabbar/home-active.png"
+        "iconPath": "images/tabbar/wanglai.png",
+        "selectedIconPath": "images/tabbar/wanglai-active.png"
       },
       {
         "pagePath": "pages/contacts/contacts",

@@ -1,4 +1,4 @@
-<!-- 会员与积分：顶部状态 + 会员套餐 + 积分礼包，数字全部由配置渲染 -->
+<!-- 会员与积分：顶部状态 + 会员套餐（小方块） + 积分礼包（小方块），数字全部由配置渲染 -->
 <view class="card member-card">
   <text class="m-title songti">{{stateText}}</text>
   <text class="m-desc" wx:if="{{expireText}}">会员到期日：{{expireText}}</text>
@@ -13,34 +13,37 @@
 <view class="warn-banner" wx:if="{{doneText}}">{{doneText}}</view>
 
 <view class="section-title" id="plans-section">会员套餐</view>
-<view wx:if="{{plans.length}}">
-  <view class="card plan-card {{item.recommended ? 'plan-hot' : ''}}" wx:for="{{plans}}" wx:key="id">
+<!-- 套餐小方块（任务Z 第 4 项）：两列网格、点按选中、底部统一购买；
+     「推荐」角标在方块顶边外侧，不遮挡金额 -->
+<view class="block-grid" wx:if="{{plans.length}}">
+  <view class="plan-block {{selectedPlanId === item.id ? 'sel' : ''}}"
+        wx:for="{{plans}}" wx:key="id" data-id="{{item.id}}" bindtap="onSelectPlan">
     <view class="badge-hot" wx:if="{{item.recommended}}">推荐</view>
-    <view class="plan-main">
-      <text class="plan-name songti">{{item.name}}</text>
-      <text class="plan-price num">¥{{item.priceText}}</text>
-    </view>
-    <view class="plan-sub">{{item.days}} 天 · 赠 {{item.grantPoints}} 积分</view>
-    <view class="m-btn plan-buy" wx:if="{{buyEnabled}}" data-id="{{item.id}}" bindtap="onBuyPlan">{{buyingId === item.id ? '处理中…' : '购买'}}</view>
+    <text class="plan-name">{{item.name}}</text>
+    <text class="plan-price num">¥{{item.priceText}}</text>
+    <text class="plan-sub">{{item.days}} 天 · 赠 {{item.grantPoints}} 积分</text>
   </view>
 </view>
 <view class="tip" wx:if="{{!plans.length}}">会员套餐即将公布，敬请期待。</view>
+<view class="btn-primary buy-btn" wx:if="{{buyEnabled && plans.length}}" bindtap="onBuyPlan">{{buyingId ? '处理中…' : '购买所选套餐'}}</view>
 <view class="tip">会员权益：横置礼单本（6 种样式 · 3 种字体）· 拍照录入 · 家庭共享邀请 · 记账额度不限量</view>
 
 <view class="section-title">积分礼包</view>
+<!-- 积分礼包小方块：金棕色系与会员方块（红米系）区分；非会员整区置灰 -->
 <view class="{{packsLocked ? 'locked' : ''}}">
-  <view class="card" wx:if="{{packs.length}}">
-    <view class="form-row" wx:for="{{packs}}" wx:key="id" data-id="{{item.id}}" bindtap="onBuyPack">
-      <text class="form-label">{{item.name}}</text>
-      <text class="form-val num">¥{{item.priceText}}</text>
-      <text class="ph">{{item.points}} 积分</text>
-      <view class="m-btn pack-buy" wx:if="{{buyEnabled && !packsLocked}}">{{buyingId === item.id ? '处理中…' : '购买'}}</view>
+  <view class="block-grid" wx:if="{{packs.length}}">
+    <view class="pack-block {{selectedPackId === item.id ? 'sel' : ''}}"
+          wx:for="{{packs}}" wx:key="id" data-id="{{item.id}}" bindtap="onSelectPack">
+      <text class="pack-name">{{item.name}}</text>
+      <text class="pack-price num">¥{{item.priceText}}</text>
+      <text class="pack-sub">{{item.points}} 积分</text>
     </view>
   </view>
   <view class="tip" wx:if="{{!packs.length}}">积分礼包即将上架，敬请期待。</view>
   <view class="tip" wx:if="{{packsLocked}}">先开通会员才能买积分包哦</view>
   <view class="tip" wx:if="{{!packsLocked}}">拍照录入每次用 {{photoImportCost}} 积分，积分不过期</view>
 </view>
+<view class="btn-primary buy-btn gold" wx:if="{{buyEnabled && !packsLocked && packs.length}}" bindtap="onBuyPack">{{buyingId ? '处理中…' : '购买所选礼包'}}</view>
 
 <view class="card">
   <view class="form-row" bindtap="onOrders">

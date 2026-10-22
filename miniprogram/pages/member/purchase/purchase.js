@@ -27,6 +27,8 @@ Page({
     photoImportCost: 0,
     plans: [],
     packs: [],
+    selectedPlanId: '',
+    selectedPackId: '',
     packsLocked: true,
     buyEnabled: true,
     platformDisabledTip: '',
@@ -53,6 +55,14 @@ Page({
       const view = buildPurchaseView({
         plans: d.plans, packs: d.packs, state: d.state, purchaseEnabled: d.purchaseEnabled,
       });
+      // 方块选中态：保留已有选择（仍在架上时），否则默认选「推荐」套餐/第一档礼包
+      const planIds = view.plans.map((p) => p.id);
+      const packIds = view.packs.map((p) => p.id);
+      const hot = view.plans.find((p) => p.recommended);
+      const selectedPlanId = planIds.includes(this.data.selectedPlanId)
+        ? this.data.selectedPlanId : ((hot && hot.id) || planIds[0] || '');
+      const selectedPackId = packIds.includes(this.data.selectedPackId)
+        ? this.data.selectedPackId : (packIds[0] || '');
       this.setData({
         loading: false,
         stateText: STATE_TEXT[d.state] || d.state,
@@ -61,6 +71,8 @@ Page({
         photoImportCost: d.photoImportCost,
         plans: view.plans,
         packs: view.packs,
+        selectedPlanId,
+        selectedPackId,
         packsLocked: view.packsLocked,
         buyEnabled: view.buyEnabled,
         platformDisabledTip: d.platformDisabledTip,
@@ -71,9 +83,23 @@ Page({
     }
   },
 
-  async onBuyPlan(e) {
-    const planId = e.currentTarget.dataset.id;
-    if (this.data.buyingId) return;
+  onSelectPlan(e) {
+    this.setData({ selectedPlanId: e.currentTarget.dataset.id });
+  },
+
+  onSelectPack(e) {
+    // 非会员：礼包置灰，点按只给委婉提示并滚到套餐区（沿用原口径）
+    if (this.data.packsLocked) {
+      wx.showToast({ title: '积分礼包是会员的小福利，先开通会员就能买啦', icon: 'none' });
+      wx.pageScrollTo({ selector: '#plans-section', duration: 300 });
+      return;
+    }
+    this.setData({ selectedPackId: e.currentTarget.dataset.id });
+  },
+
+  async onBuyPlan() {
+    const planId = this.data.selectedPlanId;
+    if (!planId || this.data.buyingId) return;
     this.setData({ buyingId: planId, doneText: '' });
     try {
       const r = await dataService.purchaseMembership(planId);
@@ -90,15 +116,15 @@ Page({
     this.setData({ buyingId: '' });
   },
 
-  async onBuyPack(e) {
-    // 非会员：礼包置灰，点击只给委婉提示并滚到套餐区，不发起购买
+  async onBuyPack() {
+    // 非会员时购买按钮不渲染，这里再兜底拦一次（下单层也会拒）
     if (this.data.packsLocked) {
       wx.showToast({ title: '积分礼包是会员的小福利，先开通会员就能买啦', icon: 'none' });
       wx.pageScrollTo({ selector: '#plans-section', duration: 300 });
       return;
     }
-    const packId = e.currentTarget.dataset.id;
-    if (this.data.buyingId) return;
+    const packId = this.data.selectedPackId;
+    if (!packId || this.data.buyingId) return;
     this.setData({ buyingId: packId, doneText: '' });
     try {
       const r = await dataService.purchasePointsPack(packId);

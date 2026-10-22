@@ -104,7 +104,9 @@ const AppConfig = {
     registerGrant: 15,
     photoImportCost: 5,
     packs: [
-      { id: 'pack5', name: '积分包', priceFen: 500, points: 5 },
+      { id: 'pack2', name: '5积分包', priceFen: 200, points: 5 },
+      { id: 'pack10', name: '25积分包', priceFen: 1000, points: 25 },
+      { id: 'pack20', name: '50积分包', priceFen: 2000, points: 50 },
     ],
   },
 

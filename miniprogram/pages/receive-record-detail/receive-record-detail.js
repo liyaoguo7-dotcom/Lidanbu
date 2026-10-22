@@ -10,6 +10,8 @@ Page({
   data: {
     record: null,
     contactName: '',
+    eventName: '',
+    isBaishi: false,
     type: '',
     date: '',
     amountText: '',
@@ -37,10 +39,14 @@ Page({
     }
     const c = await dataService.getContact(r.contactId);
     const contactName = c ? c.name : '—';
+    // 顶部徽章右侧显示所属礼薄（事件）名；白事礼薄时徽章转灰（任务Z 第 12 项）
+    const ev = r.eventId ? await dataService.getEvent(r.eventId) : null;
     const amountAbs = formatAmount(r.amount || 0);
     this.setData({
       record: r,
       contactName,
+      eventName: ev ? (ev.name || '') : '',
+      isBaishi: !!(ev && ev.tagId === 'baishi'),
       contactId: r.contactId,
       type: r.type || '',
       date: r.date || '',

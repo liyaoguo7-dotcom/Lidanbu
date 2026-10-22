@@ -1,10 +1,11 @@
-<!-- 邀请得名额（正式版） -->
+<!-- 邀请得名额（正式版）。2026-10-22 任务Z 第 5 项：去码化——页面不展示码、
+     没有填码入口；点按钮直接调起微信发送面板，邀请关系由分享路径参数静默绑定。 -->
 <view wx:if="{{!enabled && !loading}}" class="warn-banner">邀请奖励活动暂未开启，敬请期待。</view>
 
 <block wx:if="{{enabled && summary}}">
   <view class="card">
     <view class="form-row"><text class="form-val" style="font-size:17px;font-weight:600">邀请好友一起记账，双方都有奖励</text></view>
-    <view class="form-row"><text class="form-val" style="line-height:1.7">把你的邀请码发给还没用过礼单簿的朋友，对方绑定后完成第一步（新建 1 个礼薄并添加一位收礼亲友，或添加一位送礼亲友，用这位亲友记上一笔），你就能获得收礼名额 +{{summary.perInvite.receivePool}} 条、送礼 +{{summary.perInvite.giftRecords}} 条。</text></view>
+    <view class="form-row"><text class="form-val" style="line-height:1.7">把礼单簿发给还没用过的朋友，对方点开后完成第一步（新建 1 个礼薄并添加一位收礼亲友，或添加一位送礼亲友，用这位亲友记上一笔），你就能获得收礼名额 +{{summary.perInvite.receivePool}} 条、送礼 +{{summary.perInvite.giftRecords}} 条。</text></view>
   </view>
 
   <view class="section-title">我的奖励</view>
@@ -20,25 +21,9 @@
   </view>
 
   <view class="section-title">邀请好友</view>
-  <view class="card">
-    <view class="form-row">
-      <text class="form-label">我的邀请码</text>
-      <text class="form-val" style="letter-spacing:2px">{{summary.inviteCode}}</text>
-      <text class="chev" bindtap="onCopyCode">复制</text>
-    </view>
-  </view>
   <button class="btn-primary" open-type="share" style="margin:12px 24px 0">发给好友</button>
-  <view class="tip">把邀请码直接告诉朋友也可以：对方在下方填入同一个码，效果一样。</view>
-
-  <view class="section-title">填写邀请码</view>
-  <view class="card">
-    <view class="form-row">
-      <input class="form-val" placeholder="输入朋友给你的邀请码" placeholder-style="color:#C2C2C2"
-             value="{{inputCode}}" bindinput="onCodeInput" maxlength="12" style="letter-spacing:2px" />
-    </view>
-  </view>
-  <button class="btn-primary" bindtap="onBindSubmit" style="margin:12px 24px 0">绑定邀请码</button>
-  <view wx:if="{{summary.myBinding}}" class="tip">你已通过邀请加入礼单簿（邀请人 {{summary.myBinding.inviterId}}）</view>
+  <view class="tip">点按钮就能直接发给微信好友，对方点开卡片即可，不用填任何码。</view>
+  <view wx:if="{{summary.myBinding}}" class="tip">你已通过好友的邀请加入礼单簿</view>
 
   <view class="section-title">邀请记录</view>
   <view class="card">

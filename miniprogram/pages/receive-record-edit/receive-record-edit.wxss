@@ -9,3 +9,6 @@
   font-size: 14px;
 }
 .chip.on { background: #F1E6D3; color: #E05353; font-weight: 700; }
+
+/* 第 13 项（用户清单内本页）：左列字段标签改淡——仅本页覆盖，不动全局 .form-label；右列内容保持深色（全局默认 #333） */
+.form-label { color: #999999; }

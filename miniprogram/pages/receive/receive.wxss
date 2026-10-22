@@ -69,3 +69,6 @@
 .empty-icon { width: 72px; height: 72px; opacity: .45; }
 .empty-text { color: #C2C2C2; font-size: 14px; margin-top: 18px; }
 .empty-sample { color: #F0575A; font-size: 14px; margin-top: 14px; }
+
+/* 自定义 Tab 栏占位（任务Z 第 1 项）：栏高 50px + 安全区 + 8px 余量 */
+.tabbar-spacer { height: 58px; height: calc(58px + env(safe-area-inset-bottom)); }

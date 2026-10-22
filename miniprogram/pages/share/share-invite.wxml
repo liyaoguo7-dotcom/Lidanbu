@@ -30,8 +30,7 @@
 <block wx:if="{{inviteCode}}">
   <view class="section-title">邀请已生成</view>
   <view class="card" style="padding:14px 16px">
-    <view style="font-size:13px;color:#999">点下方按钮发给微信好友，对方点开就能加入你的账本。</view>
-    <view style="font-size:13px;color:#999;margin-top:6px">邀请码：<text style="color:#333">{{inviteCode}}</text></view>
+    <view style="font-size:13px;color:#999">点下方按钮发给微信好友，对方点开就能加入你的账本，不用填任何码。</view>
   </view>
   <button class="btn-primary" open-type="share" style="margin:12px 24px 0">邀请家人（发给微信好友）</button>
 </block>

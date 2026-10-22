@@ -28,7 +28,7 @@ const SPEC = {
   NAME_H: 78, NAME_FONT: 22, NAME_PITCH: 26, NAME_SLOTS: 3,
   GAP: 10,
   MID_H: 52, MID_FONT: 22, MID_PITCH: 26,
-  AMT_H: 96, AMT_FONT: 20, AMT_PITCH: 24, AMT_SLOTS: 4,
+  AMT_H: 96, AMT_FONT: 22, AMT_PITCH: 24, AMT_SLOTS: 4, // 金额字号 2026-10-22 任务Z 改与姓名一致(22，原20)；字位距/区高不变
   PLUS_VISUAL: 31,       // ＋视觉直径（约原来的 70%）
   PLUS_TOUCH: 44,        // ＋可点范围（不缩小）
   FONT_CREDIT: '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）',
@@ -180,15 +180,18 @@ function layoutName(name) {
   };
 }
 
-/** 金额逐字布局：固定 4 字位同起同收；超 4 字按比例缩字号字距压入 96 */
+/** 金额逐字布局：**底锚定**（2026-10-22 任务Z 定版）——不论几字，末字「整」
+ * 固定落在金额区最底字位，字少时起始位随之下移（姓名是顶锚定，两者不同，勿混）。
+ * ≤4 字字位距 24，起始 top = 96 − 字数×24；超 4 字按比例压缩铺满整区（天然底锚）。 */
 function layoutAmount(amountFen) {
   const text = amountToChineseUpper(amountFen);
   const chars = Array.from(text);
   const n = chars.length;
   if (n <= SPEC.AMT_SLOTS) {
+    const startTop = SPEC.AMT_H - n * SPEC.AMT_PITCH;
     return {
       text, scale: 1, fontSize: SPEC.AMT_FONT, pitch: SPEC.AMT_PITCH,
-      chars: chars.map((ch, i) => ({ ch, top: i * SPEC.AMT_PITCH })),
+      chars: chars.map((ch, i) => ({ ch, top: startTop + i * SPEC.AMT_PITCH })),
     };
   }
   const scale = SPEC.AMT_SLOTS / n;
@@ -228,7 +231,14 @@ function buildColumns(records, opts = {}) {
       nameChars: name.chars, nameFontSize: calibratedSize(name.fontSize, fontId), nameScale: name.scale,
       midText,
       midRole: fontRoleForMid(midText),
-      midChars: Array.from(midText).map((ch, i) => ({ ch, top: i * SPEC.MID_PITCH })),
+      // 中段区域内垂直居中（2026-10-22 任务Z 定版，原从顶排显得偏上）：
+      // 墨迹高 =(字数-1)×字位距 + 字号，上下留白均分
+      midChars: (() => {
+        const arr = Array.from(midText);
+        const ink = arr.length ? (arr.length - 1) * SPEC.MID_PITCH + SPEC.MID_FONT : 0;
+        const top0 = Math.max(0, (SPEC.MID_H - ink) / 2);
+        return arr.map((ch, i) => ({ ch, top: round2(top0 + i * SPEC.MID_PITCH) }));
+      })(),
       // 送礼页奠仪列：中段字黑色（39 号定版）；其余列用主题中段色（页面层决定）
       midBlack: midText === '奠仪',
       amountText: amt.text,

@@ -1,19 +1,36 @@
-<!-- 收礼详情 -->
-<view class="card">
-  <view class="form-row"><text class="form-label">姓名</text><text class="form-val">{{contactName}}</text></view>
-  <view class="form-row"><text class="form-label">类型</text><text class="form-val">{{type}}</text></view>
-  <view class="form-row"><text class="form-label">日期</text><text class="form-val num">{{date}}</text></view>
-  <view class="form-row"><text class="form-label">金额</text><text class="form-val strong red num">+{{amountText}}</text></view>
-  <view class="form-row"><text class="form-label">备注</text><text class="form-val {{remark === '无' ? 'ph' : ''}}">{{remark}}</text></view>
+<!-- 收礼详情（2026-10-22 任务Z 第 12 项：按用户目标图复刻，与送礼详情同构——
+     顶部红圆红包徽章+事件名、金额特大居中、信息行左标签淡/右内容深、卡内操作行、卡下红色往来链） -->
+<view class="card dt-card">
+  <view class="dt-head">
+    <view class="dt-badge {{isBaishi ? 'baishi' : ''}}">
+      <image class="dt-badge-img" src="/images/icons/hongbao.svg" mode="aspectFit" />
+    </view>
+    <text class="dt-tagname {{isBaishi ? 'baishi' : ''}}">{{eventName}}</text>
+  </view>
+
+  <view class="dt-amount num">+{{amountText}}</view>
+
+  <view class="dt-rows">
+    <view class="dt-row"><text class="dt-label">姓名</text><text class="dt-val">{{contactName}}</text></view>
+    <view class="dt-row"><text class="dt-label">类型</text><text class="dt-val">{{type}}</text></view>
+    <view class="dt-row"><text class="dt-label">日期</text><text class="dt-val num">{{date}}</text></view>
+    <view class="dt-row"><text class="dt-label">备注</text><text class="dt-val {{remark === '无' ? 'ph' : ''}}">{{remark}}</text></view>
+  </view>
+
+  <view class="dt-actions">
+    <view class="dt-act" bindtap="onDelete">
+      <image class="dt-act-icon" src="/images/icons/trash.svg" mode="aspectFit" />
+      <text class="dt-act-text">删除</text>
+    </view>
+    <view class="dt-vline"></view>
+    <view class="dt-act" bindtap="goEdit">
+      <image class="dt-act-icon" src="/images/icons/pen.svg" mode="aspectFit" />
+      <text class="dt-act-text">修改</text>
+    </view>
+  </view>
 </view>
 
-<view class="wanglai-link" bindtap="goWanglai">查看往来记录＞＞＞</view>
-
-<view style="height:130px"></view>
-<view class="bottom-btns">
-  <view class="btn-outline" bindtap="onDelete">删除</view>
-  <view class="btn-primary btn-half" bindtap="goEdit">修改</view>
-</view>
+<view class="wanglai-link" bindtap="goWanglai">查看往来记录＞＞</view>
 
 <!-- 统一删除弹窗 -->
 <confirm-modal show="{{showDelModal}}" title="删除收礼记录" content="{{delContent}}"

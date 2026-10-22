@@ -52,6 +52,7 @@ function createFontManager(deps = {}) {
         wxApi.loadFontFace({
           family,
           source,
+          global: true, // 加载成功后全局生效（任务Z 第 7 项：避免只有触发页能用上）
           scopes: ['webview', 'native'],
           success: () => resolve(true),
           fail: () => resolve(false),

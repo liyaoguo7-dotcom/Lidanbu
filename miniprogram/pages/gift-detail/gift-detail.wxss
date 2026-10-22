@@ -1,48 +1,33 @@
-/* 送礼详情 */
-.pat-card { text-align: center; padding: 24px 0 14px; }
-.pat-big {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: #F1E6D3;
-  margin: 0 auto;
-  display: flex; align-items: center; justify-content: center;
+/* 送礼详情（任务Z 第 11 项目标图版式；与收礼详情同构，dt- 样式两页各一份保持独立） */
+.dt-card { padding: 22px 20px 12px; }
+.dt-head { display: flex; align-items: center; justify-content: center; }
+.dt-badge {
+  width: 42px; height: 42px; border-radius: 50%; background: #F0575A;
+  display: flex; align-items: center; justify-content: center; flex: none;
 }
-.pat-big.baishi { background: #E8EAED; }
-.pat-img { width: 52px; height: 52px; }
-.pat-name { font-size: 14px; color: #E05353; font-weight: 700; margin-top: 8px; display: block; }
-.pat-name.baishi { color: #3B4046; }
-.strong { font-weight: 600; }
+.dt-badge.baishi { background: #E8EAED; }
+.dt-badge-img { width: 30px; height: 30px; }
+.dt-tagname { font-size: 16px; color: #333; margin-left: 10px; }
+.dt-tagname.baishi { color: #3B4046; }
+.dt-amount {
+  text-align: center; font-size: 44px; font-weight: 600; color: #1A1A1A;
+  margin: 18px 0 20px; letter-spacing: .5px;
+}
+/* 信息行：第 13 项口径——左标签浅灰 #999、右内容深 #333 */
+.dt-row { display: flex; align-items: baseline; padding: 7px 0; }
+.dt-label { width: 56px; flex: none; font-size: 15px; color: #999999; }
+.dt-val { flex: 1; font-size: 15px; color: #333333; }
+.dt-val.ph { color: #333333; }
+/* 卡内操作行：分隔线下左右两半，中间竖线 */
+.dt-actions { display: flex; align-items: stretch; border-top: 1px solid #F0EDE6; margin-top: 12px; padding-top: 4px; }
+.dt-act { flex: 1; display: flex; align-items: center; justify-content: center; padding: 12px 0 6px; }
+.dt-act-icon { width: 20px; height: 20px; }
+.dt-act-text { font-size: 16px; color: #333; margin-left: 8px; }
+.dt-vline { width: 1px; background: #F0EDE6; margin: 8px 0 2px; }
 .wanglai-link {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 22px;
   color: #F0575A;
-  font-size: 15px;
-}
-/* 底部双大按钮：左删除（描边）右修改（主按钮） */
-.bottom-btns {
-  position: fixed;
-  left: 24px;
-  right: 24px;
-  bottom: 26px;
-  bottom: calc(26px + env(safe-area-inset-bottom));
-  display: flex;
-  gap: 12px;
-}
-.btn-outline {
-  flex: 1;
-  height: 56px;
-  line-height: 54px;
-  background: #fff;
-  color: #F0575A;
-  border: 1px solid #F0575A;
-  text-align: center;
-  font-size: 17px;
-  border-radius: 28px;
-}
-.btn-half {
-  flex: 1;
-  position: static;
-  left: auto;
-  right: auto;
-  bottom: auto;
+  font-size: 16px;
 }
 /* （删除弹窗已改走全产品统一的 confirm-modal 组件，样式见组件） */

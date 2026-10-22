@@ -83,14 +83,14 @@ test('任务X-共享邀请：页面已去 picker、生成邀请后出现微信�
   assert(ds.includes('getShareMembership'), 'data-service 应提供 getShareMembership 供落地页查邀请');
 });
 
-// ---------- 第 1 项：红色＋两种高度 ----------
-test('任务X-加号统一：app.wxss 只保留 70px(Tab页) 与 24px(非Tab页) 两种高度且 fab-low 后置覆盖', () => {
+// ---------- 第 1 项：红色＋两种高度（任务Z 修订 64px） ----------
+test('任务X-加号统一：app.wxss 带栏页 64px 与非Tab页 24px 两种高度（任务Z 第 2 项修订）且 fab-low 后置覆盖', () => {
   const wxss = readMp('app.wxss');
-  assert(wxss.includes('bottom: calc(70px + env(safe-area-inset-bottom))'), '.fab 应为 Tab 页高度 70px');
+  assert(wxss.includes('bottom: calc(64px + env(safe-area-inset-bottom))'), '.fab 应为带栏页高度 64px（任务Z）');
   assert(wxss.includes('.fab-low { bottom: 24px; bottom: calc(24px + env(safe-area-inset-bottom)); }'), '.fab-low 应为 24px');
   assert(wxss.indexOf('\n.fab-low {') > wxss.indexOf('\n.fab {'), '.fab-low 规则必须定义在 .fab 之后才能覆盖');
   const contacts = readMp('pages/contacts/contacts.wxml');
-  assert(contacts.includes('class="fab"'), '亲友录用 .fab（70px，Tab 栏上方约 20px）');
+  assert(contacts.includes('class="fab"'), '亲友录用 .fab（64px，栏上方约 14px）');
 });
 
 // ---------- 第 2 项：编辑页按钮「修改」 ----------
@@ -122,13 +122,14 @@ test('任务X-礼薄详情：底部按钮条删除，修改/删除移至顶部�
 });
 
 // ---------- 第 6 项：亲友表单重做 ----------
-test('任务X-亲友表单：两组件 80vh、顶部取消、左右排字段、底部整宽红按钮（添加/修改）', () => {
+test('任务X-亲友表单：顶部取消、左右排字段、底部整宽红按钮（添加 80vh / 修改 60vh，任务Z 第 9 项）', () => {
   const addW = readMp('components/contact-sheet/contact-sheet.wxml');
   const addS = readMp('components/contact-sheet/contact-sheet.wxss');
   const editW = readMp('components/contact-edit-sheet/contact-edit-sheet.wxml');
   const editS = readMp('components/contact-edit-sheet/contact-edit-sheet.wxss');
-  for (const [w, s] of [[addW, addS], [editW, editS]]) {
-    assert(s.includes('height: 80vh'), '面板高应约 80vh');
+  assert(addS.includes('height: 80vh'), '添加版面板高约 80vh');
+  assert(editS.includes('height: 60vh'), '修改版面板高约 60vh（任务Z 第 9 项：用户反馈太高）');
+  for (const [w] of [[addW], [editW]]) {
     assert(w.includes('cs-cancel') && w.includes('>取消</text>'), '顶部左上角应有「取消」文字');
     assert(w.includes('cs-row') && w.includes('cs-label') && w.includes('cs-input'), '字段应为左右排（标签+同行输入）');
     assert(w.includes('cs-primary'), '底部应为整宽红色主按钮');
@@ -157,18 +158,21 @@ test('任务X-姓名字体：联系人姓名不再用宋体（与首页最近往
   const wanglaiWxss = readMp('pages/wanglai/wanglai.wxss');
   const nmBlock = (wanglaiWxss.match(/\.wl-row \.nm \{[^}]*\}/) || [''])[0];
   assert(!nmBlock.includes('font-family'), 'wanglai 列表姓名不应再单独声明宋体 font-family');
-  assert(readMp('pages/receive/receive.wxml').includes('class="nm songti"'), '收礼列表的礼薄名（标题类）保留宋体');
+  assert(!readMp('pages/receive/receive.wxml').includes('class="nm songti"'), '收礼列表礼薄名去掉宋体（任务Z 第 10 项，与联系人姓名统一黑体）');
 });
 
-// ---------- 第 10 项：Tab 图标互换 ----------
-test('任务X-Tab图标：首页与往来的图标已互换（文字/路径不动）', () => {
+// ---------- Tab 图标：2026-10-22 用户确认新图案（房子/两个人头），取代任务X的互换 ----------
+test('Tab图标：首页=房子 home.png、往来=两个人头 wanglai.png（用户确认新图案）', () => {
   const app = JSON.parse(readMp('app.json'));
   const [home, wanglai] = app.tabBar.list;
   assert.eq(home.text, '首页', '第一项文字仍是首页');
   assert.eq(home.pagePath, 'pages/index/index', '第一项路径不变');
-  assert.eq(home.iconPath, 'images/tabbar/wanglai.png', '首页改用原往来图标');
-  assert.eq(home.selectedIconPath, 'images/tabbar/wanglai-active.png', '首页选中图标互换');
+  assert.eq(home.iconPath, 'images/tabbar/home.png', '首页用房子新图');
+  assert.eq(home.selectedIconPath, 'images/tabbar/home-active.png', '首页选中用房子红图');
   assert.eq(wanglai.text, '往来', '第二项文字仍是往来');
-  assert.eq(wanglai.iconPath, 'images/tabbar/home.png', '往来改用原首页图标');
-  assert.eq(wanglai.selectedIconPath, 'images/tabbar/home-active.png', '往来选中图标互换');
+  assert.eq(wanglai.iconPath, 'images/tabbar/wanglai.png', '往来用两个人头新图');
+  assert.eq(wanglai.selectedIconPath, 'images/tabbar/wanglai-active.png', '往来选中用两个人头红图');
+  const bar = readMp('components/tab-bar/tab-bar.js');
+  assert(bar.includes("text: '首页', icon: '/images/tabbar/home.png'"), '自定义 tab 栏首页图标与 app.json 一致');
+  assert(bar.includes("text: '往来', icon: '/images/tabbar/wanglai.png'"), '自定义 tab 栏往来图标与 app.json 一致');
 });

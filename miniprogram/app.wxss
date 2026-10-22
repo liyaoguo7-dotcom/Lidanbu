@@ -40,14 +40,14 @@ page {
   bottom: 26px;
   bottom: calc(26px + env(safe-area-inset-bottom));
 }
-/* 红色＋位置全局只保留两种高度（2026-10-22 用户真机反馈：统一一个位置、向下）：
-   - Tab 页（如亲友录）：70px = Tab 栏上方约 20px，与非 Tab 页贴底观感一致；
-   - 非 Tab 列表页（.fab-low）：24px 贴底。
+/* 红色＋位置全局只保留两种高度（2026-10-22 任务Z 第 2 项：三页统一、＋更大、再略往下）：
+   - 带栏页（亲友录原生 Tab 页 + 送礼/收礼自定义 Tab 栏页）：64px = 栏上方约 14px，三页同一高度；
+   - 非 Tab 详情/选人类页面（.fab-low）：24px 贴底。
    注意 .fab-low 必须写在 .fab 之后才能覆盖 bottom。 */
 .fab {
   position: fixed;
-  bottom: 70px;
-  bottom: calc(70px + env(safe-area-inset-bottom));
+  bottom: 64px;
+  bottom: calc(64px + env(safe-area-inset-bottom));
   left: 50%;
   margin-left: -29px;
   width: 58px;
@@ -55,7 +55,7 @@ page {
   border-radius: 50%;
   background: #F0575A;
   color: #fff;
-  font-size: 34px;
+  font-size: 40px;
   font-weight: 300;
   display: flex;
   align-items: center;

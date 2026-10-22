@@ -1,17 +1,33 @@
-/* 购买页专属样式：状态区积分行 / 套餐卡 / 推荐高亮 / 礼包置灰 */
+/* 购买页专属样式：状态区积分行 / 套餐与礼包小方块（任务Z 第 4 项改版） / 礼包置灰 */
 .points-row { display: flex; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.35); }
 .points-label { color: rgba(255,255,255,.85); font-size: 13px; }
 .points-val { color: #fff; font-size: 16px; font-weight: 600; margin-left: 10px; flex: 1; }
 .chev.light { color: rgba(255,255,255,.8); }
 
-.plan-card { position: relative; }
-.plan-hot { border: 2px solid #F0575A; }
-.badge-hot { position: absolute; top: 0; right: 16px; background: #F0575A; color: #fff; font-size: 11px; padding: 2px 10px; border-radius: 0 0 8px 8px; }
-.plan-main { display: flex; align-items: baseline; justify-content: space-between; padding-right: 8px; }
-.plan-name { font-size: 17px; font-weight: 600; color: #333; }
-.plan-price { font-size: 20px; font-weight: 700; color: #F0575A; }
-.plan-sub { color: #999; font-size: 13px; margin-top: 6px; }
-.plan-buy { margin-top: 12px; text-align: center; }
-.plan-buy, .pack-buy { border: 1.5px solid #F0575A; }
+/* 小方块网格：两列，方块点按选中（.sel 高亮），底部一个统一购买按钮 */
+.block-grid { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 12px 0; }
+.plan-block, .pack-block {
+  width: calc(50% - 6px); box-sizing: border-box; position: relative;
+  border-radius: 12px; padding: 14px 12px 12px;
+  display: flex; flex-direction: column;
+}
+/* 会员方块：红米系 */
+.plan-block { background: #FFF9F1; border: 1.5px solid #E7D9C4; }
+.plan-block.sel { border-color: #F0575A; background: #FFF1EE; box-shadow: 0 2px 8px rgba(240,87,90,.18); }
+.plan-name { font-size: 15px; font-weight: 600; color: #333; }
+.plan-price { font-size: 22px; font-weight: 700; color: #F0575A; margin-top: 8px; }
+.plan-sub { color: #999; font-size: 12px; margin-top: 6px; }
+/* 「推荐」角标：挂在方块顶边外侧（网格已留 14px 上距），不压金额 */
+.badge-hot { position: absolute; top: -9px; left: 12px; background: #F0575A; color: #fff; font-size: 11px; padding: 1px 10px; border-radius: 999px; }
+
+/* 积分方块：金棕系，与会员方块明确区分 */
+.pack-block { background: #FCF7EA; border: 1.5px solid #DECD9E; }
+.pack-block.sel { border-color: #B8860B; background: #F8EED3; box-shadow: 0 2px 8px rgba(184,134,11,.20); }
+.pack-name { font-size: 14px; font-weight: 600; color: #6B4E12; }
+.pack-price { font-size: 22px; font-weight: 700; color: #9A7418; margin-top: 8px; }
+.pack-sub { color: #A98F4F; font-size: 12px; margin-top: 6px; }
+
+.buy-btn { margin: 16px 24px 0; }
+.buy-btn.gold { background: #B8860B; }
 
 .locked { opacity: .45; }

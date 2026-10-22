@@ -1,6 +1,8 @@
 /**
- * 礼单簿 · 导出备份（阶段3）
- * 勾选礼薄/送礼 → 当前账本数据情况概览 → 经云函数生成真 xlsx → 发送至微信
+ * 礼单簿 · 导出备份（阶段3；2026-10-22 任务Z 第 14 项改版）
+ * 勾选礼薄/送礼 → 经云函数生成一个 xlsx（送礼一表+每礼薄一表）→
+ * 下载到本地后 wx.openDocument 打开预览（showMenu），转发/保存由用户
+ * 在文档查看器右上角菜单里操作；页面不再直接发送文件。
  * 成员仅导出授权部分且须"可导出"开关。
  */
 const dataService = require('../../services/data-service.js');
@@ -61,15 +63,17 @@ Page({
       const fileId = result && result.fileId;
       if (!fileId) throw new Error('云端未返回文件，请稍后重试');
       const dl = await wx.cloud.downloadFile({ fileID: fileId });
-      wx.showModal({
-        title: '导出成功',
-        content: '账本已生成 Excel，要发送到微信聊天吗？',
-        confirmText: '发送至微信',
-        success: (res) => {
-          if (res.confirm) {
-            wx.shareFileMessage({ filePath: dl.tempFilePath, fileName: '礼单簿账本.xlsx' });
-          }
-        },
+      // 任务Z 第 14 项：只生成文件并打开预览，转发/保存由用户在文档菜单（右上角「···」）里自己操作，
+      // 页面不再直接把文件发到聊天。
+      wx.openDocument({
+        filePath: dl.tempFilePath,
+        fileType: 'xlsx',
+        showMenu: true,
+        fail: () => wx.showModal({
+          title: '导出成功',
+          content: 'Excel 已生成，但预览打开失败，可以稍后在导出历史里再试。',
+          showCancel: false,
+        }),
       });
     } catch (e) {
       wx.hideLoading();
