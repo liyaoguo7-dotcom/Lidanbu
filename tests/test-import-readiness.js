@@ -62,6 +62,23 @@ test('可导入性：miniprogram 内全部相对 require 均可解析', () => {
   assert(bad.length === 0, '无法解析的 require: ' + bad.join(' | '));
 });
 
+test('可导入性：任何 require 不得越出 miniprogram 根（真机打包只认根内文件）', () => {
+  // 教训（2026-10-22）：admin 两页 require 了仓库根 core/，在仓库里能解析、
+  // 进了小程序包就找不到模块、页面空白（老板平台 5/7/8/13/16/17 没内容的根因）。
+  const bad = [];
+  const rootAbs = path.resolve(ROOT);
+  for (const f of walk(ROOT, '.js')) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/require\(['"](\.[^'"]+)['"]\)/g)) {
+      const t = path.resolve(path.dirname(f), m[1]);
+      if (!t.startsWith(rootAbs + path.sep)) {
+        bad.push(path.relative(REPO, f) + ' -> ' + m[1]);
+      }
+    }
+  }
+  assert(bad.length === 0, '越出 miniprogram 根的 require: ' + bad.join(' | '));
+});
+
 test('可导入性：usingComponents 与 tabBar 图标指向真实文件', () => {
   const bad = [];
   for (const jf of walk(ROOT, '.json')) {
