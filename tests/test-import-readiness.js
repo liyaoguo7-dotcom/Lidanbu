@@ -33,6 +33,16 @@ test('可导入性：project.config 的 miniprogramRoot 指向含 app.json 的�
   assert(fs.existsSync(path.join(dir, 'app.js')), 'miniprogramRoot 目录下必须有 app.js');
 });
 
+test('可部署性：project.config 声明 cloudfunctionRoot 且云函数目录齐备', () => {
+  const pc = JSON.parse(fs.readFileSync(path.join(REPO, 'project.config.json'), 'utf8'));
+  assert(pc.cloudfunctionRoot, 'project.config.json 必须声明 cloudfunctionRoot（缺了开发者工具不显示「上传并部署」）');
+  const cfRoot = path.join(REPO, pc.cloudfunctionRoot);
+  for (const fn of ['api', 'init']) {
+    assert(fs.existsSync(path.join(cfRoot, fn, 'index.js')), `云函数 ${fn} 缺 index.js`);
+    assert(fs.existsSync(path.join(cfRoot, fn, 'package.json')), `云函数 ${fn} 缺 package.json`);
+  }
+});
+
 test('可导入性：app.json 注册的全部页面（含分包）必需文件齐全', () => {
   const app = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'));
   const missing = [];
