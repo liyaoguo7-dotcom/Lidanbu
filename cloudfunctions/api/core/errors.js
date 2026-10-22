@@ -1,0 +1,104 @@
+/**
+ * 礼单簿 · 用户可读错误（补强）
+ *
+ * 对外返回的拒绝原因不得带内部开关名（如 del/export/view），
+ * 统一转换为用户可读提示。机器可读的原因码放在 err.code。
+ */
+
+const MESSAGES = {
+  // —— 权限类 ——
+  'empty-identity': '身份信息缺失，请重新登录',
+  'not-admin': '需要管理员身份',
+  'no-active-membership': '无权访问该账本',
+  'switch-off:view': '无权查看',
+  'switch-off:add': '无权新增',
+  'switch-off:edit': '无权修改',
+  'switch-off:del': '无权删除',
+  'switch-off:export': '无权导出',
+  'out-of-scope:gifts': '超出授权范围',
+  'out-of-scope:event': '超出授权范围',
+  'out-of-scope:contact': '超出授权范围',
+  'member-cannot-touch-owner-contacts': '无权操作账本主人的亲友录',
+  'user-restricted': '该账号已被限制，暂时不能记账或修改，如有疑问请联系客服',
+  'sharing-paused': '共享已暂停：账本主人会员已过期，续费后自动恢复',
+  'grace-readonly': '账本主人会员已到期，共享当前为只读',
+  // —— 额度类（v3.1 第0章第17条：委婉"卖惨"文案，不报剩余数） ——
+  'quota-exceeded:event': '呜呜，本小本本快被塞满啦！礼薄本子已经写满了，开个会员可以添更多本子哦～',
+  'quota-exceeded:receiveRecord': '呜呜，本小本本快被塞满啦！这本礼薄已经记满了，开个会员可以记更多笔哦～',
+  'quota-exceeded:receivePool': '呜呜，本小本本快被塞满啦！收礼名额已经用完啦，开个会员可以记更多笔哦～',
+  'quota-exceeded:gift': '呜呜，本小本本快被塞满啦！送礼记录已经记满了，开个会员可以记更多笔哦～',
+  'quota-exceeded:contact': '呜呜，本小本本快被塞满啦！亲友已经记满啦，开个会员可以添更多亲友哦～',
+  'readonly:over-free-quota-after-expiry': '会员已到期，该记录为只读',
+  // —— 邀请奖励类（口径：邀请是自愿的，不出现强制/诱导分享措辞） ——
+  'invite-disabled': '邀请奖励活动暂未开启',
+  'invite-code-invalid': '邀请码不正确，请检查后再试',
+  'invite-self': '不能填写自己的邀请码哦',
+  'invite-already-bound': '你已经绑定过邀请啦，不能重复绑定',
+  'invite-not-new-user': '邀请奖励只面向新用户哦',
+  'invite-condition-incomplete': '还差一点：新建 1 个礼薄并记 1 条收礼，或记 1 条送礼，就能为邀请人点亮奖励',
+  'invite-cap-reached': '邀请人的奖励名额已达上限',
+  'invite-device-duplicate': '这台设备已经参与过邀请奖励啦',
+  // —— 积分类 ——
+  'insufficient-points': '积分不够啦，先去「会员与积分」页看看吧',
+  'points-refund-not-found': '没找到这笔积分消费，暂时退不了',
+  'points-refund-exceeds': '要退的积分比当时扣的还多，退不了哦',
+  'points-amount-invalid': '积分数量不对，请重试',
+  'points-pack-member-only': '积分礼包是会员的小福利，先开通会员就能买啦',
+  'points-pack-not-found': '这个积分礼包已经下架啦，看看其他礼包吧',
+  // —— 个人资料类（任务Q1；隐私同意不作门禁，故无"未同意"错误码） ——
+  'nickname-rejected': '这个昵称里有不太合适的词，换一个吧',
+  'nickname-too-long': '昵称太长啦，换个短一点的吧',
+  // —— 支付/订单类 ——
+  'plan-not-found': '这个会员档位已经下架啦，看看其他档位吧',
+  'order-not-found': '订单不存在',
+  'not-order-owner': '无权查看该订单',
+  'pay-not-implemented': '支付通道正在接入中，请稍后再试',
+};
+
+function userMessage(reason) {
+  return MESSAGES[reason] || '操作被拒绝';
+}
+
+/** 权限拒绝：消息"无权限：xxx"，err.code 为内部原因码 */
+function permDenied(reason) {
+  const e = new Error(`无权限：${userMessage(reason)}`);
+  e.code = reason;
+  return e;
+}
+
+/** 额度/只读拒绝：消息为用户可读提示，err.code 为内部原因码 */
+function quotaDenied(reason) {
+  const e = new Error(userMessage(reason));
+  e.code = reason;
+  return e;
+}
+
+/** 会员专属功能门禁：与"无权限"区分的独立类型 */
+function memberRequired(featureLabel) {
+  const e = new Error(`需要开通会员：${featureLabel}`);
+  e.code = 'member-required';
+  return e;
+}
+
+/** 邀请奖励拒绝：消息为用户可读提示，err.code 为内部原因码 */
+function inviteDenied(reason) {
+  const e = new Error(userMessage(reason));
+  e.code = reason;
+  return e;
+}
+
+/** 积分拒绝（不足/退款不合法等）：消息为用户可读提示，err.code 为内部原因码 */
+function pointsDenied(reason) {
+  const e = new Error(userMessage(reason));
+  e.code = reason;
+  return e;
+}
+
+/** 个人资料拒绝（昵称不合规/超长等，任务Q1）：消息为用户可读提示，err.code 为内部原因码 */
+function profileDenied(reason) {
+  const e = new Error(userMessage(reason));
+  e.code = reason;
+  return e;
+}
+
+module.exports = { userMessage, permDenied, quotaDenied, memberRequired, inviteDenied, pointsDenied, profileDenied, MESSAGES };

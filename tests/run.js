@@ -19,6 +19,8 @@ require('./test-admin');
 require('./test-admin-config');
 require('./test-admin-full');
 require('./test-cloud-export');
+require('./test-db-cloud');
+require('./test-api-dispatch');
 require('./test-uppercase');
 require('./test-stage3');
 require('./test-landscape');

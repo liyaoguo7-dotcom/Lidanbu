@@ -1,33 +1,105 @@
 /**
-* 礼单簿 · 云函数 api（T1.x 薄封装，待联调）
-*
-* 云环境到位后联调。action 分发到 core/ 对应模块；
-* 部署时把 core/ 与 miniprogram/config/app-config.js 一并打包进云函数目录。
-*
-* 本地 Node 无法运行，需云环境。
-*
-* 已就绪的真实路由模块（依赖注入，可在本地单测）：
-* - 导出 xlsx：./routes-export.js 的 createExportXlsxHandler({ db, buildXlsx })
-*   action='exportXlsx' 时调用，actorId 取 cloud.getWXContext().OPENID；
-*   测试见 tests/test-cloud-export.js。
-*/
+ * 礼单簿 · 云函数 api（服务端总入口）
+ *
+ * 架构（docs/云联调准备.md 第二节）：小程序端不直连数据库（安全规则已关死），
+ * 全部请求走本函数；本函数在服务端用 core/ 执行业务逻辑，core/authz 逐条
+ * 校验权限。调用者身份只认 cloud.getWXContext().OPENID，绝不信任客户端传参。
+ *
+ * 调用约定（小程序端 wx.cloud.callFunction({ name:'api', data:{...} })）：
+ *   { action: '<模块>.<函数>', args: [...] } → 调 core.<模块>.<函数>(db, openid, ...args)
+ *   { action: 'whoami' }                     → { ok:true, data:{ openid } }（管理员初始化/联调用）
+ *   { action: 'exportXlsx', eventIds?, includeGifts? } → routes-export 专用路由
+ * 返回统一信封：{ ok:true, data } / { ok:false, error:'用户可读文案' }。
+ *
+ * 部署：core/ 与 config 由 tools/sync-api.sh 同步进本目录（core/、miniprogram/config/），
+ * 改 core 后必须重跑同步脚本再部署。依赖：wx-server-sdk + exceljs（导出用）。
+ */
 
-// const cloud = require('wx-server-sdk');
-// cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV});
-// const core = require('./core'); // 部署时复制 core/ 到本目录
-// const db = new core.db.CloudDB();
+const { createExportXlsxHandler } = require('./routes-export');
 
-/**
-* 云函数入口（示意，待联调）
-* event: {action, actorId, params}
-*/
-// exports.main = async (event) => {
-// const { action, actorId, params} = event;
-// const { authz, contacts, receive, gifts, stats, share, quota, audit} = core;
-// switch (action) {
-// //...按 docs/接口文档.md 分发...
-// default: return { ok: false, reason: `未知action:${action}`};
-//}
-//};
+// 允许远程调用的 core 模块（业务模块，函数签名均为 (db, actorId, ...)）。
+// db/config/models/format/export/payAdapter/ocr/contentSafety 不开放：
+// 分别是基础设施、常量、纯工具、内部构建器与适配层，各有自己的入口。
+const ALLOWED_MODULES = [
+  'contacts', 'receive', 'gifts', 'stats', 'share', 'quota', 'inviteReward',
+  'payment', 'points', 'admin', 'restriction', 'users', 'account', 'notify',
+  'feedback', 'audit', 'importer',
+];
 
-module.exports = {};
+/** 服务端静默建号（与小程序端 data-service.ensureUser 同口径）：
+ * 首次调用时建 users 文档（_id=openid）并发注册赠送积分（幂等，只发一次）。
+ * 业务函数普遍假设用户文档已存在（如 quota 按 user._id 计额度），缺了会空指针。 */
+async function ensureServerUser(db, core, openid) {
+  const col = db.collection(core.models.COLLECTIONS.User);
+  const user = await col.findOne({ _id: openid });
+  if (user) return user;
+  const doc = {
+    _id: openid,
+    profile: { nickname: '', avatarUrl: '' },
+    createdAt: Date.now(),
+    membership: { status: 'free', expireAt: null },
+  };
+  await col.insert(doc);
+  try { await core.points.grantRegisterBonus(db, openid, core.config); } catch (e) { /* 赠送失败不拦主流程 */ }
+  return doc;
+}
+
+/** 依赖注入工厂（本地测试用假 SDK 在进程内跑通全链路；云端用默认导出） */
+function createMain({ sdk, core, db }) {
+  const exportXlsx = createExportXlsxHandler({
+    db,
+    buildXlsx: core.exportXlsx
+      ? core.exportXlsx.buildXlsx
+      : require('./core/export-xlsx').buildXlsx,
+  });
+
+  return async function main(event = {}) {
+    const { OPENID } = sdk.getWXContext();
+    const action = event.action || '';
+    try {
+      if (action === 'whoami') {
+        return { ok: true, data: { openid: OPENID } };
+      }
+      if (action === 'exportXlsx') {
+        const r = await exportXlsx(event, { openid: OPENID });
+        // routes-export 自有信封是 { ok:false, reason }，在这里归一化为全站统一的 error 字段
+        if (r && r.ok === false && r.reason && !r.error) return { ok: false, error: r.reason };
+        return r;
+      }
+      const dot = action.indexOf('.');
+      const modName = dot > 0 ? action.slice(0, dot) : '';
+      const fnName = dot > 0 ? action.slice(dot + 1) : '';
+      if (!ALLOWED_MODULES.includes(modName)) {
+        return { ok: false, error: `未知action：${action}` };
+      }
+      const fn = core[modName] && core[modName][fnName];
+      if (typeof fn !== 'function') {
+        return { ok: false, error: `未知action：${action}` };
+      }
+      const args = Array.isArray(event.args) ? event.args : [];
+      await ensureServerUser(db, core, OPENID);
+      const data = await fn(db, OPENID, ...args);
+      return { ok: true, data: data === undefined ? null : data };
+    } catch (err) {
+      // core 抛出的均为用户可读文案（errors.js 口径）；未知错误只回通用文案，不漏内部细节
+      const msg = (err && err.message) || '操作失败，请重试';
+      return { ok: false, error: /[:：]/.test(msg) && msg.length <= 120 ? msg : '操作失败，请重试' };
+    }
+  };
+}
+
+let _main = null;
+function lazyMain() {
+  if (_main) return _main;
+  // eslint-disable-next-line global-require
+  const sdk = require('wx-server-sdk');
+  sdk.init({ env: sdk.DYNAMIC_CURRENT_ENV });
+  // eslint-disable-next-line global-require
+  const core = require('./core');
+  const db = new core.db.CloudDB({ sdk });
+  _main = createMain({ sdk, core, db });
+  return _main;
+}
+
+exports.main = async (event, context) => lazyMain()(event, context);
+exports.createMain = createMain;

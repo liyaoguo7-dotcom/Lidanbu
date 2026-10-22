@@ -43,6 +43,22 @@ test('可部署性：project.config 声明 cloudfunctionRoot 且云函数目录�
   }
 });
 
+test('可部署性：api 云函数内的 core 副本与源一致（sync-api 产物）', () => {
+  const srcDir = path.join(REPO, 'core');
+  const dstDir = path.join(REPO, 'cloudfunctions/api/core');
+  assert(fs.existsSync(dstDir), 'cloudfunctions/api/core 不存在：先跑 tools/sync-api.sh');
+  for (const f of fs.readdirSync(srcDir).filter((x) => x.endsWith('.js'))) {
+    const dst = path.join(dstDir, f);
+    assert(fs.existsSync(dst), `api 副本缺 ${f}：重跑 tools/sync-api.sh`);
+    assert(fs.readFileSync(dst, 'utf8') === fs.readFileSync(path.join(srcDir, f), 'utf8'),
+      `api 副本 ${f} 与源不一致：重跑 tools/sync-api.sh`);
+  }
+  const cfgDst = path.join(REPO, 'cloudfunctions/api/miniprogram/config/app-config.js');
+  assert(fs.existsSync(cfgDst)
+    && fs.readFileSync(cfgDst, 'utf8') === fs.readFileSync(path.join(REPO, 'miniprogram/config/app-config.js'), 'utf8'),
+  'api 副本 app-config.js 与源不一致：重跑 tools/sync-api.sh');
+});
+
 test('可部署性：init 云函数 set 数据不得带 _id（云端 -501007 回归）', () => {
   const src = fs.readFileSync(path.join(REPO, 'cloudfunctions/init/index.js'), 'utf8');
   assert(!/_id:\s*'singleton'/.test(src), "defaultConfig 不得含 _id:'singleton'（doc().set 的 data 带 _id 会被云数据库拒绝）");
