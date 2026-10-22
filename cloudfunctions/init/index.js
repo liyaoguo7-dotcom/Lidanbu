@@ -45,7 +45,8 @@ const COLLECTIONS = [
 /** 默认 appConfig（与 miniprogram/config/app-config.js 的静态默认保持一致） */
 function defaultConfig(now) {
   return {
-    _id: 'singleton',
+    // 注意：不要在这里写 _id —— doc('singleton').set() 的 data 里带 _id 会被
+    // 云数据库拒绝（-501007 不能更新_id的值，2026-10-22 云端首跑实测），文档 ID 由 doc() 指定即可。
     // ⚠️ 管理员初始化：把创始人自己的 openid 填进这个数组（获取方法见 README），
     // 只有名单里的人能进老板平台、能改配置。先空着上线 = 老板平台无人可用，安全。
     adminIds: [],

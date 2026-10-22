@@ -43,6 +43,11 @@ test('可部署性：project.config 声明 cloudfunctionRoot 且云函数目录�
   }
 });
 
+test('可部署性：init 云函数 set 数据不得带 _id（云端 -501007 回归）', () => {
+  const src = fs.readFileSync(path.join(REPO, 'cloudfunctions/init/index.js'), 'utf8');
+  assert(!/_id:\s*'singleton'/.test(src), "defaultConfig 不得含 _id:'singleton'（doc().set 的 data 带 _id 会被云数据库拒绝）");
+});
+
 test('可导入性：app.json 注册的全部页面（含分包）必需文件齐全', () => {
   const app = JSON.parse(fs.readFileSync(path.join(ROOT, 'app.json'), 'utf8'));
   const missing = [];
