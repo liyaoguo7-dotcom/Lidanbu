@@ -18,7 +18,7 @@
 const AppConfig = {
   /** 云开发环境 ID（★要填的两样之一，见文件头）：开通云开发后把环境 ID 填在这里；
    * app.js 启动时读它初始化云开发，本地预览留空字符串 */
-  cloudEnvId: '',
+  cloudEnvId: 'cloud1-d3gd7fjdx0d217df0',
 
   /** 底部 Tab（顺序固定；Tab2 名称暂定"往来"，放配置不得写死） */
   tabs: [
