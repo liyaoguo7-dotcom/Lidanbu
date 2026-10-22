@@ -1,7 +1,7 @@
 /**
  * 礼单簿 · 礼薄详情（阶段2 2B）
  * 图案+标签名+事件名+日期居中；共计；记录行"姓名 / 类型｜日期 +1000.00"；
- * 红色＋底部中间；礼薄级修改/删除在顶部信息卡右上角（原底部按钮条会被贴底＋压住，2026-10-22 移位）；删除走统一弹窗（含连带条数）。
+ * 红色＋底部中间；礼薄级修改/删除不在本页（2026-10-22 用户定：收礼列表左滑已有修改/删除入口）。
  */
 const dataService = require('../../services/data-service.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
@@ -16,8 +16,6 @@ Page({
     date: '',
     totalText: '',
     records: [],
-    showDelModal: false,
-    delContent: '',
   },
 
   async onLoad(options) {
@@ -58,7 +56,6 @@ Page({
       date: e.date || '',
       totalText: `${st.count} 笔 ￥${formatAmountInt(st.totalFen)} 元`,
       records,
-      delContent: `${e.name}，将同时删除 ${st.count} 条收礼记录`,
     });
   },
 
@@ -69,29 +66,5 @@ Page({
   goRecordDetail(e) {
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({ url: `/pages/receive-record-detail/receive-record-detail?id=${id}` });
-  },
-
-  goEdit() {
-    wx.navigateTo({ url: `/pages/receive-add/receive-add?eventId=${this.eventId}` });
-  },
-
-  onDelete() {
-    this.setData({ showDelModal: true });
-  },
-
-  onCancelDel() {
-    this.setData({ showDelModal: false });
-  },
-
-  async onConfirmDel() {
-    try {
-      await dataService.deleteEvent(this.eventId);
-      wx.showToast({ title: '已删除', icon: 'success' });
-      setTimeout(() => wx.navigateBack(), 600);
-    } catch (e) {
-      wx.showModal({ title: '提示', content: e.message, showCancel: false });
-    } finally {
-      this.setData({ showDelModal: false });
-    }
   },
 });

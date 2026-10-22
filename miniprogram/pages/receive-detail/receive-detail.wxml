@@ -1,10 +1,6 @@
 <!-- 礼薄详情 -->
 <view class="card pat-card">
-  <!-- 礼薄级修改/删除：卡内右上角小字入口（2026-10-22 真机反馈：原底部按钮条被贴底＋压住，移上来） -->
-  <view class="card-actions">
-    <text class="card-act" bindtap="goEdit">修改</text>
-    <text class="card-act danger" bindtap="onDelete">删除</text>
-  </view>
+  <!-- 礼薄级修改/删除入口已取消（2026-10-22 用户定：收礼列表左滑已有修改/删除，详情页不再放） -->
   <view class="pat-big {{isBaishi ? 'baishi' : ''}}">
     <image class="pat-img" src="{{icon}}" mode="aspectFit" />
   </view>
@@ -35,6 +31,3 @@
 
 <view class="fab fab-low" bindtap="goAddRecord">＋</view>
 
-<!-- 统一删除弹窗：删除礼薄连带删除全部明细 -->
-<confirm-modal show="{{showDelModal}}" title="删除礼薄" content="{{delContent}}"
-  bind:confirm="onConfirmDel" bind:cancel="onCancelDel" />

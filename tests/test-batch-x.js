@@ -110,15 +110,16 @@ test('任务X-小喇叭：收礼页无滚动跑马灯，仅慢速闪烁动画（
   assert(wxss.includes('hornBlink'), '应有慢速柔和闪烁动画 hornBlink（任务Y）');
 });
 
-// ---------- 第 4 项：礼薄详情按钮移位 ----------
-test('任务X-礼薄详情：底部按钮条删除，修改/删除移至顶部信息卡右上角', () => {
+// ---------- 第 4 项（2026-10-22 晚用户改定）：礼薄详情页取消修改/删除入口 ----------
+test('礼薄详情：页内无修改/删除入口（改/删走收礼列表左滑），底部按钮条亦无', () => {
   const wxml = readMp('pages/receive-detail/receive-detail.wxml');
-  assert(!wxml.includes('bottom-btns'), '底部按钮条应删除');
-  assert(!wxml.includes('height:130px'), '130px 占位应删除');
-  assert(wxml.includes('card-actions'), '应有卡内右上角操作区');
-  assert(wxml.includes('bindtap="goEdit">修改</text>'), '修改入口走原 goEdit');
-  assert(wxml.includes('bindtap="onDelete">删除</text>'), '删除入口走原 onDelete（仍弹统一确认框）');
-  assert(readMp('pages/receive-detail/receive-detail.wxss').includes('.card-actions'), 'wxss 应有 .card-actions 定位');
+  const js = readMp('pages/receive-detail/receive-detail.js');
+  assert(!wxml.includes('card-actions'), '卡内右上角操作区应取消');
+  assert(!wxml.includes('>修改</text>') && !wxml.includes('>删除</text>'), '详情页不应再有修改/删除小字入口');
+  assert(!js.includes('goEdit') && !js.includes('onConfirmDel'), 'goEdit/删除礼薄方法应移除');
+  assert(!wxml.includes('bottom-btns'), '底部按钮条保持删除状态');
+  const list = readMp('pages/receive/receive.js');
+  assert(list.includes('goRename') && list.includes('askDelete'), '收礼列表左滑应保留修改/删除礼薄入口');
 });
 
 // ---------- 第 6 项：亲友表单重做 ----------
