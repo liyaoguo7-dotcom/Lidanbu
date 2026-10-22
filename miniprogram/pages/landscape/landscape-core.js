@@ -169,12 +169,14 @@ function resolveReceiveTheme(eventTagId, selectedStyleId) {
  * 上缘恰 GAP(5)px；中间各字在首末之间均匀分布。字号默认与中段同大 NAME_FONT(22)；
  * **坚决不许叠字**（用户定版语）：放不下时宁可缩小字号——f = min(22, 区高/字数)，
  * 此时字距恰等于字号、字形盒相接不重叠。锚点与字号无关：首字恒区顶、末字恒区底。 */
-function layoutName(name) {
+function layoutName(name, cal = 1) {
   const chars = Array.from(String(name || ''));
   const n = chars.length;
   if (n === 0) return { chars: [], scale: 1, fontSize: SPEC.NAME_FONT, pitch: SPEC.NAME_PITCH };
-  const fontSize = n >= 2 ? Math.min(SPEC.NAME_FONT, round2(SPEC.NAME_H / n)) : SPEC.NAME_FONT;
-  const pitch = n >= 2 ? (SPEC.NAME_H - fontSize) / (n - 1) : 0;
+  // 不叠字按**校准后实际字号**算：fNom×cal ≤ 区高/字数；字距=(区高−实际字号)/(n−1) ≥ 实际字号
+  const fontSize = n >= 2 ? Math.min(SPEC.NAME_FONT, round2(SPEC.NAME_H / (n * cal))) : SPEC.NAME_FONT;
+  const eff = fontSize * cal;
+  const pitch = n >= 2 ? (SPEC.NAME_H - eff) / (n - 1) : 0;
   return {
     scale: round2(fontSize / SPEC.NAME_FONT), fontSize, pitch: round2(pitch),
     chars: chars.map((ch, i) => ({ ch, top: n === 1 ? 0 : round2(i * pitch) })),
@@ -193,15 +195,16 @@ function layoutName(name) {
  * 第一个字上移到顶——其上缘距「贺礼」末字下缘恰 GAP(5)px（区顶即此位）；
  * 中间各字在首末之间均匀分布。字号默认与中段同大 AMT_FONT(22)；
  * **坚决不许叠字**：放不下时宁可缩小字号——f = min(22, 区高/字数)（算法同 layoutName）。 */
-function layoutAmount(amountFen) {
+function layoutAmount(amountFen, cal = 1) {
   const text = amountToChineseUpper(amountFen);
   const chars = Array.from(text);
   const n = chars.length;
-  const fontSize = n >= 2 ? Math.min(SPEC.AMT_FONT, round2(SPEC.AMT_H / n)) : SPEC.AMT_FONT;
-  const pitch = n >= 2 ? (SPEC.AMT_H - fontSize) / (n - 1) : 0;
+  const fontSize = n >= 2 ? Math.min(SPEC.AMT_FONT, round2(SPEC.AMT_H / (n * cal))) : SPEC.AMT_FONT;
+  const eff = fontSize * cal;
+  const pitch = n >= 2 ? (SPEC.AMT_H - eff) / (n - 1) : 0;
   return {
     text, scale: round2(fontSize / SPEC.AMT_FONT), fontSize, pitch: round2(pitch),
-    chars: chars.map((ch, i) => ({ ch, top: n === 1 ? SPEC.AMT_H - fontSize : round2(i * pitch) })),
+    chars: chars.map((ch, i) => ({ ch, top: n === 1 ? round2(SPEC.AMT_H - eff) : round2(i * pitch) })),
   };
 }
 
@@ -235,8 +238,9 @@ function buildColumns(records, opts = {}) {
   for (let i = 0; i < list.length; i++) {
     const r = list[i];
     const midText = opts.midText || midTextForTag(r.tagId);
-    const name = layoutName(r.name);
-    const amt = layoutAmount(r.amountFen);
+    const cal = fontById(fontId).calibration;
+    const name = layoutName(r.name, cal);
+    const amt = layoutAmount(r.amountFen, cal);
     cols.push({
       key: `rec-${r.id}`,
       empty: false,

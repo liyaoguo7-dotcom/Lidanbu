@@ -205,6 +205,21 @@ test('横置-均布不叠字：首末锚定+字号放不下才缩+字距恒≥�
   assert.eq(n3.fontSize, LC.SPEC.MID_FONT, '3字名字号=中段字号');
   const a4 = LC.layoutAmount(100000);
   assert.eq(a4.fontSize, LC.SPEC.MID_FONT, '4字金额字号=中段字号');
+  // 三款字体校准下同样不叠字（按校准后实际字号验：字距≥实际字号、末字不越区）
+  for (const fid of ['lxgw', 'mashanzheng', 'longcang']) {
+    const built = LC.buildColumns([{ id: 'x', name: '欧阳修远', amountFen: 150000, tagId: 'jiehun' }], { fontId: fid });
+    const col = built.columns[0];
+    const ac = col.amountChars;
+    for (let i = 1; i < ac.length; i++) {
+      assert(ac[i].top - ac[i - 1].top >= col.amountFontSize - 0.6, `${fid} 6字金额字距≥实际字号`);
+    }
+    assert(ac[ac.length - 1].top + col.amountFontSize <= LC.SPEC.AMT_H + 0.6, `${fid} 金额末字不越区`);
+    const nc = col.nameChars;
+    for (let i = 1; i < nc.length; i++) {
+      assert(nc[i].top - nc[i - 1].top >= col.nameFontSize - 0.6, `${fid} 4字名字距≥实际字号`);
+    }
+    assert(nc[nc.length - 1].top + col.nameFontSize <= LC.SPEC.NAME_H + 0.6, `${fid} 姓名末字不越区`);
+  }
 });
 
 test('横置-窗口化：占位+渲染宽度守恒', () => {
