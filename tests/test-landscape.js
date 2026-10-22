@@ -13,12 +13,13 @@ function memStorage() {
   return { get: (k) => (m.has(k) ? m.get(k) : ''), set: (k, v) => m.set(k, v), _map: m };
 }
 
-test('横置-定版数值：列宽64.5/三段78+10+52+10+96/列内总高258', () => {
+test('横置-定版数值：列宽64.5/三段94+52+96/墨迹间距5/列内总高258', () => {
   assert.eq(LC.SPEC.COL_W, 64.5, '列宽');
-  assert.eq(LC.SPEC.NAME_H, 78, '姓名区');
+  assert.eq(LC.SPEC.NAME_H, 94, '姓名区');
   assert.eq(LC.SPEC.MID_H, 52, '中段区');
   assert.eq(LC.SPEC.AMT_H, 96, '金额区');
-  assert.eq(LC.COL_INNER_H, 258, '列内总高 6+78+10+52+10+96+6');
+  assert.eq(LC.SPEC.GAP, 5, '姓名末字↔贺礼、贺礼↔金额首字 墨迹间距 5');
+  assert.eq(LC.COL_INNER_H, 258, '列内总高 258');
   assert.eq(LC.SPEC.COLS_PER_SCREEN, 12, '一屏12列');
 });
 
@@ -178,26 +179,32 @@ test('横置-空列格子：格子印满整幅，空列数=12-记录数且只有
   assert.eq(many.totalGrid, 15, '超屏按记录数扩展');
 });
 
-test('横置-缩放界内：4字名/5字名/6字金额系数在 (0,1] 且不越区', () => {
+test('横置-均布不叠字：首末锚定+字号放不下才缩+字距恒≥字号', () => {
+  // 2026-10-22 晚定版：姓名首字区顶、末字区底；金额首字区顶、末字区底，中间均布
   const n4 = LC.layoutName('欧阳修远');
-  assert(n4.scale > 0 && n4.scale <= 1, '4字名系数在界内');
-  assert.eq(n4.scale, 0.75, '4字名系数 3/4');
-  const lastTop = n4.chars[n4.chars.length - 1].top;
-  assert(lastTop + n4.pitch <= LC.SPEC.NAME_H + 0.01, '4字名末字不越姓名区');
+  assert.eq(n4.scale, 1, '4字名放得下不缩（94/4=23.5≥22）');
+  assert.eq(n4.chars[0].top, 0, '4字名首字区顶');
+  assert.eq(n4.chars[3].top + n4.fontSize, LC.SPEC.NAME_H, '4字名末字贴区底');
   const n5 = LC.layoutName('欧阳修远明');
-  assert.eq(n5.scale, 0.6, '5字名系数 3/5');
+  assert.eq(n5.fontSize, 18.8, '5字名字号缩到 94/5');
+  assert(n5.pitch >= n5.fontSize - 0.011, '5字名字距≥字号不叠字');
   const a6 = LC.layoutAmount(150000); // 壹仟伍佰元整 = 6 字
   assert.eq(a6.text, '壹仟伍佰元整', '6字金额');
-  assert(a6.scale > 0 && a6.scale <= 1, '6字金额系数在界内');
+  assert.eq(a6.fontSize, 16, '6字金额字号缩到 96/6');
+  assert(a6.pitch >= a6.fontSize - 0.011, '6字金额字距≥字号不叠字');
   const aLast = a6.chars[a6.chars.length - 1].top;
-  // 任务AA 口径：末字字形盒不越金额区（旧 top+pitch 口径已随底锚公式废除）
-  assert(aLast + a6.fontSize <= LC.SPEC.AMT_H + 0.01, '6字金额末字字形盒不越金额区');
-  // 2字名占 1、3 字位；1字居中
+  assert(Math.abs(aLast + a6.fontSize - LC.SPEC.AMT_H) < 0.011, '6字金额末字字形盒贴区底');
+  // 2字名：首字区顶、末字区底（旧字位制已废）；1字名放第一个字位置
   const n2 = LC.layoutName('欧阳');
-  assert.eq(n2.chars[0].top, 0, '2字名首字第1位');
-  assert.eq(n2.chars[1].top, 52, '2字名末字第3位');
+  assert.eq(n2.chars[0].top, 0, '2字名首字区顶');
+  assert.eq(n2.chars[1].top, LC.SPEC.NAME_H - 22, '2字名末字区底');
   const n1 = LC.layoutName('王');
-  assert.eq(n1.chars[0].top, 26, '1字名居中');
+  assert.eq(n1.chars[0].top, 0, '1字名在第一个字位置');
+  // 常规情形字号与中段同大
+  const n3 = LC.layoutName('张建国');
+  assert.eq(n3.fontSize, LC.SPEC.MID_FONT, '3字名字号=中段字号');
+  const a4 = LC.layoutAmount(100000);
+  assert.eq(a4.fontSize, LC.SPEC.MID_FONT, '4字金额字号=中段字号');
 });
 
 test('横置-窗口化：占位+渲染宽度守恒', () => {

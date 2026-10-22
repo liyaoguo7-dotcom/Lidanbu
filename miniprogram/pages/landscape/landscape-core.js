@@ -25,10 +25,10 @@ const SPEC = {
   COL_W: 64.5,           // 固定列宽
   COLS_PER_SCREEN: 12,   // 一屏列数（格子印满整幅纸面的列数下限）
   INNER_PAD: 6,          // 列内上下各留
-  NAME_H: 78, NAME_FONT: 22, NAME_PITCH: 26, NAME_SLOTS: 3,
-  GAP: 10,
+  NAME_H: 94, NAME_FONT: 22, NAME_PITCH: 26, NAME_SLOTS: 3, // NAME_H 2026-10-22 晚改版：姓名区延到中段墨迹上方 5px（见 layoutName）
+  GAP: 5,               // 姓名末字底↔贺礼首字顶、贺礼末字底↔金额首字顶 的墨迹间距（新版式定版值）
   MID_H: 52, MID_FONT: 22, MID_PITCH: 26,
-  AMT_H: 96, AMT_FONT: 22, AMT_PITCH: 24, AMT_SLOTS: 4, // 金额字号 2026-10-22 任务Z 改与姓名一致(22，原20)；字位距/区高不变
+  AMT_H: 96, AMT_FONT: 22, AMT_PITCH: 24, AMT_SLOTS: 4, // AMT_H 2026-10-22 晚改版：金额区自中段墨迹下方 5px 起（见 layoutAmount）；字号恒与中段同为 22
   AMT_BOTTOM_PAD: 4,     // 金额区底距列底（任务AA 模型实测补偿）：对称位本应 =INNER_PAD(6)，但真 LXGW
                          // 渲染下「整」字墨迹下轴承≈2.5px、姓名首字上轴承≈0.5px，故区底下移 2px 至 4，
                          // 使两侧墨迹空白同为 ≈6.5px（模型实测主列差 0.5px）；个别姓名用字（如「王」）
@@ -38,8 +38,9 @@ const SPEC = {
   FONT_CREDIT: '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）',
 };
 
-/** 列内总高（校验用）：6+78+10+52+10+96+6 = 258 */
-const COL_INNER_H = SPEC.INNER_PAD * 2 + SPEC.NAME_H + SPEC.GAP + SPEC.MID_H + SPEC.GAP + SPEC.AMT_H;
+/** 列内总高（校验用）：姓名区 94（顶 6）+ 中段区 52（居中 103–155）+ 金额区 96（底距 4，158–254），
+ * 区与区之间各隔 8；墨迹口径：姓名末字底 100 ↔ 中段墨迹顶 105 = GAP 5，中段墨迹底 153 ↔ 金额首字顶 158 = GAP 5 */
+const COL_INNER_H = 258;
 
 /** 两位小数舍入（像素用；注意：金额格式化一律走 core/format，本函数只处理像素值） */
 const round2 = (v) => Math.round(v * 100) * 0.01;
@@ -163,25 +164,20 @@ function resolveReceiveTheme(eventTagId, selectedStyleId) {
   return eventTagId === 'baishi' ? 'funeral' : (THEMES[selectedStyleId] ? selectedStyleId : 'classic');
 }
 
-/** 姓名逐字布局（返回 [{ch, top}]，单位为基准 px，页面按 scale 放大） */
+/** 姓名逐字布局（2026-10-22 晚用户定版，覆盖旧字位制）：
+ * 第一个字位置不动（区顶），最后一个字下移到底——其字形盒下缘距「贺礼」首字
+ * 上缘恰 GAP(5)px；中间各字在首末之间均匀分布。字号默认与中段同大 NAME_FONT(22)；
+ * **坚决不许叠字**（用户定版语）：放不下时宁可缩小字号——f = min(22, 区高/字数)，
+ * 此时字距恰等于字号、字形盒相接不重叠。锚点与字号无关：首字恒区顶、末字恒区底。 */
 function layoutName(name) {
   const chars = Array.from(String(name || ''));
   const n = chars.length;
   if (n === 0) return { chars: [], scale: 1, fontSize: SPEC.NAME_FONT, pitch: SPEC.NAME_PITCH };
-  if (n <= SPEC.NAME_SLOTS) {
-    // 3 字占满；2 字占第 1、3 字位；1 字居中（第 2 字位）
-    const slots = n === 1 ? [1] : n === 2 ? [0, 2] : [0, 1, 2];
-    return {
-      scale: 1, fontSize: SPEC.NAME_FONT, pitch: SPEC.NAME_PITCH,
-      chars: chars.map((ch, i) => ({ ch, top: slots[i] * SPEC.NAME_PITCH })),
-    };
-  }
-  // 4 字以上：整体按比例缩进同样的 78 高内
-  const scale = SPEC.NAME_SLOTS / n;
-  const pitch = SPEC.NAME_H / n;
+  const fontSize = n >= 2 ? Math.min(SPEC.NAME_FONT, round2(SPEC.NAME_H / n)) : SPEC.NAME_FONT;
+  const pitch = n >= 2 ? (SPEC.NAME_H - fontSize) / (n - 1) : 0;
   return {
-    scale, fontSize: round2(SPEC.NAME_FONT * scale), pitch,
-    chars: chars.map((ch, i) => ({ ch, top: round2(i * pitch) })),
+    scale: round2(fontSize / SPEC.NAME_FONT), fontSize, pitch: round2(pitch),
+    chars: chars.map((ch, i) => ({ ch, top: n === 1 ? 0 : round2(i * pitch) })),
   };
 }
 
@@ -192,17 +188,20 @@ function layoutName(name) {
  * 【任务Z 版为何真机没贴底】旧版按"末字 top + pitch = 区高"锚定，字形盒下缘还差
  * pitch − fontSize = 2px；且当时列内三段是流式堆叠、金额区并未落在列底（见 book.wxss
  * 任务AA 的绝对定位三段），双重偏差叠加成真机上「整」字下方大片空白。 */
+/** 金额逐字布局（2026-10-22 晚用户定版，覆盖旧字位制）：
+ * 末字「整」位置不变（字形盒下缘与区下缘齐平，区底锚定同任务AA）；
+ * 第一个字上移到顶——其上缘距「贺礼」末字下缘恰 GAP(5)px（区顶即此位）；
+ * 中间各字在首末之间均匀分布。字号默认与中段同大 AMT_FONT(22)；
+ * **坚决不许叠字**：放不下时宁可缩小字号——f = min(22, 区高/字数)（算法同 layoutName）。 */
 function layoutAmount(amountFen) {
   const text = amountToChineseUpper(amountFen);
   const chars = Array.from(text);
   const n = chars.length;
-  const fits = n <= SPEC.AMT_SLOTS;
-  const scale = fits ? 1 : SPEC.AMT_SLOTS / n;
-  const pitch = fits ? SPEC.AMT_PITCH : SPEC.AMT_H / n;
-  const fontSize = fits ? SPEC.AMT_FONT : round2(SPEC.AMT_FONT * scale);
+  const fontSize = n >= 2 ? Math.min(SPEC.AMT_FONT, round2(SPEC.AMT_H / n)) : SPEC.AMT_FONT;
+  const pitch = n >= 2 ? (SPEC.AMT_H - fontSize) / (n - 1) : 0;
   return {
-    text, scale, fontSize, pitch,
-    chars: chars.map((ch, i) => ({ ch, top: round2(SPEC.AMT_H - fontSize - (n - 1 - i) * pitch) })),
+    text, scale: round2(fontSize / SPEC.AMT_FONT), fontSize, pitch: round2(pitch),
+    chars: chars.map((ch, i) => ({ ch, top: n === 1 ? SPEC.AMT_H - fontSize : round2(i * pitch) })),
   };
 }
 
