@@ -82,6 +82,19 @@ page {
   flex: none;
   margin-top: 2px; /* 与小字行高对齐 */
 }
+/* 小喇叭统一规格（2026-10-22 用户定版）：不滚动、慢速柔和闪烁（opacity 1↔0.6、2.6s）；
+   文字过长默认单行省略，点文字后左右滑动看全文；右侧 × 关闭后本次打开期间不再显示
+   （状态在 services/horn-state.js 只存内存，禁止落 storage） */
+@keyframes hornBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.horn-blink { animation: hornBlink 2.6s ease-in-out infinite; }
+.tip-body { flex: 1; min-width: 0; margin-left: 6px; }
+.tip-txt-ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tip-scroll { flex: 1; min-width: 0; margin-left: 6px; white-space: nowrap; }
+.tip-txt-nowrap { white-space: nowrap; }
+.tip-close { flex: none; color: #C2C2C2; font-size: 16px; line-height: 1; padding: 1px 2px 0 10px; }
 .searchbar { display: flex; align-items: center; padding: 10px 12px; }
 .searchbox {
   flex: 1;

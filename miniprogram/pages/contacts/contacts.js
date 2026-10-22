@@ -4,6 +4,7 @@
  * 删除姓名二次确认，写明"将同时删除 X 条收礼、Y 条送礼记录，删除后无法恢复"。
  */
 const dataService = require('../../services/data-service.js');
+const hornState = require('../../services/horn-state.js');
 
 function pinyinInitial(name) {
   // 演示期简易分组：取首字，按常见姓氏映射；未知归 '#'
@@ -18,6 +19,7 @@ function pinyinInitial(name) {
 
 Page({
   data: {
+    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
     groups: [],
     keyword: '',
     tipText: '小技巧：点击姓名可查询来往记录哦～',
@@ -32,7 +34,12 @@ Page({
     editRemark: '',
   },
 
+  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
+  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  onHornClose() { hornState.dismiss('contacts'); this.setData({ hornOff: true }); },
+
   async onLoad() {
+    this.setData({ hornOff: hornState.isDismissed('contacts') });
     await dataService.init();
   },
 

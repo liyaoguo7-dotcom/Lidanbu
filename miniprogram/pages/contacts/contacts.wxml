@@ -1,5 +1,5 @@
 <!-- 亲友录 -->
-<view class="tip"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><text style="margin-left:6px">{{tipText}}</text></view>
+<view class="tip horn-blink" wx:if="{{!hornOff}}"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><scroll-view wx:if="{{hornWide}}" class="tip-scroll" scroll-x="true" bindtap="onHornTextTap"><text class="tip-txt-nowrap">{{tipText}}</text></scroll-view><view wx:else class="tip-body" bindtap="onHornTextTap"><text class="tip-txt-ellipsis">{{tipText}}</text></view><text class="tip-close" catchtap="onHornClose">×</text></view>
 
 <view class="searchbar">
   <view class="searchbox">

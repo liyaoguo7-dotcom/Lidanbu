@@ -4,17 +4,24 @@
  * 底部中间＋（去新增亲友，返回后继续选）；选中后回传。
  */
 const dataService = require('../../services/data-service.js');
+const hornState = require('../../services/horn-state.js');
 const { wxStorage, savePick } = require('../../services/form-state.js');
 
 Page({
   data: {
+    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
     contacts: [],
     keyword: '',
     tipText: '若亲友姓名不在列表中，请点击下方红色按钮添加',
     addSheetOpen: false,
   },
 
+  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
+  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  onHornClose() { hornState.dismiss('choose-contact'); this.setData({ hornOff: true }); },
+
   async onLoad(options) {
+    this.setData({ hornOff: hornState.isDismissed('choose-contact') });
     await dataService.init();
     this.from = (options && options.from) || '';
   },

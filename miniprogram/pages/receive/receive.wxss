@@ -1,18 +1,25 @@
 /* 收礼主页 */
 .songti, .nm { font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "SimSun", serif; }
 
-/* 小喇叭提示条 */
+/* 小喇叭提示条（统一规格 2026-10-22：不滚动、慢速柔和闪烁；过长默认单行省略，
+   点文字展开左右滑动看全文；× 关闭后本次打开期间不再显示，状态只存内存） */
+@keyframes hornBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 .horn {
   display: flex; align-items: center;
   background: #FFF8E1; border-radius: 8px;
   margin: 12px 12px 0; padding: 8px 10px;
+  animation: hornBlink 2.6s ease-in-out infinite;
 }
 .horn-icon { width: 14px; height: 14px; margin-right: 6px; flex: none; }
-/* 静态常驻（2026-10-22 用户真机反馈：小喇叭内容不要滚动）；原跑马灯动画已删除 */
-.horn-scroll { flex: 1; }
+.horn-scroll { flex: 1; min-width: 0; white-space: nowrap; }
 .horn-text {
   font-size: 12px; color: #E8912D; line-height: 1.5;
 }
+.horn-ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.horn-nowrap { white-space: nowrap; }
 .horn-close { color: #E8912D; font-size: 18px; padding: 0 2px 0 8px; flex: none; }
 
 /* 共计行（淡色小字，金额红） */
@@ -39,7 +46,7 @@
 .event-row {
   position: relative; z-index: 1; background: #fff;
   display: flex; align-items: center;
-  padding: 10px 16px; min-height: 62px;
+  padding: 8px 16px; min-height: 58px;
 }
 .pat {
   width: 44px; height: 44px; border-radius: 50%;

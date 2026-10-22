@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   padding: 0 16px;
-  min-height: 54px;
+  min-height: 50px;
   border-bottom: 1px solid #F0F0F0;
 }
 .contact-row:last-child { border-bottom: none; }

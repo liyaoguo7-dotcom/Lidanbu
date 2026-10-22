@@ -1,6 +1,6 @@
 /**
  * 礼单簿 · 收礼主页
- * 结构：标题「收礼礼簿」→ 小喇叭提示条（可关闭，状态存本地）→ 淡色共计行 →
+ * 结构：标题「收礼礼簿」→ 小喇叭提示条（可关闭，本次打开期间不再显示）→ 淡色共计行 →
  * 列表（图案/名称+日期/共N笔|¥金额/⋯）→ 右滑出现修改/删除 → 底部中间红色＋。
  * 标题/礼薄名称用宋体栈，金额/日期用黑体（系统默认），不引入外部字体。
  * 金额规则（用户 2026-10-18 拍板）：列表行两位小数（formatAmount），
@@ -8,10 +8,10 @@
  */
 const dataService = require('../../services/data-service.js');
 const landscapeRoute = require('../../services/landscape-route.js');
+const hornState = require('../../services/horn-state.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
 const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
-const HORN_KEY = 'receiveHornClosed';
 const SWIPE_W = 150; // 修改75 + 删除75
 
 Page({
@@ -21,6 +21,7 @@ Page({
     totalCount: 0,
     totalText: '0.00',
     showHorn: true,
+    hornWide: false, // 小喇叭展开态（点文字左右滑动看全文）
     showDelModal: false,
     delContent: '',
     delEventId: '',
@@ -33,9 +34,8 @@ Page({
     await dataService.init();
     // 缓存会员状态，供行点击时走横置路由判断（横置页内还会再校验一次门禁）
     try { this._membership = await dataService.getMembership(); } catch (e) { this._membership = null; }
-    let closed = false;
-    try { closed = wx.getStorageSync(HORN_KEY) === '1'; } catch (e) { /* 忽略 */ }
-    this.setData({ showHorn: !closed });
+    // 小喇叭关闭状态只存内存（horn-state）：本次打开期间不再显示，下次冷启动恢复
+    this.setData({ showHorn: !hornState.isDismissed('receive') });
     await this.reload();
   },
 
@@ -69,8 +69,12 @@ Page({
 
   // ---- 小喇叭 ----
   closeHorn() {
-    try { wx.setStorageSync(HORN_KEY, '1'); } catch (e) { /* 忽略 */ }
+    hornState.dismiss('receive'); // 只记内存，冷启动自动恢复显示（不落 storage）
     this.setData({ showHorn: false });
+  },
+
+  toggleHornText() {
+    this.setData({ hornWide: !this.data.hornWide });
   },
 
   // ---- 右滑 ----

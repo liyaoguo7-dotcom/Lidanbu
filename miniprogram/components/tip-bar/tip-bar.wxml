@@ -1,5 +1,11 @@
-<!-- 小喇叭提示条：克制的小喇叭 + 动态小字 -->
-<view class="tip-bar" wx:if="{{text}}">
+<!-- 小喇叭提示条：小喇叭 + 静态小字（慢速柔和闪烁）；点文字展开滑动看全文，× 关闭 -->
+<view class="tip-bar horn-blink" wx:if="{{text && !hidden}}">
   <image class="horn" src="/images/icons/speaker.svg" mode="aspectFit" />
-  <text class="text">{{text}}</text>
+  <scroll-view wx:if="{{expanded}}" class="text-scroll" scroll-x="true" bindtap="onTapText">
+    <text class="text nowrap">{{text}}</text>
+  </scroll-view>
+  <view wx:else class="text-body" bindtap="onTapText">
+    <text class="text ellipsis">{{text}}</text>
+  </view>
+  <text class="close" catchtap="onClose">×</text>
 </view>

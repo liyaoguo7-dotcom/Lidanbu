@@ -1,7 +1,7 @@
 /** 真机反馈第一批（任务X，2026-10-22 用户在开发者工具/真机实测后下达）：
  * 行为测试：stats 'all' 全量统计、家庭共享邀请码流程（不绑定亲友、谁接受谁绑定）；
- * 源码断言：fab 两种高度、编辑页按钮「修改」、小喇叭无滚动动画、礼薄详情按钮移位、
- * 往来 RANGES 含全部且 diffText 不拼「差额」、亲友表单 80vh 左右排、横置强制横屏+返回竖屏、
+ * 源码断言：fab 两种高度、编辑页按钮「修改」、小喇叭无滚动跑马灯、礼薄详情按钮移位、
+ * 往来 RANGES 含全部且 diffText 不拼「差额」、亲友表单 80vh 左右排、横置（三改已于第二批回退，见 test-batch-y）、
  * 邀请页去 picker 走微信分享、联系人姓名去宋体统一默认字体、Tab 图标互换。 */
 const fs = require('fs');
 const path = require('path');
@@ -102,11 +102,12 @@ test('任务X-编辑按钮：修改页底部按钮为「修改」，添加页保
   assert(readMp('pages/receive-record-add/receive-record-add.wxml').includes('>保存</view>'), 'receive-record-add 保持保存');
 });
 
-// ---------- 第 3 项：小喇叭静态 ----------
-test('任务X-小喇叭：收礼页喇叭文案无滚动动画（全仓唯一跑马灯已删）', () => {
+// ---------- 第 3 项：小喇叭静态（第二批修订：允许慢速闪烁动画，仍禁滚动跑马灯） ----------
+test('任务X-小喇叭：收礼页无滚动跑马灯，仅慢速闪烁动画（任务Y 新规格）', () => {
   const wxss = readMp('pages/receive/receive.wxss');
-  assert(!wxss.includes('hornscroll'), 'hornscroll 关键帧应删除');
-  assert(!wxss.includes('animation'), '喇叭样式不应再有 animation');
+  assert(!wxss.includes('hornscroll'), 'hornscroll 跑马灯关键帧应删除');
+  assert(!wxss.includes('translateX'), '不应有位移滚动动画');
+  assert(wxss.includes('hornBlink'), '应有慢速柔和闪烁动画 hornBlink（任务Y）');
 });
 
 // ---------- 第 4 项：礼薄详情按钮移位 ----------
@@ -137,17 +138,9 @@ test('任务X-亲友表单：两组件 80vh、顶部取消、左右排字段、�
   assert(!editW.includes('确认修改'), '编辑版不应再叫「确认修改」');
 });
 
-// ---------- 第 7 项：横置强制横屏 + 返回竖屏 ----------
-test('任务X-横置：两横置页强制 landscape、rotate 保持 auto、按钮改名「返回竖屏」且横置页底部有返回按钮', () => {
-  for (const p of ['pages/landscape/receive/receive.json', 'pages/landscape/gift/gift.json']) {
-    assert(JSON.parse(readMp(p)).pageOrientation === 'landscape', `${p} 应为 landscape 强制横屏`);
-  }
+// ---------- 第 7 项：横置强制横屏 + 返回竖屏（已被任务Y 全部回退，断言移交 test-batch-y） ----------
+test('任务X-横置：三改回退口径以任务Y 为准（此处仅保留 rotate 页方向断言）', () => {
   assert(JSON.parse(readMp('pages/landscape/rotate/rotate.json')).pageOrientation === 'auto', 'rotate 页保持 auto');
-  const LC = require('../miniprogram/pages/landscape/landscape-core.js');
-  assert.eq(LC.ROTATE_COPY.backButton, '返回竖屏', 'ROTATE_COPY 按钮文案应为「返回竖屏」');
-  const book = readMp('pages/landscape/book.wxml');
-  assert(book.includes('bindtap="goBackToPortrait">返回竖屏</view>'), '横置页底部控件区应有「返回竖屏」按钮');
-  assert(readMp('pages/landscape/book-common.js').includes('goBackToPortrait()'), 'book-common 应有 goBackToPortrait（navigateBack、栈空回竖屏页）');
 });
 
 // ---------- 第 9 项：联系人姓名字体统一 ----------

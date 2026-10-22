@@ -6,8 +6,9 @@
  * 数据只经 services/data-service.js；字体经 services/font-manager.js。
  *
  * 待真机联调（见 docs/wireframes/landscape/横置实现方式说明.md）：
- * - 2026-10-22 起 receive/gift 两页 pageOrientation 改为 "landscape"（进入即强制横屏，
- *   不再依赖手机横屏感应；用户真机实测 auto 时横置无反应后改）。rotate 页保持 "auto"；
+ * - receive/gift 两页 pageOrientation 为 "auto"，靠手机自动旋转感应横竖屏
+ *   （2026-10-22 曾改为 "landscape" 强制横屏＋底部「返回竖屏」按钮，同日用户确认
+ *   其手机自动旋转正常、不需要，已全部回退为自动感应＋定版原样）；
  * - 转屏淡入是否闪白；刘海屏 safeArea 与胶囊按钮避让；
  * - wx.loadFontFace 本地包路径在真机上的可用性（上线换云存储地址，见 font-manager）。
  */
@@ -38,8 +39,8 @@ function createBookPage(kind) {
       songtiStack: LC.SONGTI_STACK,
       fontLoaded: false,
       titleName: '', titleDate: '', titleIcon: '',
-      allColumns: [], winCols: [], winStart: 0, leftSpacer: 0, rightSpacer: 0,
-      scrollLeft: 0, paperInnerW: 0,
+      allColumns: [], cols: [], scrollLeft: 0, paperInnerW: 0,
+      styleRightPx: 110, // 「样式」按钮右偏移（避让微信胶囊，_applyOrientation 按胶囊实测位置刷新）
       selectedKey: '',
       detailOpen: false, detail: null,
       panelOpen: false,
@@ -83,13 +84,17 @@ function createBookPage(kind) {
       this.setData({ fontLoaded: ok });
 
       await this._loadPermissions();
-      this._applyOrientation();
+      this._syncOrientation();
       await this.reload();
       this.setData({ ready: true });
     },
 
     async onShow() {
       if (!this.data.ready) return;
+      // 返回本页时窗口方向可能已经变了（如去竖屏添加页期间手机一直竖置）：
+      // 后台页收不到 onResize，必须在 onShow 用当前窗口尺寸重同步方向，
+      // 否则 isLandscape/spec 是旧值，礼单会被竖着渲染（2026-10-22 真机问题根因）。
+      this._syncOrientation();
       await this.reload(); // 从新增/修改页返回后刷新
     },
 
@@ -98,12 +103,27 @@ function createBookPage(kind) {
       const w = size.windowWidth || 0;
       const h = size.windowHeight || 0;
       if (!w || !h || !this._machine) return;
+      this._handleResize(w, h);
+    },
+
+    /** 用当前窗口尺寸重同步方向（onLoad/onShow 调用，与 onResize 共用一条路径） */
+    _syncOrientation() {
+      let info = null;
+      try { info = wx.getWindowInfo(); } catch (e) { /* 忽略 */ }
+      if (!info || !this._machine) return;
+      const w = info.windowWidth || 0;
+      const h = info.windowHeight || 0;
+      if (w && h) this._handleResize(w, h);
+    },
+
+    _handleResize(w, h) {
+      const wasLandscape = this.data.isLandscape;
       const r = this._machine.resize(w, h);
-      // 转屏：状态机已先关半屏详情/面板，这里同步到视图再切态
-      this.setData({
-        isLandscape: r.isLandscape,
-        detailOpen: false, panelOpen: false, selectedKey: '',
-      });
+      const flipped = wasLandscape !== r.isLandscape;
+      const patch = { isLandscape: r.isLandscape };
+      // 只有真的翻转才关半屏详情/面板（状态机翻转时已先关，这里同步到视图）
+      if (flipped) { patch.detailOpen = false; patch.panelOpen = false; patch.selectedKey = ''; }
+      this.setData(patch);
       this._applyOrientation(w);
     },
 
@@ -119,9 +139,16 @@ function createBookPage(kind) {
         padL = Math.max(0, info.safeArea.left || 0);
         padR = Math.max(0, w - (info.safeArea.right || w));
       }
-      this.setData({ spec, safePadL: padL, safePadR: padR });
+      // 「样式」按钮避让微信胶囊：优先按胶囊实测左缘定位（按钮右缘距胶囊左缘 ≥12px），
+      // 取不到时保留 data 里的固定兜底偏移（按主流机型胶囊宽度留足）
+      let styleRightPx = this.data.styleRightPx;
+      try {
+        const mb = wx.getMenuButtonBoundingClientRect();
+        if (mb && mb.left) styleRightPx = (w - mb.left) + 12;
+      } catch (e) { /* 忽略，用兜底值 */ }
+      this.setData({ spec, safePadL: padL, safePadR: padR, styleRightPx });
       this._syncTileView();
-      this._applyWindow(this._scrollLeftPx || 0, true);
+      this._convertCols();
     },
 
     /** 瓦片显示尺寸 = 瓦片原始尺寸 × 当前 scale（WXML 里不能做乘法，JS 先算好） */
@@ -211,31 +238,29 @@ function createBookPage(kind) {
       this._afterBuild(built);
     },
 
-    /** 构建后定位到最右（最新一侧）并刷新窗口 */
+    /**
+     * 构建后定位到最左（第一条记录）并全量渲染。
+     * 【竞态根因记录】旧实现是窗口化渲染：按 scrollLeft 只渲染可视 ±2 列，
+     * 且初始 scrollLeft 被设到最右端（旧口径 records[0] 在最右）。scroll-view
+     * 初始布局时 scroll 事件的时序不确定，窗口随每次打开的时序漂移——真机
+     * 表现为同一本子多次打开少几列、从中间开始。现改为全量确定性渲染：
+     * 所有列一次渲染完、scrollLeft 恒为 0，渲染内容与滚动位置彻底解耦。
+     */
     _afterBuild() {
       this._syncTileView();
       const spec = this.data.spec;
       const paperInnerW = Math.max(0, 844 * spec.scale - spec.scrollW * 2);
-      const totalW = this.data.allColumns.length * spec.colW;
-      const startLeft = Math.max(0, totalW - paperInnerW);
-      this._scrollLeftPx = startLeft;
-      this.setData({ paperInnerW, scrollLeft: startLeft });
-      this._applyWindow(startLeft, true);
+      this.setData({ paperInnerW, scrollLeft: 0 });
+      this._convertCols();
     },
 
-    /** 滚动窗口化：只渲染可视范围 ±buffer 列，占位 view 撑住几何 */
-    _applyWindow(scrollLeftPx, force) {
+    /** 全量列渲染模型：基准 px × scale 换算成实际 px（字号含字体校准系数，buildColumns 已处理） */
+    _convertCols() {
       const spec = this.data.spec;
-      const total = this.data.allColumns.length;
-      if (!total) { this.setData({ winCols: [], leftSpacer: 0, rightSpacer: 0, winStart: 0 }); return; }
-      const paperInnerW = this.data.paperInnerW || (844 * spec.scale - spec.scrollW * 2);
-      const win = LC.windowRange({ total, scrollLeftPx, colWPx: spec.colW, viewportPx: paperInnerW, buffer: 2 });
-      if (!force && win.start === this.data.winStart && win.end === this.data.winStart + this.data.winCols.length) return;
-      // 渲染模型：基准 px × scale 换算成实际 px（字号含字体校准系数，buildColumns 已处理）
       const s = spec.scale;
       const midSelPx = LC.round2(LC.calibratedSize(LC.SPEC.MID_FONT, this.data.fontId) * s);
       const midSongPx = LC.round2(LC.SPEC.MID_FONT * s);
-      const winCols = this.data.allColumns.slice(win.start, win.end).map((c) => {
+      const cols = this.data.allColumns.map((c) => {
         if (c.empty) return c;
         return {
           ...c,
@@ -247,18 +272,7 @@ function createBookPage(kind) {
           amountChars: c.amountChars.map((ch) => ({ ch: ch.ch, topPx: LC.round2(ch.top * s) })),
         };
       });
-      this.setData({
-        winStart: win.start,
-        winCols,
-        leftSpacer: win.leftSpacerPx,
-        rightSpacer: win.rightSpacerPx,
-      });
-    },
-
-    onScroll(e) {
-      const sl = (e.detail && e.detail.scrollLeft) || 0;
-      this._scrollLeftPx = sl;
-      this._applyWindow(sl, false);
+      this.setData({ cols });
     },
 
     // ---- 点列 / 半屏详情 ----
@@ -391,16 +405,7 @@ function createBookPage(kind) {
       });
     },
 
-    /** 「返回竖屏」按钮（下留白控件区，2026-10-22 真机反馈新增）：
-     *  优先 navigateBack 回竖屏详情页；栈空（直接落在横置页）时走 goPortrait 回对应竖屏页 */
-    goBackToPortrait() {
-      wx.navigateBack({
-        delta: 1,
-        fail: () => this.goPortrait(),
-      });
-    },
-
-    /** 「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）：回普通竖置礼单（不丢数据、不影响会员状态）；
+    /** 「切换回竖置样式」（定版图30）：回普通竖置礼单（不丢数据、不影响会员状态）；
      *  同时把横置开关写回关闭，避免下次点礼薄又被开关自动带回横置（mine 开关 onShow 时同步） */
     goPortrait() {
       landscapeRoute.writeLandscapeOn(false, wxStorage);

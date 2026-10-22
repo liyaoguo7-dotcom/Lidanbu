@@ -7,11 +7,14 @@
   align-items: center; box-sizing: border-box;
 }
 .rotate-topbar {
-  width: 100%; height: 88rpx; background: #F0E6D4; display: flex; align-items: center;
+  width: 100%; height: 132rpx; background: #F0E6D4; display: flex; align-items: center;
   padding: 0 24rpx; box-sizing: border-box;
 }
-.rotate-back { font-size: 44rpx; color: #333; width: 80rpx; }
-.rotate-back-ph { width: 80rpx; }
+/* 返回箭头：约 30px 字号、88rpx(≥44px) 可点区，在标题行内视觉居中，不贴屏幕角（2026-10-22 用户真机反馈：原 44rpx 太小太靠角） */
+.rotate-back {
+  font-size: 60rpx; color: #333; width: 88rpx; height: 88rpx; line-height: 88rpx; text-align: center; flex: none;
+}
+.rotate-back-ph { width: 88rpx; }
 .rotate-title {
   flex: 1; text-align: center; font-size: 34rpx; color: #333;
   font-family: "Songti SC", "STSong", "Noto Serif CJK SC", SimSun, serif;
@@ -49,7 +52,8 @@
 .tdate { font-size: 13px; color: #8A8175; margin-left: 4px; }
 .style-btn {
   margin-left: auto; z-index: 2; font-size: 13px; color: #6B5D4F;
-  background: rgba(255,255,255,0.55); border-radius: 999px; padding: 4px 12px; margin-right: 8px;
+  background: rgba(255,255,255,0.55); border-radius: 999px; padding: 4px 12px;
+  /* margin-right 由页面按微信胶囊实测位置内联注入（避让胶囊，WXML style 属性） */
 }
 .midrow { flex: 1; display: flex; flex-direction: row; align-items: stretch; min-height: 0; }
 .scroll-img { height: 100%; flex-shrink: 0; }
@@ -65,7 +69,6 @@
 .corner.br { bottom: 3px; right: 3px; border-bottom-width: 2px; border-right-width: 2px; }
 .cols-scroll { width: 100%; height: 100%; }
 .cols-track { display: flex; flex-direction: row; height: 100%; }
-.spacer { flex-shrink: 0; height: 100%; }
 .col {
   flex-shrink: 0; height: 100%; box-sizing: border-box;
   border-left: 1px solid; position: relative;
@@ -76,10 +79,6 @@
   line-height: 1; white-space: nowrap;
 }
 .botbar { display: flex; align-items: center; flex-shrink: 0; position: relative; }
-.back-portrait {
-  font-size: 11px; color: #8A8175; background: rgba(255,255,255,0.55);
-  border-radius: 999px; padding: 3px 10px; margin-left: 10px; flex: none;
-}
 .hint { margin-left: 10px; }
 .hint-txt {
   font-size: 11px; color: #8A8175; background: rgba(255,255,255,0.55);

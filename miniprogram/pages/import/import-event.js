@@ -3,6 +3,7 @@
  * 未选礼薄不能进拍照（core.importer.validateTarget 兜底）。
  */
 const dataService = require('../../services/data-service.js');
+const hornState = require('../../services/horn-state.js');
 const { saveImport } = require('../../services/import-state.js');
 
 function today() {
@@ -14,12 +15,18 @@ function today() {
 
 Page({
   data: {
+    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
     events: [],
     newName: '',
     newTagId: '',
   },
 
+  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
+  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  onHornClose() { hornState.dismiss('import-event'); this.setData({ hornOff: true }); },
+
   async onLoad() {
+    this.setData({ hornOff: hornState.isDismissed('import-event') });
     await dataService.init();
     this.setData({ newTagId: dataService.getDefaultTagId(), newName: '' });
     await this.refresh();

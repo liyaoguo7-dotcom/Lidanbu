@@ -1,7 +1,7 @@
 /**
  * 横置入口路由测试（收尾接线）
  * 覆盖：开关关→竖置；开关开+会员→横置；开关开+非会员→竖置（双保险）；
- * storage 读写往返（假 storage）；「返回竖屏」写回关闭后不再自动进横置。
+ * storage 读写往返（假 storage）；「切换回竖置样式」写回关闭后不再自动进横置。
  */
 const { test, assert } = require('./fw');
 const LR = require('../miniprogram/services/landscape-route.js');
@@ -55,7 +55,7 @@ test('横置路由-storage兼容：历史字符串值 1/true 也算开，其余�
   assert.eq(LR.readLandscapeOn(st), false, '空串算关');
 });
 
-test('横置路由-返回竖屏：写回关闭后 resolve 变竖置（不会被开关再次自动带回）', () => {
+test('横置路由-切换回竖置样式：写回关闭后 resolve 变竖置（不会被开关再次自动带回）', () => {
   const st = memStorage();
   LR.writeLandscapeOn(true, st);
   const before = LR.resolveBookRoute({ landscapeOn: LR.readLandscapeOn(st), membership: { state: 'member' } });

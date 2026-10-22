@@ -1,17 +1,37 @@
-/* 小喇叭提示条（v3.1：很小的小喇叭配动态小字，绝无弹窗推广） */
+/* 小喇叭提示条（统一规格 2026-10-22：不滚动、慢速柔和闪烁；组件样式隔离，动画在本文件内定义） */
+@keyframes hornBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .tip-bar {
   display: flex;
   align-items: center;
   padding: 12rpx 24rpx;
+  animation: hornBlink 2.6s ease-in-out infinite;
 }
 
 .horn {
   width: 24rpx; /* 很小的小喇叭 */
   height: 24rpx;
   margin-right: 8rpx;
+  flex: none;
 }
 
 .text {
   font-size: 24rpx; /* 动态小字 */
   color: #999999;
+}
+
+.text-body { flex: 1; min-width: 0; }
+.ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.text-scroll { flex: 1; min-width: 0; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+
+.close {
+  flex: none;
+  color: #C2C2C2;
+  font-size: 30rpx;
+  line-height: 1;
+  padding: 0 4rpx 0 16rpx;
 }

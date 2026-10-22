@@ -35,7 +35,7 @@
           <text wx:if="{{titleDate}}" class="tdate">· {{titleDate}}</text>
         </view>
       </view>
-      <view class="style-btn" bindtap="onOpenPanel">样式</view>
+      <view class="style-btn" style="margin-right:{{styleRightPx}}px;" bindtap="onOpenPanel">样式</view>
     </view>
 
     <!-- 中部：卷轴 + 纸面 + 卷轴 -->
@@ -49,10 +49,9 @@
         <view class="corner bl" style="border-color:{{theme.frameColor}};"></view>
         <view class="corner br" style="border-color:{{theme.frameColor}};"></view>
         <scroll-view class="cols-scroll" scroll-x="true" scroll-left="{{scrollLeft}}"
-          bindscroll="onScroll" enhanced="true" show-scrollbar="false">
+          enhanced="true" show-scrollbar="false">
           <view class="cols-track">
-            <view class="spacer" style="width:{{leftSpacer}}px;"></view>
-            <view wx:for="{{winCols}}" wx:key="key"
+            <view wx:for="{{cols}}" wx:key="key"
               class="col {{selectedKey === item.key ? 'col-sel' : ''}}"
               data-key="{{item.key}}" bindtap="onColTap"
               style="width:{{spec.colW}}px;border-left-color:{{theme.lineColor}};{{selectedKey === item.key ? 'box-shadow:inset 0 0 0 2px ' + theme.highlightBorder + ';background-color:' + theme.highlightBg + ';' : ''}}">
@@ -73,7 +72,6 @@
                 </view>
               </block>
             </view>
-            <view class="spacer" style="width:{{rightSpacer}}px;"></view>
           </view>
         </scroll-view>
       </view>
@@ -81,9 +79,8 @@
         style="width:{{spec.scrollW}}px;" />
     </view>
 
-    <!-- 下留白：返回竖屏 / 滑动提示 / ＋（横置内跟随样式配色，白事深灰） -->
+    <!-- 下留白：滑动提示 / ＋（横置内跟随样式配色，白事深灰） -->
     <view class="botbar" style="height:{{spec.marginV}}px;">
-      <view class="back-portrait" bindtap="goBackToPortrait">返回竖屏</view>
       <view class="hint"><text class="hint-txt">左右滑动查看更多</text></view>
       <view wx:if="{{perms.canAdd}}" class="plus-touch" bindtap="onAdd"
         style="width:{{spec.plusTouch}}px;height:{{spec.plusTouch}}px;">

@@ -91,7 +91,7 @@
 .wl-row {
   display: flex;
   align-items: center;
-  padding: 11px 16px;
+  padding: 9px 16px;
   border-bottom: 1px solid #F0F0F0;
 }
 .wl-row:last-child { border-bottom: none; }
@@ -109,7 +109,7 @@
 .contact-row {
   display: flex;
   align-items: center;
-  padding: 11px 16px;
+  padding: 9px 16px;
   border-bottom: 1px solid #F0F0F0;
 }
 .contact-row:last-child { border-bottom: none; }

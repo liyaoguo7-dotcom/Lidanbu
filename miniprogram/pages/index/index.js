@@ -7,12 +7,14 @@
  * 拍照导入进入前走页面层隐私守卫（privacy-guard，未同意先弹窗）。
  */
 const dataService = require('../../services/data-service.js');
+const hornState = require('../../services/horn-state.js');
 const privacyGuard = require('../../services/privacy-guard.js');
 const guideState = require('../../services/guide-state.js');
 const { formatAmountInt } = require('../../core/format.js');
 
 Page({
   data: {
+    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
     tipText: '点击拍照导入，可一键识别纸质礼单',
     entries: [
       { id: 'share', icon: '/images/icons/family.svg', name: '家庭共享' },
@@ -29,7 +31,12 @@ Page({
     recent: [],            // 最近往来（任务V）：空数组时整卡不渲染
   },
 
+  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
+  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  onHornClose() { hornState.dismiss('index'); this.setData({ hornOff: true }); },
+
   async onLoad() {
+    this.setData({ hornOff: hornState.isDismissed('index') });
     const r = await dataService.init();
     this.setData({ initFailed: !(r && r.ok) });
     // 首次使用引导：只显示一次（storage 标记），未看过先去引导页

@@ -3,12 +3,18 @@
  * 会员专属；非会员弹介绍。送礼直接拍照，收礼先去选礼薄。
  */
 const dataService = require('../../services/data-service.js');
+const hornState = require('../../services/horn-state.js');
 const { saveImport } = require('../../services/import-state.js');
 
 Page({
-  data: {},
+  data: { hornOff: false, hornWide: false },
+
+  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
+  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  onHornClose() { hornState.dismiss('import-home'); this.setData({ hornOff: true }); },
 
   async onLoad() {
+    this.setData({ hornOff: hornState.isDismissed('import-home') });
     await dataService.init();
     try {
       const m = await dataService.getMembership();

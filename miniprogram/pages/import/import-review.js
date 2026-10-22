@@ -6,6 +6,7 @@
  * 校验，任一条不合格整批不写并定位高亮到该条；成功后显示结果（成功条数）。
  */
 const dataService = require('../../services/data-service.js');
+const hornState = require('../../services/horn-state.js');
 const { formatAmount, parseAmountToFen } = require('../../core/format.js');
 const { takeImport } = require('../../services/import-state.js');
 
@@ -18,6 +19,7 @@ function today() {
 
 Page({
   data: {
+    hornOff: false, hornWide: false, // 小喇叭：关闭（本次打开期间）/展开滑动看全文
     kind: 'gift',
     kindLabel: '送礼',
     eventId: '',
@@ -39,7 +41,12 @@ Page({
     doneCount: 0,
   },
 
+  // ---- 小喇叭（统一规格：点文字展开左右滑看全文，点 × 本次打开期间不再显示） ----
+  onHornTextTap() { this.setData({ hornWide: !this.data.hornWide }); },
+  onHornClose() { hornState.dismiss('import-review'); this.setData({ hornOff: true }); },
+
   async onLoad() {
+    this.setData({ hornOff: hornState.isDismissed('import-review') });
     await dataService.init();
     const pending = takeImport();
     if (!pending || !Array.isArray(pending.items)) {

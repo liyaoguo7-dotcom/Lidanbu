@@ -64,7 +64,7 @@ test('横置-白事样式无红色：主题常量（＋/高亮/中段/列线）�
   // 任何字体下白事中段（奠仪）恒宋体、主题判定不随字体变
   for (const f of LC.FONTS) {
     const built = LC.buildColumns([{ id: '1', name: '张三', amountFen: 10000, tagId: 'baishi' }], { fontId: f.id });
-    const col = built.columns[built.columns.length - 1];
+    const col = built.columns[0];
     assert.eq(col.midRole, 'songti', `${f.id} 下奠仪恒宋体`);
   }
   assert.eq(LC.resolveReceiveTheme('baishi', 'classic'), 'funeral', '白事礼薄强制白事样式');
@@ -75,10 +75,10 @@ test('横置-字体分工：礼金随所选字体，贺礼/奠仪恒宋体', () 
   assert.eq(LC.fontRoleForMid('贺礼'), 'songti', '贺礼恒宋体');
   assert.eq(LC.fontRoleForMid('奠仪'), 'songti', '奠仪恒宋体');
   const g = LC.buildColumns([{ id: '1', name: '张三', amountFen: 10000, tagId: 'yasui' }], {});
-  assert.eq(g.columns[g.columns.length - 1].midText, '礼金', '压岁标签→礼金');
-  assert.eq(g.columns[g.columns.length - 1].midRole, 'selected', '礼金列 role=selected');
+  assert.eq(g.columns[0].midText, '礼金', '压岁标签→礼金');
+  assert.eq(g.columns[0].midRole, 'selected', '礼金列 role=selected');
   const h = LC.buildColumns([{ id: '1', name: '张三', amountFen: 10000, tagId: 'jiehun' }], {});
-  assert.eq(h.columns[h.columns.length - 1].midRole, 'songti', '贺礼列 role=songti');
+  assert.eq(h.columns[0].midRole, 'songti', '贺礼列 role=songti');
 });
 
 test('横置-字体回退链：所选字体→楷体→宋体，缺字不出方框', () => {
@@ -146,7 +146,7 @@ test('横置-转屏关闭半屏：方向翻转时详情与面板先关', () => {
 
 test('横置-金额一致性：大写与分值一致、半屏金额两位小数', () => {
   const built = LC.buildColumns([{ id: '1', name: '张三', amountFen: 100000, tagId: 'jiehun' }], {});
-  const col = built.columns[built.columns.length - 1];
+  const col = built.columns[0];
   assert.eq(col.amountText, amountToChineseUpper(100000), '大写与 core 转换一致');
   assert.eq(col.amountText, '壹仟元整', '1000元→壹仟元整');
   assert.eq(col.amountChars.map((c) => c.ch).join(''), col.amountText, '逐字拼回一致');
@@ -163,8 +163,9 @@ test('横置-空列格子：格子印满整幅，空列数=12-记录数且只有
   const empties = built.columns.filter((c) => c.empty);
   assert.eq(empties.length, 8, '空列对象数');
   assert(empties.every((c) => !c.nameChars && !c.amountChars), '空列只有线框无内容');
-  assert.eq(built.columns[0].empty, true, '空列在左（display 顺序）');
-  assert.eq(built.columns[11].empty, false, '最右是第一条记录');
+  assert.eq(built.columns[0].empty, false, '最左是第一条记录（2026-10-22 定版：第一条最左）');
+  assert.eq(built.columns[11].empty, true, '空列补在最后一条记录右侧');
+  assert.eq(built.columns.map((c) => c.recordId).slice(0, 4).join(','), '1,2,3,4', '记录按账本顺序从左到右排');
   const zero = LC.buildColumns([], {});
   assert.eq(zero.emptyCount, 12, '零记录时 12 列全空');
   const many = LC.buildColumns(Array.from({ length: 15 }, (_, i) => ({ id: String(i), name: '张三', amountFen: 1, tagId: 'jiehun' })), {});
@@ -206,6 +207,6 @@ test('横置-请横屏文案：与定版图30逐字一致', () => {
   assert.eq(LC.ROTATE_COPY.main, '请把手机横过来，礼单本就会铺开啦', '主提示');
   assert.eq(LC.ROTATE_COPY.sub, '横置礼单本仅支持横屏使用', '次提示');
   assert.eq(LC.ROTATE_COPY.lock, '没有反应？请先在手机控制中心关闭"竖屏锁定"', '锁屏提示');
-  assert.eq(LC.ROTATE_COPY.backButton, '返回竖屏', '按钮'); // 2026-10-22 用户真机反馈改名（原定版图30「切换回竖置样式」）
+  assert.eq(LC.ROTATE_COPY.backButton, '切换回竖置样式', '按钮'); // 定版图30原文（2026-10-22 曾改名「返回竖屏」，同日用户决定回退）
   assert.eq(LC.SPEC.FONT_CREDIT, '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）', '字体署名');
 });

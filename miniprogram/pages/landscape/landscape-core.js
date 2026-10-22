@@ -201,9 +201,13 @@ function layoutAmount(amountFen) {
 
 /**
  * 构建列模型。
- * records：账本顺序（records[0] 在纸面最右）。每条 {id, name, amountFen, tagId}
- * 返回 display 顺序（左→右）的列数组：左侧先空格子，再 records 逆序（最右 = records[0]）。
- * 格子印满整幅纸面：总列数 = max(12, 记录数)，空列只有线框、内容为空。
+ * records：账本顺序，**records[0] 放纸面最左列**，后续记录依次向右排
+ * （2026-10-22 用户定版，覆盖旧定版的右起排法——旧口径为 records[0] 在最右、
+ * 空列在左；新口径第一条最左、空列补在最后一条记录右侧，三种本子一致）。
+ * 每条 {id, name, amountFen, tagId}
+ * 返回 display 顺序（左→右）的列数组：records 正序 + 右侧空格子补满。
+ * 格子印满整幅纸面：总列数 = max(12, 记录数)，空列只有线框、内容为空；
+ * 超出一屏（12 列）的记录靠横向滚动查看，不压缩列宽。
  */
 function buildColumns(records, opts = {}) {
   const list = Array.isArray(records) ? records : [];
@@ -211,10 +215,7 @@ function buildColumns(records, opts = {}) {
   const emptyCount = totalGrid - list.length;
   const fontId = opts.fontId || 'lxgw';
   const cols = [];
-  for (let i = 0; i < emptyCount; i++) {
-    cols.push({ key: `empty-${i}`, empty: true, recordId: null });
-  }
-  for (let i = list.length - 1; i >= 0; i--) {
+  for (let i = 0; i < list.length; i++) {
     const r = list[i];
     const midText = opts.midText || midTextForTag(r.tagId);
     const name = layoutName(r.name);
@@ -235,13 +236,18 @@ function buildColumns(records, opts = {}) {
       amountFen: r.amountFen,
     });
   }
+  // 空格子补在最后一条记录右侧（第一条最左口径）：一屏先铺满，格子印满整幅纸面
+  for (let i = 0; i < emptyCount; i++) {
+    cols.push({ key: `empty-${i}`, empty: true, recordId: null });
+  }
   return { columns: cols, emptyCount, totalGrid, recordCount: list.length };
 }
 
 /**
- * 滚动窗口化：只渲染可视范围附近的列。
- * 入参为 display 顺序的滚动量；返回应渲染的 [start,end) 与左右占位宽度，
- * 页面用占位 view 撑住滚动几何，滑动不跳。
+ * 【已停用】滚动窗口化：曾按可视范围 ±buffer 列渲染、占位 view 撑几何。
+ * 2026-10-22 起页面改为全量确定性渲染，不再调用本函数（保留仅为兼容旧测试）：
+ * 窗口化 + 初始 scrollLeft 定位最右端的做法存在竞态——scroll-view 初始布局时
+ * scroll 事件时序不确定，窗口随之漂移，真机表现为同一本子多次打开少列/从中间开始。
  */
 function windowRange({ total, scrollLeftPx, colWPx, viewportPx, buffer = 2 }) {
   if (total <= 0 || colWPx <= 0) return { start: 0, end: 0, leftSpacerPx: 0, rightSpacerPx: 0 };
@@ -320,7 +326,7 @@ const ROTATE_COPY = {
   main: '请把手机横过来，礼单本就会铺开啦',
   sub: '横置礼单本仅支持横屏使用',
   lock: '没有反应？请先在手机控制中心关闭"竖屏锁定"',
-  backButton: '返回竖屏', // 2026-10-22 用户真机反馈改名（原定版图30文案「切换回竖置样式」）
+  backButton: '切换回竖置样式', // 定版图30文案（2026-10-22 曾按真机反馈改名「返回竖屏」，同日用户确认手机自动旋转正常后决定回退，恢复定版原样）
 };
 
 module.exports = {
