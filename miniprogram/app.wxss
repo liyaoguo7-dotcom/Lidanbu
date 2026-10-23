@@ -22,6 +22,11 @@ page {
 .form-val { flex: 1; }
 .form-val.ph { color: #C2C2C2; }
 .chev { color: #C2C2C2; font-size: 18px; }
+/* 日期行右侧「›」与日期数字拉开距离（2026-10-23 任务AC 第 4 项，用户点名"不要挨着日期数字"）：
+   只命中"值容器内的 ›"（gift-add/gift-edit/receive-add/receive-record-add/receive-record-edit
+   五个表单页的日期行同形态）；姓名行等的 › 是 form-row 直接子元素、不在此列，不受影响。
+   原间距为一个空格 ≈4px，本规则再加 8px → 总间距 ≈12px。 */
+.form-val .chev { margin-left: 8px; }
 .btn-primary {
   display: block;
   height: 56px;
@@ -55,7 +60,7 @@ page {
   border-radius: 50%;
   background: #F0575A;
   color: #fff;
-  font-size: 40px;
+  font-size: 46px; /* 任务AC 第 5 项：「+」只加大不加粗（40→46px，font-weight 保持 300 不动，用户明确修正） */
   font-weight: 300;
   display: flex;
   align-items: center;

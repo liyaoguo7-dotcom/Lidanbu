@@ -1,8 +1,10 @@
 /* 往来页（v3.1 第五章） */
+/* 任务AC 第 7 项（用户标"重点"）：本页全部文字字号整体大一号（+1px），只动本页、不动全局。
+   姓名原名义 16px 与其他列表页同值，但用户观感明显偏小（疑与同行 13~15px 小字衬托有关），按用户原话整体 +1。 */
 .member-tip {
   text-align: center;
   color: #C2C2C2;
-  font-size: 12px;
+  font-size: 13px;
   padding: 8px 0 0;
 }
 /* 时间标签行 */
@@ -14,7 +16,7 @@
   flex-wrap: wrap;
 }
 .tchip {
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
   border: 1px solid #E5E5E5;
   border-radius: 15px;
@@ -27,12 +29,12 @@
   padding: 8px 12px;
   background: #F5F6F4;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .dash { color: #C2C2C2; }
 .daterange {
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
   color: #999;
   padding: 6px 0 4px;
 }
@@ -53,20 +55,20 @@
 }
 .side + .side { border-left: 1px solid #F0F0F0; }
 .side-label {
-  font-size: 14px;
+  font-size: 15px;
   color: #333;
 }
 .side-amount {
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 700;
   color: #333;
   margin-top: 6px;
 }
-.side-count { font-size: 12px; color: #999; margin-top: 4px; }
+.side-count { font-size: 13px; color: #999; margin-top: 4px; }
 /* 合计 */
 .total-line {
   text-align: center;
-  font-size: 13px;
+  font-size: 14px;
   color: #666;
   padding: 10px 0 2px;
 }
@@ -80,10 +82,10 @@
   text-align: center;
 }
 .diff-label {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
 }
-.diff-amount { font-size: 15px; font-weight: 700; margin-left: 8px; }
+.diff-amount { font-size: 16px; font-weight: 700; margin-left: 8px; }
 .wl-row {
   display: flex;
   align-items: center;
@@ -92,15 +94,15 @@
 }
 .wl-row:last-child { border-bottom: none; }
 .wl-row .nm {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   flex: 1;
   /* 姓名与首页最近往来同字体（默认黑体）：2026-10-22 统一，原宋字体声明删除 */
 }
 .wl-row .right { display: flex; align-items: center; }
-.wl-row .count { font-size: 13px; color: #C2C2C2; }
-.wl-row .sep { font-size: 13px; color: #C2C2C2; margin: 0 4px; }
-.wl-row .diff { font-size: 15px; color: #333; font-weight: 600; }
+.wl-row .count { font-size: 14px; color: #C2C2C2; }
+.wl-row .sep { font-size: 14px; color: #C2C2C2; margin: 0 4px; }
+.wl-row .diff { font-size: 16px; color: #333; font-weight: 600; }
 .wl-row .chev { color: #C2C2C2; margin-left: 6px; }
 .contact-row {
   display: flex;
@@ -109,8 +111,8 @@
   border-bottom: 1px solid #F0F0F0;
 }
 .contact-row:last-child { border-bottom: none; }
-.contact-row .nm { font-size: 16px; font-weight: 600; }
-.contact-row .rmk { font-size: 13px; color: #C2C2C2; margin-left: 8px; flex: 1; }
-.contact-row .ph { color: #C2C2C2; font-size: 14px; }
+.contact-row .nm { font-size: 17px; font-weight: 600; }
+.contact-row .rmk { font-size: 14px; color: #C2C2C2; margin-left: 8px; flex: 1; }
+.contact-row .ph { color: #C2C2C2; font-size: 15px; }
 .empty { text-align: center; padding: 60px 0; }
-.empty-text { color: #C2C2C2; font-size: 14px; }
+.empty-text { color: #C2C2C2; font-size: 15px; }

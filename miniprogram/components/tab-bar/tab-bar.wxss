@@ -1,13 +1,18 @@
-/* 自定义 Tab 栏样式：与微信原生 tabBar 逐项对齐（栏高 50px、图标 27px、文字 10px + 安全区、白底、顶部分隔线）；
-   图标尺寸固定 27px，与原生栏完全一致，页面间切换不得有大小变化（2026-10-22 任务AB 第 5 项） */
+/* 自定义 Tab 栏样式（2026-10-23 任务AC 第 2 项：与原生 tabBar 逐像素对齐修订，
+   证据为用户同设备截图实测——原生栏（我的页）：图标图形 72×71 物理px、标签字高 ≈28 物理px、
+   栏总高 ≈150 物理px；旧自定义栏：图形 60×60、字高 ≈22、总高 ≈127。
+   图标盒 27→30px（图形按 PNG 框占比 ≈84% 渲染 ≈ 原生 72 物理px 口径）、
+   字号 10→13px（字高 ≈ 原生 28 物理px 口径）、栏内容高保持 50px、
+   底部内边距在安全区外再 +6px 补偿总高差（webview 的 env 取不到原生栏的真实手势区高度）。
+   图标/字号在任何页面、任何状态下不得变化（用户两轮点名）。 */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
-  height: 50px; padding-bottom: env(safe-area-inset-bottom);
+  height: 50px; padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
   background: #ffffff; border-top: 1px solid #E7E7E7;
   display: flex; box-sizing: content-box;
 }
 .tabbar-item {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.tabbar-icon { width: 27px; height: 27px; }
-.tabbar-text { font-size: 10px; line-height: 1.2; margin-top: 2px; }
+.tabbar-icon { width: 30px; height: 30px; }
+.tabbar-text { font-size: 13px; line-height: 1.2; margin-top: 3px; }

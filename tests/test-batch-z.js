@@ -2,7 +2,7 @@
  * 任务Z（真机反馈第三批）源码/行为断言：
  * 1 自定义 Tab 栏进送礼/收礼页；2 加号三页统一 64px/字号 40；3 Tab 文字加深；
  * 4 购买页方块化 + 积分三档落配置；5 邀请去码化（inviter 参数）；
- * 6 样式按钮加大加红左移下移；7 字体 @font-face 本地声明 + loadFontFace global + 回页重试；
+ * 6 样式按钮加大加红左移下移；7 字体加载（@font-face 已被任务AC 第 8 项删除）+ loadFontFace global + 回页重试；
  * 8 金额底锚定/中段居中/金额字号 22；9 修改亲友面板 60vh；10 礼薄名去宋体；
  * 11/12 详情页目标图版式；13 清单 7 页标签改淡；14 导出页 openDocument 预览。
  */
@@ -35,10 +35,10 @@ test('任务Z-1：tab-bar 组件四件套齐全、switchTab 跳四 Tab、两页�
 });
 
 // ---------- 第 2/3 项：加号与 Tab 文字 ----------
-test('任务Z-2/3：.fab 字号 40px；tabBar 未选文字 #404040、选中红不变', () => {
+test('任务Z-2/3：.fab 字号（AC 第 5 项改 46px）；tabBar 未选文字 #404040、选中红不变', () => {
   const wxss = readMp('app.wxss');
   const fab = (wxss.match(/\.fab \{[^}]*\}/) || [''])[0];
-  assert(fab.includes('font-size: 40px'), '.fab 字号 40px（+6）');
+  assert(fab.includes('font-size: 46px'), '.fab 字号 46px（Z 定 40，任务AC 第 5 项只加大不加粗再 +6）');
   const app = JSON.parse(readMp('app.json'));
   assert.eq(app.tabBar.color, '#404040', 'tabBar 未选文字加深');
   assert.eq(app.tabBar.selectedColor, '#F0575A', '选中红不变');
@@ -102,13 +102,12 @@ test('任务Z-6：样式按钮 17px 红字、下移 6px、左移再加 10px', ()
 });
 
 // ---------- 第 7 项：字体切换修复 ----------
-test('任务Z-7：book.wxss 三条 @font-face 与 FONTS 表逐一对齐（本地字体官方路径）', () => {
+test('任务Z-7（AC 第 8 项修订）：book.wxss 已无 @font-face、字体文件仍在分包作兜底', () => {
   const wxss = readMp('pages/landscape/book.wxss');
   const LC = require('../miniprogram/pages/landscape/landscape-core.js');
+  assert(!wxss.includes('@font-face'), 'book.wxss 不得再有 @font-face（Android 加载不了分包字体，官方 Known BUG；任务AC 第 8 项删除）');
   for (const f of LC.FONTS) {
-    assert(wxss.includes(`@font-face { font-family: "${f.family}"; src: url("/packages/fonts/${f.file}"); }`),
-      `@font-face 应声明 ${f.family} → ${f.file}`);
-    assert(fs.existsSync(path.join(MP, 'packages/fonts', f.file)), `字体文件 ${f.file} 存在`);
+    assert(fs.existsSync(path.join(MP, 'packages/fonts', f.file)), `字体文件 ${f.file} 存在（分包兜底）`);
   }
   const fm = readMp('services/font-manager.js');
   assert(fm.includes('global: true'), 'loadFontFace 带 global:true（增强路径保留）');
@@ -140,7 +139,7 @@ test('任务Z-8：金额底锚定（末字字形盒贴区底）、字号与姓�
   const LC = require('../miniprogram/pages/landscape/landscape-core.js');
   assert.eq(LC.SPEC.AMT_FONT, 22, '金额字号 22');
   assert.eq(LC.SPEC.AMT_FONT, LC.SPEC.NAME_FONT, '金额与姓名字号一致');
-  assert.eq(LC.SPEC.AMT_H, 96, '金额区高 96（2026-10-22 晚：中段墨迹下 5px 起）');
+  assert.eq(LC.SPEC.AMT_H, 117, '金额区高 117（任务AC 第 9 项按真实列高反推；旧 96 为中段墨迹下名义 5px 口径，已废）');
   for (const fen of [100, 1000, 10000, 100000, 123456]) {
     const a = LC.layoutAmount(fen);
     const last = a.chars[a.chars.length - 1];

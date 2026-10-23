@@ -1,16 +1,13 @@
 /* 礼单簿 · 横置礼单本共用样式（收礼/送礼共用；页面 wxss 用 @import 引入）
    尺寸数字不在这里写死：关键尺寸由 JS 按 landscape-core 定版常量等比换算后内联注入。 */
 
-/* ===== 三款字体本地声明（任务Z 第 7 项：字体切换真机无效的稳健修法）=====
-   根因：wx.loadFontFace 的 source 在真机只接受网络地址/用户区文件路径，
-   代码包内路径（含分包）在真机加载失败，而本项目未配云字体地址 → 三个候选全落空、
-   渲染回落楷体/宋体，表现为"点三种字体没变化"。
-   WXSS @font-face 是官方支持的代码包本地字体路径：family 名与 landscape-core
-   FONTS 表逐一对齐，文件在分包 packages/fonts（页面 onLoad 已先触发分包下载）。
-   font-manager 的 loadFontFace 保留为增强路径（成功更佳），不再是唯一路径。 */
-@font-face { font-family: "LxgwWenKai"; src: url("/packages/fonts/lxgw-wenkai.woff2"); }
-@font-face { font-family: "MaShanZheng"; src: url("/packages/fonts/mashanzheng.woff2"); }
-@font-face { font-family: "LongCang"; src: url("/packages/fonts/longcang.woff2"); }
+/* ===== 字体声明：已删除（2026-10-23 任务AC 第 8 项）=====
+   原任务Z 第 7 项在此写了三条指向分包 /packages/fonts/*.woff2 的 font-face 声明，
+   但微信官方《分包加载》文档 Known BUG 明确："Currently Android can't load
+   the font file under the subpackage"——Android 真机根本加载不了，是死代码；
+   且与 font-manager 的 loadFontFace 机制重复。三款字体一律经
+   services/font-source.js 候选链加载：用户数据区缓存 → 云存储（cloud-file，
+   CLOUD_FONT_BASE 填入后启用） → 分包兜底。此处不要再加 font-face 声明。 */
 
 /* ===== 请横屏（竖屏态，与定版图 30 一致） ===== */
 .rotate-wrap {

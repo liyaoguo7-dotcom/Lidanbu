@@ -8,8 +8,10 @@
  *
  * 字体文件已移入**分包** `packages/fonts`（app.json subpackages，name:"fonts"），
  * 不再占主包体积。来源一律经 services/font-source.js 适配层按优先级取：
- * 已缓存文件 → 本地分包路径 → 云存储（font-source 的 CLOUD_FONT_BASE 留空待填，
- * 填上即启用云下载）。页面与横置代码不得直接引用字体路径，只调本模块接口。
+ * 已缓存文件 → 云存储 → 本地分包兜底（2026-10-23 任务AC 第 8 项改序：
+ * Android 微信有官方 Known BUG 加载不了分包字体，云来源优先；
+ * font-source 的 CLOUD_FONT_BASE 留空待填，填上即启用云下载）。
+ * 页面与横置代码不得直接引用字体路径，只调本模块接口。
  *
  * 失败/离线行为：load() 永不抛错、永不 reject；所有来源都失败时该字体标记为
  * fallback，页面继续用回退链渲染（所选字体名仍在栈首，未加载时系统自动逐字

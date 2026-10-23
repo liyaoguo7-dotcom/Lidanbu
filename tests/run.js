@@ -45,6 +45,7 @@ require('./test-batch-y');
 require('./test-batch-z');
 require('./test-batch-aa');
 require('./test-batch-ab');
+require('./test-batch-ac');
 
 (async () => {
   console.log('礼单簿 阶段1 本地测试（内存数据库）\n');

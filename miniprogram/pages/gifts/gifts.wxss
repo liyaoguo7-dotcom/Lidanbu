@@ -28,5 +28,12 @@
 .empty-text { color: #C2C2C2; font-size: 14px; margin-top: 18px; }
 .empty-sample { color: #F0575A; font-size: 14px; margin-top: 14px; }
 
-/* 自定义 Tab 栏占位（任务Z 第 1 项）：栏高 50px + 安全区 + 8px 余量 */
+/* 自定义 Tab 栏占位（任务Z 第 1 项）：栏高 + 安全区 + 余量（任务AC 第 2 项后栏总高 56px+安全区，58 仍够用） */
 .tabbar-spacer { height: 58px; height: calc(58px + env(safe-area-inset-bottom)); }
+
+/* 顶部三行贴紧（2026-10-23 任务AC 第 3 项）：搜索行、横置礼单本入口行、共计行之间的
+   纵向留白归零——搜索行下内边距 10→0、入口行上下外边距 10→0、共计行上外边距 10→0；
+   三行本身高度与内部排版一律不动（.card 的全局 margin 只在本页用复合选择器覆盖，不动全局）。 */
+.searchbar { padding-bottom: 0; }
+.card.entry-row { margin-top: 0; margin-bottom: 0; }
+.card.summary { margin-top: 0; }

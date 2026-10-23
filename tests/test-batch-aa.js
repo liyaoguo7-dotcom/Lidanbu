@@ -170,7 +170,5 @@ test('任务AA-字体专项：三款字体文件为真 woff2 且与声明族名�
       family, `${file} 声明族名`);
   }
   const bookWxss = readMp('pages/landscape/book.wxss');
-  for (const fam of Object.values(expect)) {
-    assert(bookWxss.includes(`font-family: "${fam}"`), `@font-face 声明 ${fam}`);
-  }
+  assert(!bookWxss.includes('@font-face'), 'book.wxss 已无 @font-face（任务AC 第 8 项删除分包字体声明，族名对齐改由 font-manager loadFontFace 保证）');
 });

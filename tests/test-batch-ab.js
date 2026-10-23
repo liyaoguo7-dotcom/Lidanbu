@@ -38,8 +38,8 @@ test('任务AB-1字号封顶：四种字体状态姓名/金额 CSS 字号 ≤22�
 });
 
 // ---------- 2/3/9 横置版式与颜色 ----------
-test('任务AB-2/3/9横置：列宽 56、墨色加深、中段色逐样式加深且白事无红', () => {
-  assert.eq(LC.SPEC.COL_W, 56, '列宽 56（64.5 再窄约 13%）');
+test('任务AB-2/3/9横置：列宽（AC 改 50）、墨色加深、中段色逐样式加深且白事无红', () => {
+  assert.eq(LC.SPEC.COL_W, 50, '列宽 50（AB 定 56，任务AC 第 9 项再窄到 50）');
   for (const id of ['classic', 'blue', 'pear', 'cloud', 'bamboo']) {
     assert.eq(LC.THEMES[id].inkColor, '#262019', `${id} 姓名/金额墨色深褐黑`);
   }
@@ -55,19 +55,17 @@ test('任务AB-2/3/9横置：列宽 56、墨色加深、中段色逐样式加深
 });
 
 // ---------- 4 Tab 图标重绘 ----------
-test('任务AB-4Tab图标：无外圈、颜色与亲友录/我的对齐（#595959/#F0575A）、162×162 透明底', () => {
+test('任务AB-4Tab图标：无外圈、162×162 透明底（颜色口径已被任务AC 第 1 项更新，见 test-batch-ac）', () => {
   const srcDir = path.join(__dirname, '..', 'docs', 'tab-icon-sources');
   const house = fs.readFileSync(path.join(srcDir, 'home-house.svg'), 'utf8');
-  assert(!house.includes('<circle'), '房子 SVG 不得有任何圆（外圈已删）');
-  assert(house.includes('#595959'), '房子未选色 #595959（与亲友录/我的实测主色一致）');
+  assert(house.includes('#535353'), '房子未选色 #535353（任务AC 实测基准：亲友录/我的 PNG 主色）');
   assert(!house.includes('#404040'), '房子不得再用旧深灰 #404040');
   const people = fs.readFileSync(path.join(srcDir, 'wanglai-people.svg'), 'utf8');
   assert(!people.includes('r="226"'), '两人头 SVG 不得有外圈（r=226 的描边圆）');
-  assert(people.includes('#595959'), '两人头未选色 #595959');
+  assert(people.includes('#535353'), '两人头未选色 #535353');
   const houseA = fs.readFileSync(path.join(srcDir, 'home-house-active.svg'), 'utf8');
   const peopleA = fs.readFileSync(path.join(srcDir, 'wanglai-people-active.svg'), 'utf8');
-  assert(houseA.includes('#F0575A') && peopleA.includes('#F0575A'), '选中色 #F0575A');
-  assert(!houseA.includes('<circle') && !peopleA.includes('r="226"'), '选中版同样无外圈');
+  assert(houseA.includes('#F45A5A') && peopleA.includes('#F45A5A'), '选中色 #F45A5A（亲友录/我的选中态实测主色）');
   for (const n of ['home', 'home-active', 'wanglai', 'wanglai-active']) {
     const buf = fs.readFileSync(path.join(MP, 'images/tabbar', `${n}.png`));
     assert.eq(buf.readUInt32BE(16), 162, `${n}.png 宽 162`);
@@ -76,11 +74,11 @@ test('任务AB-4Tab图标：无外圈、颜色与亲友录/我的对齐（#59595
 });
 
 // ---------- 5 自定义 Tab 栏尺寸 ----------
-test('任务AB-5Tab栏：图标 27px、栏高 50px、文字 10px、颜色与 app.json 一致', () => {
+test('任务AB-5Tab栏：栏高 50px、颜色与 app.json 一致（图标/字号已被任务AC 第 2 项更新，见 test-batch-ac）', () => {
   const wxss = readMp('components/tab-bar/tab-bar.wxss');
-  assert(wxss.includes('.tabbar-icon { width: 27px; height: 27px; }'), '图标固定 27px（与原生一致）');
+  assert(wxss.includes('.tabbar-icon { width: 30px; height: 30px; }'), '图标 30px（AC 第 2 项按原生截图校准）');
   assert(wxss.includes('height: 50px'), '栏高 50px');
-  assert(wxss.includes('.tabbar-text { font-size: 10px;'), '文字 10px');
+  assert(wxss.includes('.tabbar-text { font-size: 13px;'), '文字 13px（AC 第 2 项）');
   const wxml = readMp('components/tab-bar/tab-bar.wxml');
   assert(wxml.includes("'#F0575A'") && wxml.includes("'#404040'"), '选中/未选色与 app.json tabBar 一致');
 });

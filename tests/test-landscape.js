@@ -13,13 +13,13 @@ function memStorage() {
   return { get: (k) => (m.has(k) ? m.get(k) : ''), set: (k, v) => m.set(k, v), _map: m };
 }
 
-test('横置-定版数值：列宽56/三段94+52+96/墨迹间距5/列内总高258', () => {
-  assert.eq(LC.SPEC.COL_W, 56, '列宽（任务AB 第 2 项：64.5→56 再窄一档）');
-  assert.eq(LC.SPEC.NAME_H, 94, '姓名区');
+test('横置-定版数值：列宽50/三段116+52+117/墨迹间距2/列内总高290', () => {
+  assert.eq(LC.SPEC.COL_W, 50, '列宽（任务AC 第 9 项：56→50 再窄一档；历程 64.5→56→50）');
+  assert.eq(LC.SPEC.NAME_H, 116, '姓名区（任务AC 第 9 项按真实列高 290 反推，见 landscape-core COL_INNER_H 注释）');
   assert.eq(LC.SPEC.MID_H, 52, '中段区');
-  assert.eq(LC.SPEC.AMT_H, 96, '金额区');
-  assert.eq(LC.SPEC.GAP, 5, '姓名末字↔贺礼、贺礼↔金额首字 墨迹间距 5');
-  assert.eq(LC.COL_INNER_H, 258, '列内总高 258');
+  assert.eq(LC.SPEC.AMT_H, 117, '金额区（任务AC 第 9 项反推）');
+  assert.eq(LC.SPEC.GAP, 2, '姓名末字墨迹↔贺礼、贺礼↔金额首字墨迹 间距 2（任务AC 第 9 项：5→2）');
+  assert.eq(LC.COL_INNER_H, 290, '列内总高 = 纸面 294 − 边框 4（任务AC 纠正旧 258 名义值）');
   assert.eq(LC.SPEC.COLS_PER_SCREEN, 12, '一屏12列');
 });
 
@@ -182,15 +182,15 @@ test('横置-空列格子：格子印满整幅，空列数=12-记录数且只有
 test('横置-均布不叠字：首末锚定+字号放不下才缩+字距恒≥字号', () => {
   // 2026-10-22 晚定版：姓名首字区顶、末字区底；金额首字区顶、末字区底，中间均布
   const n4 = LC.layoutName('欧阳修远');
-  assert.eq(n4.scale, 1, '4字名放得下不缩（94/4=23.5≥22）');
+  assert.eq(n4.scale, 1, '4字名放得下不缩（116/4=29≥22）');
   assert.eq(n4.chars[0].top, 0, '4字名首字区顶');
   assert.eq(n4.chars[3].top + n4.fontSize, LC.SPEC.NAME_H, '4字名末字贴区底');
-  const n5 = LC.layoutName('欧阳修远明');
-  assert.eq(n5.fontSize, 18.8, '5字名字号缩到 94/5');
-  assert(n5.pitch >= n5.fontSize - 0.011, '5字名字距≥字号不叠字');
+  const n5 = LC.layoutName('欧阳修远明轩'); // 6 字名（任务AC 后区高 116，5 字已不需缩：116/5=23.2≥22）
+  assert(Math.abs(n5.fontSize - 19.33) < 0.011, '6字名字号缩到 116/6≈19.33');
+  assert(n5.pitch >= n5.fontSize - 0.011, '6字名字距≥字号不叠字');
   const a6 = LC.layoutAmount(150000); // 壹仟伍佰元整 = 6 字
   assert.eq(a6.text, '壹仟伍佰元整', '6字金额');
-  assert.eq(a6.fontSize, 16, '6字金额字号缩到 96/6');
+  assert.eq(a6.fontSize, 19.5, '6字金额字号缩到 117/6');
   assert(a6.pitch >= a6.fontSize - 0.011, '6字金额字距≥字号不叠字');
   const aLast = a6.chars[a6.chars.length - 1].top;
   assert(Math.abs(aLast + a6.fontSize - LC.SPEC.AMT_H) < 0.011, '6字金额末字字形盒贴区底');

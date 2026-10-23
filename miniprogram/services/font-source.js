@@ -8,16 +8,21 @@
 * 1. cache 已缓存文件：云下载成功后持久化到用户数据区的副本
 * （wx.env.USER_DATA_PATH/landscape-fonts/<file>，storage 记路径）。
 * 跨启动可直接用，不依赖分包是否已下载、也不耗流量。
-* 2. subpackage 本地分包：/packages/fonts/<file>（三款子集 WOFF2 所在分包，
-* app.json subpackages name:"fonts"）。尝试前先 ensureSubpackage()
-* 触发分包下载（另有 preloadRule 在收礼/我的页 wifi 下预下载）。
-* 3. cloud 云存储：常量 CLOUD_FONT_BASE 为空 = 未启用，直接跳过（不产生候选）。
-* 填入后自动启用，两种形态：
+* 2. cloud 云存储：常量 CLOUD_FONT_BASE 为空 = 未启用，直接跳过（不产生候选）。
+* 填入后自动启用且**优先于分包**（2026-10-23 任务AC 第 8 项改序），两种形态：
 * - https://…/ 直链：loadFontFace 直接加载该 URL（须把域名加进小程序
 * 后台「服务器域名」downloadFile 合法域名，且字体服务需开 CORS）。
 * - cloud://… 云存储 fileID 前缀：wx.cloud.downloadFile 取临时文件
 * → loadFontFace 临时路径，并顺手把副本持久化到用户数据区，
-* 下次走优先级 1。
+* 下次走优先级 1（断网可用）。
+* 3. subpackage 本地分包（兜底）：/packages/fonts/<file>（三款子集 WOFF2
+* 所在分包，app.json subpackages name:"fonts"）。尝试前先 ensureSubpackage()
+* 触发分包下载（另有 preloadRule 在收礼/我的页 wifi 下预下载）。
+* 【为何分包降为兜底】微信官方《分包加载》文档 Known BUG 原文：
+* "Currently Android can't load the font file under the subpackage"——
+* Android 微信根本加载不了分包内字体文件，与加载代码无关（用户手机为
+* Android，三款字体真机不可用的真因）；且 wx.loadFontFace 官方口径
+* source 只支持 https 链接或 Data URL。分包仅保留作 iOS/工具兜底。
 *
 *
 * - 分包打包/引用原则（微信官方《分包加载》）：分包可引用主包与本包资源，
@@ -35,11 +40,13 @@ const SUBPACKAGE_NAME = 'fonts';
 /** 分包内字体目录的包内绝对路径前缀 */
 const SUBPACKAGE_ROOT = '/packages/fonts/';
 /**
-* 云存储字体地址前缀：留空 = 未启用云来源。
+* 云存储字体地址前缀：留空 = 未启用云来源（保持空字符串，打包前由主代理填入）。
+* 填入后云来源自动启用且**优先于分包**（任务AC 第 8 项：Android 微信有官方
+* Known BUG，加载不了分包内字体文件，云来源是 Android 的唯一正路）。
 * 启用时填：https 直链目录（如 'https://cdn.example.com/fonts/'）
 * 或云存储 fileID 目录（如 'cloud://env-id.bucket-id/fonts/'），末尾斜杠可有可无。
 */
-const CLOUD_FONT_BASE = '';
+const CLOUD_FONT_BASE = 'cloud://cloud1-d3gd7fjdx0d217df0.636c-cloud1-d3gd7fjdx0d217df0-1514234749/fonts/';
 /** 用户数据区内的字体缓存目录名 */
 const USER_CACHE_DIR = 'landscape-fonts';
 /** storage 键前缀：fontId -> 已缓存文件的绝对路径 */
@@ -90,21 +97,21 @@ return null;
 }
 
 /**
-* 按优先级列出候选来源（同步部分）：
+* 按优先级列出候选来源（同步部分；任务AC 第 8 项改序：缓存 → 云 → 分包）：
 * [{kind:'cache', source, path}?,
-* {kind:'subpackage', source, path, needsSubpackage:true},
-* {kind:'cloud-url', source} | {kind:'cloud-file', fileID}?]
+* {kind:'cloud-url', source} | {kind:'cloud-file', fileID}?,
+* {kind:'subpackage', source, path, needsSubpackage:true}]
 * 云未启用（CLOUD_FONT_BASE 空）时不产生云候选。
 */
 function resolveCandidates(font) {
 const list = [];
 const cached = cachedFilePath(font);
 if (cached) list.push({ kind: 'cache', source: `url("${cached}")`, path: cached});
-list.push({ kind: 'subpackage', source: subpackageSource(font), path: subpackagePath(font), needsSubpackage: true});
 if (isCloudEnabled()) {
 if (isCloudFileMode()) list.push({ kind: 'cloud-file', fileID: joinUrl(cloudBase, font.file)});
 else list.push({ kind: 'cloud-url', source: `url("${joinUrl(cloudBase, font.file)}")`});
 }
+list.push({ kind: 'subpackage', source: subpackageSource(font), path: subpackagePath(font), needsSubpackage: true});
 return list;
 }
 

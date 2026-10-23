@@ -1,6 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- 首页·房子（2026-10-22 任务AB 第 4 项重绘）：无外圈，线宽与亲友录/我的对齐，色 #595959 -->
-  <path d="M60 272 L256 96 L452 272" fill="none" stroke="#595959" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M112 226 L112 420 L400 420 L400 226" fill="none" stroke="#595959" stroke-width="36" stroke-linejoin="round"/>
-  <rect x="224" y="312" width="64" height="108" fill="#595959"/>
+  <!-- 首页·房子（2026-10-23 任务AC 第 1 项重绘）：与亲友录/我的统一为细线条轮廓风——
+       描边 32/512≈6.25%（与 contacts 5/81≈6.2% 同比例），门改轮廓不实心；
+       常态色 #535353、选中色 #F45A5A（读亲友录/我的现行 PNG 实测主色，非凭记忆）。
+       旧版（AB）粗描边 36~38＋实心门板是"看着比亲友录/我的深"的主因。 -->
+  <g fill="none" stroke="#535353" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="56,268 256,84 456,268"/>
+    <polyline points="116,232 116,424 396,424 396,232"/>
+    <polyline points="216,424 216,316 296,316 296,424"/>
+  </g>
 </svg>
