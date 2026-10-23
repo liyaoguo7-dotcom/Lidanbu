@@ -45,13 +45,20 @@ async function ensureServerUser(db, core, openid) {
 }
 
 /** 依赖注入工厂（本地测试用假 SDK 在进程内跑通全链路；云端用默认导出） */
-function createMain({ sdk, core, db }) {
-  const exportXlsx = createExportXlsxHandler({
-    db,
-    buildXlsx: core.exportXlsx
-      ? core.exportXlsx.buildXlsx
-      : require('./core/export-xlsx').buildXlsx,
-  });
+function createMain({ sdk, core, db, buildXlsx }) {
+  // 导出处理器懒加载：buildXlsx 依赖 exceljs（体积大、加载慢），绝不能在
+  // 函数冷启动时就 require——2026-10-23 真云端实测：急切加载导致 whoami
+  // 这种空动作也在默认 3 秒超时内回不来。只有真来 exportXlsx 动作时才装配。
+  let _exportXlsx = null;
+  const getExportXlsx = () => {
+    if (!_exportXlsx) {
+      _exportXlsx = createExportXlsxHandler({
+        db,
+        buildXlsx: buildXlsx || require('./core/export-xlsx').buildXlsx,
+      });
+    }
+    return _exportXlsx;
+  };
 
   return async function main(event = {}) {
     const { OPENID } = sdk.getWXContext();
@@ -61,7 +68,7 @@ function createMain({ sdk, core, db }) {
         return { ok: true, data: { openid: OPENID } };
       }
       if (action === 'exportXlsx') {
-        const r = await exportXlsx(event, { openid: OPENID });
+        const r = await getExportXlsx()(event, { openid: OPENID });
         // routes-export 自有信封是 { ok:false, reason }，在这里归一化为全站统一的 error 字段
         if (r && r.ok === false && r.reason && !r.error) return { ok: false, error: r.reason };
         return r;
