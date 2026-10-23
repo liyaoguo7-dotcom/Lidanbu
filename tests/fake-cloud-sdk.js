@@ -121,12 +121,19 @@ function makeFakeSdk() {
       return new FakeCollection(stores.get(name), seqRef);
     },
   };
+  const files = new Map();
   return {
     DYNAMIC_CURRENT_ENV: 'fake-env',
     init() {},
     database: () => db,
     getWXContext: () => ({ OPENID: makeFakeSdk.currentOpenid || 'fake-openid' }),
+    // 云存储上传（任务AE 导出 fileId 路线用）：存内存、回 fake fileID
+    uploadFile: async ({ cloudPath, fileContent }) => {
+      files.set(cloudPath, Buffer.from(fileContent));
+      return { fileID: `cloud://fake-env.fake-bucket/${cloudPath}` };
+    },
     __stores: stores,
+    __files: files,
   };
 }
 makeFakeSdk.currentOpenid = 'fake-openid';

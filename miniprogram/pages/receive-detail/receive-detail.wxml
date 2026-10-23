@@ -9,17 +9,21 @@
   <text class="event-date num">{{date}}</text>
 </view>
 
-<view class="card summary">
-  <text>共计：</text><text class="red num">{{totalText}}</text>
-</view>
-
-<view class="card" wx:if="{{records.length > 0}}">
-  <view class="rec-row" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRecordDetail">
+<!-- 共计与记录合并为一张卡（任务AE 第 8 项，与送礼列表同一版式）：共计居中大字、
+     数字红字；细线分隔无灰底间隔；列表末尾「完」 -->
+<view class="card list-card">
+  <view class="total-line">
+    <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
+  </view>
+  <view class="rec-row {{index === records.length - 1 ? 'last' : ''}}" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRecordDetail">
     <view class="mid">
       <text class="nm">{{item.name}}</text>
-      <text class="sub">{{item.subType}}｜</text><text class="sub num">{{item.subDate}}</text>
+      <view class="subline"><text class="sub">{{item.subType}}｜</text><text class="sub num">{{item.subDate}}</text></view>
     </view>
     <text class="amt red num">{{item.amountText}}</text>
+  </view>
+  <view class="list-end" wx:if="{{records.length > 0}}">
+    <view class="end-line"></view><text class="end-text">完</text><view class="end-line"></view>
   </view>
 </view>
 

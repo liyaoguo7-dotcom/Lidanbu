@@ -17,7 +17,11 @@
  *
  * 部署说明：core/ 复制进云函数目录后，
  *   buildXlsx = require('./core/export-xlsx').buildXlsx（exceljs 在云函数内运行）。
- * 返回 base64 是骨架阶段方案；正式联调可改为上传云存储后返回 fileID。
+ * 任务AE 起为正式形态：生成后上传云存储、返回 { fileId }，小程序端凭
+ * fileID 走 wx.cloud.downloadFile 下载再 openDocument 预览（页面早已按
+ * fileId 写好，骨架期的 base64 返回与它对不上、真机导出必失败——
+ * 用户 2026-10-23 实测"云端未返回文件"即此）。未注入 uploadFile 时
+ * 回落 base64（仅单测/旧路兼容，生产装配在 index.js 恒注入）。
  */
 
 // 与 core/models.js COLLECTIONS.ExportJob 一致；部署时 core/ 在同目录，
@@ -30,7 +34,7 @@ function scopeText(event) {
   return event.includeGifts === false ? base : `${base}+送礼`;
 }
 
-function createExportXlsxHandler({ db, buildXlsx }) {
+function createExportXlsxHandler({ db, buildXlsx, uploadFile }) {
   if (!db || typeof buildXlsx !== 'function') {
     throw new Error('createExportXlsxHandler 需要 { db, buildXlsx }');
   }
@@ -46,15 +50,22 @@ function createExportXlsxHandler({ db, buildXlsx }) {
         eventIds: Array.isArray(event.eventIds) ? event.eventIds : null,
         includeGifts: event.includeGifts !== false,
       });
+      let data;
+      if (typeof uploadFile === 'function') {
+        // 正式形态：上传云存储 → 返回 fileId（文件名用 ASCII 路径，展示名在 fileName）
+        const cloudPath = `exports/${ownerId}/lidanbu-${Date.now()}.xlsx`;
+        const fileId = await uploadFile(cloudPath, Buffer.from(buf));
+        if (!fileId) throw new Error('文件上传失败，请稍后重试');
+        data = { fileName: '礼单簿导出.xlsx', fileId };
+      } else {
+        data = { fileName: '礼单簿导出.xlsx', fileBase64: Buffer.from(buf).toString('base64') };
+      }
+      // 导出历史只记成功：上传失败走 catch，不写 ExportJob（与"拒绝后数据未变"口径一致）
       await db.collection(EXPORT_JOBS).insert({
         ownerId, scope: scopeText(event), status: 'done', createdAt: Date.now(),
       });
-      return {
-        ok: true,
-        data: { fileName: '礼单簿导出.xlsx', fileBase64: Buffer.from(buf).toString('base64') },
-      };
+      return { ok: true, data };
     } catch (e) {
-      // 拒绝时不写 ExportJob（与"拒绝后数据未变"口径一致）
       return { ok: false, reason: e.message };
     }
   };

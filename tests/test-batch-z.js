@@ -139,7 +139,7 @@ test('任务Z-8：金额底锚定（末字字形盒贴区底）、字号与姓�
   const LC = require('../miniprogram/pages/landscape/landscape-core.js');
   assert.eq(LC.SPEC.AMT_FONT, 22, '金额字号 22');
   assert.eq(LC.SPEC.AMT_FONT, LC.SPEC.NAME_FONT, '金额与姓名字号一致');
-  assert.eq(LC.SPEC.AMT_H, 117, '金额区高 117（任务AC 第 9 项按真实列高反推；旧 96 为中段墨迹下名义 5px 口径，已废）');
+  assert.eq(LC.SPEC.AMT_H, 115.5, '金额区高 115.5（任务AC 反推 117，任务AE 为 GAP 3.5 收 1.5；旧 96 口径已废）');
   for (const fen of [100, 1000, 10000, 100000, 123456]) {
     const a = LC.layoutAmount(fen);
     const last = a.chars[a.chars.length - 1];

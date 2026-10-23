@@ -72,7 +72,7 @@ test('引导重看模式：从关于我们进入恒为 review，与已看标记�
   assert(aboutWxml.includes('使用引导'), '关于页有「使用引导」行');
 });
 
-test('"我的"页行序：资料条→会员积分卡→共享/横置/导出→邀请分享→通知组→底部', async () => {
+test('"我的"页行序：资料条→会员积分卡→共享/横置→邀请分享→通知组→底部', async () => {
   // 剥掉注释再断言（头注释里复述了顺序，会污染 indexOf）
   const wxml = read('miniprogram/pages/mine/mine.wxml').replace(/<!--[\s\S]*?-->/g, '');
   const markers = [
@@ -80,8 +80,6 @@ test('"我的"页行序：资料条→会员积分卡→共享/横置/导出→�
     '会员与积分',             // ② 会员与积分卡片
     '家庭共享',               // ③
     '横置礼单本',             // ③
-    '导出备份',               // ③
-    '换手机或换微信前，请先导出备份', // ③ 导出行下淡字提示（逐字）
     '邀请分享',               // ④ 唯一入口
     '通知',                   // ⑤
     '意见反馈',               // ⑤
@@ -151,4 +149,41 @@ test('隐私弹窗组件：含同意/不同意与双协议链接', async () => {
   for (const ev of ['agree', 'disagree', 'privacy', 'agreement']) {
     assert(js.includes(`triggerEvent('${ev}')`), `弹窗应抛出 ${ev} 事件`);
   }
+});
+
+test('任务AE：我的页无导出备份入口（只留首页）；横置开关只拦开不拦关', async () => {
+  const wxml = read('miniprogram/pages/mine/mine.wxml').replace(/<!--[\s\S]*?-->/g, '');
+  assert(!wxml.includes('导出备份'), '我的页不得再有导出备份行（入口只在首页金刚区）');
+  assert(!wxml.includes('onExport'), '我的页不得再绑定 onExport');
+  const mineJs = read('miniprogram/pages/mine/mine.js');
+  assert(!/onExport\s*\(/.test(mineJs), 'mine.js 不得留 onExport 方法');
+  const i = mineJs.indexOf('onLandscapeToggle()');
+  assert(i >= 0, '应有 onLandscapeToggle');
+  const body = mineJs.slice(i, i + 1000);
+  const nextPos = body.indexOf('const next = !this.data.landscapeOn;');
+  const gatePos = body.indexOf('if (next && !this.data.isMember)');
+  assert(nextPos >= 0 && gatePos > nextPos, '应先算 next，会员门禁只在 next 为开时触发（关不验会员）');
+});
+
+test('任务AE：我的页字体统一 16px（=亲友录联系人姓名 .nm 大小）且上下紧凑', async () => {
+  const contactsWxss = read('miniprogram/pages/contacts/contacts.wxss');
+  assert(/\.nm \{ font-size: 16px; \}/.test(contactsWxss), '基准：亲友录联系人姓名为 16px');
+  const wxss = read('miniprogram/pages/mine/mine.wxss');
+  const sizes = [...wxss.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
+  const bad = sizes.filter((s) => s !== 16 && s !== 22);
+  assert(bad.length === 0, `我的页 font-size 只许 16（文字）与 22（头像首字图形），实际异常值：${bad.join(',')}`);
+  // 22 只许出现在头像首字
+  const avatarBlock = wxss.slice(wxss.indexOf('.avatar-initial'), wxss.indexOf('.profile-chev'));
+  assert(avatarBlock.includes('font-size: 22px'), '头像首字保留 22px（图形占位，非正文）');
+  assert(wxss.includes('.form-val { font-size: 16px; }'), '功能行文字页面级覆盖为 16px');
+  // 紧凑锚点
+  assert(wxss.includes('.profile { padding: 12px 16px;'), '资料条上下内边距收到 12px');
+  assert(wxss.includes('.card { margin: 8px 12px; }'), '卡间距页面级收紧为上下 8px');
+  assert(wxss.includes('.form-row { min-height: 50px; }'), '功能行高收到 50px（不低于 48 可点下限）');
+});
+
+test('任务AE 补漏：我的页 wxml 内联字号也不许小于 16（版本号曾是内联 11px）', async () => {
+  const wxml = read('miniprogram/pages/mine/mine.wxml');
+  const inline = [...wxml.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
+  assert(inline.every((s) => s === 16), `内联字号应全为 16，实际：${inline.join(',')}`);
 });

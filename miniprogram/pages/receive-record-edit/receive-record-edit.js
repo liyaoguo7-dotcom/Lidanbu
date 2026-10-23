@@ -80,11 +80,13 @@ Page({
   },
 
   async onSave() {
+    if (this._saving) return;
     const fen = parseAmountToFen(this.data.amount);
     if (fen === null) {
       wx.showToast({ title: '请输入正确的金额', icon: 'none' });
       return;
     }
+    this._saving = true;
     try {
       await dataService.updateRecord(this.recordId, {
         type: this.data.type,
@@ -97,6 +99,8 @@ Page({
       setTimeout(() => wx.navigateBack(), 600);
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
+    } finally {
+      this._saving = false;
     }
   },
 });

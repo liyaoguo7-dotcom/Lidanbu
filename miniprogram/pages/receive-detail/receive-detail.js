@@ -15,6 +15,8 @@ Page({
     isBaishi: false,
     date: '',
     totalText: '',
+    totalCount: 0,
+    totalAmountText: '0',
     records: [],
   },
 
@@ -55,6 +57,8 @@ Page({
       isBaishi: e.tagId === 'baishi',
       date: e.date || '',
       totalText: `${st.count} 笔 ￥${formatAmountInt(st.totalFen)} 元`,
+      totalCount: st.count,
+      totalAmountText: formatAmountInt(st.totalFen),
       records,
     });
   },

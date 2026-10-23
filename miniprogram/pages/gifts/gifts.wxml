@@ -12,18 +12,22 @@
   <text class="entry-arrow">></text>
 </view>
 
-<view class="card summary" wx:if="{{!searching}}">
-  <text>共计：</text><text class="red num">{{totalCount}} 笔 {{totalText}}</text>
-</view>
-
-<view class="card" wx:if="{{shown.length > 0}}">
-  <view class="gift-row" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
+<!-- 共计与记录合并为一张卡（任务AE 第 8 项复刻定版图）：共计居中大字、数字红字；
+     共计↔记录、记录↔记录之间无灰底间隔、只有细线；列表末尾「完」 -->
+<view class="card list-card" wx:if="{{shown.length > 0 || !searching}}">
+  <view class="total-line" wx:if="{{!searching}}">
+    <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
+  </view>
+  <view class="gift-row {{index === shown.length - 1 ? 'last' : ''}}" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
     <view class="pat"><image class="pat-img" src="{{item.icon}}" mode="aspectFit" /></view>
     <view class="mid">
       <text class="nm">{{item.name}}</text>
-      <text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text>
+      <view class="subline"><text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text></view>
     </view>
     <text class="amt num">{{item.amountText}}</text>
+  </view>
+  <view class="list-end" wx:if="{{shown.length > 0 && !searching}}">
+    <view class="end-line"></view><text class="end-text">完</text><view class="end-line"></view>
   </view>
 </view>
 

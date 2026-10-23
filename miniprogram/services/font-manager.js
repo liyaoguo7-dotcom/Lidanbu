@@ -8,9 +8,9 @@
  *
  * 字体文件已移入**分包** `packages/fonts`（app.json subpackages，name:"fonts"），
  * 不再占主包体积。来源一律经 services/font-source.js 适配层按优先级取：
- * 已缓存文件 → 云存储 → 本地分包兜底（2026-10-23 任务AC 第 8 项改序：
- * Android 微信有官方 Known BUG 加载不了分包字体，云来源优先；
- * font-source 的 CLOUD_FONT_BASE 留空待填，填上即启用云下载）。
+ * 云存储临时 https 链接 → 本地分包兜底（2026-10-23 任务AE 改路线：
+ * Android 上分包与本地文件两条路都被真机证伪，loadFontFace 只认 https
+ * 链接/Data URL，故 cloud:// 字体先换临时链接再加载，细节见 font-source）。
  * 页面与横置代码不得直接引用字体路径，只调本模块接口。
  *
  * 失败/离线行为：load() 永不抛错、永不 reject；所有来源都失败时该字体标记为
@@ -27,7 +27,7 @@ const FONT_SRC_BASE = SUBPACKAGE_ROOT;
  * 若曾"加载成功"写下旧键，版本段一变旧键自然失效，强制用当前文件重载
  * （2026-10-22 任务AB 第 6 项：三款字体真机仍不可用的机制修复之一）。
  * 字体文件再重建时必须同步 bump 此版本号。 */
-const FONT_BUILD = 'v3';
+const FONT_BUILD = 'v4';
 const LOADED_KEY_PREFIX = `landscape.fontLoaded.${FONT_BUILD}.`;
 
 function defaultStorage() {
@@ -86,8 +86,8 @@ function createFontManager(deps = {}) {
       for (const cand of candidates) {
         let source = cand.source || null;
         if (cand.needsSubpackage) await fontSource.ensureSubpackage(); // 尽力触发分包下载，成败都继续尝试
-        if (cand.kind === 'cloud-file') {
-          source = await fontSource.materialize(cand, font); // 云下载→临时路径（并持久化缓存）
+        if (cand.needsTempUrl) {
+          source = await fontSource.materialize(cand, font); // 云存储 fileID → 临时 https 链接
           if (!source) continue;
         }
         if (!source) continue;

@@ -20,6 +20,7 @@ Page({
     searching: false,
     totalCount: 0,
     totalFen: 0,
+    totalAmountText: '0',
     showLandscapeEntry: false,
   },
 
@@ -63,6 +64,7 @@ Page({
       totalCount: list.length,
       totalFen,
       totalText: `￥${formatAmountInt(totalFen)} 元`,
+      totalAmountText: formatAmountInt(totalFen),
     });
     this.applyFilter();
   },

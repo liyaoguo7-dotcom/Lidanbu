@@ -72,6 +72,10 @@ function friendly(err) {
   if (!err) return '操作失败，请重试';
   if (isNetworkError(err)) return NETWORK_HINT;
   const msg = err.message || String(err);
+  // 带机器错误码的错误（core/errors.js 构造）其文案即设计给用户看的，原样透出
+  // （任务AE：此前靠逐个调用点特判 code，漏判的就被吞成"操作失败"——
+  // 如 user-restricted「该账号已被限制…」；与云函数分发的透传口径一致）
+  if (typeof err.code === 'string' && err.code && msg) return msg;
   // core 抛出的已是用户可读文案（errors.js），直接透出；兜底未知错误
   // 卖惨文案以"呜呜"开头，也须透出（此前会被吞成"操作失败"，已修复）
   if (/^无权限|需要开通会员|额度|已达上限|不存在|重复|不能为空|必须|邀请|积分|昵称|隐私|请填写|请选择|反馈|注销|呜呜/.test(msg)) return msg;
@@ -650,11 +654,20 @@ const service = {
     if (AppConfig.demo.localMode) {
       throw new Error('导出功能需要云环境，云联调后可用');
     }
-    const res = await wx.cloud.callFunction({
-      name: 'api',
-      data: { action: 'exportXlsx', eventIds, includeGifts },
-    });
-    return res.result;
+    // 传输：测试注入回环时走注入通道；生产走 wx.cloud.callFunction（与 remote-core 同路）
+    const env = _transportForTest
+      ? await _transportForTest({ action: 'exportXlsx', eventIds, includeGifts })
+      : (await wx.cloud.callFunction({
+        name: 'api',
+        data: { action: 'exportXlsx', eventIds, includeGifts },
+      })).result;
+    // 云函数回的是统一信封 { ok, data } / { ok:false, error }：解开后只把
+    // data（{ fileId, fileName }）给页面（任务AE：此前页面直接在信封上找
+    // fileId 恒为空、真机导出必报"云端未返回文件"）
+    if (!env || env.ok !== true) {
+      throw new Error((env && (env.error || env.reason)) || '导出失败，请稍后重试');
+    }
+    return env.data;
   },
   /** 写导出历史（经 core.importer.recordExportJob 落库，任务AD：本地/云端共用一条路径） */
   async logExportJob(scope) {

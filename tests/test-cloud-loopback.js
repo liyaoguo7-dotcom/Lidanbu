@@ -149,3 +149,56 @@ test('回环：传输失败时 init 优雅失败（不抛死）', async () => {
     assert(r.ok === false && r.reason === 'network', `应返回 network 失败（实际 ${JSON.stringify(r)}）`);
   } finally { dataService._resetForTest(); }
 });
+
+test('回环：会员拍照导入送礼/收礼全通（任务AE 第 5 项链路坐实）', async () => {
+  try {
+    await initCloud('loop-user-photo');
+    await dataService.purchaseMembership('month'); // 15 + 10 = 25 分
+    const g = await dataService.recognizePhoto('/tmp/p.jpg', 'gift', {});
+    assert.eq(g.items.length, 3, '送礼识别返回 3 条（Mock 口径）');
+    assert.eq(g.items.map((i) => i.name).join(','), '张三,李五,王二麻', '条目顺序原样透传（顺序契约：适配层不得重排）');
+    assert.eq(g.cost, 5, '拍照单价 5 分');
+    const ev = await dataService.createEvent({ name: '拍照礼薄', tagId: 'jiehun', date: '2026-10-23' });
+    const evId = (ev.event && ev.event._id) || ev._id;
+    const r = await dataService.recognizePhoto('/tmp/p.jpg', 'receive', { eventId: evId });
+    assert.eq(r.items.length, 2, '收礼识别返回 2 条（Mock 口径）');
+    assert.eq(await dataService.getPointsBalance(), 15, '两次识别各扣 5 分：25 − 5 − 5 = 15');
+  } finally { dataService._resetForTest(); }
+});
+
+test('回环：免费用户拍照被会员门禁拦下，code 透传到页面层', async () => {
+  try {
+    await initCloud('loop-user-photo-free');
+    let caught = null;
+    try { await dataService.recognizePhoto('/tmp/p.jpg', 'gift', {}); } catch (e) { caught = e; }
+    assert(caught, '免费用户拍照应抛错');
+    assert.eq(caught.code, 'member-required', '错误码 member-required 须透传（页面据此弹会员提示）');
+    assert.eq(await dataService.getPointsBalance(), 15, '门禁拦下不扣分');
+  } finally { dataService._resetForTest(); }
+});
+
+test('回环：带码错误文案不再被 friendly 吞成「操作失败」（任务AE 硬化）', async () => {
+  try {
+    await initCloud('loop-user-coded');
+    const summary = await dataService.getInviteSummary();
+    assert(summary.inviteCode, '应拿到自己的邀请码');
+    let caught = null;
+    try { await dataService.bindInviteCode(summary.inviteCode); } catch (e) { caught = e; }
+    assert(caught, '绑自己的码应抛错');
+    assert.eq(caught.message, '不能填写自己的邀请码哦', 'invite-self 文案应原样到达页面（旧口径会被吞成"操作失败，请重试"）');
+  } finally { dataService._resetForTest(); }
+});
+
+test('回环：云端导出全链路返回 fileId（任务AE：修"云端未返回文件"）', async () => {
+  try {
+    await initCloud('loop-user-export');
+    const ev = await dataService.createEvent({ name: '导出礼薄', tagId: 'jiehun', date: '2026-10-01' });
+    const evId = (ev.event && ev.event._id) || ev._id;
+    const out = await dataService.exportXlsx({ eventIds: [evId], includeGifts: true });
+    assert(out && typeof out.fileId === 'string' && out.fileId.startsWith('cloud://fake-env.fake-bucket/exports/loop-user-export/'),
+      `dataService 应解信封后回 fileId（实际 ${JSON.stringify(out)}）`);
+    assert.eq(out.fileName, '礼单簿导出.xlsx', '展示文件名');
+    const jobs = await dataService.listExportJobs();
+    assert(jobs.length >= 1, '服务端应已写导出历史');
+  } finally { dataService._resetForTest(); }
+});

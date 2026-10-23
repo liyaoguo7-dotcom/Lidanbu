@@ -22,6 +22,7 @@ require('./test-cloud-export');
 require('./test-db-cloud');
 require('./test-api-dispatch');
 require('./test-cloud-loopback');
+require('./test-save-guards');
 require('./test-uppercase');
 require('./test-stage3');
 require('./test-landscape');

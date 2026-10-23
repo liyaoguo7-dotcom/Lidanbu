@@ -48,16 +48,26 @@ async function ensureServerUser(db, core, openid) {
 }
 
 /** 依赖注入工厂（本地测试用假 SDK 在进程内跑通全链路；云端用默认导出） */
-function createMain({ sdk, core, db, buildXlsx }) {
+function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
   // 导出处理器懒加载：buildXlsx 依赖 exceljs（体积大、加载慢），绝不能在
   // 函数冷启动时就 require——2026-10-23 真云端实测：急切加载导致 whoami
   // 这种空动作也在默认 3 秒超时内回不来。只有真来 exportXlsx 动作时才装配。
   let _exportXlsx = null;
   const getExportXlsx = () => {
     if (!_exportXlsx) {
+      // 上传器：优先用注入的；否则从 sdk 派生（wx-server-sdk 的 uploadFile，
+      // 任务AE：导出文件落云存储、回 fileId 给小程序端下载）
+      let up = uploadFile;
+      if (!up && sdk && typeof sdk.uploadFile === 'function') {
+        up = async (cloudPath, fileContent) => {
+          const r = await sdk.uploadFile({ cloudPath, fileContent });
+          return r && r.fileID;
+        };
+      }
       _exportXlsx = createExportXlsxHandler({
         db,
         buildXlsx: buildXlsx || require('./core/export-xlsx').buildXlsx,
+        uploadFile: up,
       });
     }
     return _exportXlsx;

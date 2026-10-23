@@ -1,4 +1,4 @@
-/* 我的页（任务Q2 重排） */
+/* 我的页（任务Q2 重排；任务AE：上下紧凑 + 全页字体统一为亲友录联系人姓名大小 16px） */
 .avatar-img { border-radius: 50%; }
 .avatar-initial {
   border-radius: 50%;
@@ -7,55 +7,51 @@
   font-size: 22px; font-weight: 600;
 }
 .profile-chev { margin-left: auto; }
-.ph { color: #999; font-size: 13px; margin-right: 4px; }
+.ph { color: #999; font-size: 16px; margin-right: 4px; }
 .m-actions { display: flex; align-items: center; gap: 10px; }
 .m-btn.ghost {
   background: transparent; color: #fff;
   border: 1px solid rgba(255, 255, 255, .7);
 }
-.export-hint {
-  font-size: 11px; color: #C2C2C2;
-  padding: 8px 16px 12px;
-}
 .contact-btn {
   background: #fff; border: none; border-radius: 0;
-  font-size: 15px; text-align: left;
+  font-size: 16px; text-align: left;
   width: 100%; box-sizing: border-box; line-height: 1.4;
 }
 .contact-btn::after { border: none; }
-.profile { padding: 20px 16px; display: flex; align-items: center; }
+.profile { padding: 12px 16px; display: flex; align-items: center; }
 .avatar {
   width: 56px; height: 56px;
   flex: none; margin-right: 14px;
 }
 .uname { font-size: 16px; font-weight: 600; display: block; }
-.usub { font-size: 12px; color: #C2C2C2; margin-top: 4px; display: block; }
+.usub { font-size: 16px; color: #C2C2C2; margin-top: 4px; display: block; }
 .member-card {
-  padding: 16px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, #F0575A, #e04447);
   border: none;
   display: flex; flex-direction: column;
 }
 .m-title { color: #fff; font-size: 16px; font-weight: 600; }
-.m-desc { color: rgba(255,255,255,.85); font-size: 13px; margin-top: 8px; line-height: 1.7; }
+.m-desc { color: rgba(255,255,255,.85); font-size: 16px; margin-top: 6px; line-height: 1.55; }
 .m-btn {
-  margin-top: 12px; align-self: flex-start;
+  margin-top: 10px; align-self: flex-start;
   background: #fff; color: #F0575A;
-  font-size: 13px; font-weight: 600;
+  font-size: 16px; font-weight: 600;
   padding: 8px 22px; border-radius: 20px;
 }
 .m-badge {
-  margin-top: 12px; align-self: flex-start;
+  margin-top: 10px; align-self: flex-start;
   border: 1px solid rgba(255,255,255,.7); color: #fff;
-  font-size: 12px; padding: 6px 16px; border-radius: 16px;
+  font-size: 16px; padding: 6px 16px; border-radius: 16px;
 }
-.section-title { padding: 4px 12px 0; font-size: 13px; color: #999; }
-.feat { display: flex; align-items: center; padding: 10px 16px; min-height: 62px; border-bottom: 1px solid #F0F0F0; }
+.section-title { padding: 2px 12px 0; font-size: 16px; color: #999; }
+.feat { display: flex; align-items: center; padding: 7px 16px; min-height: 50px; border-bottom: 1px solid #F0F0F0; }
 .feat:last-child { border-bottom: none; }
 .feat-icon { width: 32px; height: 32px; flex: none; margin-right: 8px; }
 .feat-mid { display: flex; flex-direction: column; }
-.feat-t { font-size: 15px; font-weight: 600; }
-.feat-d { font-size: 12px; color: #C2C2C2; margin-top: 3px; }
+.feat-t { font-size: 16px; font-weight: 600; }
+.feat-d { font-size: 16px; color: #C2C2C2; margin-top: 3px; }
 .switch {
   width: 46px; height: 26px; border-radius: 13px;
   background: #DDD; position: relative; flex: none;
@@ -68,11 +64,16 @@
   transition: left .2s;
 }
 .switch.on .dot { left: 22px; }
-.footer { text-align: center; font-size: 11px; color: #C2C2C2; padding: 18px 0 8px; }
+.footer { text-align: center; font-size: 16px; color: #C2C2C2; padding: 12px 0 6px; }
 .badge {
   min-width: 18px; height: 18px; border-radius: 9px;
   background: #F0575A; color: #fff;
-  font-size: 11px; line-height: 18px; text-align: center;
+  font-size: 16px; line-height: 18px; text-align: center;
   padding: 0 5px; margin-right: 6px; flex: none;
   box-sizing: border-box;
 }
+/* 页面级覆盖（只作用本页）：卡间距收紧、功能行高收紧、行文字统一 16px */
+.card { margin: 8px 12px; }
+.form-row { min-height: 50px; }
+.form-val { font-size: 16px; }
+.chev { font-size: 16px; }

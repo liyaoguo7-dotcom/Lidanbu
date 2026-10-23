@@ -8,8 +8,8 @@
  * 6 亲友录加号下移（Tab 页 bottom 14px，屏幕位置与送礼/收礼一致）；
  * 7 往来页全部字号 +1（逐项断言）；
  * 8 字体候选改序 缓存→云→分包、book.wxss 无 @font-face、
- *    cloud-file 下载成功必持久化缓存；
- * 9 横置再收紧（COL_W 50、GAP 2、NAME_H 116、AMT_H 117、COL_INNER_H 290、不叠字扫验）。
+ *    字体经云存储换临时 https 链接加载（任务AE）；
+ * 9 横置再收紧（COL_W 50、GAP 2、NAME_H 116、AMT_H 117、COL_INNER_H 290、不叠字扫验；任务AE 后 GAP 3.5/NAME_H 114.5/AMT_H 115.5，断言已同步）。
  * 像素级证据（图标取色/边界框、横置墨迹间距）在任务AC 报告中以 PIL/CDP 量测给出。
  */
 const fs = require('fs');
@@ -57,7 +57,7 @@ test('任务AC-3送礼页：三行间距归零（页面级覆盖）、全局 .ca
   const g = readMp('pages/gifts/gifts.wxss');
   assert(g.includes('.searchbar { padding-bottom: 0; }'), '搜索行下内边距 10→0');
   assert(g.includes('.card.entry-row { margin-top: 0; margin-bottom: 0; }'), '横置礼单本入口行上下外边距 10→0');
-  assert(g.includes('.card.summary { margin-top: 0; }'), '共计行上外边距 10→0');
+  assert(g.includes('.card.list-card { margin-top: 0; }'), '共计与记录合并卡上外边距 10→0（任务AE 第 8 项后 .summary 改为 .list-card）');
   assert(readMp('app.wxss').includes('margin: 10px 12px;'), '全局 .card margin 保持 10px 12px（只动送礼页）');
 });
 
@@ -114,47 +114,44 @@ test('任务AC-7往来字号：全页逐项 +1（姓名 17、金额 23、其余�
   assert((w.match(/\.empty-text \{[^}]*\}/) || [''])[0].includes('font-size: 15px'), '空态文字 14→15px');
 });
 
-// ---------- 8 字体改走云存储 ----------
-test('任务AC-8字体候选序：缓存→云→分包；CLOUD_FONT_BASE 已填真实云存储前缀', () => {
+// ---------- 8 字体来源（任务AE 改走临时 https 链接；AC 的本地下载路线已被真机证伪） ----------
+test('任务AE-8字体候选序：云链接→分包；CLOUD_FONT_BASE 已填真实云存储前缀', () => {
   assert.eq(CLOUD_FONT_BASE, 'cloud://cloud1-d3gd7fjdx0d217df0.636c-cloud1-d3gd7fjdx0d217df0-1514234749/fonts/', 'CLOUD_FONT_BASE 为用户 2026-10-23 上传云存储 fonts/ 后的真实前缀');
-  const defSrc = createFontSource({ storage: { get: () => '', set: () => {} }, fileExists: () => false });
-  const defKinds = defSrc.resolveCandidates(LC.fontById('lxgw')).map((c) => c.kind);
-  assert.eq(defKinds.join(','), 'cloud-file,subpackage', '默认（无缓存）候选：云文件第一、分包兜底');
-  const st = { _m: new Map(), get(k) { return this._m.get(k) || ''; }, set(k, v) { this._m.set(k, v); } };
-  st.set('landscape.fontCacheFile.lxgw', '/userData/landscape-fonts/lxgw-wenkai.woff2');
-  const src = createFontSource({ storage: st, fileExists: () => true, cloudBase: 'cloud://env-x.bucket-y/fonts/' });
-  const kinds = src.resolveCandidates(LC.fontById('lxgw')).map((c) => c.kind);
-  assert.eq(kinds.join(','), 'cache,cloud-file,subpackage', '候选顺序：缓存 → 云文件 → 分包兜底');
+  const defSrc = createFontSource({ storage: { get: () => '', set: () => {} } });
+  const defCands = defSrc.resolveCandidates(LC.fontById('lxgw'));
+  assert.eq(defCands.map((c) => c.kind).join(','), 'cloud-url,subpackage', '候选：云链接第一、分包兜底（本地缓存候选已废除）');
+  assert.eq(defCands[0].needsTempUrl, true, 'cloud:// 候选须先换临时链接');
+  assert(defCands[0].fileID.endsWith('/fonts/lxgw-wenkai.woff2'), 'fileID 指向真实云存储字体文件');
 });
 
-test('任务AC-8字体：book.wxss 无 @font-face；cloud-file 下载成功必持久化到用户数据区缓存', async () => {
+test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileURL 换 https 链接（不落本地文件）', async () => {
   assert(!readMp('pages/landscape/book.wxss').includes('@font-face'), 'book.wxss 三条分包 @font-face 已删（Android 死代码）');
   const st = { _m: new Map(), get(k) { return this._m.get(k) || ''; }, set(k, v) { this._m.set(k, v); } };
-  let savedTo = null;
+  let askedFor = null;
   const wxApi = {
-    env: { USER_DATA_PATH: '/userData' },
-    cloud: { downloadFile: (o) => o.success({ tempFilePath: '/tmp/font-tmp.woff2' }) },
-    getFileSystemManager: () => ({
-      mkdirSync: () => {},
-      saveFileSync: (from, to) => { savedTo = to; },
-      accessSync: () => {},
-    }),
+    cloud: {
+      getTempFileURL: (o) => {
+        askedFor = o.fileList[0];
+        o.success({ fileList: [{ fileID: o.fileList[0], tempFileURL: 'https://tmp.example.com/lxgw.woff2', status: 0 }] });
+      },
+      downloadFile: () => { throw new Error('AE 后不得再走 downloadFile 本地路线'); },
+    },
     getStorageSync: () => '', setStorageSync: () => {},
   };
   const src = createFontSource({ wxApi, storage: st, cloudBase: 'cloud://env-x.bucket-y/fonts/' });
-  const cand = src.resolveCandidates(LC.fontById('lxgw')).find((c) => c.kind === 'cloud-file');
+  const cand = src.resolveCandidates(LC.fontById('lxgw'))[0];
   const source = await src.materialize(cand, LC.fontById('lxgw'));
-  assert.eq(source, 'url("/tmp/font-tmp.woff2")', 'materialize 返回临时路径来源串');
-  assert.eq(savedTo, '/userData/landscape-fonts/lxgw-wenkai.woff2', '下载成功后持久化到用户数据区缓存目录');
-  assert.eq(st._m.get('landscape.fontCacheFile.lxgw'), '/userData/landscape-fonts/lxgw-wenkai.woff2', 'storage 记缓存路径（下次走缓存直读、断网可用）');
+  assert.eq(askedFor, 'cloud://env-x.bucket-y/fonts/lxgw-wenkai.woff2', '换链入参为字体 fileID');
+  assert.eq(source, 'url("https://tmp.example.com/lxgw.woff2")', 'materialize 返回临时 https 来源串（loadFontFace 官方支持的网络形态）');
+  assert.eq(st._m.get('landscape.fontCacheFile.lxgw'), undefined, '不再写本地文件缓存路径（本地路线已废除）');
 });
 
 // ---------- 9 横置再收紧 ----------
-test('任务AC-9横置：COL_W 50/GAP 2/NAME_H 116/AMT_H 117/总高 290、三字体全长不叠字扫验', () => {
+test('任务AC-9横置（任务AE 更新 GAP/区高）：COL_W 50/GAP 3.5/NAME_H 114.5/AMT_H 115.5/总高 290、三字体全长不叠字扫验', () => {
   assert.eq(LC.SPEC.COL_W, 50, '列宽 56→50');
-  assert.eq(LC.SPEC.GAP, 2, '墨迹间距目标 5→2');
-  assert.eq(LC.SPEC.NAME_H, 116, '姓名区（按真实列高几何反推）');
-  assert.eq(LC.SPEC.AMT_H, 117, '金额区（按真实列高几何反推）');
+  assert.eq(LC.SPEC.GAP, 3.5, '墨迹间距目标（5→2 任务AC → 3.5 任务AE）');
+  assert.eq(LC.SPEC.NAME_H, 114.5, '姓名区（AC 反推 116，AE 为 GAP 3.5 收 1.5）');
+  assert.eq(LC.SPEC.AMT_H, 115.5, '金额区（AC 反推 117，AE 为 GAP 3.5 收 1.5）');
   assert.eq(LC.COL_INNER_H, 290, '列内总高 = 纸面高 294 − 边框 4');
   // 不叠字：字距 − 校准后字号 ≥ −0.01（round2 尘埃内视为相接不重叠，与旧版式同口径）
   for (const fid of ['lxgw', 'mashanzheng', 'longcang']) {
@@ -167,4 +164,29 @@ test('任务AC-9横置：COL_W 50/GAP 2/NAME_H 116/AMT_H 117/总高 290、三字
     }
   }
   assert(fs.existsSync(path.join(__dirname, '..', 'docs/screens/landscape-fix-check/model.png')), '量测图 model.png 已按新 SPEC 重渲（像素量测见任务AC 报告）');
+});
+
+// ---------- 任务AE 第 8 项：共计与列表复刻定版图（三页同构） ----------
+test('任务AE-8共计列表复刻：居中大字分段红字、合并一卡、细线分隔、日期一行、行高一致、末尾「完」', () => {
+  for (const [wxmlP, wxssP, rowCls] of [
+    ['pages/gifts/gifts.wxml', 'pages/gifts/gifts.wxss', 'gift-row'],
+    ['pages/receive-detail/receive-detail.wxml', 'pages/receive-detail/receive-detail.wxss', 'rec-row'],
+    ['pages/example/gift-example.wxml', 'pages/example/gift-example.wxss', 'gift-row'],
+  ]) {
+    const w = readMp(wxmlP);
+    const x = readMp(wxssP);
+    assert(w.includes('card list-card'), `${wxmlP}：共计与记录应合并为一张卡`);
+    assert(w.includes('<text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text>'), `${wxmlP}：共计分段——笔数与金额数字红字、笔/¥/元深色`);
+    assert(w.includes('class="subline"'), `${wxmlP}：场合/类型与日期应在同一行（subline）`);
+    assert(w.includes('<text class="end-text">完</text>'), `${wxmlP}：列表末尾应有「完」`);
+    assert(x.includes('.total-line { text-align: center; font-size: 20px;'), `${wxssP}：共计居中 20px 大字`);
+    assert(x.includes('height: 76px'), `${wxssP}：记录行固定高 76px（三页一致）`);
+    assert(x.includes(`.${rowCls}::after`), `${wxssP}：行间为内嵌细线（::after），无卡片灰底间隔`);
+    assert(!x.includes('.summary'), `${wxssP}：旧 .summary 已清除`);
+  }
+  const g = readMp('pages/gifts/gifts.wxss');
+  assert(g.includes('background: #F1E6D3') && g.includes('width: 56px; height: 56px'), '送礼徽章：56px 米色圆底（定版图口径）');
+  assert(g.includes('left: 84px'), '送礼分隔线从姓名左缘起（16+56+12）');
+  const rd = readMp('pages/receive-detail/receive-detail.wxss');
+  assert(rd.includes('left: 16px'), '收礼记录无徽章，分隔线自左内边距起');
 });

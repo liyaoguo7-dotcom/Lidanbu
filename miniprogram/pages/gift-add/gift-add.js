@@ -110,6 +110,7 @@ Page({
   },
 
   async onSave() {
+    if (this._saving) return;
     const { tagId, date, contactId, contactName, amount, remark } = this.data;
     if (!contactId) {
       wx.showToast({ title: '请选择亲友', icon: 'none' });
@@ -120,6 +121,7 @@ Page({
       wx.showToast({ title: '请输入正确的金额', icon: 'none' });
       return;
     }
+    this._saving = true;
     try {
       await dataService.createGift({
         contactId, tagId, amountFen: fen, remark: (remark || '').trim(), date,
@@ -135,6 +137,8 @@ Page({
         showCancel: false,
         confirmText: '知道了',
       });
+    } finally {
+      this._saving = false;
     }
   },
 });

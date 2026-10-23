@@ -155,12 +155,10 @@ Page({
     wx.navigateTo({ url: '/pages/share/share-home' });
   },
 
-  onExport() {
-    wx.navigateTo({ url: '/pages/export/export-home' });
-  },
-
   onLandscapeToggle() {
-    if (!this.data.isMember) {
+    const next = !this.data.landscapeOn;
+    // 任务AE 第 2 项：关不验会员（关一个开关不需要会员），只有「开」才过会员门禁
+    if (next && !this.data.isMember) {
       wx.showModal({
         title: '会员专属功能',
         content: '「横置礼单本」是会员专属功能，开通会员后即可使用。',
@@ -170,7 +168,6 @@ Page({
       });
       return;
     }
-    const next = !this.data.landscapeOn;
     this.setData({ landscapeOn: next });
     landscapeRoute.writeLandscapeOn(next);
     wx.showToast({ title: next ? '横置模式已开启' : '已回到竖置模式', icon: 'none' });

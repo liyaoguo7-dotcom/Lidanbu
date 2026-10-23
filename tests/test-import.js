@@ -276,3 +276,14 @@ test('编辑后写入：送礼的场合/日期等于核对页编辑值，缺省�
   const recs = await core.receive.listRecords(db, owner, owner, ev._id);
   assert(recs[0].type === '现金', '缺省类型为现金');
 });
+
+test('识别顺序契约（任务AE）：适配层不重排、不丢弃空值条目', async () => {
+  const ocr = require('../core/ocr-adapter');
+  const items = await ocr.recognize('/tmp/any.jpg', { kind: 'gift' });
+  assert.eq(items.map((i) => i.name).join(','), '张三,李五,王二麻', 'Mock 列表按返回原序透传（左列先行的顺序契约落在适配层口径上）');
+  // 归一化规则：name 空/amount 缺失的条目保留为空值条目（核对页靠空行补录），不得过滤
+  const kept = await ocr.MockOCR.recognize('/tmp/any.jpg', { kind: 'receive' });
+  assert.eq(kept.length, 2, '收礼 Mock 条数');
+  const norm = items.every((i) => typeof i.name === 'string' && (i.amountFen === null || Number.isInteger(i.amountFen)));
+  assert(norm, '归一化后每条都有 name 字段、amountFen 为整数分或 null');
+});

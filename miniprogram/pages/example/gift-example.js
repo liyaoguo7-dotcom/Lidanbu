@@ -31,6 +31,7 @@ Page({
     })),
     totalCount: GIFTS.length,
     totalText: `￥${formatAmountInt(GIFTS.reduce((s, g) => s + g.amount, 0))} 元`,
+    totalAmountText: formatAmountInt(GIFTS.reduce((s, g) => s + g.amount, 0)),
     gift: null,
   },
 

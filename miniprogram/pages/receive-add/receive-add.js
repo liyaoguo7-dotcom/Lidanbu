@@ -84,12 +84,14 @@ Page({
   },
 
   async onSave() {
+    if (this._saving) return;
     const { tagId, name, date, remark, isEdit } = this.data;
     const trimmed = (name || '').trim();
     if (!trimmed) {
       wx.showToast({ title: '请填写礼薄名称', icon: 'none' });
       return;
     }
+    this._saving = true;
     try {
       if (isEdit) {
         await dataService.updateEvent(this.eventId, {
@@ -110,6 +112,8 @@ Page({
         showCancel: false,
         confirmText: '知道了',
       });
+    } finally {
+      this._saving = false;
     }
   },
 });

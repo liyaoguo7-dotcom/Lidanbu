@@ -27,7 +27,7 @@
   </view>
 </view>
 
-<!-- ③ 家庭共享 / 横置礼单本 / 导出备份 -->
+<!-- ③ 家庭共享 / 横置礼单本（导出备份入口只在首页，任务AE 用户决定：我的页不再重复） -->
 <view class="card">
   <view class="form-row" bindtap="onShareHome">
     <text class="form-val">家庭共享</text>
@@ -37,11 +37,6 @@
     <text class="form-val">横置礼单本</text>
     <view class="switch {{landscapeOn ? 'on' : ''}}"><view class="dot"></view></view>
   </view>
-  <view class="form-row" bindtap="onExport">
-    <text class="form-val">导出备份</text>
-    <text class="chev">›</text>
-  </view>
-  <view class="export-hint">换手机或换微信前，请先导出备份</view>
 </view>
 
 <!-- ④ 邀请分享（唯一入口） -->
@@ -88,6 +83,6 @@
 </view>
 <!-- 老板平台开发期隐藏入口：连点版本号 5 次进入。生产部署方式待定（上线前必须加管理员身份校验+二次验证）。 -->
 <view style="text-align:center;padding:6px 0 4px" bindtap="onVersionTap">
-  <text style="font-size:11px;color:#D8D8D8">{{version}}</text>
+  <text style="font-size:16px;color:#D8D8D8">{{version}}</text>
 </view>
 <view style="height:30px"></view>

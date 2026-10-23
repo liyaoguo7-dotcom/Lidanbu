@@ -3,17 +3,20 @@
 
 <!-- 送礼列表 -->
 <block wx:if="{{view === 'list'}}">
-  <view class="card summary">
-    <text>共计：</text><text class="red num">{{totalCount}} 笔 {{totalText}}</text>
-  </view>
-  <view class="card">
-    <view class="gift-row" wx:for="{{gifts}}" wx:key="index" data-i="{{index}}" bindtap="openGift">
+  <view class="card list-card">
+    <view class="total-line">
+      <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
+    </view>
+    <view class="gift-row {{index === gifts.length - 1 ? 'last' : ''}}" wx:for="{{gifts}}" wx:key="index" data-i="{{index}}" bindtap="openGift">
       <view class="pat {{item.isBaishi ? 'baishi' : ''}}"><image class="pat-img" src="{{item.icon}}" mode="aspectFit" /></view>
       <view class="mid">
         <text class="nm">{{item.name}}</text>
-        <text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text>
+        <view class="subline"><text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text></view>
       </view>
       <text class="amt num">-{{item.amountText}}</text>
+    </view>
+    <view class="list-end">
+      <view class="end-line"></view><text class="end-text">完</text><view class="end-line"></view>
     </view>
   </view>
   <view class="example-note">点任意一条记录，可以看详情页长什么样。</view>
