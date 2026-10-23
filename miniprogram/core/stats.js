@@ -132,10 +132,28 @@ async function getContactTimeline(db, viewerId, ownerId, contactId) {
   return { items, inTotal, outTotal, diff: inTotal - outTotal };
 }
 
+/**
+ * 首页小结/最近往来的原始数据（任务AD 切云新增）：本人账本的收礼记录、
+ * 送礼记录、亲友、礼薄四组全量（与 data-service 原直连读取同口径）。
+ * 月份过滤、合并排序与展示拼装是页面表现层逻辑，仍由 data-service
+ * 在本地完成，本函数只负责一次取齐数据（本地/云端共用一条路径）。
+ */
+async function getHomeData(db, actorId) {
+  const ownerId = actorId;
+  const [receives, gifts, contacts, events] = await Promise.all([
+    db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId }),
+    db.collection(COLLECTIONS.GiftRecord).find({ ownerId }),
+    db.collection(COLLECTIONS.Contact).find({ ownerId }),
+    db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId }),
+  ]);
+  return { receives, gifts, contacts, events };
+}
+
 module.exports = {
   resolveRange, resolveRangeOpt,
   getWanglaiStats, getContactTimeline, visibleRecords,
   contactStats, timeline, memberStats, memberTimeline, memberEvents, findContactsByName,
+  getHomeData,
 };
 
 /**

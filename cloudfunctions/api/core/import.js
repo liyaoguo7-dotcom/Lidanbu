@@ -272,4 +272,25 @@ async function _writeImportInner(db, actorId, ownerId, { kind, eventId, items })
   return { written, total, rawError: null };
 }
 
-module.exports = { validateTarget, writeImport, startImportTask };
+/**
+ * 记一条导出历史（任务AD 切云新增）：导出任务与导入任务同属"任务记录"，
+ * 统一由本模块落库。存储位置沿用数据字典既有的 ExportJob 集合
+ * （exportJobs；云函数 routes-export 真导出时也写同一集合，两边历史合流），
+ * 字段与 data-service 原直连写入一致 {ownerId, scope, status:'done', createdAt}，
+ * 另加 kind:'export' 标明任务类型。actorId 即记录归属人（导出恒为本人账本）。
+ */
+async function recordExportJob(db, actorId, { scope } = {}) {
+  const doc = {
+    ownerId: actorId, kind: 'export', scope: scope || '', status: 'done', createdAt: Date.now(),
+  };
+  const r = await db.collection(COLLECTIONS.ExportJob).insert(doc);
+  return { ...doc, _id: r && r._id };
+}
+
+/** 我的导出历史（任务AD 切云新增）：与 data-service 原直连读取同口径（最新在前、最多 50 条） */
+async function listExportJobs(db, userId) {
+  return db.collection(COLLECTIONS.ExportJob)
+    .find({ ownerId: userId }, { sort: { createdAt: -1 }, limit: 50 });
+}
+
+module.exports = { validateTarget, writeImport, startImportTask, recordExportJob, listExportJobs };

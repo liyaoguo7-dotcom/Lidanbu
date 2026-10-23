@@ -50,6 +50,8 @@ function inviteSettingsFromConfig(config = AppConfig) {
  * 文档未写过的项回退静态默认。
  */
 async function resolveInviteSettings(db, config = AppConfig) {
+  // 任务AD：api 分发会把调用者 id 放进本参数位（见 payment.resolvePricing 同口径守卫）
+  if (typeof config === 'string') config = AppConfig;
   const base = inviteSettingsFromConfig(config);
   if (!db) return base;
   const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });

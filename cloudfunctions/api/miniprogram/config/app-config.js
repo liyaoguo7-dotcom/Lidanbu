@@ -214,8 +214,11 @@ const AppConfig = {
    * 默认空数组——本地词表只作兜底，查不全，上线前应切微信官方检测 */
   contentSafety: { provider: 'local', localBlocklist: [] },
   /** 本地演示模式（阶段2 2A）：true=用微信本地存储演示，false=走云开发。
-   * 正式发布前必须设为 false，见 docs/发布检查清单。 */
-  demo: { localMode: true },
+   * 2026-10-23 任务AD 起出厂为 false（云联调版：数据全部经云函数 api
+   * 读写的云端账本，首开静默建号，"我的"页演示切换区不显示）。
+   * 本地调试要回演示模式：把这里改回 true 重新编译即可（数据走回本地
+   * 存储，与云端账本互不相通）。发布检查见 docs/发布检查清单。 */
+  demo: { localMode: false },
 
   memberOnlyFeatures: ['familyShareInvite', 'photoImport', 'landscapeMode'],
 

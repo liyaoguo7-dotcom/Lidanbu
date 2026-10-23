@@ -203,3 +203,24 @@ test('可运行性：components 目录下每个组件四件套齐全且声明 co
   }
   assert(bad.length === 0, bad.join(' | '));
 });
+
+test('可编译性：全部 wxss @import 必须为根绝对路径且目标真实存在（2026-10-23 真机调试上传 wxss 编译报错补门禁）', () => {
+  const bad = [];
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.wxss')) {
+        const src = fs.readFileSync(p, 'utf8');
+        for (const m of src.matchAll(/@import\s+"([^"]+)"/g)) {
+          const t = m[1];
+          const rel = path.relative(ROOT, p);
+          if (!t.startsWith('/')) { bad.push(rel + ' 用了非根绝对 @import: ' + t); continue; }
+          if (!fs.existsSync(path.join(ROOT, t))) bad.push(rel + ' 的 @import 目标不存在: ' + t);
+        }
+      }
+    }
+  };
+  walk(ROOT);
+  assert(bad.length === 0, bad.join(' | '));
+});

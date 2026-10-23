@@ -83,7 +83,7 @@ test('阶段3：移除成员后其新增记录保留并显示创建人', async (
     contactId: c1, amount: 66600, type: '微信', date: '2026-10-18',
   });
   const inv = await core.share.invite(db, owner, { switches: { view: true }, scope: { events: [ev] } });
-  await core.share.accept(db, inv.membershipId, member);
+  await core.share.accept(db, member, inv.membershipId);
   await core.share.removeMember(db, owner, inv.membershipId);
   const kept = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: rec._id });
   assert(kept, '记录应保留');

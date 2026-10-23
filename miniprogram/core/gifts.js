@@ -72,4 +72,16 @@ async function listGifts(db, actorId, ownerId) {
   return users.attachCreatorNames(db, records);
 }
 
-module.exports = { createGift, updateGift, deleteGift, listGifts };
+/**
+ * 按 id 读单条送礼记录（任务AD 切云新增）：与 data-service 原直连读取同口径
+ * （只按 {_id, ownerId} 查），并补记账人显示名（与原页面口径一致）。
+ * 不存在返回 null。
+ */
+async function getGift(db, actorId, ownerId, giftId) {
+  const doc = await db.collection(COLLECTIONS.GiftRecord).findOne({ _id: giftId, ownerId });
+  if (!doc) return doc;
+  const [named] = await users.attachCreatorNames(db, [doc]);
+  return named;
+}
+
+module.exports = { createGift, updateGift, deleteGift, listGifts, getGift };

@@ -91,6 +91,9 @@ function normalizePlan(p) {
  * 购买页负责不显示、createOrder 负责拒绝下单。
  */
 async function resolvePricing(db, config = AppConfig) {
+  // 任务AD：api 分发约定 fn(db, actorId, ...args) 会把调用者 id 放进本参数位；
+  // 识别到字符串（身份）时按未传配置处理，行为与本地 (db) 调用完全一致。
+  if (typeof config === 'string') config = AppConfig;
   if (db) {
     const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
     if (doc && Array.isArray(doc.pricing) && doc.pricing.length > 0) {
@@ -439,6 +442,17 @@ async function listOrders(db, userId) {
   return db.collection(COLLECTIONS.Order).find({ userId }, { sort: { createdAt: -1 }, limit: 100 });
 }
 
+/**
+ * 老板平台对各终端的购买开关覆盖值（任务AD 切云新增）：读 appConfig
+ * singleton 文档的 paymentPlatforms 段，未配置返回 null（调用方回退
+ * 静态配置）。data-service 购买页聚合用，本地/云端共用一条路径；
+ * 与 admin.getConfig 不同：本函数不要求管理员身份，只读这一个公开段。
+ */
+async function getPaymentPlatforms(db, actorId) {
+  const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+  return (doc && doc.paymentPlatforms) || null;
+}
+
 /** 取一张订单：不存在或非本人一律拒绝 */
 async function getOrderForUser(db, userId, orderId) {
   const order = await db.collection(COLLECTIONS.Order).findOne({ _id: orderId });
@@ -460,4 +474,5 @@ module.exports = {
   refund,
   listOrders,
   getOrderForUser,
+  getPaymentPlatforms,
 };

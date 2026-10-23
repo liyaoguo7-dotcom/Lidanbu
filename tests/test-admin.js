@@ -65,7 +65,7 @@ const inv = await core.share.invite(db, ownerA, {
 switches: { view: true}, scope: { events: [evA._id], gifts: false},
 });
 const member = await newUser(db, 'member_openid_003');
-await core.share.accept(db, inv.membershipId, member);
+await core.share.accept(db, member, inv.membershipId);
 // 邀请奖励发放记录（只存数量与时间）
 await db.collection(COLLECTIONS.InviteRewardGrant).insert({
 userId: ownerA, invitedUserId: 'newbie1', poolGranted: 10, giftsGranted: 5,
@@ -122,7 +122,7 @@ const db = await newDB();
 const { ownerB} = await setupLedger(db);
 const masked = admin.maskUserId(ownerB);
 const before = Date.now();
-const r = await admin.setMemberPlan(db, masked, 'manual', 30);
+const r = await admin.setMemberPlan(db, 'admin-tester', masked, 'manual', 30);
 assertKeys(r, ['userId', 'memberState', 'expireAt'], 'setMemberPlan');
 assert.eq(r.userId, masked, '返回脱敏 id');
 assert.eq(r.memberState, 'member', '开通后为会员');
@@ -136,9 +136,9 @@ assertNoLeak(logs[0], 'audit log');
 assertNoLeak(r, 'setMemberPlan');
 // 非法参数拒绝
 let threw = 0;
-try { await admin.setMemberPlan(db, masked, 'yearvip', 30);} catch (e) { threw++;}
-try { await admin.setMemberPlan(db, masked, 'manual', 0);} catch (e) { threw++;}
-try { await admin.setMemberPlan(db, 'no***such', 'manual', 30);} catch (e) { threw++;}
+try { await admin.setMemberPlan(db, 'admin-tester', masked, 'yearvip', 30);} catch (e) { threw++;}
+try { await admin.setMemberPlan(db, 'admin-tester', masked, 'manual', 0);} catch (e) { threw++;}
+try { await admin.setMemberPlan(db, 'admin-tester', 'no***such', 'manual', 30);} catch (e) { threw++;}
 assert.eq(threw, 3, '未知档位/非法天数/未知用户都被拒绝');
 });
 

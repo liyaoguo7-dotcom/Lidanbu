@@ -21,6 +21,7 @@ require('./test-admin-full');
 require('./test-cloud-export');
 require('./test-db-cloud');
 require('./test-api-dispatch');
+require('./test-cloud-loopback');
 require('./test-uppercase');
 require('./test-stage3');
 require('./test-landscape');

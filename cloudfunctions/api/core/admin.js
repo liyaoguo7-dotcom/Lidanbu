@@ -49,7 +49,10 @@ return d.getTime();
 * @returns {{userTotal, memberCount, freeCount, newUsersToday,
 * receiveRecordTotal, giftRecordTotal, generatedAt}}
 */
-async function overview(db) {
+// 任务AD：第二参数 actorId 为 api 分发约定预留（分发统一以 (db, actorId, ...)
+// 调用），本函数只做全站聚合、不按调用者过滤，参数暂不使用；本地旧调用
+// overview(db) 不受影响。
+async function overview(db, actorId) {
 const users = await db.collection(COLLECTIONS.User).find({});
 let memberCount = 0;
 let newUsersToday = 0;
@@ -76,7 +79,10 @@ generatedAt: now(),
 * @returns {{total, page, pageSize, items: [{userId, memberState, expireAt,
 * recordCounts: {events, gifts, contacts}}]}}
 */
-async function memberList(db, { page = 1, pageSize = 20, memberState} = {}) {
+// 任务AD 签名对齐：新口径 (db, actorId, opts)（api 分发约定）；旧口径
+// (db, opts) 双兼容——第二参为对象且第三参缺省时按旧口径解释，存量调用不改。
+async function memberList(db, actorId, opts) {
+  const { page = 1, pageSize = 20, memberState } = (opts === undefined && actorId && typeof actorId === 'object') ? actorId : (opts || {});
 const users = await db.collection(COLLECTIONS.User).find({}, { sort: { createdAt: -1}});
 const filtered = memberState
 ? users.filter((u) => quota.getMembershipState(u) === memberState)
@@ -108,7 +114,10 @@ return { total, page: p, pageSize: ps, items};
 * @param {number} days 天数，1~1095
 * @returns {{userId, memberState, expireAt}}
 */
-async function setMemberPlan(db, maskedUserId, plan, days, actorId = 'admin') {
+// 任务AD 签名对齐：(db, actorId, maskedUserId, plan, days)——与 api 分发约定
+// 及本文件其余管理员接口统一；审计记录里的操作者沿用旧口径 'admin:<actorId>'。
+async function setMemberPlan(db, actorId, maskedUserId, plan, days) {
+  const actorLabel = !actorId ? 'admin' : (String(actorId).startsWith('admin:') ? String(actorId) : `admin:${actorId}`);
 if (plan!== 'manual') throw new Error('admin:unknown-plan');
 const d = Number(days);
 if (!Number.isInteger(d) || d < 1 || d > 1095) throw new Error('admin:bad-days');
@@ -122,7 +131,7 @@ await db.collection(COLLECTIONS.User).update(
 // 操作记录：只写"做了什么+天数"，不含任何账本内容
 await audit.log(db, {
 ownerId: user._id,
-actorId,
+actorId: actorLabel,
 action: 'grant',
 targetType: 'member',
 targetId: maskedUserId,
@@ -136,7 +145,9 @@ return { userId: maskedUserId, memberState: 'member', expireAt};
 * @returns {{userId, memberState, usage: [{kind, used, limit, remain}] kind:
 * receiveEvents(礼薄数) | giftRecords(送礼条数) | contacts(亲友数) | receivePool(收礼额度池)}}
 */
-async function quotaUsage(db, maskedUserId) {
+// 任务AD 签名对齐：新口径 (db, actorId, maskedUserId)；旧口径 (db, maskedUserId) 双兼容。
+async function quotaUsage(db, actorId, maskedUserId) {
+  if (maskedUserId === undefined) maskedUserId = actorId;
 const user = await findUserByMask(db, maskedUserId);
 const successfulInvites = await quota.countSuccessfulInvites(db, user._id);
 const inviteSettings = await quota.resolveInviteSettings(db);
@@ -164,7 +175,8 @@ row('receivePool', poolUsed, q.receivePool || 0),
 * 邀请奖励数据（阶段5第14项）：只看数量
 * @returns {{inviterCount, totalInvites, totalPoolGranted, totalGiftsGranted}}
 */
-async function inviteStats(db) {
+// 任务AD：actorId 为 api 分发约定预留（同 overview），本函数不按调用者过滤。
+async function inviteStats(db, actorId) {
 const grants = await db.collection(COLLECTIONS.InviteRewardGrant).find({});
 const inviters = new Set(grants.map((g) => g.userId));
 let totalPoolGranted = 0;
@@ -185,7 +197,9 @@ totalGiftsGranted,
 * 家庭共享概况（阶段5第15项）：每人邀请了几位家人，只看数量
 * @returns {{ownerCount, totalMemberships, activeMemberships, perOwner: [{ownerId, memberCount}] 每项 ownerId 为脱敏短号}}
 */
-async function shareOverview(db, { limit = 200} = {}) {
+// 任务AD 签名对齐：新口径 (db, actorId, opts)；旧口径 (db, opts) 双兼容（同 memberList）。
+async function shareOverview(db, actorId, opts) {
+  const { limit = 200 } = (opts === undefined && actorId && typeof actorId === 'object') ? actorId : (opts || {});
 const all = await db.collection(COLLECTIONS.ShareMembership).find({});
 const byOwner = new Map();
 let activeMemberships = 0;

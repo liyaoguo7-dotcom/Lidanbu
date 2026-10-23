@@ -1,4 +1,4 @@
-@import "../admin-common.wxss";
+@import "/pages/admin/admin-common.wxss";
 .pill-on { background: #F0575A; color: #fff; border-color: #F0575A; }
 .fb-content { font-size: 14px; color: #333; line-height: 1.6; margin: 8px 0; word-break: break-all; }
 .btn-primary { background: #F0575A; color: #fff; border-radius: 28px; margin: 12px 0 4px; font-size: 15px; }

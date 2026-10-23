@@ -101,4 +101,12 @@ async function searchContacts(db, actorId, ownerId, keyword) {
   return all.filter((c) => c.name.includes(kw) || (c.remark && c.remark.includes(kw)));
 }
 
-module.exports = { createContact, updateContact, countImpact, deleteContact, listContacts, searchContacts };
+/**
+ * 按 id 读单个亲友（任务AD 切云新增）：与 data-service 原直连读取同口径
+ * （只按 {_id, ownerId} 查，不额外加权限判断），供本地/云端共用一条路径。
+ */
+async function getContact(db, actorId, ownerId, contactId) {
+  return db.collection(COLLECTIONS.Contact).findOne({ _id: contactId, ownerId });
+}
+
+module.exports = { createContact, updateContact, countImpact, deleteContact, listContacts, searchContacts, getContact };

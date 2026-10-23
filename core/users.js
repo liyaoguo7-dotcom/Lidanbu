@@ -128,6 +128,17 @@ async function updateProfile(db, userId, patch = {}, opts = {}) {
   return { ...user, profile };
 }
 
+/**
+ * 取用户原始文档（任务AD 切云新增）：data-service 的会员状态/额度/提醒计算
+ * 需要完整文档（membership 等字段），本地与云端共用这一条读取路径；
+ * 云端经 api 分发调用时 actorId 即文档主人本人，只返回自己的文档。
+ * 不存在返回 null（初始化流程保证先建号，调用方按空文档兜底）。
+ */
+async function getSelf(db, userId) {
+  if (!userId) return null;
+  return db.collection(COLLECTIONS.User).findOne({ _id: userId });
+}
+
 /** 取用户资料的展示形状：{ displayName, nickname(原始存值), avatarUrl } */
 async function getProfile(db, userId) {
   const user = await db.collection(COLLECTIONS.User).findOne({ _id: userId });
@@ -165,5 +176,6 @@ module.exports = {
   setPrivacyConsent,
   updateProfile,
   getProfile,
+  getSelf,
   attachCreatorNames,
 };

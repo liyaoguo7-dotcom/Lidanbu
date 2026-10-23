@@ -73,8 +73,10 @@ async function invite(db, ownerId, { switches, scope }) {
   return { membershipId };
 }
 
-/** 接受邀请（成员操作） */
-async function accept(db, membershipId, memberId) {
+/** 接受邀请（成员操作）。
+ * 参数序 2026-10-23 任务AD 对调为全站统一的 (db, actorId, ...) 口径
+ * （原 (db, membershipId, memberId) 与 api 分发约定冲突，云端无法调用）。 */
+async function accept(db, memberId, membershipId) {
   await restriction.assertWritable(db, memberId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
   if (!ms) throw new Error('邀请不存在');
@@ -135,4 +137,47 @@ async function listMembers(db, ownerId) {
   return out;
 }
 
-module.exports = { invite, accept, updateGrant, removeMember, listMembers, SWITCH_IDS };
+/**
+ * 读某成员的授权文档（任务AD 切云新增）：与 data-service 原直连读取同口径
+ * （只按 membershipId 查 ShareGrant），供本地/云端共用一条路径。
+ */
+async function getGrant(db, ownerId, membershipId) {
+  return db.collection(COLLECTIONS.ShareGrant).findOne({ membershipId });
+}
+
+/** 按 id 读共享关系文档（任务AD 切云新增）：分享落地页接受邀请前查状态用，同原直连口径 */
+async function getMembership(db, actorId, membershipId) {
+  return db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
+}
+
+/**
+ * 我收到的共享列表（任务AD 切云新增）：与 data-service 原直连拼装同口径——
+ * 本人 active 的共享关系 + 每位账本主人的用户文档（显示名由调用方本地解析，
+ * 主人文档不存在时返回 owner:null，调用方兜底显示"家人"）。
+ */
+async function listReceived(db, actorId) {
+  const mss = await db.collection(COLLECTIONS.ShareMembership)
+    .find({ memberId: actorId, status: 'active' });
+  const out = [];
+  for (const ms of mss) {
+    const owner = await db.collection(COLLECTIONS.User).findOne({ _id: ms.ownerId });
+    out.push({ membershipId: ms._id, ownerId: ms.ownerId, owner: owner || null, createdAt: ms.createdAt });
+  }
+  return out;
+}
+
+/**
+ * 我作为成员对某账本的授权（任务AD 切云新增）：与 data-service 原直连拼装
+ * 同口径——无有效共享/无授权文档返回 null，有则返回 { switches, scope }。
+ */
+async function getMyGrantFor(db, actorId, ownerId) {
+  const ms = await db.collection(COLLECTIONS.ShareMembership)
+    .findOne({ ownerId, memberId: actorId, status: 'active' });
+  if (!ms) return null;
+  const grant = await db.collection(COLLECTIONS.ShareGrant)
+    .findOne({ membershipId: ms._id });
+  if (!grant) return null;
+  return { switches: grant.switches || {}, scope: grant.scope || {} };
+}
+
+module.exports = { invite, accept, updateGrant, removeMember, listMembers, getGrant, getMembership, listReceived, getMyGrantFor, SWITCH_IDS };

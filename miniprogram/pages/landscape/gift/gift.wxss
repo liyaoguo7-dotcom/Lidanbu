@@ -1,1 +1,1 @@
-@import "../book.wxss";
+@import "/pages/landscape/book.wxss";

@@ -39,7 +39,7 @@ async function setupMember(db, owner, { events = [], gifts = false, switches } =
     switches: switches || { view: true },
     scope: { events, gifts },
   });
-  await core.share.accept(db, inv.membershipId, member);
+  await core.share.accept(db, member, inv.membershipId);
   return { member, membershipId: inv.membershipId };
 }
 

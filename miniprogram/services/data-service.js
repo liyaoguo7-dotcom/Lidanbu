@@ -2,17 +2,27 @@
  * 礼单簿 · 数据服务层（阶段2 2A）
  *
  * 页面只调这一层，不直接碰 core/ 也不直接碰存储。
- * 开发期用微信本地存储（WxStorageDB）演示；云环境就绪后把 _makeDb()
- * 换成 CloudDB，页面代码不动。本地模式开关见 AppConfig.demo.localMode。
+ * 本地模式开关见 AppConfig.demo.localMode：
+ * - 本地演示（localMode=true）：本地 core + 微信本地存储（WxStorageDB）；
+ * - 云模式（localMode=false，任务AD 已落地）：core 绑定换成远程代理
+ *   （services/remote-core.js），全部读写经 wx.cloud.callFunction 走
+ *   云函数 api，服务端用同一套 core 执行业务；页面代码不动。
  *
  * 所有业务规则（额度、权限、会员状态）都在 core/ 里实现，这里只做
  * 参数组装与错误转用户可读文案。
  */
-const core = require('../core/index.js');
+const coreLib = require('../core/index.js');
+const { createRemoteCore } = require('./remote-core.js');
 const AppConfig = require('../config/app-config.js');
 const { tagIconPath } = require('../config/tag-icons.js');
 const { WxStorageDB } = require('./db-wxstorage.js');
 const demoSeed = require('./demo-seed.js');
+
+// —— 本地/云切换点 ——
+// core 绑定按模式切换：本地 = coreLib；云 = remote-core 代理。
+// 全文件业务调用点仍写 core.<模块>.<函数>(_db, _userId, ...)，签名不变；
+// models/format/纯函数在 remote-core 里挂的仍是本地实现，绝不走 RPC。
+let core = coreLib;
 
 const USER_KEY = 'lidanbu_demo_user';
 const SEEDED_KEY = 'lidanbu_demo_seeded_v2';
@@ -21,19 +31,31 @@ const OLD_SEEDED_KEY = 'lidanbu_demo_seeded_v1';
 let _db = null;
 let _userId = null;
 let _dbFactory = null; // 仅测试注入用（模拟数据库失败/恢复），生产恒为 null
+let _modeForTest = null; // 仅测试注入用：'local' | 'cloud' | null
+let _transportForTest = null; // 仅测试注入用：远程传输（进程内回环到 api 云函数）
+let _remoteCore = null;
+let _cloudUserReady = false; // 云模式：服务端静默建号是否已触发
+
+/** 当前是否云模式：测试注入优先；注入了本地 db 工厂即本地模式（该注入口本就是本地测试缝） */
+function _isCloud() {
+  if (_modeForTest) return _modeForTest === 'cloud';
+  if (_dbFactory) return false;
+  return !(AppConfig.demo && AppConfig.demo.localMode);
+}
+
+/** 按当前模式同步 core 绑定（init 与 ensureUser 入口调用，幂等） */
+function _syncCoreBinding() {
+  if (_isCloud()) {
+    if (!_remoteCore) _remoteCore = createRemoteCore(_transportForTest || undefined);
+    core = _remoteCore;
+  } else {
+    core = coreLib;
+  }
+}
 
 function _makeDb() {
-  // —— 本地/云切换点（只改这里，页面代码不动）——
-  // 本地演示模式：return new WxStorageDB();（当前）
-  // 云模式：return new core.db.CloudDB();
-  //   切云的前提（缺一不可，见 docs/云环境切换步骤.md）：
-  //   1) miniprogram/config/app-config.js 的 cloudEnvId 填好环境 ID
-  //      （app.js 启动时自动读取并 wx.cloud.init，不用改其他文件）；
-  //   2) AppConfig.demo.localMode 设为 false；
-  //   3) core/db-cloud.js 骨架已补全并联调通过；
-  //   4) cloudfunctions/api 已部署。
-  // 注意：WxStorageDB 与 CloudDB 同接口（collection/insert/find/findOne/count/update/remove），
-  // core/ 业务层不感知底层是本地还是云，所以切换后页面层零改动。
+  // 本地演示模式的数据库（微信本地存储）。云模式不使用本地 db
+  // （_db 仅作"已初始化"标记），数据全部走远程 core。
   return new WxStorageDB();
 }
 
@@ -79,7 +101,26 @@ function presentOrder(o) {
   };
 }
 
+/**
+ * 确保当前用户存在并返回其文档。
+ * - 本地模式：查本地库，没有就建（演示 id）并发注册赠分，见 ensureLocalUser。
+ * - 云模式：身份是服务端 openid（init 已由 whoami 取得）；服务端在首次
+ *   业务调用时静默建号并发注册赠分（api 分发 ensureServerUser），这里调
+ *   一次 getProfile 触发它，之后返回服务端文档（getSelf）。
+ */
 async function ensureUser() {
+  _syncCoreBinding();
+  if (_isCloud()) {
+    if (!_cloudUserReady) {
+      await core.users.getProfile(_db, _userId);
+      _cloudUserReady = true;
+    }
+    return core.users.getSelf(_db, _userId);
+  }
+  return ensureLocalUser();
+}
+
+async function ensureLocalUser() {
   const col = _db.collection(core.models.COLLECTIONS.User);
   let user = await col.findOne({ _id: _userId });
   if (!user) {
@@ -204,9 +245,9 @@ const service = {
    * 本产品**没有任何"先登录才能进"的拦截页**：打开小程序直接进首页，
    * 身份在后台静默建立，全程不弹登录框、不强制授权头像/昵称/手机号。
    * - 本地演示模式：直接建/取本地用户（ensureUser）。
-   * - 云模式（联调时接）：wx.login() 拿 code → 云函数以 code 换 openid
-   *   （code2session）→ 以 openid 建/取用户；适配位就在这里，
-   *   init 的流程与页面代码都不用改。
+   * - 云模式（任务AD 已落地）：调云函数 whoami 取服务端认定的 openid
+   *   作身份（不经 wx.login/客户端传参），再触发服务端静默建号；
+   *   之后全部业务走远程 core（见文件头切换点）。
    * 失败口径：不抛死，返回 { ok:false, reason:'network' } 并清掉半成品
    * 状态，app.js 把结果存进 globalData.initState，首页据此显示
    * "网络不太顺，点这里重试"，用户点一下就再调一次 init（可重试成功）。
@@ -215,6 +256,18 @@ const service = {
   async init() {
     if (_db) return { ok: true, already: true };
     try {
+      _syncCoreBinding();
+      if (_isCloud()) {
+        // 云模式（任务AD）：身份只认服务端 openid——whoami 取得后调一次
+        // 业务接口触发服务端静默建号 + 注册赠分（见 ensureUser 云分支）。
+        // 本地存储里的演示 id 在云模式下不作数，绝不用它当身份。
+        _db = _makeDb(); // 仅作已初始化标记，云模式不读本地库
+        const who = await core.whoami();
+        _userId = (who && who.openid) || null;
+        if (!_userId) throw new Error('callFunction:fail 未取得服务端身份');
+        await ensureUser();
+        return { ok: true };
+      }
       _db = _dbFactory ? _dbFactory() : _makeDb();
       try {
         const saved = wx.getStorageSync(USER_KEY);
@@ -232,12 +285,13 @@ const service = {
       return { ok: true };
     } catch (e) {
       _db = null; // 清掉半成品，保证重试能从干净状态重来
+      _cloudUserReady = false;
       return { ok: false, reason: 'network' };
     }
   },
 
   get userId() { return _userId; },
-  get localMode() { return !!(AppConfig.demo && AppConfig.demo.localMode); },
+  get localMode() { return !_isCloud(); },
 
   // —— 个人资料与隐私同意（任务Q1） ——
   /** 我的资料：{ displayName(显示名,无昵称时"微信用户"), nickname(原始存值), avatarUrl } */
@@ -316,12 +370,8 @@ const service = {
     } catch (e) { throw new Error(friendly(e)); }
   },
   async getGift(giftId) {
-    const col = _db.collection(core.models.COLLECTIONS.GiftRecord);
-    const doc = await col.findOne({ _id: giftId, ownerId: _userId });
-    if (!doc) return doc;
-    // 补记账人显示名（读取时按作者当前昵称解析，任务Q1）
-    const [named] = await core.users.attachCreatorNames(_db, [doc]);
-    return named;
+    // 补记账人显示名在 core.gifts.getGift 内完成（任务Q1/AD，与原直连拼装同口径）
+    return core.gifts.getGift(_db, _userId, _userId, giftId);
   },
 
   // —— 标签/配置 ——
@@ -337,8 +387,7 @@ const service = {
 
   // —— 会员/额度 ——
   async getMembership() {
-    const col = _db.collection(core.models.COLLECTIONS.User);
-    const user = await col.findOne({ _id: _userId });
+    const user = (await core.users.getSelf(_db, _userId)) || {};
     return {
       state: core.quota.getMembershipState(user),
       quota: core.quota.getEffectiveQuota(user, AppConfig, Date.now(), await inviteOpts()),
@@ -361,22 +410,22 @@ const service = {
   },
 
   /** 额度使用情况：各类已用/上限（免费+会员+邀请奖励） */
-  async getQuotaUsage() {    const me = await ensureUser();
+  async getQuotaUsage() {
+    const me = await ensureUser();
     const quota = core.quota.getEffectiveQuota(me, AppConfig, Date.now(), await inviteOpts());
-    const events = await _db.collection(core.models.COLLECTIONS.ReceiveEvent).find({ ownerId: _userId });
-    const gifts = await _db.collection(core.models.COLLECTIONS.GiftRecord).count({ ownerId: _userId });
-    const contacts = await _db.collection(core.models.COLLECTIONS.Contact).count({ ownerId: _userId });
+    // 已用计数经 export.buildExportData 只读聚合取（任务AD：本地/云端共用一条路径）
+    const summary = await core.export.buildExportData(_db, _userId, _userId);
     const receivePool = await core.quota.computePoolUsed(_db, _userId, quota.recordsPerEvent);
     return {
       state: core.quota.getMembershipState(me),
       quota,
-      used: { events: events.length, receivePool, gifts, contacts },
+      used: { events: summary.events.length, receivePool, gifts: summary.gifts, contacts: summary.contacts },
     };
   },
 
   /** 会员到期三次提醒：到期前15天 / 到期当天 / 缓冲期结束前 */
   getReminderInfo() {
-    return _db.collection(core.models.COLLECTIONS.User).findOne({ _id: _userId }).then((user) => {
+    return core.users.getSelf(_db, _userId).then((user) => {
       const times = core.quota.getReminderSchedule(user || {});
       const labels = ['到期前 15 天', '到期当天', '缓冲期结束前'];
       const nowT = Date.now();
@@ -398,8 +447,10 @@ const service = {
    */
   async purchaseMembership(planId) {
     try {
-      const adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
-      const r = await core.payment.purchase(_db, _userId, planId, { adapter });
+      // 支付适配器不能跨 RPC：本地模式本地注入 Mock；云模式传空 opts，
+      // 由 api 分发在服务端注入同口径的 MockPayAdapter（见 cloudfunctions/api/index.js）
+      const opts = _isCloud() ? {} : { adapter: new coreLib.payAdapter.MockPayAdapter({ result: 'success' }) };
+      const r = await core.payment.purchase(_db, _userId, planId, opts);
       return { delivered: r.delivered, order: presentOrder(r.order) };
     } catch (e) {
       if (e && e.code === 'plan-not-found') throw new Error('这个会员档位已经下架啦，看看其他档位吧');
@@ -471,8 +522,9 @@ const service = {
    */
   async purchasePointsPack(packId) {
     try {
-      const adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
-      const r = await core.payment.purchasePointsPack(_db, _userId, packId, { adapter });
+      // 适配器注入方式同 purchaseMembership（云模式由服务端注入）
+      const opts = _isCloud() ? {} : { adapter: new coreLib.payAdapter.MockPayAdapter({ result: 'success' }) };
+      const r = await core.payment.purchasePointsPack(_db, _userId, packId, opts);
       return { delivered: r.delivered, order: presentOrder(r.order) };
     } catch (e) {
       if (e && (e.code === 'points-pack-member-only' || e.code === 'points-pack-not-found')) {
@@ -496,8 +548,7 @@ const service = {
     const settings = await this.getPointsSettings();
     let platformOverrides = null;
     try {
-      const doc = await _db.collection(core.models.COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
-      platformOverrides = doc && doc.paymentPlatforms;
+      platformOverrides = await core.payment.getPaymentPlatforms(_db, _userId);
     } catch (e) { /* 读不到覆盖就用静态配置 */ }
     const mergedConfig = {
       ...AppConfig,
@@ -536,7 +587,7 @@ const service = {
   /** 某成员的权限详情 */
   async getGrant(membershipId) {
     try {
-      return await _db.collection(core.models.COLLECTIONS.ShareGrant).findOne({ membershipId });
+      return await core.share.getGrant(_db, _userId, membershipId);
     } catch (e) { throw new Error(friendly(e)); }
   },
   /** 修改成员权限（立即生效） */
@@ -554,28 +605,27 @@ const service = {
   /** 我收到的共享（我是成员的账本） */
   async myReceivedShares() {
     try {
-      const mss = await _db.collection(core.models.COLLECTIONS.ShareMembership)
-        .find({ memberId: _userId, status: 'active' });
-      const out = [];
-      for (const ms of mss) {
-        const owner = await _db.collection(core.models.COLLECTIONS.User).findOne({ _id: ms.ownerId });
-        // 账本主人显示名走统一解析（任务Q1）：其当前昵称，无昵称显示"微信用户"；
-        // 主人文档已不存在（已注销）时才兜底叫"家人"
-        out.push({ membershipId: ms._id, ownerId: ms.ownerId, ownerName: owner ? core.users.displayName(owner) : '家人', createdAt: ms.createdAt });
-      }
-      return out;
+      const list = await core.share.listReceived(_db, _userId);
+      // 账本主人显示名走统一解析（任务Q1）：其当前昵称，无昵称显示"微信用户"；
+      // 主人文档已不存在（已注销）时才兜底叫"家人"
+      return list.map((ms) => ({
+        membershipId: ms.membershipId,
+        ownerId: ms.ownerId,
+        ownerName: ms.owner ? core.users.displayName(ms.owner) : '家人',
+        createdAt: ms.createdAt,
+      }));
     } catch (e) { throw new Error(friendly(e)); }
   },
   /** 接受邀请 */
   async acceptShare(membershipId) {
     try {
-      return await core.share.accept(_db, membershipId, _userId);
+      return await core.share.accept(_db, _userId, membershipId);
     } catch (e) { throw new Error(friendly(e)); }
   },
   /** 按邀请码（membershipId）查共享关系文档（ownerId/status/memberId），供分享落地页接受邀请 */
   async getShareMembership(membershipId) {
     try {
-      return await _db.collection(core.models.COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
+      return await core.share.getMembership(_db, _userId, membershipId);
     } catch (e) { throw new Error(friendly(e)); }
   },
   /** 当前用户 id（页面侧需要比对"是不是自己"时用） */
@@ -588,14 +638,9 @@ const service = {
   },
   /** 共享开关清单（供邀请页渲染） */
   getShareSwitches() { return AppConfig.shareSwitches; },
-  /** 当前账本数据情况（导出页概览） */
+  /** 当前账本数据情况（导出页概览）：经 core.export.buildExportData 只读聚合（任务AD） */
   async exportSummary() {
-    const C = core.models.COLLECTIONS;
-    const events = await _db.collection(C.ReceiveEvent).find({ ownerId: _userId });
-    const receiveRecords = await _db.collection(C.ReceiveRecord).count({ ownerId: _userId });
-    const gifts = await _db.collection(C.GiftRecord).count({ ownerId: _userId });
-    const contacts = await _db.collection(C.Contact).count({ ownerId: _userId });
-    return { events, receiveRecords, gifts, contacts };
+    return core.export.buildExportData(_db, _userId, _userId);
   },
   /**
    * 导出 xlsx：经云函数生成真文件。
@@ -611,16 +656,13 @@ const service = {
     });
     return res.result;
   },
-  /** 写导出历史 */
+  /** 写导出历史（经 core.importer.recordExportJob 落库，任务AD：本地/云端共用一条路径） */
   async logExportJob(scope) {
-    await _db.collection(core.models.COLLECTIONS.ExportJob).insert({
-      ownerId: _userId, scope: scope || '', status: 'done', createdAt: Date.now(),
-    });
+    await core.importer.recordExportJob(_db, _userId, { scope });
   },
   /** 导出历史记录 */
   async listExportJobs() {
-    return _db.collection(core.models.COLLECTIONS.ExportJob)
-      .find({ ownerId: _userId }, { sort: { createdAt: -1 }, limit: 50 });
+    return core.importer.listExportJobs(_db, _userId);
   },
   // —— 账号注销全流程（任务L；⚠️ 开关关闭时申请被拒，确认前不上线） ——
   /** 提交注销申请（进入冷静期）；开关未开放时抛"暂未开放" */
@@ -723,8 +765,7 @@ const service = {
     } catch (e) { throw new Error(friendly(e)); }
   },
   async getEvent(eventId) {
-    const col = _db.collection(core.models.COLLECTIONS.ReceiveEvent);
-    return col.findOne({ _id: eventId, ownerId: _userId });
+    return core.receive.getEvent(_db, _userId, _userId, eventId);
   },
   /** 礼薄共计：{count, totalFen} */
   async getEventStats(eventId) {
@@ -759,12 +800,8 @@ const service = {
     } catch (e) { throw new Error(friendly(e)); }
   },
   async getRecord(recordId) {
-    const col = _db.collection(core.models.COLLECTIONS.ReceiveRecord);
-    const doc = await col.findOne({ _id: recordId, ownerId: _userId });
-    if (!doc) return doc;
-    // 补记账人显示名（读取时按作者当前昵称解析，任务Q1）
-    const [named] = await core.users.attachCreatorNames(_db, [doc]);
-    return named;
+    // 补记账人显示名在 core.receive.getRecord 内完成（任务Q1/AD，与原直连拼装同口径）
+    return core.receive.getRecord(_db, _userId, _userId, recordId);
   },
 
   // —— 往来 ——
@@ -829,8 +866,7 @@ const service = {
   },
   async getContact(contactId, ownerId) {
     const oid = ownerId || _userId;
-    const col = _db.collection(core.models.COLLECTIONS.Contact);
-    return col.findOne({ _id: contactId, ownerId: oid });
+    return core.contacts.getContact(_db, _userId, oid, contactId);
   },
 
   // —— 首页小结与最近往来（任务V） ——
@@ -843,12 +879,13 @@ const service = {
    *   hasRecords=false（本月一笔都没有）时页面显示"本月还没有记录"，不显示 ¥0。
    */
   async getHomeSummary() {
-    const C = core.models.COLLECTIONS;
     const nowD = new Date();
     const prefix = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}`;
     const inMonth = (r) => typeof r.date === 'string' && r.date.startsWith(prefix);
-    const receives = (await _db.collection(C.ReceiveRecord).find({ ownerId: _userId })).filter(inMonth);
-    const gifts = (await _db.collection(C.GiftRecord).find({ ownerId: _userId })).filter(inMonth);
+    // 原始数据经 stats.getHomeData 一次取齐（任务AD：本地/云端共用一条路径），月份过滤仍在本地
+    const home = await core.stats.getHomeData(_db, _userId);
+    const receives = home.receives.filter(inMonth);
+    const gifts = home.gifts.filter(inMonth);
     const sum = (list) => list.reduce((s, r) => s + (r.amount || 0), 0);
     return {
       receiveFen: sum(receives), receiveCount: receives.length,
@@ -868,22 +905,22 @@ const service = {
    *            dateText, amountText, targetUrl}]} 无记录返回 []
    */
   async getHomeRecent(limit = 3) {
-    const C = core.models.COLLECTIONS;
     const n = Math.max(0, Math.floor(Number(limit)) || 0);
     if (n === 0) return [];
-    const [receives, gifts] = await Promise.all([
-      _db.collection(C.ReceiveRecord).find({ ownerId: _userId }),
-      _db.collection(C.GiftRecord).find({ ownerId: _userId }),
-    ]);
+    // 原始数据经 stats.getHomeData 一次取齐（任务AD）；原先按 id 集合的定向
+    // 查询改为在全量本人数据里按同一 id 集合过滤，结果完全一致
+    const home = await core.stats.getHomeData(_db, _userId);
+    const receives = home.receives;
+    const gifts = home.gifts;
     if (!receives.length && !gifts.length) return [];
     const contactIds = [...new Set([...receives, ...gifts].map((r) => r.contactId).filter(Boolean))];
     const contacts = contactIds.length
-      ? await _db.collection(C.Contact).find({ ownerId: _userId, _id: { $in: contactIds } })
+      ? home.contacts.filter((c) => contactIds.includes(c._id))
       : [];
     const contactName = new Map(contacts.map((c) => [c._id, c.name]));
     const eventIds = [...new Set(receives.map((r) => r.eventId).filter(Boolean))];
     const events = eventIds.length
-      ? await _db.collection(C.ReceiveEvent).find({ ownerId: _userId, _id: { $in: eventIds } })
+      ? home.events.filter((e) => eventIds.includes(e._id))
       : [];
     const eventById = new Map(events.map((e) => [e._id, e]));
     const tagNameOf = (tagId) => {
@@ -974,13 +1011,7 @@ const service = {
    */
   async getGrantFor(ownerId) {
     if (!ownerId || ownerId === _userId) return null;
-    const ms = await _db.collection(core.models.COLLECTIONS.ShareMembership)
-      .findOne({ ownerId, memberId: _userId, status: 'active' });
-    if (!ms) return null;
-    const grant = await _db.collection(core.models.COLLECTIONS.ShareGrant)
-      .findOne({ membershipId: ms._id });
-    if (!grant) return null;
-    return { switches: grant.switches || {}, scope: grant.scope || {} };
+    return core.share.getMyGrantFor(_db, _userId, ownerId);
   },
 
   friendly,
@@ -1028,28 +1059,29 @@ const service = {
   // 铁律：只调 core.admin 白名单聚合接口；绝不返回用户的礼金、联系人、备注内容，
   // 也不能替用户导出账本。所有返回对象只含白名单字段，userId 一律脱敏短号。
   async adminOverview() {
-    return core.admin.overview(_db);
+    return core.admin.overview(_db, _userId);
   },
   async adminMemberList({ page, pageSize, memberState } = {}) {
     try {
-      return await core.admin.memberList(_db, { page, pageSize, memberState });
+      return await core.admin.memberList(_db, _userId, { page, pageSize, memberState });
     } catch (e) { throw new Error(friendly(e)); }
   },
   async adminSetMemberPlan(maskedUserId, plan, days) {
     try {
-      return await core.admin.setMemberPlan(_db, maskedUserId, plan, days, 'admin:' + _userId);
+      // 审计操作者标记由 core.admin 按 'admin:<actorId>' 口径派生（与旧行为一致）
+      return await core.admin.setMemberPlan(_db, _userId, maskedUserId, plan, days);
     } catch (e) { throw new Error(friendly(e)); }
   },
   async adminQuotaUsage(maskedUserId) {
     try {
-      return await core.admin.quotaUsage(_db, maskedUserId);
+      return await core.admin.quotaUsage(_db, _userId, maskedUserId);
     } catch (e) { throw new Error(friendly(e)); }
   },
   async adminInviteStats() {
-    return core.admin.inviteStats(_db);
+    return core.admin.inviteStats(_db, _userId);
   },
   async adminShareOverview({ limit } = {}) {
-    return core.admin.shareOverview(_db, { limit });
+    return core.admin.shareOverview(_db, _userId, { limit });
   },
   // —— 老板平台补全（任务M）：以下接口 core 侧一律校验管理员身份
   // （只认 appConfig 文档 adminIds；本地演示模式下 init 已自动把演示
@@ -1136,6 +1168,16 @@ service._isNetworkError = isNetworkError;
 service.NETWORK_HINT = NETWORK_HINT;
 // 仅测试用：注入 db 工厂（模拟初始化失败/恢复）与复位单例状态
 service._setDbFactoryForTest = (fn) => { _dbFactory = fn || null; };
-service._resetForTest = () => { _db = null; _userId = null; _dbFactory = null; };
+// 仅测试用（任务AD）：注入模式与远程传输——回环测试把传输接到
+// cloudfunctions/api 的 createMain（假 SDK），在进程内跑通全链路；
+// 页面与生产路径恒不设这两个注入口
+service._setModeForTest = (mode) => { _modeForTest = mode || null; _remoteCore = null; };
+service._setTransportForTest = (fn) => { _transportForTest = fn || null; _remoteCore = null; };
+service._resetForTest = () => {
+  _db = null; _userId = null; _dbFactory = null;
+  _modeForTest = null; _transportForTest = null; _remoteCore = null;
+  _cloudUserReady = false;
+  core = coreLib;
+};
 
 module.exports = service;

@@ -84,6 +84,14 @@ async function listEvents(db, actorId, ownerId) {
   return all.filter((e) => pre.scope.events.includes(e._id));
 }
 
+/**
+ * 按 id 读单个礼薄（任务AD 切云新增）：与 data-service 原直连读取同口径
+ * （只按 {_id, ownerId} 查），供本地/云端共用一条路径。
+ */
+async function getEvent(db, actorId, ownerId, eventId) {
+  return db.collection(COLLECTIONS.ReceiveEvent).findOne({ _id: eventId, ownerId });
+}
+
 /* ---------- 收礼明细记录 ---------- */
 
 async function createRecord(db, actorId, ownerId, eventId, { contactId, amount, type, remark = '', date }) {
@@ -143,4 +151,16 @@ async function listRecords(db, actorId, ownerId, eventId) {
   return users.attachCreatorNames(db, records);
 }
 
-module.exports = { createEvent, updateEvent, deleteEvent, listEvents, createRecord, updateRecord, deleteRecord, listRecords, today };
+/**
+ * 按 id 读单条收礼记录（任务AD 切云新增）：与 data-service 原直连读取同口径
+ * （只按 {_id, ownerId} 查），并补记账人显示名（与原页面口径一致）。
+ * 不存在返回 null。
+ */
+async function getRecord(db, actorId, ownerId, recordId) {
+  const doc = await db.collection(COLLECTIONS.ReceiveRecord).findOne({ _id: recordId, ownerId });
+  if (!doc) return doc;
+  const [named] = await users.attachCreatorNames(db, [doc]);
+  return named;
+}
+
+module.exports = { createEvent, updateEvent, deleteEvent, listEvents, getEvent, createRecord, updateRecord, deleteRecord, listRecords, getRecord, today };

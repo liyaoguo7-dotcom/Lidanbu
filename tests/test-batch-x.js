@@ -60,7 +60,7 @@ test('任务X-共享邀请：invite 不绑定亲友（pending、memberId 空）�
   const ms = await db.collection(core.models.COLLECTIONS.ShareMembership).findOne({ _id: inv.membershipId });
   assert.eq(ms.status, 'pending', '新建邀请应为 pending');
   assert.eq(ms.memberId, '', '新建邀请不应绑定任何亲友（谁接受谁绑定）');
-  await core.share.accept(db, inv.membershipId, member);
+  await core.share.accept(db, member, inv.membershipId);
   const ms2 = await db.collection(core.models.COLLECTIONS.ShareMembership).findOne({ _id: inv.membershipId });
   assert.eq(ms2.status, 'active', '接受后应 active');
   assert.eq(ms2.memberId, member, '接受者即绑定者');

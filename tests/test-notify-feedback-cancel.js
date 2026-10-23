@@ -112,7 +112,7 @@ test('通知触发：共享接受通知主人、改权通知成员、移除再�
   const inv = await core.share.invite(db, owner, { switches: { view: true }, scope: { events: [ev] } });
   // 发出邀请阶段不产生通知
   assert.eq((await N.listNotifications(db, owner)).length, 0, '发出邀请不通知');
-  await core.share.accept(db, inv.membershipId, member);
+  await core.share.accept(db, member, inv.membershipId);
   const ownerNotes = await N.listNotifications(db, owner);
   assert.eq(ownerNotes.length, 1, '主人收到 1 条');
   assert.eq(ownerNotes[0].type, 'shareChanged', '类型为共享变更');

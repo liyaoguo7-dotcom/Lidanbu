@@ -28,6 +28,8 @@ function pointsSettingsFromConfig(config = AppConfig) {
 
 /** 生效积分设置：静态配置为默认，appConfig 文档 points 段逐项覆盖（与邀请奖励同口径） */
 async function resolvePointsSettings(db, config = AppConfig) {
+  // 任务AD：api 分发会把调用者 id 放进本参数位（见 payment.resolvePricing 同口径守卫）
+  if (typeof config === 'string') config = AppConfig;
   const base = pointsSettingsFromConfig(config);
   if (!db) return base;
   const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });

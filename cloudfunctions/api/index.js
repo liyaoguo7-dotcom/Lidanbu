@@ -18,12 +18,15 @@
 const { createExportXlsxHandler } = require('./routes-export');
 
 // 允许远程调用的 core 模块（业务模块，函数签名均为 (db, actorId, ...)）。
-// db/config/models/format/export/payAdapter/ocr/contentSafety 不开放：
-// 分别是基础设施、常量、纯工具、内部构建器与适配层，各有自己的入口。
+// db/config/models/format/payAdapter/ocr/contentSafety 不开放：
+// 分别是基础设施、常量、纯工具与适配层，各有自己的入口。
+// export 于 2026-10-23 任务AD 加入：只放行 buildExportData（导出页概览的
+// 只读聚合，无写操作、无审计写入）；exportData 含实际导出筛选与审计，
+// 仍只经 exportXlsx 专用路由调用，不经通用分发。
 const ALLOWED_MODULES = [
   'contacts', 'receive', 'gifts', 'stats', 'share', 'quota', 'inviteReward',
   'payment', 'points', 'admin', 'restriction', 'users', 'account', 'notify',
-  'feedback', 'audit', 'importer',
+  'feedback', 'audit', 'importer', 'export',
 ];
 
 /** 服务端静默建号（与小程序端 data-service.ensureUser 同口径）：
@@ -84,13 +87,41 @@ function createMain({ sdk, core, db, buildXlsx }) {
         return { ok: false, error: `未知action：${action}` };
       }
       const args = Array.isArray(event.args) ? event.args : [];
+      // 支付适配器不能跨 RPC 序列化（任务AD）：payment.purchase /
+      // purchasePointsPack 在服务端注入与小程序端本地演示同口径的
+      // MockPayAdapter（模拟支付，真实通道未接入前两边行为一致）。
+      // 真实支付通道接入时，只改这里：换成 WechatVirtualPayAdapter。
+      if (modName === 'payment' && (fnName === 'purchase' || fnName === 'purchasePointsPack')) {
+        const opts = (args[1] && typeof args[1] === 'object') ? args[1] : {};
+        opts.adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
+        args[1] = opts;
+      }
       await ensureServerUser(db, core, OPENID);
       const data = await fn(db, OPENID, ...args);
+      // importer.writeImport 的失败以 { rawError } 形态返回（非抛错）：Error
+      // 对象过不了云端序列化，这里归一化为普通对象 {message, code, itemIndex}，
+      // 小程序端据此还原文案/错误码/出错条目下标（与本地口径一致）。
+      if (data && data.rawError instanceof Error) {
+        const re = data.rawError;
+        data.rawError = {
+          message: re.message || '操作失败，请重试',
+          code: re.code,
+          itemIndex: Number.isInteger(re.itemIndex) ? re.itemIndex : undefined,
+        };
+      }
       return { ok: true, data: data === undefined ? null : data };
     } catch (err) {
-      // core 抛出的均为用户可读文案（errors.js 口径）；未知错误只回通用文案，不漏内部细节
+      // core 抛出的均为用户可读文案（errors.js 口径）；未知错误只回通用文案，不漏内部细节。
+      // 带机器错误码的错误（errors.js 的 permDenied/quotaDenied 等）其消息即
+      // 设计给用户看的文案（如额度卖惨文案，无冒号），原样透出；无码的未知
+      // 错误才走"含冒号且短"的启发式，防内部细节外漏（任务AD 回环测试坐实）。
       const msg = (err && err.message) || '操作失败，请重试';
-      return { ok: false, error: /[:：]/.test(msg) && msg.length <= 120 ? msg : '操作失败，请重试' };
+      const coded = err && typeof err.code === 'string';
+      const out = { ok: false, error: coded || (/[:：]/.test(msg) && msg.length <= 120) ? msg : '操作失败，请重试' };
+      // 机器可读错误码透传（任务AD）：小程序端页面按 code 分流提示
+      // （如 member-required / insufficient-points / plan-not-found），与本地口径一致
+      if (err && typeof err.code === 'string') out.code = err.code;
+      return out;
     }
   };
 }

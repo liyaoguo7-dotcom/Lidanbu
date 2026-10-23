@@ -73,4 +73,19 @@ async function exportData(db, actorId, ownerId, opts = {}) {
   return { events, records, gifts };
 }
 
-module.exports = { checkExportScope, exportData };
+/**
+ * 导出页概览数据（任务AD 切云新增，只读聚合、无写操作、不写审计）：
+ * 与 data-service.exportSummary 原直连拼装同口径——本人账本的礼薄列表
+ * + 收礼/送礼/亲友计数。注意与 exportData 的区别：exportData 是实际导出
+ * 时的授权筛选（带审计），本函数只是页面概览数字，ownerId 恒为本人。
+ * @returns {{events, receiveRecords:number, gifts:number, contacts:number}}
+ */
+async function buildExportData(db, actorId, ownerId) {
+  const events = await db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId });
+  const receiveRecords = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId });
+  const gifts = await db.collection(COLLECTIONS.GiftRecord).count({ ownerId });
+  const contacts = await db.collection(COLLECTIONS.Contact).count({ ownerId });
+  return { events, receiveRecords, gifts, contacts };
+}
+
+module.exports = { checkExportScope, exportData, buildExportData };
