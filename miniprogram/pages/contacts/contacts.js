@@ -7,21 +7,19 @@ const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
 const { hornMarquee } = require('../../services/horn-marquee.js');
 
-function pinyinInitial(name) {
-  // 演示期简易分组：取首字，按常见姓氏映射；未知归 '#'
-  const first = (name || '').charAt(0);
-  const map = {
-    张: 'Z', 李: 'L', 王: 'W', 赵: 'Z', 刘: 'L', 陈: 'C', 杨: 'Y', 黄: 'H',
-    周: 'Z', 吴: 'W', 徐: 'X', 孙: 'S', 马: 'M', 朱: 'Z', 胡: 'H', 郭: 'G',
-    何: 'H', 罗: 'L', 高: 'G', 郑: 'Z', 梁: 'L', 谢: 'X', 宋: 'S', 唐: 'T',
-  };
-  return map[first] || '#';
-}
+// 分组口径在 services/pinyin-initial.js（300+ 姓氏含复姓，2026-10-24 改准）
+const { pinyinInitial, compareGroupKey } = require('../../services/pinyin-initial.js');
 
 Page({
   data: {
     hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
     groups: [],
+    presentMap: {},
+    hasHashGroup: false,
+    indexLetters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), // 右侧字母快选（全部字母，没人的置灰）
+    activeLetter: '',
+    bubbleLetter: '',
+    bubbleShow: false,
     keyword: '',
     tipText: '小技巧：点击姓名可查询来往记录哦～',
     sheetOpen: false,
@@ -61,8 +59,80 @@ Page({
       const k = pinyinInitial(c.name);
       (by[k] = by[k] || []).push(c);
     });
-    const groups = Object.keys(by).sort().map((k) => ({ key: k, items: by[k] }));
-    this.setData({ groups });
+    const groups = Object.keys(by).sort(compareGroupKey).map((k) => ({ key: k, items: by[k] }));
+    this._presentKeys = groups.map((g) => g.key);
+    const presentMap = {};
+    this._presentKeys.forEach((k) => { presentMap[k] = true; });
+    this._barLetters = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+    if (presentMap['#']) this._barLetters.push('#');
+    this._barRect = null; // 栏内容可能变，旧量测作废
+    this.setData({
+      groups,
+      presentMap,
+      hasHashGroup: !!presentMap['#'],
+    }, () => this._measureGroups());
+  },
+
+  /** 量测各分组标题的文档位置（滚动高亮当前字母用） */
+  _measureGroups() {
+    if (!wx.createSelectorQuery) return; // 极老基础库无此接口时仅失去滚动高亮，快选跳转不受影响
+    wx.createSelectorQuery()
+      .selectAll('.group-title')
+      .boundingClientRect()
+      .selectViewport()
+      .scrollOffset()
+      .exec((res) => {
+        const rects = (res && res[0]) || [];
+        const off = (res && res[1] && res[1].scrollTop) || 0;
+        this._groupTops = rects.map((r, i) => ({
+          key: (this._presentKeys || [])[i],
+          top: r.top + off,
+        })).filter((g) => g.key);
+      });
+  },
+
+  onPageScroll(e) {
+    if (!this._groupTops || !this._groupTops.length) return;
+    const st = (e && e.scrollTop) || 0;
+    let cur = this._groupTops[0].key;
+    for (const g of this._groupTops) {
+      if (g.top <= st + 140) cur = g.key; else break;
+    }
+    if (cur !== this.data.activeLetter) this.setData({ activeLetter: cur });
+    // 手动滚动时与字母栏点击的短暂锁定互不干扰：点击跳转会置 _jumpLock 直到滚动停稳
+  },
+
+  /** 字母栏：点按/滑动选字母 → 跳到对应分组（没人的字母置灰不响应） */
+  onIndexTouch(e) {
+    const letters = this._barLetters || [];
+    if (!letters.length) return;
+    const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    if (!touch) return;
+    const go = (rect) => {
+      const h = rect.height / letters.length;
+      let idx = Math.floor((touch.clientY - rect.top) / h);
+      idx = Math.max(0, Math.min(letters.length - 1, idx));
+      const letter = letters[idx];
+      if (!letter || letter === this._lastIndexLetter) return;
+      this._lastIndexLetter = letter;
+      if (!(this._presentKeys || []).includes(letter)) {
+        this.setData({ bubbleLetter: letter, bubbleShow: true });
+        return; // 置灰字母只给气泡反馈，不跳转
+      }
+      this.setData({ bubbleLetter: letter, bubbleShow: true, activeLetter: letter });
+      wx.pageScrollTo({ selector: letter === '#' ? '#anchor-hash' : `#anchor-${letter}`, duration: 0, offsetTop: -10 });
+    };
+    if (this._barRect) { go(this._barRect); return; }
+    if (!wx.createSelectorQuery) return;
+    wx.createSelectorQuery().select('.index-bar').boundingClientRect((rect) => {
+      this._barRect = rect;
+      if (rect) go(rect);
+    }).exec();
+  },
+
+  onIndexTouchEnd() {
+    this._lastIndexLetter = '';
+    if (this.data.bubbleShow) this.setData({ bubbleShow: false });
   },
 
   onSearchInput(e) {

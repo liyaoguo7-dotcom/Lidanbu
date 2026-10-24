@@ -11,7 +11,7 @@
 
 <view class="card">
   <block wx:for="{{groups}}" wx:key="key">
-    <view class="group-title">{{item.key}}</view>
+    <view class="group-title" id="anchor-{{item.key === '#' ? 'hash' : item.key}}">{{item.key}}</view>
     <view class="contact-row" wx:for="{{item.items}}" wx:key="_id"
       data-id="{{item._id}}" data-name="{{item.name}}" bindtap="openSheet">
       <text class="nm">{{item.name}}</text>
@@ -22,6 +22,16 @@
     <text class="ph">还没有亲友，点击下方红色＋添加</text>
   </view>
 </view>
+
+<!-- 右侧字母快选栏：全部字母，没联系人的置灰；点按/滑动选字母跳分组 -->
+<view class="index-bar" wx:if="{{groups.length}}"
+  bindtouchstart="onIndexTouch" bindtouchmove="onIndexTouch"
+  bindtouchend="onIndexTouchEnd" bindtouchcancel="onIndexTouchEnd">
+  <view class="idx-item {{activeLetter === item ? 'on' : ''}} {{presentMap[item] ? '' : 'off'}}"
+    wx:for="{{indexLetters}}" wx:key="*this">{{item}}</view>
+  <view class="idx-item {{activeLetter === '#' ? 'on' : ''}}" wx:if="{{hasHashGroup}}">#</view>
+</view>
+<view class="idx-bubble" wx:if="{{bubbleShow}}">{{bubbleLetter}}</view>
 
 <view class="fab" bindtap="goAdd">＋</view>
 
