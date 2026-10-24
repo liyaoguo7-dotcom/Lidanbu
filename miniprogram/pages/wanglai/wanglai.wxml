@@ -29,7 +29,7 @@
 <!-- 搜索结果 -->
 <view class="card" wx:if="{{searching}}">
   <view class="contact-row" wx:for="{{searchResults}}" wx:key="contactId"
-    data-id="{{item.contactId}}" bindtap="goTimeline">
+    data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
     <text class="nm">{{item.name}}</text>
     <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
     <text class="chev">›</text>
@@ -65,7 +65,7 @@
 
   <!-- 亲友列表 -->
   <view class="card" wx:if="{{rows.length > 0}}">
-    <view class="wl-row" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" bindtap="goTimeline">
+    <view class="wl-row" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
       <text class="nm">{{item.name}}</text>
       <view class="right">
         <text class="count">{{item.countText}}</text>

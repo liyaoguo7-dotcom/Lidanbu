@@ -36,7 +36,10 @@
   <view class="num"><text class="dl">差额：</text>{{sumDiff}}</view>
 </view>
 
-<view class="empty" wx:if="{{items.length === 0}}">
+<view class="empty" wx:if="{{loading && items.length === 0}}">
+  <text class="empty-text">加载中…</text>
+</view>
+<view class="empty" wx:if="{{!loading && items.length === 0}}">
   <text class="empty-text">暂无往来记录</text>
 </view>
 

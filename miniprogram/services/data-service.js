@@ -877,8 +877,11 @@ const service = {
   async getTimeline({ contactId, ownerId, range } = {}) {
     const oid = ownerId || _userId;
     try {
-      const tl = await core.stats.memberTimeline(_db, _userId, oid, contactId, { range });
-      const c = await this.getContact(contactId, oid);
+      // 竖线树与联系人详情互相独立，并发取（原来串行多一个云端往返）
+      const [tl, c] = await Promise.all([
+        core.stats.memberTimeline(_db, _userId, oid, contactId, { range }),
+        this.getContact(contactId, oid),
+      ]);
       return { ...tl, contactName: c ? c.name : '' };
     } catch (e) { throw new Error(friendly(e)); }
   },

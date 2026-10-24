@@ -137,7 +137,9 @@ Page({
 
   goTimeline(e) {
     const id = e.currentTarget.dataset.id;
+    const name = e.currentTarget.dataset.name || '';
     const ownerQ = this.ownerId ? `&ownerId=${this.ownerId}` : '';
-    wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${id}${ownerQ}` });
+    const nameQ = name ? `&name=${encodeURIComponent(name)}` : '';
+    wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${id}${ownerQ}${nameQ}` });
   },
 });

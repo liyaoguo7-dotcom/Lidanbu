@@ -10,6 +10,7 @@ const { formatAmount } = require('../../core/format.js');
 
 Page({
   data: {
+    loading: true,
     contactName: '',
     isMember: false,
     sumSend: '',
@@ -20,6 +21,12 @@ Page({
   },
 
   async onLoad(options) {
+    // 列表页带过来的姓名先落屏（标题与姓名不等云端往返）
+    const presetName = options.name ? decodeURIComponent(options.name) : '';
+    if (presetName) {
+      this.setData({ contactName: presetName });
+      wx.setNavigationBarTitle({ title: `往来记录 - ${presetName}` });
+    }
     await dataService.init();
     this.contactId = options.contactId || '';
     this.ownerId = options.ownerId || '';
@@ -62,6 +69,8 @@ Page({
       wx.setNavigationBarTitle({ title: `往来记录 - ${tl.contactName || ''}` });
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
+    } finally {
+      this.setData({ loading: false });
     }
   },
 

@@ -259,3 +259,17 @@ test('成员竖线树：无权限被拒绝', async () => {
   try { await stats.memberTimeline(db, 'stranger', owner, cA); } catch (e) { err = e; }
   assert(err && /^无权限：/.test(err.message), '陌生人拒绝且文案用户可读');
 });
+
+test('竖线树提速（2026-10-24 真机延迟反馈）：同一批记录只查一遍', async () => {
+  const db = await h.newDB();
+  const { owner, cA } = await setup(db);
+  const counts = {};
+  const origCollection = db.collection.bind(db);
+  db.collection = (name) => { counts[name] = (counts[name] || 0) + 1; return origCollection(name); };
+  const tl = await stats.memberTimeline(db, owner, owner, cA);
+  db.collection = origCollection;
+  assert(tl.items.length > 0, '竖线树应有条目');
+  const C = core.models.COLLECTIONS;
+  assert.eq(counts[C.ReceiveRecord] || 0, 1, '收礼记录只查一遍（旧实现 memberStats+timeline 查两遍）');
+  assert.eq(counts[C.GiftRecord] || 0, 1, '送礼记录只查一遍');
+});

@@ -163,16 +163,38 @@ module.exports = {
  * @returns 同 timeline，另带 isMember
  */
 async function memberTimeline(db, actorId, ownerId, contactId, opts = {}) {
-  const stats = await memberStats(db, actorId, ownerId, contactId, opts);
-  const full = await timeline(db, ownerId, contactId, opts);
-  if (!stats.isMember) return { ...full, isMember: false };
-  const pre = await authz.checkMemberAccess(db, actorId, ownerId);
-  const eventIds = (pre.ok && pre.scope.events) || [];
-  const giftsOk = !!(pre.ok && pre.scope.gifts);
-  const items = full.items.filter((it) => (
-    it.type === 'receive' ? eventIds.includes(it.eventId) : giftsOk
-  ));
-  return { ...stats, items, isMember: true };
+  // 2026-10-24 提速（真机反馈：往来页点联系人竖线树加载延迟）：旧实现先跑
+  // memberStats 再跑 timeline，同一批收/送记录在云端被查两遍，加上联系人
+  // 详情串行跟随，一次打开约 8~9 个云端往返。现改为：权限检查口径与
+  // memberStats 完全一致（成员先过 checkMemberAccess＋查看开关＋联系人
+  // 可见性），记录只取一次（带授权范围的查询条件），统计与条目同源计算，
+  // 结果与旧实现逐字段等价（回归测试守恒）。
+  const isOwner = actorId === ownerId;
+  let eventIds = null; // null=全部事件（账本主人）
+  let giftsOk = true;
+  if (!isOwner) {
+    const pre = await authz.checkMemberAccess(db, actorId, ownerId);
+    if (!pre.ok) throw errors.permDenied(pre.reason);
+    if (!pre.switches.view) throw errors.permDenied('switch-off:view');
+    eventIds = pre.scope.events;
+    giftsOk = pre.scope.gifts;
+    const ck = await authz.check(db, actorId, 'read', { kind: 'contact', ownerId, contactId });
+    if (!ck.ok) throw errors.permDenied(ck.reason);
+  }
+  const range = resolveRangeOpt(opts.range);
+  const inRange = (r) => r.date >= range.from && r.date <= range.to;
+  const rq = { ownerId, contactId };
+  if (eventIds) rq.eventId = { $in: eventIds };
+  const [rsAll, gsAll, evs] = await Promise.all([
+    db.collection(COLLECTIONS.ReceiveRecord).find(rq),
+    giftsOk
+      ? db.collection(COLLECTIONS.GiftRecord).find({ ownerId, contactId })
+      : Promise.resolve([]),
+    db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId }),
+  ]);
+  const full = await finishTimeline(db, rsAll.filter(inRange), gsAll.filter(inRange),
+    new Map(evs.map((e) => [e._id, e])), range);
+  return { ...full, isMember: !isOwner };
 }
 
 /**
@@ -225,16 +247,7 @@ async function contactStats(db, ownerId, contactId, opts = {}) {
  * items 每条 {type:'receive'|'gift', date, amountFen, tagId, tagName, eventName, note,
  *   payType(收礼才有), recordId, kind}，按 date 从早到晚（同日按创建时间）
  */
-async function timeline(db, ownerId, contactId, opts = {}) {
-  const range = resolveRangeOpt(opts.range);
-  const inRange = (r) => r.date >= range.from && r.date <= range.to;
-  const receives = (await db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, contactId })).filter(inRange);
-  const gifts = (await db.collection(COLLECTIONS.GiftRecord).find({ ownerId, contactId })).filter(inRange);
-  const events = new Map();
-  if (receives.length) {
-    const evs = await db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId });
-    evs.forEach((e) => events.set(e._id, e));
-  }
+function buildTimelineItems(receives, gifts, events) {
   const items = [];
   receives.forEach((r) => {
     const ev = events.get(r.eventId) || {};
@@ -255,6 +268,11 @@ async function timeline(db, ownerId, contactId, opts = {}) {
       createdAt: g.createdAt || 0,
     });
   });
+  return items;
+}
+
+async function finishTimeline(db, receives, gifts, events, range) {
+  const items = buildTimelineItems(receives, gifts, events);
   await fillCreatorNames(db, items, [...receives, ...gifts]);
   items.sort((a, b) => (
     a.date < b.date ? -1 : a.date > b.date ? 1
@@ -269,6 +287,18 @@ async function timeline(db, ownerId, contactId, opts = {}) {
     diffFen: receiveTotalFen - giftTotalFen,
     from: range.from, to: range.to,
   };
+}
+
+async function timeline(db, ownerId, contactId, opts = {}) {
+  const range = resolveRangeOpt(opts.range);
+  const inRange = (r) => r.date >= range.from && r.date <= range.to;
+  const [rsAll, gsAll, evs] = await Promise.all([
+    db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, contactId }),
+    db.collection(COLLECTIONS.GiftRecord).find({ ownerId, contactId }),
+    db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId }),
+  ]);
+  return finishTimeline(db, rsAll.filter(inRange), gsAll.filter(inRange),
+    new Map(evs.map((e) => [e._id, e])), range);
 }
 
 /**
