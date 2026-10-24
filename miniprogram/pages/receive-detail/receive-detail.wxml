@@ -7,11 +7,8 @@
   <text class="pat-name {{isBaishi ? 'baishi' : ''}}">{{tagName}}</text>
   <text class="event-name">{{event.name}}</text>
   <text class="event-date num">{{date}}</text>
-</view>
-
-<!-- 共计与记录合并为一张卡（任务AE 第 8 项，与送礼列表同一版式）：共计居中大字、
-     数字红字；细线分隔无灰底间隔；列表末尾「完」 -->
-<view class="card list-card">
+  <!-- 上下合成一块（2026-10-24 用户亲定）：共计直接接在日期下面，与头部同一张卡，
+       去掉中间的灰色间隔；共计与记录之间仍是细线分隔（任务AE 第 8 项版式不变） -->
   <view class="total-line">
     <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
   </view>

@@ -128,7 +128,7 @@ Page({
       });
       clearForm(wxStorage(), GIFT_ADD_KEY);
       wx.showToast({ title: '已保存', icon: 'success' });
-      setTimeout(() => wx.navigateBack(), 600);
+      wx.navigateBack(); // 成功提示是全局浮层，返回后仍可见：不再固定多等 600ms（2026-10-24 提速，用户反馈新建礼薄等保存后延迟）
     } catch (e) {
       // 额度用完走委婉文案（core 已是用户可读文案）
       wx.showModal({

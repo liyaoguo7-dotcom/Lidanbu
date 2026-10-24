@@ -82,7 +82,7 @@ Page({
     try {
       await dataService.deleteRecord(this.recordId);
       wx.showToast({ title: '已删除', icon: 'success' });
-      setTimeout(() => wx.navigateBack(), 600);
+      wx.navigateBack(); // 成功提示是全局浮层，返回后仍可见：不再固定多等 600ms（2026-10-24 提速，用户反馈新建礼薄等保存后延迟）
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
     } finally {

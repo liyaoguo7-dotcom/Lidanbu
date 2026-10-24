@@ -175,7 +175,13 @@ test('任务AE-8共计列表复刻：居中大字分段红字、合并一卡、�
   ]) {
     const w = readMp(wxmlP);
     const x = readMp(wxssP);
-    assert(w.includes('card list-card'), `${wxmlP}：共计与记录应合并为一张卡`);
+    if (wxmlP.includes('receive-detail')) {
+      // 2026-10-24 用户改定：头部与共计/记录上下合成一块（同一张 pat-card、共计接在日期下面、无灰色间隔）
+      assert(w.includes('card pat-card') && !w.includes('card list-card'), `${wxmlP}：头部与共计/记录应合成一张卡`);
+      assert(w.indexOf('event-date') < w.indexOf('total-line'), `${wxmlP}：共计应直接接在日期下面`);
+    } else {
+      assert(w.includes('card list-card'), `${wxmlP}：共计与记录应合并为一张卡`);
+    }
     assert(w.includes('<text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text>'), `${wxmlP}：共计分段——笔数与金额数字红字、笔/¥/元深色`);
     assert(w.includes('class="subline"'), `${wxmlP}：场合/类型与日期应在同一行（subline）`);
     assert(w.includes('<text class="end-text">完</text>'), `${wxmlP}：列表末尾应有「完」`);
