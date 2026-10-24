@@ -294,3 +294,58 @@ test('回环：详情页一趟取齐（RPC 计数：详情聚合各只走 1 趟�
     void sdk; void db;
   } finally { dataService._resetForTest(); }
 });
+
+test('回环：保存后列表即时显示（会话缓存写穿，二次读列表 0 往返）', async () => {
+  const { transport } = makeLoopback('loop-cache');
+  let calls = 0;
+  const counting = async (data) => { calls += 1; return transport(data); };
+  try {
+    dataService._resetForTest();
+    dataService._setModeForTest('cloud');
+    dataService._setTransportForTest(counting);
+    await dataService.init();
+
+    // 联系人：首读 1 趟、再读 0 趟；新建后列表立刻有（写穿）
+    await dataService.listContacts();
+    calls = 0;
+    await dataService.listContacts();
+    assert.eq(calls, 0, '联系人列表二次读取应走缓存');
+    const c = await dataService.createContact({ name: '赵六' });
+    const contactId = (c.contact && c.contact._id) || c._id;
+    calls = 0;
+    const afterAdd = await dataService.listContacts();
+    assert.eq(calls, 0, '新建联系人后列表不应再等云端');
+    assert(afterAdd.some((x) => x._id === contactId && x.name === '赵六'), '新联系人应已在列表');
+
+    // 送礼：新建后列表立刻有
+    await dataService.listGifts();
+    const gf = await dataService.createGift({ contactId, tagId: 'shengri', amountFen: 10000, date: '2026-10-01' });
+    const giftId = (gf.gift && gf.gift._id) || gf._id;
+    calls = 0;
+    const gifts = await dataService.listGifts();
+    assert.eq(calls, 0, '新建送礼后列表不应再等云端');
+    assert(gifts.some((g) => g._id === giftId), '新送礼应已在列表最上方');
+    assert.eq(gifts[0]._id, giftId, '最新一条在最上方');
+
+    // 礼薄汇总：记一笔后条数/合计即时更新
+    const ev = await dataService.createEvent({ name: '赵六婚宴', tagId: 'jiehun', date: '2026-10-02' });
+    const eventId = (ev.event && ev.event._id) || ev._id;
+    await dataService.listEventsWithStats();
+    await dataService.createRecord(eventId, { contactId, amountFen: 50000, type: '现金', date: '2026-10-02' });
+    calls = 0;
+    const sums = await dataService.listEventsWithStats();
+    assert.eq(calls, 0, '记账后礼薄列表不应再等云端');
+    const row = sums.find((s) => s._id === eventId);
+    assert(row && row.count === 1 && row.totalFen === 50000, '礼薄条数/合计应即时更新');
+
+    // 礼薄详情：首读落缓存；再记一笔，详情写穿即时可见
+    const det1 = await dataService.getEventDetail(eventId);
+    assert.eq(det1.count, 1, '详情首读 1 条');
+    await dataService.createRecord(eventId, { contactId, amountFen: 30000, type: '红包', date: '2026-10-02' });
+    calls = 0;
+    const det2 = await dataService.getEventDetail(eventId);
+    assert.eq(calls, 0, '详情再读应走缓存');
+    assert(det2.count === 2 && det2.totalFen === 80000, '详情应写穿新记录');
+    assert.eq(det2.records[0].contactName, '赵六', '新记录带联系人名');
+  } finally { dataService._resetForTest(); }
+});

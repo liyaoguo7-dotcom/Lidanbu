@@ -174,7 +174,7 @@ Page({
     try {
       const r = await dataService.createContact({ name, remark });
       this.setData({ addSheetOpen: false });
-      await this.reload();
+      this.reload(); // 缓存已写穿，列表即时刷新，不再等云端重拉
       if (r && r.duplicateWarning) {
         // core：重名只提醒不阻止，记录已创建
         wx.showModal({
