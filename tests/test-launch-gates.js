@@ -169,3 +169,40 @@ test('AF性能：api 定时保活触发器——timer 事件空转、config.json
   const cfg = JSON.parse(fs.readFileSync(path.join(API_DIR, 'config.json'), 'utf8'));
   assert(Array.isArray(cfg.triggers) && cfg.triggers.some((t) => t.type === 'timer'), 'api config.json 应带 timer 触发器');
 });
+
+test('AF老板后台三修：静态四档（含 halfYear）原样保存应成功（真机保存失败实锤回归）', async () => {
+  try {
+    await initCloud('af-admin-3', { adminIds: ['af-admin-3'] });
+    const cfg = await dataService.adminGetConfig();
+    assert(Array.isArray(cfg.pricing) && cfg.pricing.some((p) => p.id === 'halfYear'), '生效档位应含 halfYear');
+    // 按配置页的保存口径原样回存（含大写 id 的半年卡）——修复前会被 id 正则拒
+    const plans = cfg.pricing.map((p) => ({
+      id: p.id, name: p.name, priceFen: p.priceFen, days: p.days,
+      grantPoints: p.grantPoints || 0, recommended: !!p.recommended, onShelf: p.onShelf !== false,
+    }));
+    const r = await dataService.adminUpdatePricing(plans);
+    assert.eq(r.pricing.length, 4, '四档应全部保存成功');
+    const q = await dataService.adminUpdateQuotaSettings({
+      freeQuota: { receiveEvents: 3, recordsPerEvent: 30, giftRecords: 30, contacts: 50 },
+      memberQuota: { receiveEvents: 30, recordsPerEvent: 500, giftRecords: 500, contacts: 500 },
+    });
+    assert.eq(q.freeQuota.receiveEvents, 3, '额度保存应成功');
+  } finally { dataService._resetForTest(); }
+});
+
+test('AF老板后台三修：专属清单勾选不用 WXML 方法调用、邀请设置节与购买页秒出（静态）', () => {
+  const wxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/app-config/app-config.wxml'), 'utf8');
+  assert(!wxml.includes('indexOf('), 'WXML 不得调用 .indexOf()（真机勾选没反应的实锤）');
+  assert(wxml.includes('featureChecked[item.key]'), '勾选态应走 JS 预计算的映射');
+  assert(wxml.includes("section === 'invite'"), '配置页应有邀请奖励设置节');
+  assert(wxml.includes('onSaveInvite'), '邀请节应有保存入口');
+  const home = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/admin-home/admin-home.js'), 'utf8');
+  assert(home.includes("section: 'invite'"), '老板平台菜单应有邀请奖励设置入口');
+  const ds = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/services/data-service.js'), 'utf8');
+  const seg = ds.slice(ds.indexOf('async getPurchasePageData'), ds.indexOf('async getPurchasePageData') + 900);
+  assert(seg.includes('Promise.all'), '购买页数据五个读应并发（串行真机 3~4 秒）');
+  const purchase = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/member/purchase/purchase.js'), 'utf8');
+  assert(purchase.includes('paintStatic'), '购买页应先进页静态秒出方块');
+  const pwxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/member/purchase/purchase.wxml'), 'utf8');
+  assert(pwxml.includes('hydrated && buyEnabled'), '购买按钮应等真数据到达才出现');
+});

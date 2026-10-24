@@ -547,14 +547,18 @@ const service = {
    * @param {string} platform 设备平台（wx.getDeviceInfo().platform，如 'ios'/'android'）
    */
   async getPurchasePageData(platform) {
-    const membership = await this.getMembership();
-    const pointsBalance = await this.getPointsBalance();
-    const plans = await this.getPricing();
-    const settings = await this.getPointsSettings();
-    let platformOverrides = null;
-    try {
-      platformOverrides = await core.payment.getPaymentPlatforms(_db, _userId);
-    } catch (e) { /* 读不到覆盖就用静态配置 */ }
+    // 五个读互相独立，必须并发（2026-10-24 真机反馈：串行 5 个云端往返
+    // 让购买页套餐 3~4 秒才出现；并发后约等于 1 个往返）
+    const [membership, pointsBalance, plans, settings, platformOverrides] = await Promise.all([
+      this.getMembership(),
+      this.getPointsBalance(),
+      this.getPricing(),
+      this.getPointsSettings(),
+      (async () => {
+        try { return await core.payment.getPaymentPlatforms(_db, _userId); }
+        catch (e) { return null; /* 读不到覆盖就用静态配置 */ }
+      })(),
+    ]);
     const mergedConfig = {
       ...AppConfig,
       payment: {

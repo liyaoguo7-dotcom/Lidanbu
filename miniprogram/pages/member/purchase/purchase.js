@@ -9,6 +9,7 @@
  * 真实环境换微信虚拟支付适配器，本页不改。
  */
 const dataService = require('../../../services/data-service.js');
+const AppConfig = require('../../../config/app-config.js');
 const { buildPurchaseView } = require('../../../services/purchase-view.js');
 
 const STATE_TEXT = {
@@ -34,11 +35,38 @@ Page({
     platformDisabledTip: '',
     buyingId: '',
     doneText: '',
+    hydrated: false, // 真数据（服务端配置/会员状态）是否已到达
   },
 
   async onLoad() {
+    this.paintStatic();
     await dataService.init();
     await this.refresh();
+  },
+
+  /** 先出方块（2026-10-24 真机反馈：套餐要等 3~4 秒才出现）：进页先用
+   * 静态默认配置同步渲染套餐/礼包方块（数值与服务端默认一致），真数据
+   * 到达后由 refresh() 整页替换为生效值（老板平台改过的以服务端为准）。
+   * 购买按钮等真数据到达（hydrated）才出现，杜绝拿旧开关状态下单。 */
+  paintStatic() {
+    try {
+      const view = buildPurchaseView({
+        plans: AppConfig.pricing || [],
+        packs: (AppConfig.points && AppConfig.points.packs) || [],
+        state: 'free',
+        purchaseEnabled: true,
+      });
+      const hot = view.plans.find((p) => p.recommended);
+      this.setData({
+        loading: false,
+        stateText: '加载中…',
+        plans: view.plans,
+        packs: view.packs,
+        selectedPlanId: (hot && hot.id) || (view.plans[0] && view.plans[0].id) || '',
+        selectedPackId: (view.packs[0] && view.packs[0].id) || '',
+        packsLocked: true,
+      });
+    } catch (e) { /* 静态渲染失败不拦真数据加载 */ }
   },
 
   /** 本机平台（'ios'/'android'/…）：只用来问配置开关，判断逻辑不在本页 */
@@ -65,6 +93,7 @@ Page({
         ? this.data.selectedPackId : (packIds[0] || '');
       this.setData({
         loading: false,
+        hydrated: true,
         stateText: STATE_TEXT[d.state] || d.state,
         expireText: d.expireAt ? new Date(d.expireAt).toLocaleDateString('zh-CN') : '',
         pointsBalance: d.pointsBalance,

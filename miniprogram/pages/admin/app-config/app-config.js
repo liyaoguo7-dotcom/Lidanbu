@@ -20,6 +20,7 @@ function yuanToFen(str) {
 }
 
 const SECTIONS = {
+  invite: { title: '邀请奖励设置' },
   pricing: { title: '额度与会员价格设置' },
   switches: { title: '功能开关' },
   features: { title: '会员专属功能清单设置' },
@@ -51,6 +52,8 @@ Page({
     pointsCfg: { registerGrant: '', photoImportCost: '' }, packs: [],
     platforms: { ios: true, android: true },
     launch: { paymentEnabled: false, photoImportEnabled: false },
+    featureChecked: {}, // 会员专属清单的勾选映射（WXML 不能调 .indexOf()，须 JS 预先算好）
+    inviteCfg: { enabled: true, receivePool: '', giftRecords: '', maxSuccessfulInvites: '' },
   },
 
   async onLoad(query) {
@@ -92,6 +95,13 @@ Page({
           paymentEnabled: cfg.paymentEnabled === true,
           photoImportEnabled: cfg.photoImportEnabled === true,
         },
+        featureChecked: Object.fromEntries(FEATURE_FIELDS.map((f) => [f.key, (cfg.memberOnlyFeatures || []).includes(f.key)])),
+        inviteCfg: {
+          enabled: !cfg.inviteReward || cfg.inviteReward.enabled !== false,
+          receivePool: String(cfg.inviteReward && cfg.inviteReward.perInvite ? cfg.inviteReward.perInvite.receivePool : ''),
+          giftRecords: String(cfg.inviteReward && cfg.inviteReward.perInvite ? cfg.inviteReward.perInvite.giftRecords : ''),
+          maxSuccessfulInvites: String(cfg.inviteReward ? cfg.inviteReward.maxSuccessfulInvites : ''),
+        },
       });
     } catch (e) {
       this.setData({ loading: false, error: ds.friendly(e) });
@@ -125,7 +135,32 @@ Page({
     this.setData({ [`features.${e.currentTarget.dataset.key}`]: e.detail.value });
   },
   onFeatureCheck(e) {
-    this.setData({ memberOnly: e.detail.value });
+    const selected = e.detail.value || [];
+    this.setData({
+      memberOnly: selected,
+      featureChecked: Object.fromEntries(FEATURE_FIELDS.map((f) => [f.key, selected.includes(f.key)])),
+    });
+  },
+
+  // —— 邀请奖励设置（补 UI：此前 core/接口齐全但配置页无此节，总览页写的「修改入口在配置管理」无处可改） ——
+  onInviteToggle(e) {
+    this.setData({ 'inviteCfg.enabled': e.detail.value });
+  },
+  onInviteInput(e) {
+    this.setData({ [`inviteCfg.${e.currentTarget.dataset.key}`]: e.detail.value });
+  },
+  onSaveInvite() {
+    let payload;
+    try {
+      const pool = this.num(this.data.inviteCfg.receivePool, '收礼池奖励');
+      const gift = this.num(this.data.inviteCfg.giftRecords, '送礼奖励');
+      const max = this.num(this.data.inviteCfg.maxSuccessfulInvites, '成功邀请上限');
+      payload = { enabled: !!this.data.inviteCfg.enabled, perInvite: { receivePool: pool, giftRecords: gift }, maxSuccessfulInvites: max };
+    } catch (e) {
+      wx.showToast({ title: e.message, icon: 'none' });
+      return;
+    }
+    this.confirmSave('邀请奖励设置', () => ds.adminUpdateInviteSettings(payload));
   },
 
   confirmSave(what, fn) {

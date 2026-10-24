@@ -24,6 +24,7 @@ Page({
       { no: '15', title: '家庭共享概况', desc: '每人邀请了几位家人，只看数量', target: 'page', page: 'share-overview' },
       { no: '16', title: '会员与积分配置', desc: '注册赠送、拍照单价、积分礼包增删改', target: 'config', section: 'points' },
       { no: '17', title: '支付平台开关', desc: 'iPhone/安卓购买入口分别开关', target: 'config', section: 'platforms' },
+      { no: '18', title: '邀请奖励设置', desc: '开关、每邀请奖励数、成功邀请上限', target: 'config', section: 'invite' },
     ],
   },
   onTapItem(e) {

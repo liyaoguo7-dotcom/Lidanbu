@@ -311,7 +311,7 @@ const seen = new Set();
 const clean = plans.map((p) => {
 if (!p || typeof p!== 'object') throw badConfig('档位格式不对');
 const id = String(p.id || '');
-if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(id)) throw badConfig(`档位id不合法:${id}`);
+if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$/.test(id)) throw badConfig(`档位id不合法:${id}`); // 允许大小写：存量档位 id halfYear 含大写（2026-10-24 真机保存失败实锤——原小写正则把默认四档里的半年卡拒之门外）
 if (seen.has(id)) throw badConfig(`档位id重复:${id}`);
 seen.add(id);
 const name = String(p.name || '').trim();
@@ -491,7 +491,7 @@ const seen = new Set();
 next.packs = packs.map((p) => {
 if (!p || typeof p !== 'object') throw badConfig('礼包格式不对');
 const id = String(p.id || '');
-if (!/^[a-z0-9][a-z0-9_-]{0,31}$/.test(id)) throw badConfig(`礼包id不合法:${id}`);
+if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}$/.test(id)) throw badConfig(`礼包id不合法:${id}`); // 同上
 if (seen.has(id)) throw badConfig(`礼包id重复:${id}`);
 seen.add(id);
 const name = String(p.name || '').trim();

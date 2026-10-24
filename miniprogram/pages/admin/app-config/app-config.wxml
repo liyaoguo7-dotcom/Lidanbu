@@ -36,7 +36,19 @@
     </view>
   </view>
   <button class="btn-primary" bindtap="onSaveSwitches" loading="{{saving}}">保存功能开关</button>
-  <view class="note">邀请奖励开关在「邀请奖励设置与数据」页里改。</view>
+  <view class="note">邀请奖励开关在本页「邀请奖励设置」节里改（老板平台菜单第 18 项）。</view>
+</block>
+
+<!-- 邀请奖励设置 -->
+<block wx:if="{{!loading && !error && section === 'invite'}}">
+  <view class="card">
+    <view class="form-row"><text class="form-label" style="width:170px">邀请奖励开关</text><switch checked="{{inviteCfg.enabled}}" bindchange="onInviteToggle" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">每邀请奖励·收礼池（+条）</text><input class="form-val" type="number" value="{{inviteCfg.receivePool}}" data-key="receivePool" bindinput="onInviteInput" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">每邀请奖励·送礼（+条）</text><input class="form-val" type="number" value="{{inviteCfg.giftRecords}}" data-key="giftRecords" bindinput="onInviteInput" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">成功邀请上限（次/人）</text><input class="form-val" type="number" value="{{inviteCfg.maxSuccessfulInvites}}" data-key="maxSuccessfulInvites" bindinput="onInviteInput" /></view>
+  </view>
+  <button class="btn-primary" bindtap="onSaveInvite" loading="{{saving}}">保存邀请奖励设置</button>
+  <view class="note">改动对之后的发放立即生效，历史发放不追溯；每次修改记入操作记录。邀请数据（人数/次数/已发额度）在老板平台「邀请奖励设置与数据」页看。</view>
 </block>
 
 <!-- 积分规则 -->
@@ -83,7 +95,7 @@
     <checkbox-group bindchange="onFeatureCheck">
       <label class="form-row" wx:for="{{featureFields}}" wx:key="key">
         <text class="form-label" style="width:170px">{{item.label}}</text>
-        <checkbox value="{{item.key}}" checked="{{memberOnly.indexOf(item.key) >= 0}}" />
+        <checkbox value="{{item.key}}" checked="{{featureChecked[item.key]}}" />
       </label>
     </checkbox-group>
   </view>
