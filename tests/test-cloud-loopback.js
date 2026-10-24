@@ -243,3 +243,16 @@ test('回环：remote-core 映射清单与本地 core 导出对齐（防漏登�
   }
   assert(checked > 40, `应对齐检查应覆盖主要映射（实际 ${checked}）`);
 });
+
+test('回环：管理员增减通路（云端管理员调 addAdmin，错误原样回传）', async () => {
+  try {
+    await initCloud('loop-boss', { adminIds: ['loop-boss'] });
+    let err = null;
+    try { await dataService.adminAddAdmin('zzz***zzz'); } catch (e) { err = e; }
+    assert(err && /没有找到这个编号对应的用户/.test(err.message), `不存在的编号应回可读错误（实际 ${err && err.message}）`);
+    const list = await dataService.adminListAdmins();
+    assert.eq(list.count, 1, '名单 1 人');
+    assert.eq(list.admins[0].tier, 'console', '种子管理员是云端档');
+    assert.eq(list.viewerCanManage, true, '云端管理员可增减');
+  } finally { dataService._resetForTest(); }
+});

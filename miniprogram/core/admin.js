@@ -12,7 +12,10 @@
 * 3. userId 一律脱敏短号对外展示，内部用 mask 解析回真实 id。
 *
 * 范围：15 项全部接真接口（任务M 补全第3/4/6/7/10/11项与配置写接口）。
-* 新增接口一律 requireAdmin（只认 appConfig 文档 adminIds 名单）。
+* 新增接口一律 requireAdmin（生效名单 = adminIds ∪ addedAdminIds，见 isAdmin）。
+* 管理员名单分两档（用户 2026-10-24 定）：adminIds 是云端后台（控制台）导入的
+* 管理员，只有这一档可以增减管理员；addedAdminIds 是云端管理员在应用内
+* 添加的管理员，能用老板平台但不能增减管理员。
 */
 const { COLLECTIONS, now} = require('./models');
 const quota = require('./quota');
@@ -248,10 +251,44 @@ return db.collection(COLLECTIONS.AppConfig).findOne({ _id: CONFIG_DOC_ID});
 }
 
 /** 是否管理员：只认 appConfig 文档 adminIds 名单（无名单=无人是管理员） */
+function consoleAdminIds(doc) {
+return doc && Array.isArray(doc.adminIds) ? doc.adminIds : [];
+}
+function addedAdminIds(doc) {
+return doc && Array.isArray(doc.addedAdminIds) ? doc.addedAdminIds : [];
+}
+function effectiveAdminIds(doc) {
+return [...new Set([...consoleAdminIds(doc), ...addedAdminIds(doc)])];
+}
+
 async function isAdmin(db, actorId) {
 if (!actorId) return false;
 const doc = await readConfigDoc(db);
-return !!(doc && Array.isArray(doc.adminIds) && doc.adminIds.includes(actorId));
+return effectiveAdminIds(doc).includes(actorId);
+}
+
+/** 能否增减管理员：只有云端后台导入的管理员（adminIds 本档）可以 */
+async function canManageAdmins(db, actorId) {
+if (!actorId) return false;
+const doc = await readConfigDoc(db);
+return consoleAdminIds(doc).includes(actorId);
+}
+
+function rosterDenied() {
+const e = new Error('无权限：只有云端后台导入的管理员可以增减管理员');
+e.code = 'roster-manager-only';
+return e;
+}
+function badRoster(msg) {
+const e = new Error(msg);
+e.code = 'bad-roster';
+return e;
+}
+
+/** 增减管理员的前置：先是管理员，再是云端导入的管理员 */
+async function requireAdminManager(db, actorId) {
+await requireAdmin(db, actorId);
+if (!(await canManageAdmins(db, actorId))) throw rosterDenied();
 }
 
 async function requireAdmin(db, actorId) {
@@ -606,10 +643,13 @@ if (Number.isFinite(from)) users = users.filter((u) => (u.createdAt || 0) >= fro
 if (Number.isFinite(to)) users = users.filter((u) => (u.createdAt || 0) <= to);
 const total = users.length;
 const { p, ps, items: pageUsers } = pageSlice(users, { page, pageSize });
+const cfgDoc = (await readConfigDoc(db)) || {};
+const adminSet = new Set(effectiveAdminIds(cfgDoc));
 const items = [];
 for (const u of pageUsers) {
 items.push({
 userId: maskUserId(u._id),
+isAdmin: adminSet.has(u._id),
 createdAt: u.createdAt || null,
 memberState: quota.getMembershipState(u),
 counts: {
@@ -622,7 +662,7 @@ restricted: !!(u.restricted && u.restricted.status === true),
 restrictReason: (u.restricted && u.restricted.reason) || '',
 });
 }
-return { total, page: p, pageSize: ps, items };
+return { total, page: p, pageSize: ps, items, viewerCanManage: consoleAdminIds(cfgDoc).includes(actorId) };
 }
 
 /** 周期键：day → 'YYYY-MM-DD'（本地）；week → 该周周一的 'YYYY-MM-DD' */
@@ -757,11 +797,75 @@ byPlan: [...planMap.values()],
 }
 
 /** 管理员名单（第10项）：只读展示（脱敏），名单维护仍走云数据库直写（现行口径） */
+function buildAdminList(doc, actorId) {
+const admins = [
+...consoleAdminIds(doc).map((id) => ({ userId: maskUserId(id), tier: 'console', self: id === actorId })),
+...addedAdminIds(doc).map((id) => ({ userId: maskUserId(id), tier: 'added', self: id === actorId })),
+];
+return { admins, count: admins.length, viewerCanManage: consoleAdminIds(doc).includes(actorId) };
+}
+
 async function listAdmins(db, actorId) {
 await requireAdmin(db, actorId);
 const doc = (await readConfigDoc(db)) || {};
-const ids = Array.isArray(doc.adminIds) ? doc.adminIds : [];
-return { admins: ids.map((id) => maskUserId(id)), count: ids.length };
+return buildAdminList(doc, actorId);
+}
+
+/**
+ * 添加管理员（仅云端导入的管理员可操作）：按脱敏编号定位用户，
+ * 写入 addedAdminIds（后加档），写审计。对方须已打开过小程序（用户文档存在）。
+ */
+async function addAdmin(db, actorId, { maskedId } = {}) {
+await requireAdminManager(db, actorId);
+if (!maskedId) throw badRoster('缺少用户编号');
+let target;
+try {
+target = await findUserByMask(db, String(maskedId));
+} catch (e) {
+if (e.message === 'admin:user-not-found') throw badRoster('没有找到这个编号对应的用户');
+if (e.message === 'admin:mask-collision') throw badRoster('这个编号对应多个用户，无法确定是哪一位');
+throw e;
+}
+const doc = (await readConfigDoc(db)) || {};
+if (effectiveAdminIds(doc).includes(target._id)) throw badRoster('该用户已经是管理员');
+const added = [...addedAdminIds(doc), target._id];
+await db.collection(COLLECTIONS.AppConfig).update({ _id: CONFIG_DOC_ID }, { addedAdminIds: added, updatedAt: now() });
+await audit.log(db, {
+ownerId: actorId, actorId, action: 'admin-add', targetType: 'admin',
+targetId: maskUserId(target._id), detail: `添加管理员：${maskUserId(target._id)}（后加管理员，不能增减管理员）`,
+});
+return buildAdminList({ ...doc, addedAdminIds: added }, actorId);
+}
+
+/**
+ * 移除管理员（仅云端导入的管理员可操作）：按脱敏编号定位名单条目。
+ * 护栏：不能移除最后一位云端管理员（否则再无人能增减管理员）。
+ */
+async function removeAdmin(db, actorId, { maskedId } = {}) {
+await requireAdminManager(db, actorId);
+if (!maskedId) throw badRoster('缺少用户编号');
+const doc = (await readConfigDoc(db)) || {};
+const consoleIds = consoleAdminIds(doc);
+const addedIds = addedAdminIds(doc);
+const inConsole = consoleIds.filter((id) => maskUserId(id) === maskedId);
+const inAdded = addedIds.filter((id) => maskUserId(id) === maskedId);
+if (!inConsole.length && !inAdded.length) throw badRoster('该编号不在管理员名单里');
+if (inConsole.length && inAdded.length && inConsole[0] !== inAdded[0]) {
+throw badRoster('这个编号对应多位管理员，无法确定要移除哪一位');
+}
+const targetId = (inConsole[0] || inAdded[0]);
+if (inConsole.length && consoleIds.length <= 1) throw badRoster('不能移除最后一位云端管理员');
+const nextConsole = consoleIds.filter((id) => id !== targetId);
+const nextAdded = addedIds.filter((id) => id !== targetId);
+await db.collection(COLLECTIONS.AppConfig).update(
+{ _id: CONFIG_DOC_ID },
+{ adminIds: nextConsole, addedAdminIds: nextAdded, updatedAt: now() },
+);
+await audit.log(db, {
+ownerId: actorId, actorId, action: 'admin-remove', targetType: 'admin',
+targetId: maskUserId(targetId), detail: `移除管理员：${maskUserId(targetId)}${targetId === actorId ? '（移除自己）' : ''}`,
+});
+return buildAdminList({ ...doc, adminIds: nextConsole, addedAdminIds: nextAdded }, actorId);
 }
 
 /**
@@ -837,6 +941,9 @@ feedbackSetStatus,
 orderList,
 orderStats,
 listAdmins,
+addAdmin,
+removeAdmin,
+canManageAdmins,
 auditTrail,
 setUserRestricted,
 };

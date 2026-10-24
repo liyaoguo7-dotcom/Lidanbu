@@ -52,3 +52,4 @@
 }
 .input-line input { flex: 1; height: 58px; font-size: 15px; }
 .iron { font-size: 13px; color: #B0492F; margin: 12px 16px; line-height: 1.6; }
+.btn-danger-sm { display: inline-block; margin-left: auto; padding: 2px 14px; font-size: 13px; line-height: 1.9; color: #F0575A; background: #fff; border: 1px solid #F0575A; border-radius: 16px; }

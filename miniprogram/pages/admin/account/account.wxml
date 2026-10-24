@@ -14,6 +14,8 @@
   </view>
   <view class="note">注册：{{item.createdText}}</view>
   <view class="note">礼薄 {{item.counts.events}} 本 · 收礼 {{item.counts.records}} 条 · 送礼 {{item.counts.gifts}} 条 · 亲友 {{item.counts.contacts}} 人</view>
+  <view wx:if="{{item.isAdmin}}" class="note">已是管理员</view>
+  <button wx:elif="{{canManage}}" class="btn-danger-sm" data-id="{{item.userId}}" catchtap="onMakeAdmin">设为管理员</button>
   <view wx:if="{{item.restricted}}" class="note">限制原因：{{item.restrictReason}}</view>
 </view>
 <button wx:if="{{searched && list.length < total}}" class="btn-primary" bindtap="onLoadMore" loading="{{loading}}">加载更多（已显示 {{list.length}} / 共 {{total}}）</button>

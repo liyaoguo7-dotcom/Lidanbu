@@ -8,7 +8,7 @@ const ds = require('../../../services/data-service.js');
 const STATE_NAMES = { free: '免费', member: '会员', grace: '缓冲期', expired: '已过期' };
 
 Page({
-  data: { frag: '', from: '', to: '', list: [], total: 0, loading: false, searched: false, page: 1 },
+  data: { frag: '', from: '', to: '', list: [], total: 0, loading: false, searched: false, page: 1, canManage: false },
   onLoad() {
     wx.setNavigationBarTitle({ title: '账号查询' });
     // 用户列表（2026-10-24 用户要求加）：打开即按注册时间倒序列出全部用户，
@@ -40,6 +40,7 @@ Page({
       this.setData({
         list: append ? [...this.data.list, ...items] : items,
         total: r.total, loading: false, searched: true, page: pageNum,
+        canManage: !!r.viewerCanManage,
       });
     } catch (e) {
       this.setData({ loading: false });
@@ -50,6 +51,26 @@ Page({
   async onLoadMore() {
     if (this.data.loading || this.data.list.length >= this.data.total) return;
     await this.loadPage(this.data.page + 1, true);
+  },
+  /** 设为管理员（按钮只对云端管理员显示；服务端校验分档，后加管理员不能再加人） */
+  onMakeAdmin(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    wx.showModal({
+      title: '设为管理员',
+      content: `把 ${id} 设为管理员吗？对方能使用老板平台（看统计、改配置），但不能增减管理员；记账数据仍然看不到。`,
+      confirmText: '设为管理员',
+      success: async (res) => {
+        if (!res.confirm) return;
+        try {
+          await ds.adminAddAdmin(id);
+          wx.showToast({ title: '已设为管理员', icon: 'none' });
+          await this.loadPage(this.data.page, false);
+        } catch (err) {
+          wx.showToast({ title: ds.friendly(err), icon: 'none' });
+        }
+      },
+    });
   },
   /** 点一行复制脱敏编号：去「额度用量」「账号处理」等页粘贴查询，免手打脱敏号 */
   onCopyId(e) {

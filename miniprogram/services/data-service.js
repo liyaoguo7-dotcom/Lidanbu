@@ -1141,6 +1141,16 @@ const service = {
     try { return await core.admin.listAdmins(_db, _userId); }
     catch (e) { throw new Error(friendly(e)); }
   },
+  /** 添加管理员（仅云端导入的管理员可操作，服务端校验分档） */
+  async adminAddAdmin(maskedId) {
+    try { return await core.admin.addAdmin(_db, _userId, { maskedId }); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 移除管理员（同上；服务端拦最后一位云端管理员） */
+  async adminRemoveAdmin(maskedId) {
+    try { return await core.admin.removeAdmin(_db, _userId, { maskedId }); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
   async adminAuditTrail(opts = {}) {
     try { return await core.admin.auditTrail(_db, _userId, opts); }
     catch (e) { throw new Error(friendly(e)); }

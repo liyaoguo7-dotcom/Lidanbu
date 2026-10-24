@@ -90,9 +90,10 @@ test('admin补全：账号查询只回条数汇总、白名单字段、无账本
   assert.eq(row.restricted, false, '未受限');
   assert.eq(
     Object.keys(row).sort().join(','),
-    'counts,createdAt,memberState,restrictReason,restricted,userId',
-    '账号查询字段白名单'
+    'counts,createdAt,isAdmin,memberState,restrictReason,restricted,userId',
+    '账号查询字段白名单（isAdmin 为 2026-10-24 名单分档新增）'
   );
+  assert.eq(row.isAdmin, false, '普通用户 isAdmin=false');
   assertNoLeak(r, 'searchAccounts');
 
   const future = await admin.searchAccounts(db, BOSS, { from: Date.now() + 86400e3 });
@@ -215,8 +216,10 @@ test('admin补全：管理员名单脱敏只读、操作记录过滤与 actor �
 
   const admins = await admin.listAdmins(db, BOSS);
   assert.eq(admins.count, 1, '管理员 1 人');
-  assert(admins.admins[0].includes('***'), '管理员编号脱敏');
-  assert(!admins.admins[0].includes(BOSS), '不露管理员原文');
+  assert(admins.admins[0].userId.includes('***'), '管理员编号脱敏');
+  assert(!admins.admins[0].userId.includes(BOSS), '不露管理员原文');
+  assert.eq(admins.admins[0].tier, 'console', '种子管理员是云端档');
+  assert.eq(admins.viewerCanManage, true, '云端管理员可增减管理员');
 
   const trail = await admin.auditTrail(db, BOSS, { action: 'config' });
   assert(trail.total >= 1, '配置修改有审计');
@@ -326,4 +329,56 @@ test('账号查询页带用户列表（2026-10-24 用户要求）：打开即列
   const wxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/account/account.wxml'), 'utf8');
   assert(wxml.includes('bindtap="onCopyId"'), '列表行应绑定点按复制');
   assert(wxml.includes('onLoadMore'), '应有加载更多按钮');
+});
+
+test('管理员名单分档（2026-10-24 用户定）：只有云端管理员能增减，后加管理员不能', async () => {
+  const db = await newDB();
+  await seedAdmin(db); // BOSS 在 adminIds（云端档）
+  const U1 = await newUser(db, 'added_candidate_01');
+  const U2 = await newUser(db, 'second_candidate_02');
+  const mask = admin.maskUserId;
+
+  // 云端管理员加人 → 进后加档，立即具备管理员权限
+  const after = await admin.addAdmin(db, BOSS, { maskedId: mask(U1) });
+  assert.eq(after.count, 2, '名单变 2 人');
+  const addedRow = after.admins.find((a) => a.userId === mask(U1));
+  assert(addedRow && addedRow.tier === 'added', '新管理员是后加档');
+  assert.eq(await admin.isAdmin(db, U1), true, '后加管理员 isAdmin=true');
+  assert.eq(await admin.canManageAdmins(db, U1), false, '后加管理员不能增减名单');
+
+  // 后加管理员加人/删人 → 都被分档拦下
+  let e1 = null; try { await admin.addAdmin(db, U1, { maskedId: mask(U2) }); } catch (e) { e1 = e; }
+  assert(e1 && e1.code === 'roster-manager-only', '后加管理员加人应被拒，实际 ' + (e1 && e1.code));
+  let e2 = null; try { await admin.removeAdmin(db, U1, { maskedId: mask(BOSS) }); } catch (e) { e2 = e; }
+  assert(e2 && e2.code === 'roster-manager-only', '后加管理员删人应被拒');
+
+  // 非管理员 → not-admin
+  await expectNotAdmin(admin.addAdmin(db, NOBODY, { maskedId: mask(U2) }), 'addAdmin');
+
+  // 重复添加 → 拒绝；审计留痕 admin-add
+  let e3 = null; try { await admin.addAdmin(db, BOSS, { maskedId: mask(U1) }); } catch (e) { e3 = e; }
+  assert(e3 && /已经是管理员/.test(e3.message), '重复添加应被拒');
+  const trail = await admin.auditTrail(db, BOSS, { action: 'admin-add' });
+  assert(trail.total >= 1, '添加管理员应写审计');
+
+  // 云端管理员移除后加管理员 → 生效
+  const afterRm = await admin.removeAdmin(db, BOSS, { maskedId: mask(U1) });
+  assert.eq(afterRm.count, 1, '移除后剩 1 人');
+  assert.eq(await admin.isAdmin(db, U1), false, '被移除后不再是管理员');
+
+  // 最后一位云端管理员不能被移除
+  let e4 = null; try { await admin.removeAdmin(db, BOSS, { maskedId: mask(BOSS) }); } catch (e) { e4 = e; }
+  assert(e4 && /最后一位云端管理员/.test(e4.message), '最后一位云端管理员应被护栏拦下');
+  assert.eq(await admin.isAdmin(db, BOSS), true, 'BOSS 仍在名单');
+});
+
+test('管理员分档页面接线（静态）：管理员页分档+移除、用户列表设为管理员', () => {
+  const fs = require('fs'); const path = require('path');
+  const adminsJs = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/admins/admins.js'), 'utf8');
+  assert(adminsJs.includes('onRemoveAdmin') && adminsJs.includes('adminRemoveAdmin'), '管理员页应有移除接线');
+  const adminsWxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/admins/admins.wxml'), 'utf8');
+  assert(adminsWxml.includes('云端管理员') && adminsWxml.includes('后加管理员'), '名单应分档显示');
+  const accountWxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/account/account.wxml'), 'utf8');
+  assert(accountWxml.includes('catchtap="onMakeAdmin"'), '用户列表应有「设为管理员」（catchtap 不触发行复制）');
+  assert(accountWxml.includes('item.isAdmin'), '已是管理员应有标记');
 });

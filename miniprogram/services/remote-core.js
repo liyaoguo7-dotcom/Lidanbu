@@ -120,7 +120,7 @@ function createRemoteCore(transport) {
     admin: makeRemoteModule(t, 'admin', [
       'overview', 'memberList', 'setMemberPlan', 'quotaUsage', 'inviteStats', 'shareOverview',
       'searchAccounts', 'importUsage', 'feedbackList', 'feedbackSetStatus',
-      'orderList', 'orderStats', 'listAdmins', 'auditTrail', 'setUserRestricted',
+      'orderList', 'orderStats', 'listAdmins', 'addAdmin', 'removeAdmin', 'auditTrail', 'setUserRestricted',
       'getConfig', 'updatePricing', 'updateFeatureSwitches', 'updateMemberOnlyFeatures',
       'updateQuotaSettings', 'updateInviteSettings', 'updatePointsSettings',
       'updatePaymentPlatforms', 'updateLaunchSwitches', 'isAdmin',

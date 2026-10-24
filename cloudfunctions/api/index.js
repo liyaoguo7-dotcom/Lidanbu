@@ -121,7 +121,7 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
         const staticEnabled = !!(core.config && core.config.payment && core.config.payment.enabled);
         opts.cloudGate = {
           enabled: (cfgDoc && cfgDoc.payment && typeof cfgDoc.payment.enabled === 'boolean') ? cfgDoc.payment.enabled : staticEnabled,
-          isAdmin: !!(cfgDoc && Array.isArray(cfgDoc.adminIds) && cfgDoc.adminIds.includes(OPENID)),
+          isAdmin: !!(cfgDoc && [...(Array.isArray(cfgDoc.adminIds) ? cfgDoc.adminIds : []), ...(Array.isArray(cfgDoc.addedAdminIds) ? cfgDoc.addedAdminIds : [])].includes(OPENID)),
         };
         args[1] = opts;
       }
