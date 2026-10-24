@@ -39,8 +39,12 @@ function makeLoopback(openid) {
   return { transport, sdk, db };
 }
 
-async function initCloud(openid) {
-  const { transport } = makeLoopback(openid);
+async function initCloud(openid, seedDoc) {
+  const { transport, db } = makeLoopback(openid);
+  if (seedDoc) {
+    // 种 appConfig 单例（任务AF 发布开关等）；须在 init 的首个业务调用前落库
+    await db.collection('appConfig').insert({ _id: 'singleton', ...seedDoc });
+  }
   dataService._resetForTest();
   dataService._setModeForTest('cloud');
   dataService._setTransportForTest(transport);
@@ -99,7 +103,7 @@ test('回环：建亲友→建礼薄→记收礼→统计/首页/导出全通', 
 
 test('回环：购买会员经服务端 Mock 适配器发货，赠分到账', async () => {
   try {
-    await initCloud('loop-user-3');
+    await initCloud('loop-user-3', { payment: { enabled: true } }); // 任务AF：购买总开关默认关，本用例验发货链路故开闸
     const r = await dataService.purchaseMembership('month');
     assert(r.delivered === true, '云模式购买应发货成功');
     const bal = await dataService.getPointsBalance();
@@ -152,7 +156,7 @@ test('回环：传输失败时 init 优雅失败（不抛死）', async () => {
 
 test('回环：会员拍照导入送礼/收礼全通（任务AE 第 5 项链路坐实）', async () => {
   try {
-    await initCloud('loop-user-photo');
+    await initCloud('loop-user-photo', { payment: { enabled: true }, features: { photoImport: true } }); // 任务AF：两开关默认关，本用例验识别链路故开闸
     await dataService.purchaseMembership('month'); // 15 + 10 = 25 分
     const g = await dataService.recognizePhoto('/tmp/p.jpg', 'gift', {});
     assert.eq(g.items.length, 3, '送礼识别返回 3 条（Mock 口径）');
@@ -168,7 +172,7 @@ test('回环：会员拍照导入送礼/收礼全通（任务AE 第 5 项链路�
 
 test('回环：免费用户拍照被会员门禁拦下，code 透传到页面层', async () => {
   try {
-    await initCloud('loop-user-photo-free');
+    await initCloud('loop-user-photo-free', { features: { photoImport: true } }); // 任务AF：只开拍照闸，验会员门禁（购买闸保持关）
     let caught = null;
     try { await dataService.recognizePhoto('/tmp/p.jpg', 'gift', {}); } catch (e) { caught = e; }
     assert(caught, '免费用户拍照应抛错');

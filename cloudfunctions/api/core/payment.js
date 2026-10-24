@@ -145,6 +145,7 @@ async function createOrder(db, userId, planId, opts = {}) {
     grantPoints: plan.grantPoints || 0, // 赠送积分快照：之后改配置不影响本单，发货时按此入账
     status: 'pending',
     channel: opts.channel || 'mock',
+    mock: !!(opts.mock === true || (opts.adapter && opts.adapter.channel === 'mock')), // 模拟渠道订单标记（任务AF：管理员联调单/演示单可辨识）
     outTradeNo: genOutTradeNo(nowTs),
     createdAt: nowTs,
     paidAt: null,
@@ -209,6 +210,7 @@ async function createPointsPackOrder(db, userId, packId, opts = {}) {
     pointsAmount: pack.points, // 积分快照：发货时经 points.grant 幂等入账
     status: 'pending',
     channel: opts.channel || 'mock',
+    mock: !!(opts.mock === true || (opts.adapter && opts.adapter.channel === 'mock')),
     outTradeNo: genOutTradeNo(nowTs),
     createdAt: nowTs,
     paidAt: null,
@@ -316,12 +318,26 @@ async function processNotify(db, adapter, rawPayload, opts = {}) {
 }
 
 /**
+ * 云端购买总闸（任务AF 第一版发布口径）：opts.cloudGate 由 api 分发在
+ * 云端调用时注入 { enabled, isAdmin }（本地演示/单测不注入、不受限）。
+ * 关闸且非管理员 → 在建单之前拒绝：不产生订单、不发货、不赠分。
+ * 管理员放行走模拟支付联调，其订单在建单时按 mock 渠道自动打标。
+ */
+function assertCloudGateOpen(opts) {
+  const g = opts && opts.cloudGate;
+  if (!g) return;
+  if (g.enabled === true || g.isAdmin === true) return;
+  throw payError('payment-closed', errors.userMessage('payment-closed'));
+}
+
+/**
  * 完整购买流程（演示/测试用编排）：建单 → 通道建单 → 调起支付 →
  * 成功走回调发货；失败/取消只改订单状态、不发货。
  * opts.duplicateNotify=true 时模拟平台把成功回调重复投递一次（验证幂等）。
  * @returns {{order:object, delivered:boolean, duplicated?:boolean, reason?:string}}
  */
 async function purchase(db, userId, planId, opts = {}) {
+  assertCloudGateOpen(opts);
   const adapter = opts.adapter;
   if (!adapter) throw payError('pay-no-adapter', '支付通道未配置');
   const nowTs = opts.now !== undefined ? opts.now : now();
@@ -334,6 +350,7 @@ async function purchase(db, userId, planId, opts = {}) {
  * 成功回调发货积分；非会员在建单层被拒，不产生订单。
  */
 async function purchasePointsPack(db, userId, packId, opts = {}) {
+  assertCloudGateOpen(opts);
   const adapter = opts.adapter;
   if (!adapter) throw payError('pay-no-adapter', '支付通道未配置');
   const nowTs = opts.now !== undefined ? opts.now : now();

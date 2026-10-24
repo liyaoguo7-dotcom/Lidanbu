@@ -122,12 +122,24 @@ const AppConfig = {
   /** 支付平台开关（按终端控制购买入口显隐，页面读 resolvePlatformPurchaseEnabled 决定，
    * 不改页面代码即可开关某终端购买入口——如 iOS 虚拟商品规则变化时先行关闭） */
   payment: {
+    /** 云端购买总开关（任务AF 第一版发布口径）：默认关——云端普通用户
+     * 购买一律回「会员购买暂未开放，敬请期待」，不建单不发货；管理员
+     * （appConfig.adminIds）不受此限、走模拟支付联调且订单标 mock。
+     * 本地演示模式不受影响。真实支付接入后再打开。老板平台可改。 */
+    enabled: false,
     platforms: {
       ios: { purchaseEnabled: true },
       android: { purchaseEnabled: true },
     },
     /** 某终端购买入口关闭时，购买页显示的大白话提示（可改文案，不改页面代码） */
     platformDisabledTip: '这台设备上暂时不能购买，会员和积分在其他设备上也能正常用，换台设备试试吧',
+  },
+
+  /** 功能总开关（任务AF）：默认关，老板平台可改（appConfig 文档 features 段覆盖） */
+  features: {
+    /** 拍照导入：真实识别未接入前第一版关闭——首页入口点击提示
+     * 「拍照导入敬请期待」，服务端 startImportTask/writeImport 同步拒绝 */
+    photoImport: false,
   },
 
   /** 会员防滥用安全上限（用户 2026-10-21 确认口径：会员不设业务额度，

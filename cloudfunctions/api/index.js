@@ -26,16 +26,20 @@ const { createExportXlsxHandler } = require('./routes-export');
 const ALLOWED_MODULES = [
   'contacts', 'receive', 'gifts', 'stats', 'share', 'quota', 'inviteReward',
   'payment', 'points', 'admin', 'restriction', 'users', 'account', 'notify',
-  'feedback', 'audit', 'importer', 'export',
+  'feedback', 'audit', 'importer', 'export', 'features',
 ];
 
 /** 服务端静默建号（与小程序端 data-service.ensureUser 同口径）：
  * 首次调用时建 users 文档（_id=openid）并发注册赠送积分（幂等，只发一次）。
  * 业务函数普遍假设用户文档已存在（如 quota 按 user._id 计额度），缺了会空指针。 */
-async function ensureServerUser(db, core, openid) {
+async function ensureServerUser(db, core, openid, cache) {
+  // 进程内缓存（性能）：同一函数容器内已确认存在的用户跳过这次 DB 读——
+  // 热路径上每个业务调用原本都要先读一次 users。只缓存"已存在"这一
+  // 事实；账号限制另有 restriction.assertWritable 在写入口独立查，不受影响。
+  if (cache && cache.has(openid)) return null;
   const col = db.collection(core.models.COLLECTIONS.User);
   const user = await col.findOne({ _id: openid });
-  if (user) return user;
+  if (user) { if (cache) cache.add(openid); return user; }
   const doc = {
     _id: openid,
     profile: { nickname: '', avatarUrl: '' },
@@ -43,12 +47,14 @@ async function ensureServerUser(db, core, openid) {
     membership: { status: 'free', expireAt: null },
   };
   await col.insert(doc);
+  if (cache) cache.add(openid);
   try { await core.points.grantRegisterBonus(db, openid, core.config); } catch (e) { /* 赠送失败不拦主流程 */ }
   return doc;
 }
 
 /** 依赖注入工厂（本地测试用假 SDK 在进程内跑通全链路；云端用默认导出） */
 function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
+  const _ensuredUsers = new Set(); // 本容器内已确认建号的用户（见 ensureServerUser）
   // 导出处理器懒加载：buildXlsx 依赖 exceljs（体积大、加载慢），绝不能在
   // 函数冷启动时就 require——2026-10-23 真云端实测：急切加载导致 whoami
   // 这种空动作也在默认 3 秒超时内回不来。只有真来 exportXlsx 动作时才装配。
@@ -74,6 +80,11 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
   };
 
   return async function main(event = {}) {
+    // 定时保活触发（config.json 的 timer 触发器）：空转返回，目的只是让
+    // 容器保持热乎、减少用户撞上冷启动（真机反馈保存/删除等数秒的主因）。
+    if (event && (event.Type === 'timer' || event.TriggerName)) {
+      return { ok: true, warm: true };
+    }
     const { OPENID } = sdk.getWXContext();
     const action = event.action || '';
     try {
@@ -104,9 +115,23 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
       if (modName === 'payment' && (fnName === 'purchase' || fnName === 'purchasePointsPack')) {
         const opts = (args[1] && typeof args[1] === 'object') ? args[1] : {};
         opts.adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
+        // 第一版发布口径总闸（任务AF）：注入云端闸口信息，core/payment
+        // 据此在建单前拒绝普通用户（开关关且非管理员）；本地演示不经此路。
+        const cfgDoc = await db.collection(core.models.COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+        const staticEnabled = !!(core.config && core.config.payment && core.config.payment.enabled);
+        opts.cloudGate = {
+          enabled: (cfgDoc && cfgDoc.payment && typeof cfgDoc.payment.enabled === 'boolean') ? cfgDoc.payment.enabled : staticEnabled,
+          isAdmin: !!(cfgDoc && Array.isArray(cfgDoc.adminIds) && cfgDoc.adminIds.includes(OPENID)),
+        };
         args[1] = opts;
       }
-      await ensureServerUser(db, core, OPENID);
+      if (modName === 'importer' && (fnName === 'startImportTask' || fnName === 'writeImport')) {
+        // 拍照导入总闸（任务AF）：给最后一个参数（opts 对象）打云端标记，
+        // core/import 据此按 features.photoImport 开关拒绝（防绕过页面）
+        const last = args[args.length - 1];
+        if (last && typeof last === 'object') args[args.length - 1] = { ...last, cloudGate: true };
+      }
+      await ensureServerUser(db, core, OPENID, _ensuredUsers);
       const data = await fn(db, OPENID, ...args);
       // importer.writeImport 的失败以 { rawError } 形态返回（非抛错）：Error
       // 对象过不了云端序列化，这里归一化为普通对象 {message, code, itemIndex}，

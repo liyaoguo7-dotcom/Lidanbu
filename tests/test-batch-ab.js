@@ -16,24 +16,26 @@ const LC = require('../miniprogram/pages/landscape/landscape-core.js');
 const { hornMarquee, estimateWidth } = require('../miniprogram/services/horn-marquee.js');
 
 // ---------- 1 字号封顶 ----------
-test('任务AB-1字号封顶：四种字体状态姓名/金额 CSS 字号 ≤22、默认字数 =22', () => {
+test('任务AB-1字号封顶（任务AF 更新：中段 23 大一号）：姓名/金额 CSS 字号 ≤中段 23、字形恒小于中段', () => {
+  // 默认字数下各字体渲染 CSS 字号：文楷/宋体回退 22；马善政/龙藏经校准后封顶 23
+  // （其字形 = CSS÷校准系数 ≈ 21.9/19.2，仍小于中段字形 23——"大一号"按字形口径成立）
+  const EXPECT_CSS = { lxgw: 22, mashanzheng: 23, longcang: 23, default: 22 };
   for (const fid of ['lxgw', 'mashanzheng', 'longcang', 'default']) {
     const built = LC.buildColumns(
       [{ id: 'x', name: '张建国', amountFen: 100000, tagId: 'jiehun' }], { fontId: fid });
     const col = built.columns[0];
     assert(col.nameFontSize <= LC.SPEC.MID_FONT, `${fid} 姓名字号 ${col.nameFontSize} 不得超过中段 ${LC.SPEC.MID_FONT}`);
     assert(col.amountFontSize <= LC.SPEC.MID_FONT, `${fid} 金额字号 ${col.amountFontSize} 不得超过中段`);
-    assert.eq(col.nameFontSize, 22, `${fid} 3 字名默认字号 =22`);
-    assert.eq(col.amountFontSize, 22, `${fid} 4 字金额默认字号 =22`);
-    // 多字缩字后仍 ≤22
+    assert.eq(col.nameFontSize, EXPECT_CSS[fid], `${fid} 3 字名默认渲染字号`);
+    assert.eq(col.amountFontSize, EXPECT_CSS[fid], `${fid} 4 字金额默认渲染字号`);
     const big = LC.buildColumns(
       [{ id: 'y', name: '欧阳修远明', amountFen: 150000, tagId: 'jiehun' }], { fontId: fid });
-    assert(big.columns[0].nameFontSize <= 22, `${fid} 5 字名缩后 ≤22`);
-    assert(big.columns[0].amountFontSize <= 22, `${fid} 6 字金额缩后 ≤22`);
+    assert(big.columns[0].nameFontSize <= LC.SPEC.MID_FONT, `${fid} 5 字名缩后 ≤中段`);
+    assert(big.columns[0].amountFontSize <= LC.SPEC.MID_FONT, `${fid} 6 字金额缩后 ≤中段`);
   }
-  // 校准仍在内部：renderFontSize 对龙藏 22 名义值应封顶（裸校准为 26.4）
+  // 校准仍在内部：renderFontSize 对龙藏 22 名义值应封顶中段 23（裸校准为 26.4）
   assert(Math.abs(LC.calibratedSize(22, 'longcang') - 26.4) < 0.01, '校准值本身不变（内部防叠用）');
-  assert.eq(LC.renderFontSize(22, 'longcang'), 22, '渲染字号封顶 22');
+  assert.eq(LC.renderFontSize(22, 'longcang'), 23, '渲染字号封顶中段 23（任务AF：中段大一号）');
   assert.eq(LC.renderFontSize(22, 'lxgw'), 22, '文楷渲染 22');
 });
 

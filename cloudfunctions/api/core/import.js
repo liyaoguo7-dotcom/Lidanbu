@@ -33,6 +33,21 @@ const gifts = require('./gifts');
 const receive = require('./receive');
 const quota = require('./quota');
 const errors = require('./errors');
+const features = require('./features');
+
+/** 第一版发布口径总闸（任务AF）：云端调用（api 分发注入 opts.cloudGate）
+ * 且拍照导入开关关闭时，识别与确认写入一律在最前面拒绝（带 code，
+ * 文案「拍照导入敬请期待」由 friendly 透出）——防绕过页面直接调接口。
+ * 本地演示/单测不注入 cloudGate、不受此闸（与购买总闸同构）。
+ * 开关读取与页面入口提示同源（core/features，appConfig 文档优先）。 */
+async function assertPhotoImportOpen(db, opts) {
+  if (!opts || opts.cloudGate !== true) return;
+  if (!(await features.photoImportEnabled(db))) {
+    const e = new Error(errors.userMessage('photo-import-closed'));
+    e.code = 'photo-import-closed';
+    throw e;
+  }
+}
 const restriction = require('./restriction');
 const ocr = require('./ocr-adapter');
 const points = require('./points');
@@ -69,7 +84,8 @@ function _newJobId() {
  * @throws memberRequired（非会员）| pointsDenied insufficient-points（余额不足，
  *   识别前拦截，无扣款）| OCR 识别错误（未扣款）
  */
-async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, imagePath, provider, fail } = {}) {
+async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, imagePath, provider, fail, cloudGate } = {}) {
+  await assertPhotoImportOpen(db, { cloudGate });
   await restriction.assertWritable(db, actorId);
   validateTarget(kind, eventId);
 
@@ -206,7 +222,8 @@ async function writeImport(db, actorId, ownerId, args) {
   return result;
 }
 
-async function _writeImportInner(db, actorId, ownerId, { kind, eventId, items }) {
+async function _writeImportInner(db, actorId, ownerId, { kind, eventId, items, cloudGate }) {
+  await assertPhotoImportOpen(db, { cloudGate });
   await restriction.assertWritable(db, actorId);
   validateTarget(kind, eventId);
   if (!Array.isArray(items) || items.length === 0) {

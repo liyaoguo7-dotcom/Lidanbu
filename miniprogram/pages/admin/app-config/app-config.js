@@ -50,6 +50,7 @@ Page({
     pricingFromStatic: false, saving: false,
     pointsCfg: { registerGrant: '', photoImportCost: '' }, packs: [],
     platforms: { ios: true, android: true },
+    launch: { paymentEnabled: false, photoImportEnabled: false },
   },
 
   async onLoad(query) {
@@ -86,6 +87,10 @@ Page({
         platforms: {
           ios: !pf.ios || pf.ios.purchaseEnabled !== false,
           android: !pf.android || pf.android.purchaseEnabled !== false,
+        },
+        launch: {
+          paymentEnabled: cfg.paymentEnabled === true,
+          photoImportEnabled: cfg.photoImportEnabled === true,
         },
       });
     } catch (e) {
@@ -239,5 +244,17 @@ Page({
       android: { purchaseEnabled: !!this.data.platforms.android },
     };
     this.confirmSave('支付平台开关', () => ds.adminUpdatePaymentPlatforms(platforms));
+  },
+
+  // —— 第一版发布开关（任务AF） ——
+  onLaunchToggle(e) {
+    this.setData({ [`launch.${e.currentTarget.dataset.key}`]: e.detail.value });
+  },
+  onSaveLaunch() {
+    const switches = {
+      paymentEnabled: !!this.data.launch.paymentEnabled,
+      photoImportEnabled: !!this.data.launch.photoImportEnabled,
+    };
+    this.confirmSave('发布开关', () => ds.adminUpdateLaunchSwitches(switches));
   },
 });

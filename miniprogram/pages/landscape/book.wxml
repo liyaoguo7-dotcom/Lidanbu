@@ -64,7 +64,7 @@
                   <text wx:for="{{item.nameChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
                     style="top:{{ch.topPx}}px;font-size:{{item.nameFontPx}}px;font-family:{{selStack}};color:{{theme.inkColor}};">{{ch.ch}}</text>
                 </view>
-                <view class="zone zone-mid" style="height:{{spec.midH}}px;">
+                <view class="zone zone-mid" style="height:{{spec.midH}}px;margin-top:{{spec.midShift}}px;">
                   <text wx:for="{{item.midChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
                     style="top:{{ch.topPx}}px;font-size:{{item.midFontPx}}px;font-family:{{songtiStack}};color:{{item.midBlack ? '#15181B' : theme.midColor}};">{{ch.ch}}</text>
                 </view>
@@ -82,7 +82,7 @@
     </view>
 
     <!-- 下留白：滑动提示 / ＋（横置内跟随样式配色，白事深灰） -->
-    <view class="botbar" style="height:{{spec.marginV}}px;">
+    <view class="botbar" style="height:{{spec.marginB}}px;">
       <view class="hint"><text class="hint-txt">左右滑动查看更多</text></view>
       <view wx:if="{{perms.canAdd}}" class="plus-touch" bindtap="onAdd"
         style="width:{{spec.plusTouch}}px;height:{{spec.plusTouch}}px;">

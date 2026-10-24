@@ -147,11 +147,11 @@ test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileU
 });
 
 // ---------- 9 横置再收紧 ----------
-test('任务AC-9横置（任务AE 更新 GAP/区高）：COL_W 50/GAP 3.5/NAME_H 114.5/AMT_H 115.5/总高 290、三字体全长不叠字扫验', () => {
+test('任务AC-9横置（任务AF 更新 GAP/区高）：COL_W 50/GAP 4/NAME_H 114.5/AMT_H 118.5/总高 290、三字体全长不叠字扫验', () => {
   assert.eq(LC.SPEC.COL_W, 50, '列宽 56→50');
-  assert.eq(LC.SPEC.GAP, 3.5, '墨迹间距目标（5→2 任务AC → 3.5 任务AE）');
-  assert.eq(LC.SPEC.NAME_H, 114.5, '姓名区（AC 反推 116，AE 为 GAP 3.5 收 1.5）');
-  assert.eq(LC.SPEC.AMT_H, 115.5, '金额区（AC 反推 117，AE 为 GAP 3.5 收 1.5）');
+  assert.eq(LC.SPEC.GAP, 4, '墨迹间距目标（5→2 任务AC → 3.5 任务AE → 4 任务AF）');
+  assert.eq(LC.SPEC.NAME_H, 114.5, '姓名区（AC 反推 116，AE 为 GAP 3.5 收 1.5，本轮校准后仍 114.5）');
+  assert.eq(LC.SPEC.AMT_H, 118.5, '金额区（AC 反推 117，AE 为 GAP 3.5 收 1.5，本轮中段上移后反增至 118.5）');
   assert.eq(LC.COL_INNER_H, 290, '列内总高 = 纸面高 294 − 边框 4');
   // 不叠字：字距 − 校准后字号 ≥ −0.01（round2 尘埃内视为相接不重叠，与旧版式同口径）
   for (const fid of ['lxgw', 'mashanzheng', 'longcang']) {

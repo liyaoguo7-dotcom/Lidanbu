@@ -24,7 +24,7 @@ const colHtml = (c, fid) => {
     `<span class="vchar" style="top:${ch.top}px;font-size:${fontPx}px;font-family:${family};color:${color}">${ch.ch}</span>`).join('');
   return `<div class="col" style="width:${spec.colW}px">
     <div class="zone zone-name" style="top:${spec.innerPad}px;height:${spec.nameH}px">${chars(c.nameChars, c.nameFontSize, stack(fid), theme.inkColor)}</div>
-    <div class="zone zone-mid" style="height:${spec.midH}px">${chars(c.midChars, LC.SPEC.MID_FONT, LC.SONGTI_STACK.replace(/"/g, "'"), theme.midColor)}</div>
+    <div class="zone zone-mid" style="height:${spec.midH}px;margin-top:${spec.midShift}px">${chars(c.midChars, LC.SPEC.MID_FONT, LC.SONGTI_STACK.replace(/"/g, "'"), theme.midColor)}</div>
     <div class="zone zone-amt" style="bottom:${LC.SPEC.AMT_BOTTOM_PAD}px;height:${spec.amtH}px">${chars(c.amountChars, c.amountFontSize, stack(fid), theme.inkColor)}</div>
   </div>`;
 };
@@ -42,9 +42,9 @@ body { background: #888; }
 .scroll { width: 32px; flex-shrink: 0; background: #E8CFC0; }
 .paper { flex: 1; position: relative; border: 2px solid ${theme.frameColor}; background: ${theme.paperBg}; overflow: hidden; }
 .track { display: flex; flex-direction: row; height: 100%; }
-.col { flex-shrink: 0; height: 100%; box-sizing: border-box; border-left: 1px solid ${theme.lineColor}; position: relative; }
+.col { flex-shrink: 0; height: 100%; box-sizing: border-box; border-left: 2px solid ${theme.lineColor}; position: relative; }
 .zone { position: absolute; left: 0; right: 0; }
-.zone-mid { top: 50%; transform: translateY(-50%); }
+.zone-mid { top: 50%; transform: translateY(-50%); margin-top: -3px; }
 .vchar { position: absolute; left: 50%; transform: translateX(-50%); line-height: 1; white-space: nowrap; }
 .strip { margin-top: 20px; width: 844px; display: flex; }
 .strip .paper { height: 294px; flex: 1; }

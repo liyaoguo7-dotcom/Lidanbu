@@ -1,0 +1,9 @@
+{
+  "triggers": [
+    {
+      "name": "warmupTimer",
+      "type": "timer",
+      "config": "0 */5 * * * * *"
+    }
+  ]
+}

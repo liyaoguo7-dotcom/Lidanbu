@@ -123,7 +123,7 @@ function createRemoteCore(transport) {
       'orderList', 'orderStats', 'listAdmins', 'auditTrail', 'setUserRestricted',
       'getConfig', 'updatePricing', 'updateFeatureSwitches', 'updateMemberOnlyFeatures',
       'updateQuotaSettings', 'updateInviteSettings', 'updatePointsSettings',
-      'updatePaymentPlatforms',
+      'updatePaymentPlatforms', 'updateLaunchSwitches', 'isAdmin',
     ]),
     restriction: makeRemoteModule(t, 'restriction', [
       'isRestricted', 'assertWritable',
@@ -142,6 +142,9 @@ function createRemoteCore(transport) {
     ]),
     feedback: makeRemoteModule(t, 'feedback', [
       'submitFeedback', 'listMyFeedback',
+    ]),
+    features: makeRemoteModule(t, 'features', [
+      'getFlags',
     ]),
     importer: makeRemoteModule(t, 'importer', [
       'startImportTask', 'writeImport', 'recordExportJob', 'listExportJobs',

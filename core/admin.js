@@ -274,6 +274,8 @@ inviteReward: await quota.resolveInviteSettings(db),
 pricing: doc.pricing || (StaticConfig.pricing || []).map((x) => ({ ...x })),
 points: await points.resolvePointsSettings(db),
 paymentPlatforms: doc.paymentPlatforms || { ...(StaticConfig.payment ? StaticConfig.payment.platforms : {}) },
+paymentEnabled: (doc.payment && typeof doc.payment.enabled === 'boolean') ? doc.payment.enabled : !!(StaticConfig.payment && StaticConfig.payment.enabled),
+photoImportEnabled: (doc.features && typeof doc.features.photoImport === 'boolean') ? doc.features.photoImport : !!(StaticConfig.features && StaticConfig.features.photoImport),
 updatedAt: doc.updatedAt || null,
 };
 }
@@ -536,6 +538,33 @@ const updatedAt = await writeConfigPatch(db, actorId, { paymentPlatforms: merged
 return { paymentPlatforms: merged, updatedAt };
 }
 
+/**
+ * 修改第一版发布开关（仅管理员，任务AF）：云端购买总开关 +
+ * 拍照导入开关。写入 appConfig 文档 payment.enabled / features.photoImport
+ * 段（与生效读取同口径：文档优先、静态默认兜底）。两个开关第一版默认关。
+ */
+async function updateLaunchSwitches(db, actorId, switches) {
+await requireAdmin(db, actorId);
+if (!switches || typeof switches !== 'object' || Array.isArray(switches)) throw badConfig('发布开关必须是对象');
+if ('paymentEnabled' in switches && typeof switches.paymentEnabled !== 'boolean') throw badConfig('云端购买开关必须为开/关');
+if ('photoImportEnabled' in switches && typeof switches.photoImportEnabled !== 'boolean') throw badConfig('拍照导入开关必须为开/关');
+const hasPay = typeof switches.paymentEnabled === 'boolean';
+const hasPhoto = typeof switches.photoImportEnabled === 'boolean';
+if (!hasPay && !hasPhoto) throw badConfig('发布开关不能为空');
+const doc = (await readConfigDoc(db)) || {};
+const patch = {};
+const changed = [];
+if (hasPay) { patch.payment = { ...(doc.payment || {}), enabled: switches.paymentEnabled }; changed.push('云端购买'); }
+if (hasPhoto) { patch.features = { ...(doc.features || {}), photoImport: switches.photoImportEnabled }; changed.push('拍照导入'); }
+const updatedAt = await writeConfigPatch(db, actorId, patch, `修改发布开关：${changed.join('、')}`);
+const after = (await readConfigDoc(db)) || {};
+return {
+paymentEnabled: (after.payment && typeof after.payment.enabled === 'boolean') ? after.payment.enabled : !!(StaticConfig.payment && StaticConfig.payment.enabled),
+photoImportEnabled: (after.features && typeof after.features.photoImport === 'boolean') ? after.features.photoImport : !!(StaticConfig.features && StaticConfig.features.photoImport),
+updatedAt,
+};
+}
+
 // ================= 补全项（任务M：第3/4/6/7/10/11项接真接口） =================
 //
 // 共同纪律（与文件头铁律一致）：
@@ -675,6 +704,7 @@ amountFen: o.amountFen,
 days: o.days,
 status: o.status,
 channel: o.channel,
+mock: o.mock === true,
 createdAt: o.createdAt,
 paidAt: o.paidAt || null,
 refundedAt: o.refundedAt || null,
@@ -799,6 +829,7 @@ updateQuotaSettings,
 updateInviteSettings,
 updatePointsSettings,
 updatePaymentPlatforms,
+updateLaunchSwitches,
 searchAccounts,
 importUsage,
 feedbackList,

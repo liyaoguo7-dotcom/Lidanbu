@@ -13,12 +13,15 @@ function memStorage() {
   return { get: (k) => (m.has(k) ? m.get(k) : ''), set: (k, v) => m.set(k, v), _map: m };
 }
 
-test('横置-定版数值：列宽50/三段116+52+117/墨迹间距2/列内总高290', () => {
+test('横置-定版数值：列宽50/姓名区114.5/中段区52/金额区118.5/墨迹间距4/列内总高290', () => {
   assert.eq(LC.SPEC.COL_W, 50, '列宽（任务AC 第 9 项：56→50 再窄一档；历程 64.5→56→50）');
-  assert.eq(LC.SPEC.NAME_H, 114.5, '姓名区（AC 反推 116，AE 为 GAP 3.5 收 1.5，见 landscape-core COL_INNER_H 注释）');
+  assert.eq(LC.SPEC.NAME_H, 114.5, '姓名区（本轮模型实测校准定版，见 landscape-core COL_INNER_H 注释）');
   assert.eq(LC.SPEC.MID_H, 52, '中段区');
-  assert.eq(LC.SPEC.AMT_H, 115.5, '金额区（AC 反推 117，AE 为 GAP 3.5 收 1.5）');
-  assert.eq(LC.SPEC.GAP, 3.5, '姓名末字墨迹↔贺礼、贺礼↔金额首字墨迹 间距 3.5（任务AE：2 太近放宽）');
+  assert.eq(LC.SPEC.AMT_H, 118.5, '金额区（本轮模型实测校准定版；大于姓名区——真机反馈金额占位偏小）');
+  assert.eq(LC.SPEC.GAP, 4, '姓名末字墨迹↔贺礼、贺礼↔金额首字墨迹 间距 4（任务AF真机定版；历程 2→3.5→4）');
+  assert.eq(LC.SPEC.MID_FONT, 23, '中段字号 23（比姓名/金额 22 大一号，任务AF真机定版）');
+  assert.eq(LC.SPEC.MID_SHIFT_UP, 3, '中段整体上移 3');
+  assert.eq(LC.SPEC.MARGIN_B, 30, '下留白 30（真机反馈收窄；上留白 48 与纸面高不变）');
   assert.eq(LC.COL_INNER_H, 290, '列内总高 = 纸面 294 − 边框 4（任务AC 纠正旧 258 名义值）');
   assert.eq(LC.SPEC.COLS_PER_SCREEN, 12, '一屏12列');
 });
@@ -190,7 +193,7 @@ test('横置-均布不叠字：首末锚定+字号放不下才缩+字距恒≥�
   assert(n5.pitch >= n5.fontSize - 0.011, '6字名字距≥字号不叠字');
   const a6 = LC.layoutAmount(150000); // 壹仟伍佰元整 = 6 字
   assert.eq(a6.text, '壹仟伍佰元整', '6字金额');
-  assert.eq(a6.fontSize, 19.25, '6字金额字号缩到 115.5/6');
+  assert.eq(a6.fontSize, 19.75, '6字金额字号缩到 118.5/6（金额区本轮 115.5→118.5）');
   assert(a6.pitch >= a6.fontSize - 0.011, '6字金额字距≥字号不叠字');
   const aLast = a6.chars[a6.chars.length - 1].top;
   assert(Math.abs(aLast + a6.fontSize - LC.SPEC.AMT_H) < 0.011, '6字金额末字字形盒贴区底');
@@ -200,11 +203,12 @@ test('横置-均布不叠字：首末锚定+字号放不下才缩+字距恒≥�
   assert.eq(n2.chars[1].top, LC.SPEC.NAME_H - 22, '2字名末字区底');
   const n1 = LC.layoutName('王');
   assert.eq(n1.chars[0].top, 0, '1字名在第一个字位置');
-  // 常规情形字号与中段同大
+  // 字号口径（任务AF 更新）：姓名/金额默认 22，中段 23 大一号
   const n3 = LC.layoutName('张建国');
-  assert.eq(n3.fontSize, LC.SPEC.MID_FONT, '3字名字号=中段字号');
+  assert.eq(n3.fontSize, LC.SPEC.NAME_FONT, '3字名字号=姓名默认 22');
+  assert.eq(LC.SPEC.MID_FONT, LC.SPEC.NAME_FONT + 1, '中段比姓名大一号（23）');
   const a4 = LC.layoutAmount(100000);
-  assert.eq(a4.fontSize, LC.SPEC.MID_FONT, '4字金额字号=中段字号');
+  assert.eq(a4.fontSize, LC.SPEC.AMT_FONT, '4字金额字号=金额默认 22');
   // 三款字体校准下同样不叠字（按校准后实际字号验：字距≥实际字号、末字不越区）
   for (const fid of ['lxgw', 'mashanzheng', 'longcang']) {
     const built = LC.buildColumns([{ id: 'x', name: '欧阳修远', amountFen: 150000, tagId: 'jiehun' }], { fontId: fid });

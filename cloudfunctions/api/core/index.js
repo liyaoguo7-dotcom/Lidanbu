@@ -31,5 +31,6 @@ module.exports = {
   account: require('./account'), // 账号注销（⚠️ 待用户确认，确认前不上线）
   notify: require('./notify'), // 通知中心（站内通知 + 订阅消息适配骨架，任务L）
   feedback: require('./feedback'), // 意见反馈（用户提交 + 老板平台列表，任务L）
+  features: require('./features'), // 功能总开关（任务AF：拍照导入等第一版口径）
   config: require('../miniprogram/config/app-config'),
 };

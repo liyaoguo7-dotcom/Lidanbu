@@ -99,6 +99,7 @@ function presentOrder(o) {
     pointsAmount: o.pointsAmount || 0,
     amountText: core.format.formatAmount(o.amountFen),
     status: o.status,
+    mock: o.mock === true,
     statusText: ORDER_STATUS_TEXT[o.status] || o.status,
     createdText: dstr(o.createdAt),
     paidText: dstr(o.paidAt),
@@ -1167,6 +1168,32 @@ const service = {
     try { return await core.admin.updatePaymentPlatforms(_db, _userId, platforms); }
     catch (e) { throw new Error(friendly(e)); }
   },
+  async adminUpdateLaunchSwitches(switches) {
+    try { return await core.admin.updateLaunchSwitches(_db, _userId, switches); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+
+  /** 当前用户是不是老板平台管理员：结论只认服务端名单（appConfig.adminIds）。
+   * 「我的」页隐藏入口据此决定显隐（任务AF：非管理员连点版本号无入口无提示）。
+   * 出错一律按"不是"处理（fail closed）。 */
+  async isAdmin() {
+    try { return !!(await core.admin.isAdmin(_db, _userId)); }
+    catch (e) { return false; }
+  },
+
+  _featureFlagsCache: null,
+  /** 生效功能开关 { photoImport }（任务AF）：服务端 appConfig 文档优先、
+   * 静态默认兜底；会话内缓存（老板改开关后重开小程序生效）。 */
+  async getFeatureFlags() {
+    if (this._featureFlagsCache) return this._featureFlagsCache;
+    let flags = { photoImport: !!((AppConfig.features || {}).photoImport) };
+    try {
+      const f = await core.features.getFlags(_db, _userId);
+      if (f && typeof f.photoImport === 'boolean') flags = { photoImport: f.photoImport };
+    } catch (e) { /* 取不到按静态默认（第一版为关） */ }
+    this._featureFlagsCache = flags;
+    return flags;
+  },
 
   // —— 电子请柬（2026-10-21 用户决定：取消自制请柬，改为跳转外部小程序） ——
   /** 外部请柬小程序配置 { miniprogramName, appId }（app-config.externalInvitation；
@@ -1188,6 +1215,7 @@ service._setModeForTest = (mode) => { _modeForTest = mode || null; _remoteCore =
 service._setTransportForTest = (fn) => { _transportForTest = fn || null; _remoteCore = null; };
 service._resetForTest = () => {
   _db = null; _userId = null; _dbFactory = null;
+  service._featureFlagsCache = null;
   _modeForTest = null; _transportForTest = null; _remoteCore = null;
   _cloudUserReady = false;
   core = coreLib;

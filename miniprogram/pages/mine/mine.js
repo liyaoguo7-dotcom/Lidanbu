@@ -43,6 +43,7 @@ Page({
 
   async onLoad() {
     await dataService.init();
+    this._isAdmin = await dataService.isAdmin();
     this.setData({
       inviteRewardEnabled: !!(AppConfig.inviteReward && AppConfig.inviteReward.enabled),
       landscapeOn: landscapeRoute.readLandscapeOn(),
@@ -205,10 +206,14 @@ Page({
     wx.navigateTo({ url: '/pages/mine-cancel/mine-cancel' });
   },
 
-  // 老板平台开发期隐藏入口：连点版本号 5 次进入。生产部署方式待定。
+  // 老板平台隐藏入口：连点版本号 5 次进入。任务AF 起入口显隐只认服务端
+  // 判定（onLoad 时问一次 isAdmin）：非管理员连点——不计数、不提示、不跳转，
+  // 像什么都没装一样；管理员才走连点逻辑（管理页自身另有服务端校验兜底）。
   _versionTaps: 0,
   _versionTimer: null,
+  _isAdmin: false,
   onVersionTap() {
+    if (!this._isAdmin) return;
     this._versionTaps += 1;
     clearTimeout(this._versionTimer);
     this._versionTimer = setTimeout(() => { this._versionTaps = 0; }, 2000);

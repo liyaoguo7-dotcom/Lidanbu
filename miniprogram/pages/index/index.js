@@ -40,6 +40,12 @@ Page({
 
   async onLoad() {
     this.setData({ hornOff: hornState.isDismissed('index') }); this._syncHorn();
+    // 电子请柬（任务AF）：合作小程序 AppID 未配置时入口整个不显示，
+    // 不再露一个点了只报「敬请期待」的空入口；配置好自动出现。
+    const ext = dataService.getExternalInvitation();
+    if (!ext || !ext.appId) {
+      this.setData({ entries: this.data.entries.filter((e) => e.id !== 'invite') });
+    }
     const r = await dataService.init();
     this.setData({ initFailed: !(r && r.ok) });
     // 首次使用引导：只显示一次（storage 标记），未看过先去引导页
@@ -194,8 +200,17 @@ Page({
     wx.navigateToMiniProgram({ appId: ext.appId, path: '' });
   },
 
-  onEntry(e) {
+  async onEntry(e) {
     const id = e.currentTarget.dataset.id;
+    if (id === 'photo') {
+      // 拍照导入总闸（任务AF）：开关关闭时谁点都只提示敬请期待，
+      // 不进会员判断、不进隐私守卫、不打开导入页（服务端另有拒绝兜底）
+      const flags = await dataService.getFeatureFlags();
+      if (!flags.photoImport) {
+        wx.showToast({ title: '拍照导入敬请期待', icon: 'none' });
+        return;
+      }
+    }
     if ((id === 'share' || id === 'photo') && !this.data.isMember) {
       this.memberOnly(id);
       return;

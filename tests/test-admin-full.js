@@ -202,7 +202,7 @@ test('admin补全：订单列表与收入汇总（脱敏、按档位聚合、退
   function assertEqKeys(o) {
     assert.eq(
       Object.keys(o).sort().join(','),
-      'amountFen,channel,createdAt,days,orderId,outTradeNo,paidAt,planName,refundedAt,status,userId',
+      'amountFen,channel,createdAt,days,mock,orderId,outTradeNo,paidAt,planName,refundedAt,status,userId', // 任务AF：订单行新增 mock 标记（模拟渠道订单可辨识）
       '订单列表字段白名单'
     );
   }

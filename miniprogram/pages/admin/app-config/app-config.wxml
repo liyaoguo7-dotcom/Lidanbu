@@ -68,6 +68,13 @@
   </view>
   <button class="btn-primary" bindtap="onSavePlatforms" loading="{{saving}}">保存平台开关</button>
   <view class="note">关掉某个终端后，该终端的购买页只显示提示、不出现购买按钮；改开关不用改任何页面代码。</view>
+
+  <view class="card">
+    <view class="form-row"><text class="form-label" style="width:170px">云端购买总开关</text><switch checked="{{launch.paymentEnabled}}" bindchange="onLaunchToggle" data-key="paymentEnabled" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">拍照导入开关</text><switch checked="{{launch.photoImportEnabled}}" bindchange="onLaunchToggle" data-key="photoImportEnabled" /></view>
+  </view>
+  <button class="btn-primary" bindtap="onSaveLaunch" loading="{{saving}}">保存发布开关</button>
+  <view class="note">第一版发布口径（任务AF）：云端购买默认关——普通用户购买提示「会员购买暂未开放，敬请期待」，管理员不受限（模拟购买、订单标"模拟"）；真实支付接入后再打开。拍照导入默认关——入口点击提示「拍照导入敬请期待」，服务端同步拒绝；真实识别接入后再打开。</view>
 </block>
 
 <!-- 会员专属清单 -->

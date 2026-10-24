@@ -10,11 +10,17 @@ const core = require(path.join(API_DIR, 'core'));
 // eslint-disable-next-line import/no-dynamic-require
 const { createMain } = require(path.join(API_DIR, 'index.js'));
 
-function makeMain(openid) {
+function makeMain(openid, seedDoc) {
   const sdk = makeFakeSdk();
   sdk.getWXContext = () => ({ OPENID: openid });
   const db = new core.db.CloudDB({ sdk });
-  return createMain({ sdk, core, db });
+  const main = createMain({ sdk, core, db });
+  if (seedDoc) {
+    // 种 appConfig 单例（如开发布开关）；insert 须在首个业务调用前完成，
+    // 用同步启动的 promise 串到 main 前——简单起见测试里直接 await 种子
+    main.seedPromise = db.collection('appConfig').insert({ _id: 'singleton', ...seedDoc });
+  }
+  return main;
 }
 
 test('api分发：whoami 返回服务端 openid；未知 action 被拒', async () => {
@@ -88,8 +94,9 @@ test('api分发：importer 导出任务记录与列表（任务AD）', async () 
   assert(empty.ok && empty.data.length === 0, '他人导出历史应为空');
 });
 
-test('api分发：支付经服务端注入 Mock 适配器完成购买；错误码透传（任务AD）', async () => {
-  const main = makeMain('owner-6');
+test('api分发：支付经服务端注入 Mock 适配器完成购买；错误码透传（任务AD；任务AF 后需开购买总开关）', async () => {
+  const main = makeMain('owner-6', { payment: { enabled: true } });
+  await main.seedPromise;
   const buy = await main({ action: 'payment.purchase', args: ['month', {}] });
   assert(buy.ok, `购买失败：${buy.error || ''}`);
   assert(buy.data.delivered === true, 'Mock 支付应发货成功');

@@ -54,3 +54,4 @@ require('./test-batch-ac');
   const ok = await run();
   process.exit(ok ? 0 : 1);
 })();
+require('./test-launch-gates');

@@ -53,6 +53,9 @@ const MESSAGES = {
   'order-not-found': '订单不存在',
   'not-order-owner': '无权查看该订单',
   'pay-not-implemented': '支付通道正在接入中，请稍后再试',
+  // —— 第一版发布口径（任务AF） ——
+  'payment-closed': '会员购买暂未开放，敬请期待',
+  'photo-import-closed': '拍照导入敬请期待',
 };
 
 function userMessage(reason) {
