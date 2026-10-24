@@ -20,7 +20,7 @@
 .rec-row {
   display: flex;
   align-items: center;
-  height: 76px;
+  height: 64px;
   box-sizing: border-box;
   padding: 6px 16px;
   position: relative;
@@ -34,8 +34,9 @@
 .nm { font-size: 16px; font-weight: 600; }
 .subline { display: flex; flex-direction: row; align-items: baseline; margin-top: 3px; }
 .sub { font-size: 13px; color: #999; }
-.amt { font-size: 17px; font-weight: 600; }
-.amt.red { color: #F0575A; }
+.amt { font-size: 17px; font-weight: 700; color: #1A1A1A; }
+.amt.red { color: #1A1A1A; }
+.amt .sign { font-weight: 800; }
 .empty { text-align: center; padding: 40px 0; }
 .empty-text { color: #C2C2C2; font-size: 14px; }
 /* 底部双大按钮：左删除（描边）右修改（主按钮） */

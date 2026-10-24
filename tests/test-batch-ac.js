@@ -180,7 +180,7 @@ test('任务AE-8共计列表复刻：居中大字分段红字、合并一卡、�
     assert(w.includes('class="subline"'), `${wxmlP}：场合/类型与日期应在同一行（subline）`);
     assert(w.includes('<text class="end-text">完</text>'), `${wxmlP}：列表末尾应有「完」`);
     assert(x.includes('.total-line { text-align: center; font-size: 20px;'), `${wxssP}：共计居中 20px 大字`);
-    assert(x.includes('height: 76px'), `${wxssP}：记录行固定高 76px（三页一致）`);
+    assert(x.includes('height: 64px'), `${wxssP}：记录行固定高 64px（三页一致，2026-10-24 用户改定，原 76px）`);
     assert(x.includes(`.${rowCls}::after`), `${wxssP}：行间为内嵌细线（::after），无卡片灰底间隔`);
     assert(x.includes('.list-end { display: flex; align-items: center; gap: 10px; padding: 17px 60px 19px; }'), `${wxssP}：「完」就嵌在最后一条下方的横线上（无额外横线），上下间距比行间略宽（用户 2026-10-24 真机反馈定版）`);
     assert(!x.includes('.summary'), `${wxssP}：旧 .summary 已清除`);

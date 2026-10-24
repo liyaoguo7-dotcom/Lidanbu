@@ -57,7 +57,7 @@ Page({
         tagName: tag.name || '',
         icon: tagIconPath(tag && tag.id),
         date: fmtDate(g.date),
-        amountText: formatAmount(-(g.amount || 0)),
+        amountText: formatAmount(g.amount || 0), // 符号在模板里单独加黑（用户 2026-10-24：减号也要黑）
       };
     });
     const totalFen = list.reduce((s, g) => s + (g.amount || 0), 0);

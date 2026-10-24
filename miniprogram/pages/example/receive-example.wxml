@@ -31,7 +31,7 @@
     <view class="rec-row" wx:for="{{records}}" wx:key="index" data-i="{{index}}" bindtap="openRecord">
       <text class="rec-name">{{item.name}}</text>
       <text class="rec-type">{{item.type}}</text>
-      <text class="rec-amt num">+{{item.amountText}}</text>
+      <text class="rec-amt num"><text class="sign">+</text>{{item.amountText}}</text>
     </view>
   </view>
   <view class="example-note">点任意一条记录，可以看详情页长什么样。</view>

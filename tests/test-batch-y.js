@@ -111,12 +111,12 @@ test('任务Y-F喇叭实现：无 storage 持久化、全实例带关闭叉（�
 });
 
 // ---------- G：列表行距再收紧 ----------
-test('任务Y-G行距：五处联系人列表行数值再收紧一档（送礼/收礼记录行已被任务AE 第 8 项固定行高 76px 取代）', () => {
+test('任务Y-G行距：五处联系人列表行数值再收紧一档（送礼/收礼记录行高 2026-10-24 用户改定 64px）', () => {
   assert(readMp('pages/contacts/contacts.wxss').includes('min-height: 50px'), '亲友录行 min-height 54→50');
   const rd = readMp('pages/receive-detail/receive-detail.wxss');
-  assert(rd.includes('height: 76px'), '收礼记录行：任务AE 复刻定版图改固定高 76px（行高一致口径，取代 Y-G 的 min-height 56）');
+  assert(rd.includes('height: 64px'), '收礼记录行：2026-10-24 用户改定固定高 64px（原 AE 定版 76px，用户亲令再收紧）');
   const gf = readMp('pages/gifts/gifts.wxss');
-  assert(gf.includes('height: 76px'), '送礼行：任务AE 复刻定版图改固定高 76px（取代 Y-G 的 min-height 56）');
+  assert(gf.includes('height: 64px'), '送礼行：2026-10-24 用户改定固定高 64px');
   const wl = readMp('pages/wanglai/wanglai.wxss');
   assert(!wl.includes('padding: 11px 16px') && wl.includes('padding: 9px 16px'), '往来行 padding 11→9');
   const rv = readMp('pages/receive/receive.wxss');

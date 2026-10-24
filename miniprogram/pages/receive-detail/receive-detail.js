@@ -45,7 +45,7 @@ Page({
       name: r.contactName || '—',
       subType: r.type || '',
       subDate: r.date || '',
-      amountText: `+${formatAmount(r.amount || 0)}`,
+      amountText: formatAmount(r.amount || 0), // 加号在模板里单独加黑
     }));
     this.setData({
       event: e,

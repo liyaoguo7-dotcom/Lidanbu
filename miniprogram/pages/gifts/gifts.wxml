@@ -24,7 +24,7 @@
       <text class="nm">{{item.name}}</text>
       <view class="subline"><text class="sub">{{item.tagName}}｜</text><text class="sub num">{{item.date}}</text></view>
     </view>
-    <text class="amt num">{{item.amountText}}</text>
+    <text class="amt num"><text class="sign">-</text>{{item.amountText}}</text>
   </view>
   <view class="list-end" wx:if="{{shown.length > 0 && !searching}}">
     <view class="end-line"></view><text class="end-text">完</text><view class="end-line"></view>

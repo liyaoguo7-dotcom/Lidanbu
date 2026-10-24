@@ -54,13 +54,14 @@
 .rec-row {
   display: flex;
   align-items: center;
-  padding: 13px 2px;
+  padding: 10px 2px;
   border-bottom: 1px solid #F0F0F0;
 }
 .rec-row:last-child { border-bottom: none; }
 .rec-name { flex: 1; font-size: 15px; }
 .rec-type { font-size: 12.5px; color: #999; margin-right: 14px; }
-.rec-amt { font-size: 15px; color: #333; }
+.rec-amt { font-size: 15px; color: #1A1A1A; font-weight: 700; }
+.rec-amt .sign { font-weight: 800; }
 .strong { font-weight: 600; }
 .red { color: #E05353; }
 .ph { color: #C2C2C2; }
