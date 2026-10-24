@@ -52,8 +52,8 @@ function defaultConfig(now) {
     adminIds: [],
     freeQuota: {
       receiveEvents: 3,     // 免费：收礼礼薄 3 个
-      recordsPerEvent: 30,  // 免费：每个礼薄 30 条
-      giftRecords: 30,      // 免费：送礼 30 条
+      recordsPerEvent: 50,  // 免费：每个礼薄 50 条（2026-10-24 用户改定）
+      giftRecords: 50,      // 免费：送礼 50 条（2026-10-24 用户改定）
       contacts: 50,         // 免费：亲友 50 人
     },
     membership: {

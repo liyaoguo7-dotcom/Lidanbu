@@ -218,22 +218,22 @@ test('额度含receivePool字段；邀请奖励规则进配置', async () => {
   const eff = core.quota.getEffectiveQuota(user);
   assert('receivePool' in eff, '有效额度应含receivePool');
   assert.eq(eff.receivePool, 0, '未传成功邀请数时池为0');
-  assert.eq(eff.recordsPerEvent, 30, '每礼薄上限仍为30');
+  assert.eq(eff.recordsPerEvent, 50, '每礼薄上限为 50（免费默认，2026-10-24 改定）');
 });
 
-test('池为0时第31条仍被拦截（行为不变）', async () => {
+test('池为0时第51条仍被拦截（行为不变）', async () => {
   const db = await h.newDB();
   const owner = await h.newUser(db, 'owner1');
   const c = await core.contacts.createContact(db, owner, owner, { name: '甲' });
   const ev = await core.receive.createEvent(db, owner, owner, { name: '宴', tagId: 'qita', date: '2026-10-01' });
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 50; i++) {
     await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   }
   let err = null;
   try {
     await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   } catch (e) { err = e; }
-  assert(err && err.code && err.code.startsWith('quota-exceeded'), '池为0时第31条应被拦截，code=' + (err && err.code));
+  assert(err && err.code && err.code.startsWith('quota-exceeded'), '池为0时第51条应被拦截，code=' + (err && err.code));
   const cntAfter = await db.collection(core.models.COLLECTIONS.ReceiveRecord).count({ ownerId: owner, eventId: ev._id });
-  assert.eq(cntAfter, 30, '拒绝后数据未变：仍为30条');
+  assert.eq(cntAfter, 50, '拒绝后数据未变：仍为50条');
 });

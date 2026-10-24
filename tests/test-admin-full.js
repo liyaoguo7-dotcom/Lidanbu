@@ -122,8 +122,8 @@ test('admin补全：拍照导入用量按日/周聚合、成功率与失败分�
     kind: 'gift', items: [{ contactId: 'no_such_contact', amountFen: 100 }],
   });
   assert(bad.rawError, '校验批被拒');
-  // 额度拦截一批（免费额度 30 条、已用 1 条，31 条整批超额）
-  const many = Array.from({ length: 31 }, () => ({ contactId, amountFen: 100 }));
+  // 额度拦截一批（免费额度 50 条、已用 1 条，再导 50 条整批超额）
+  const many = Array.from({ length: 50 }, () => ({ contactId, amountFen: 100 }));
   const over = await core.importer.writeImport(db, ownerA, ownerA, { kind: 'gift', items: many });
   assert(over.rawError && String(over.rawError.code || '').startsWith('quota-exceeded'), '额度批被拒');
 

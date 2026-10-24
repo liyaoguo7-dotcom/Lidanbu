@@ -87,8 +87,8 @@ test('导入积分：额度拦截自动返还全额，且只退一次', async ()
   const db = await h.newDB();
   const owner = await memberWithPoints(db, 'p4', 100);
   const c = await core.contacts.createContact(db, owner, owner, { name: '张三' });
-  // 会员期先记满免费口径的 30 条送礼（会员额度高，不会被拦）
-  for (let i = 0; i < 30; i++) {
+  // 会员期先记满免费口径的 50 条送礼（会员额度高，不会被拦）
+  for (let i = 0; i < 50; i++) {
     await core.gifts.createGift(db, owner, owner, { contactId: c._id, tagId: 'qita', amount: 100, date: '2026-10-01' });
   }
   const r = await importer.startImportTask(db, owner, owner, {
@@ -96,7 +96,7 @@ test('导入积分：额度拦截自动返还全额，且只退一次', async ()
   });
   assert.eq(await points.getBalance(db, owner), 95, '识别成功已扣 5');
 
-  // 模拟会员到期变免费用户：免费送礼额度 30 已满，整批写入被额度拦截
+  // 模拟会员到期变免费用户：免费送礼额度 50 已满，整批写入被额度拦截
   await db.collection(COLLECTIONS.User).update(
     { _id: owner },
     { membership: { status: 'free', expireAt: null, graceUntil: null } },

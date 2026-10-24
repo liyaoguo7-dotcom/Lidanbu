@@ -19,21 +19,21 @@ test('免费额度用完拦截新增，旧记录不删', async () => {
   assert.eq(evs.length, 3, '旧记录一条不删，应仍为3个');
 });
 
-test('每礼薄30条额度', async () => {
+test('每礼薄50条额度（2026-10-24 用户改定 30→50）', async () => {
   const db = await h.newDB();
   const owner = await h.newUser(db, 'owner1');
   const c = await core.contacts.createContact(db, owner, owner, { name: '甲' });
   const ev = await core.receive.createEvent(db, owner, owner, { name: '宴', tagId: 'qita', date: '2026-10-01' });
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 50; i++) {
     await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   }
   let err = null;
   try {
     await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   } catch (e) { err = e; }
-  assert(err && err.code && err.code.startsWith('quota-exceeded'), '第31条应被拦截，code=' + (err && err.code));
+  assert(err && err.code && err.code.startsWith('quota-exceeded'), '第51条应被拦截，code=' + (err && err.code));
   const cntAfter = await db.collection(core.models.COLLECTIONS.ReceiveRecord).count({ ownerId: owner, eventId: ev._id });
-  assert.eq(cntAfter, 30, '拒绝后数据未变：仍为30条');
+  assert.eq(cntAfter, 50, '拒绝后数据未变：仍为50条');
 });
 
 test('会员有效期内额度扩大', async () => {
@@ -110,9 +110,9 @@ test('邀请奖励额度与会员额度的叠加：免费叠池、会员封顶�
   const freeUser = { _id: 'u', membership: { status: 'free', expireAt: null, graceUntil: null } };
   const free = core.quota.getEffectiveQuota(freeUser, cfg, nowTs, opts);
   assert.eq(free.receiveEvents, 3, '免费：礼薄仍为 3（邀请不增礼薄数）');
-  assert.eq(free.recordsPerEvent, 30, '免费：每薄仍为 30');
+  assert.eq(free.recordsPerEvent, 50, '免费：每薄 50（2026-10-24 用户改定 30→50）');
   assert.eq(free.receivePool, 20, '免费：邀请池生效 +20');
-  assert.eq(free.giftRecords, 40, '免费：送礼 30+10');
+  assert.eq(free.giftRecords, 60, '免费：送礼 50+10');
   assert.eq(free.contacts, 50, '免费：亲友仍为 50');
   const memberUser = { _id: 'u', membership: { status: 'member', expireAt: nowTs + 30 * 86400e3, graceUntil: null } };
   const mem = core.quota.getEffectiveQuota(memberUser, cfg, nowTs, opts);
@@ -125,7 +125,7 @@ test('邀请奖励额度与会员额度的叠加：免费叠池、会员封顶�
   assert.eq(core.quota.getMembershipState(expiredUser, cfg, nowTs), 'expired', '前提：已过缓冲期');
   const back = core.quota.getEffectiveQuota(expiredUser, cfg, nowTs, opts);
   assert.eq(back.receiveEvents, 3, '到期回落：礼薄回到免费 3');
-  assert.eq(back.giftRecords, 40, '到期回落：送礼回到免费+池');
+  assert.eq(back.giftRecords, 60, '到期回落：送礼回到免费+池');
   assert.eq(back.receivePool, 20, '到期回落：邀请池继续生效');
 });
 

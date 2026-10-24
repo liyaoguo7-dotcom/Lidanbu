@@ -71,11 +71,11 @@ test('确认写入：收礼写入指定礼薄', async () => {
   assert(recs.length === 2, '礼薄下 2 条');
 });
 
-test('额度满：送礼第 31 条被拦截，旧 30 条未变', async () => {
+test('额度满：送礼第 51 条被拦截，旧 50 条未变', async () => {
   const db = await h.newDB();
   const owner = await h.newUser(db, 'free1', { status: 'free', expireAt: null, graceUntil: null });
   const c = await core.contacts.createContact(db, owner, owner, { name: '张三' });
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 50; i++) {
     await core.gifts.createGift(db, owner, owner, { contactId: c._id, tagId: 'qita', amount: 100, date: '2026-10-01' });
   }
   const r = await importer.writeImport(db, owner, owner, {
@@ -88,7 +88,7 @@ test('额度满：送礼第 31 条被拦截，旧 30 条未变', async () => {
   assert(r.written === 0, '一条都没写进去');
   assert(r.rawError && r.rawError.code === 'quota-exceeded:gift', '额度原因码');
   const list = await core.gifts.listGifts(db, owner, owner);
-  assert(list.length === 30, '旧 30 条未变');
+  assert(list.length === 50, '旧 50 条未变');
 });
 
 test('额度拦截走卖惨文案：friendly 透出"呜呜"不吞掉', () => {
@@ -164,11 +164,11 @@ test('批量原子性：亲友 id 不存在（已被删），整批不写', asyn
   assert(list.length === 0, '库里一条都没有');
 });
 
-test('额度联动：免费用户已用 29 条送礼额度，导入 2 条整批拦截不部分写入', async () => {
+test('额度联动：免费用户已用 49 条送礼额度，导入 2 条整批拦截不部分写入', async () => {
   const db = await h.newDB();
   const owner = await h.newUser(db, 'free2', { status: 'free', expireAt: null, graceUntil: null });
   const c = await core.contacts.createContact(db, owner, owner, { name: '张三' });
-  for (let i = 0; i < 29; i++) {
+  for (let i = 0; i < 49; i++) {
     await core.gifts.createGift(db, owner, owner, { contactId: c._id, tagId: 'qita', amount: 100, date: '2026-10-01' });
   }
   const r = await importer.writeImport(db, owner, owner, {
@@ -182,15 +182,15 @@ test('额度联动：免费用户已用 29 条送礼额度，导入 2 条整批�
   assert(r.rawError && r.rawError.code === 'quota-exceeded:gift', '额度原因码');
   assert(r.rawError.itemIndex === 1, '定位到第一条放不下的（第 2 条）');
   const list = await core.gifts.listGifts(db, owner, owner);
-  assert(list.length === 29, '仍是 29 条，没有部分写入');
+  assert(list.length === 49, '仍是 49 条，没有部分写入');
 });
 
-test('额度联动：收礼礼薄已记 29 条，导入 2 条整批拦截', async () => {
+test('额度联动：收礼礼薄已记 49 条，导入 2 条整批拦截', async () => {
   const db = await h.newDB();
   const owner = await h.newUser(db, 'free3', { status: 'free', expireAt: null, graceUntil: null });
   const c = await core.contacts.createContact(db, owner, owner, { name: '张三' });
   const ev = await core.receive.createEvent(db, owner, owner, { name: '婚宴', tagId: 'jiehun', date: '2026-10-01' });
-  for (let i = 0; i < 29; i++) {
+  for (let i = 0; i < 49; i++) {
     await core.receive.createRecord(db, owner, owner, ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   }
   const r = await importer.writeImport(db, owner, owner, {
@@ -204,14 +204,14 @@ test('额度联动：收礼礼薄已记 29 条，导入 2 条整批拦截', asyn
   assert(r.written === 0, '整批拦截');
   assert(r.rawError && /^quota-exceeded:/.test(r.rawError.code), '额度原因码：' + (r.rawError && r.rawError.code));
   const recs = await core.receive.listRecords(db, owner, owner, ev._id);
-  assert(recs.length === 29, '仍是 29 条');
+  assert(recs.length === 49, '仍是 49 条');
 });
 
 test('额度联动：额度刚好够（剩 2 导 2）整批成功', async () => {
   const db = await h.newDB();
   const owner = await h.newUser(db, 'free4', { status: 'free', expireAt: null, graceUntil: null });
   const c = await core.contacts.createContact(db, owner, owner, { name: '张三' });
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 48; i++) {
     await core.gifts.createGift(db, owner, owner, { contactId: c._id, tagId: 'qita', amount: 100, date: '2026-10-01' });
   }
   const r = await importer.writeImport(db, owner, owner, {
@@ -223,7 +223,7 @@ test('额度联动：额度刚好够（剩 2 导 2）整批成功', async () => 
   });
   assert(r.written === 2 && r.rawError === null, '2 条全写');
   const list = await core.gifts.listGifts(db, owner, owner);
-  assert(list.length === 30, '正好记满 30 条');
+  assert(list.length === 50, '正好记满 50 条');
 });
 
 test('识别失败态：Mock 可控失败抛出大白话错误', async () => {

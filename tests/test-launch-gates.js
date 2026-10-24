@@ -183,7 +183,7 @@ test('AF老板后台三修：静态四档（含 halfYear）原样保存应成功
     const r = await dataService.adminUpdatePricing(plans);
     assert.eq(r.pricing.length, 4, '四档应全部保存成功');
     const q = await dataService.adminUpdateQuotaSettings({
-      freeQuota: { receiveEvents: 3, recordsPerEvent: 30, giftRecords: 30, contacts: 50 },
+      freeQuota: { receiveEvents: 3, recordsPerEvent: 50, giftRecords: 50, contacts: 50 },
       memberQuota: { receiveEvents: 30, recordsPerEvent: 500, giftRecords: 500, contacts: 500 },
     });
     assert.eq(q.freeQuota.receiveEvents, 3, '额度保存应成功');

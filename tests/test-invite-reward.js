@@ -68,7 +68,7 @@ test('邀请奖励：条件未完成不发放', async () => {
   assert.eq((await grantsOf(db, 'inviter1')).length, 0, '未发放时不应有发放记录');
   const q = await effQuota(db, 'inviter1');
   assert.eq(q.receivePool, 0, '未发放时额度池为0');
-  assert.eq(q.giftRecords, 30, '未发放时送礼额度为免费30');
+  assert.eq(q.giftRecords, 50, '未发放时送礼额度为免费50');
 });
 
 test('邀请奖励：完成收礼条件后发放+10/+5且额度生效', async () => {
@@ -84,9 +84,9 @@ test('邀请奖励：完成收礼条件后发放+10/+5且额度生效', async ()
   assert.eq(grants[0].invitedUserId, 'invitee1', '发放记录应指向被邀请人');
   const q = await effQuota(db, 'inviter1');
   assert.eq(q.receivePool, 10, '有效额度收礼池应为10');
-  assert.eq(q.giftRecords, 35, '有效额度送礼应为免费30+奖励5');
+  assert.eq(q.giftRecords, 55, '有效额度送礼应为免费50+奖励5');
   assert.eq(q.receiveEvents, 3, '邀请奖励不增加礼薄个数');
-  assert.eq(q.recordsPerEvent, 30, '邀请奖励不增加每礼薄上限');
+  assert.eq(q.recordsPerEvent, 50, '邀请奖励不增加每礼薄上限（免费默认 50）');
 });
 
 test('邀请奖励：只记送礼也可发放（送礼路径）', async () => {
@@ -295,20 +295,20 @@ test('邀请奖励：额度池可累积，超额记录从池消耗（现行规�
   }
   const q = await effQuota(db, 'inviter1');
   assert.eq(q.receivePool, 20, '两次成功邀请池应累积到20');
-  assert.eq(q.giftRecords, 40, '送礼额度应为30+5+5=40');
-  // 邀请人自己的礼薄写满 30 条后，再写 20 条从池消耗，第 51 条被拒
+  assert.eq(q.giftRecords, 60, '送礼额度应为50+5+5=60');
+  // 邀请人自己的礼薄：免费 50 条写满后，再写 20 条从池消耗，第 71 条被拒
   const c = await core.contacts.createContact(db, 'inviter1', 'inviter1', { name: '亲友甲' });
   const ev = await core.receive.createEvent(db, 'inviter1', 'inviter1', { name: '婚宴', tagId: 'jiehun', date: '2026-10-01' });
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 70; i++) {
     await core.receive.createRecord(db, 'inviter1', 'inviter1', ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   }
   let err = null;
   try {
     await core.receive.createRecord(db, 'inviter1', 'inviter1', ev._id, { contactId: c._id, amount: 100, type: '现金', date: '2026-10-01' });
   } catch (e) { err = e; }
-  assert(err && err.code && err.code.startsWith('quota-exceeded'), '第51条应被额度拦截，code=' + (err && err.code));
+  assert(err && err.code && err.code.startsWith('quota-exceeded'), '第71条应被额度拦截，code=' + (err && err.code));
   const cnt = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId: 'inviter1', eventId: ev._id });
-  assert.eq(cnt, 50, '拒绝后数据未变：仍为50条');
+  assert.eq(cnt, 70, '拒绝后数据未变：仍为70条');
 });
 
 test('邀请奖励：会员过期用户奖励仍按池规则（与会员额度互不影响）', async () => {
@@ -324,7 +324,7 @@ test('邀请奖励：会员过期用户奖励仍按池规则（与会员额度�
   assert.eq(r.granted, true, '邀请人会员过期不影响奖励发放');
   const q = await effQuota(db, 'inviter1');
   assert.eq(q.receivePool, 10, '过期会员奖励池仍为10');
-  assert.eq(q.giftRecords, 35, '送礼额度应为免费30+奖励5（无会员加成）');
+  assert.eq(q.giftRecords, 55, '送礼额度应为免费50+奖励5（无会员加成）');
 });
 
 test('邀请奖励：每次发放写审计，奖励记录可在我的页查，老板平台统计一致', async () => {

@@ -31,8 +31,8 @@ const AppConfig = {
   /** 免费额度（计数单位均为记录条数；数字放配置，后台可改） */
   freeQuota: {
     receiveEvents: 3,      // 收礼礼薄：总共可创建 3 个
-    recordsPerEvent: 30,   // 每个礼薄的收礼记录：30 条
-    giftRecords: 30,       // 送礼记录：30 条
+    recordsPerEvent: 50,   // 每个礼薄的收礼记录：50 条（2026-10-24 用户改定：30→50）
+    giftRecords: 50,       // 送礼记录：50 条（2026-10-24 用户改定：30→50）
     contacts: 50,          // 亲友录联系人：50 人
   },
 
