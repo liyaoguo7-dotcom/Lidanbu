@@ -316,3 +316,14 @@ test('admin：配置文档只有部分段时 getConfig 各段回落静态默认�
   assert(cfg.freeQuota && cfg.freeQuota.contacts === 50, 'freeQuota 回落');
   assert(cfg.paymentPlatforms && typeof cfg.paymentPlatforms === 'object', 'paymentPlatforms 回落');
 });
+
+test('账号查询页带用户列表（2026-10-24 用户要求）：打开即列表＋点行复制编号＋加载更多（静态）', () => {
+  const fs = require('fs'); const path = require('path');
+  const js = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/account/account.js'), 'utf8');
+  assert(js.includes('this.loadPage(1, false)'), 'onLoad 应自动加载第一页用户列表');
+  assert(js.includes('onCopyId') && js.includes('setClipboardData'), '点行应可复制脱敏编号');
+  assert(js.includes('onLoadMore'), '应有加载更多');
+  const wxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/account/account.wxml'), 'utf8');
+  assert(wxml.includes('bindtap="onCopyId"'), '列表行应绑定点按复制');
+  assert(wxml.includes('onLoadMore'), '应有加载更多按钮');
+});

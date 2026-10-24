@@ -8,8 +8,13 @@ const ds = require('../../../services/data-service.js');
 const STATE_NAMES = { free: '免费', member: '会员', grace: '缓冲期', expired: '已过期' };
 
 Page({
-  data: { frag: '', from: '', to: '', list: [], total: 0, loading: false, searched: false },
-  onLoad() { wx.setNavigationBarTitle({ title: '账号查询' }); },
+  data: { frag: '', from: '', to: '', list: [], total: 0, loading: false, searched: false, page: 1 },
+  onLoad() {
+    wx.setNavigationBarTitle({ title: '账号查询' });
+    // 用户列表（2026-10-24 用户要求加）：打开即按注册时间倒序列出全部用户，
+    // 不必先输入编号；上面的条件是可选的过滤，想查谁点一行复制编号即可
+    this.loadPage(1, false);
+  },
   onFrag(e) { this.setData({ frag: e.detail.value }); },
   onFrom(e) { this.setData({ from: e.detail.value }); },
   onTo(e) { this.setData({ to: e.detail.value }); },
@@ -19,23 +24,40 @@ Page({
     const p = (n) => `${n}`.padStart(2, '0');
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   },
-  async onSearch() {
+  async loadPage(pageNum, append) {
     this.setData({ loading: true });
     try {
-      const opts = { page: 1, pageSize: 50 };
+      const opts = { page: pageNum, pageSize: 50 };
       if (this.data.frag.trim()) opts.maskedId = this.data.frag.trim();
       if (this.data.from) opts.from = new Date(`${this.data.from}T00:00:00`).getTime();
       if (this.data.to) opts.to = new Date(`${this.data.to}T23:59:59`).getTime();
       const r = await ds.adminSearchAccounts(opts);
-      const list = r.items.map((u) => ({
+      const items = r.items.map((u) => ({
         ...u,
         stateName: STATE_NAMES[u.memberState] || u.memberState,
         createdText: this.fmtTime(u.createdAt),
       }));
-      this.setData({ list, total: r.total, loading: false, searched: true });
+      this.setData({
+        list: append ? [...this.data.list, ...items] : items,
+        total: r.total, loading: false, searched: true, page: pageNum,
+      });
     } catch (e) {
       this.setData({ loading: false });
       wx.showToast({ title: ds.friendly(e), icon: 'none' });
     }
+  },
+  async onSearch() { await this.loadPage(1, false); },
+  async onLoadMore() {
+    if (this.data.loading || this.data.list.length >= this.data.total) return;
+    await this.loadPage(this.data.page + 1, true);
+  },
+  /** 点一行复制脱敏编号：去「额度用量」「账号处理」等页粘贴查询，免手打脱敏号 */
+  onCopyId(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    wx.setClipboardData({
+      data: id,
+      success: () => wx.showToast({ title: '编号已复制', icon: 'none' }),
+    });
   },
 });

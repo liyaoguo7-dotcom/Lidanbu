@@ -1,4 +1,4 @@
-<view class="warn-banner">客服用：只能按脱敏编号查到条数级信息，看不到任何账本内容。</view>
+<view class="warn-banner">打开就是用户列表（按注册时间从新到旧）；只能看到脱敏编号和条数级信息，看不到任何账本内容。点任意一行可复制编号。</view>
 <view class="card">
   <view class="form-row"><text class="form-label">编号片段</text><input class="form-val" placeholder="如 abc***xyz 中的片段" value="{{frag}}" bindinput="onFrag" /></view>
   <view class="form-row"><text class="form-label">注册从</text><picker mode="date" value="{{from}}" bindchange="onFrom"><view class="form-val">{{from || '不限'}}</view></picker></view>
@@ -6,7 +6,7 @@
   <button class="btn-primary" bindtap="onSearch" loading="{{loading}}">查询</button>
 </view>
 <view wx:if="{{searched}}" class="note">共 {{total}} 个账号</view>
-<view class="card" wx:for="{{list}}" wx:key="userId">
+<view class="card" wx:for="{{list}}" wx:key="userId" data-id="{{item.userId}}" bindtap="onCopyId">
   <view class="row-between">
     <text class="mask">{{item.userId}}</text>
     <text class="pill">{{item.stateName}}</text>
@@ -16,4 +16,5 @@
   <view class="note">礼薄 {{item.counts.events}} 本 · 收礼 {{item.counts.records}} 条 · 送礼 {{item.counts.gifts}} 条 · 亲友 {{item.counts.contacts}} 人</view>
   <view wx:if="{{item.restricted}}" class="note">限制原因：{{item.restrictReason}}</view>
 </view>
+<button wx:if="{{searched && list.length < total}}" class="btn-primary" bindtap="onLoadMore" loading="{{loading}}">加载更多（已显示 {{list.length}} / 共 {{total}}）</button>
 <view wx:if="{{searched && list.length === 0}}" class="note">没有查到符合条件的账号。</view>
