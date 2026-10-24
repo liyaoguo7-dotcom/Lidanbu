@@ -31,21 +31,18 @@ Page({
   },
 
   async reload() {
-    const e = await dataService.getEvent(this.eventId);
-    if (!e) {
+    // 一次取齐（礼薄+明细+联系人名+合计）：原来串行四趟（礼薄→统计→联系人→明细）
+    const d = await dataService.getEventDetail(this.eventId);
+    if (!d || !d.event) {
       wx.showToast({ title: '礼薄不存在', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 800);
       return;
     }
+    const e = d.event;
     const tag = dataService.getTagById(e.tagId) || {};
-    const st = await dataService.getEventStats(this.eventId);
-    const contacts = await dataService.listContacts();
-    const cmap = {};
-    contacts.forEach((c) => { cmap[c._id] = c.name; });
-    const recs = await dataService.listRecords(this.eventId);
-    const records = recs.map((r) => ({
+    const records = d.records.map((r) => ({
       _id: r._id,
-      name: cmap[r.contactId] || '—',
+      name: r.contactName || '—',
       subType: r.type || '',
       subDate: r.date || '',
       amountText: `+${formatAmount(r.amount || 0)}`,
@@ -56,9 +53,9 @@ Page({
       icon: tagIconPath(tag.id),
       isBaishi: e.tagId === 'baishi',
       date: e.date || '',
-      totalText: `${st.count} 笔 ￥${formatAmountInt(st.totalFen)} 元`,
-      totalCount: st.count,
-      totalAmountText: formatAmountInt(st.totalFen),
+      totalText: `${d.count} 笔 ￥${formatAmountInt(d.totalFen)} 元`,
+      totalCount: d.count,
+      totalAmountText: formatAmountInt(d.totalFen),
       records,
     });
   },

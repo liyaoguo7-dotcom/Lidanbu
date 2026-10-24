@@ -19,19 +19,18 @@ Page({
   async onLoad(options) {
     await dataService.init();
     this.giftId = options.id;
-    const g = await dataService.getGift(this.giftId);
+    const d = await dataService.getGiftDetail(this.giftId);
+    const g = d && d.gift;
     if (!g) {
       wx.showToast({ title: '记录不存在', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 800);
       return;
     }
-    const contacts = await dataService.listContacts();
-    const c = contacts.find((x) => x._id === g.contactId);
     this.setData({
       tagId: g.tagId,
       date: g.date || '',
       contactId: g.contactId,
-      contactName: c ? c.name : '—',
+      contactName: d.contactName || '—',
       amount: formatAmount(g.amount || 0), // 回显两位小数（如 1000.00）
       remark: g.remark || '',
     });

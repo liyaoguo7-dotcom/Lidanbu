@@ -31,6 +31,7 @@ const OLD_SEEDED_KEY = 'lidanbu_demo_seeded_v1';
 let _db = null;
 let _userId = null;
 let _dbFactory = null; // 仅测试注入用（模拟数据库失败/恢复），生产恒为 null
+let _homeDataInflight = null; // 首页数据在途去重：小结与最近往来同时要同一份全量数据时只取一趟
 let _modeForTest = null; // 仅测试注入用：'local' | 'cloud' | null
 let _transportForTest = null; // 仅测试注入用：远程传输（进程内回环到 api 云函数）
 let _remoteCore = null;
@@ -377,6 +378,11 @@ const service = {
   async getGift(giftId) {
     // 补记账人显示名在 core.gifts.getGift 内完成（任务Q1/AD，与原直连拼装同口径）
     return core.gifts.getGift(_db, _userId, _userId, giftId);
+  },
+  /** 送礼详情一次取齐（记录+联系人名，1 趟云端往返） */
+  async getGiftDetail(giftId) {
+    try { return await core.gifts.getGiftDetail(_db, _userId, _userId, giftId); }
+    catch (e) { throw new Error(friendly(e)); }
   },
 
   // —— 标签/配置 ——
@@ -827,6 +833,16 @@ const service = {
     // 补记账人显示名在 core.receive.getRecord 内完成（任务Q1/AD，与原直连拼装同口径）
     return core.receive.getRecord(_db, _userId, _userId, recordId);
   },
+  /** 礼薄详情一次取齐（礼薄+明细+联系人名+合计，1 趟） */
+  async getEventDetail(eventId) {
+    try { return await core.receive.getEventDetail(_db, _userId, _userId, eventId); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 收礼记录详情一次取齐（记录+联系人+所属礼薄，1 趟） */
+  async getRecordDetail(recordId) {
+    try { return await core.receive.getRecordDetail(_db, _userId, _userId, recordId); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
 
   // —— 往来 ——
   /**
@@ -905,12 +921,20 @@ const service = {
    * @returns {{receiveFen, receiveCount, giftFen, giftCount, hasRecords}}
    *   hasRecords=false（本月一笔都没有）时页面显示"本月还没有记录"，不显示 ¥0。
    */
+  /** 首页全量数据的在途去重（并发调用共享同一趟；落定即释放，不缓存旧数据） */
+  async _homeDataOnce() {
+    if (!_homeDataInflight) {
+      _homeDataInflight = core.stats.getHomeData(_db, _userId)
+        .finally(() => { _homeDataInflight = null; });
+    }
+    return _homeDataInflight;
+  },
   async getHomeSummary() {
     const nowD = new Date();
     const prefix = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}`;
     const inMonth = (r) => typeof r.date === 'string' && r.date.startsWith(prefix);
     // 原始数据经 stats.getHomeData 一次取齐（任务AD：本地/云端共用一条路径），月份过滤仍在本地
-    const home = await core.stats.getHomeData(_db, _userId);
+    const home = await this._homeDataOnce();
     const receives = home.receives.filter(inMonth);
     const gifts = home.gifts.filter(inMonth);
     const sum = (list) => list.reduce((s, r) => s + (r.amount || 0), 0);
@@ -936,7 +960,7 @@ const service = {
     if (n === 0) return [];
     // 原始数据经 stats.getHomeData 一次取齐（任务AD）；原先按 id 集合的定向
     // 查询改为在全量本人数据里按同一 id 集合过滤，结果完全一致
-    const home = await core.stats.getHomeData(_db, _userId);
+    const home = await this._homeDataOnce();
     const receives = home.receives;
     const gifts = home.gifts;
     if (!receives.length && !gifts.length) return [];

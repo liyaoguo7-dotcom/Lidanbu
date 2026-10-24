@@ -31,16 +31,19 @@ Page({
   },
 
   async reload() {
-    const r = await dataService.getRecord(this.recordId);
+    // 一次取齐（记录+联系人+所属礼薄）：原来三趟串行
+    const d = await dataService.getRecordDetail(this.recordId);
+    const r = d && d.record;
     if (!r) {
       wx.showToast({ title: '记录不存在', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 800);
       return;
     }
-    const c = await dataService.getContact(r.contactId);
+    const c = d.contact;
     const contactName = c ? c.name : '—';
+    this._contactName = c ? c.name : '';
     // 顶部徽章右侧显示所属礼薄（事件）名；白事礼薄时徽章转灰（任务Z 第 12 项）
-    const ev = r.eventId ? await dataService.getEvent(r.eventId) : null;
+    const ev = d.event;
     const amountAbs = formatAmount(r.amount || 0);
     this.setData({
       record: r,
@@ -57,7 +60,8 @@ Page({
   },
 
   goWanglai() {
-    wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${this.data.contactId}` });
+    const nameQ = this._contactName ? `&name=${encodeURIComponent(this._contactName)}` : '';
+    wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${this.data.contactId}${nameQ}` });
   },
 
   goEdit() {

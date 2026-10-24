@@ -81,10 +81,10 @@ function createRemoteCore(transport) {
     ]),
     receive: makeRemoteModule(t, 'receive', [
       'createEvent', 'updateEvent', 'deleteEvent', 'listEvents', 'listEventSummaries', 'getEvent',
-      'createRecord', 'updateRecord', 'deleteRecord', 'listRecords', 'getRecord',
+      'createRecord', 'updateRecord', 'deleteRecord', 'listRecords', 'getRecord', 'getEventDetail', 'getRecordDetail',
     ]),
     gifts: makeRemoteModule(t, 'gifts', [
-      'createGift', 'updateGift', 'deleteGift', 'listGifts', 'getGift',
+      'createGift', 'updateGift', 'deleteGift', 'listGifts', 'getGift', 'getGiftDetail',
     ]),
     stats: Object.assign(makeRemoteModule(t, 'stats', [
       'contactStats', 'memberStats', 'memberTimeline', 'memberEvents', 'getHomeData',

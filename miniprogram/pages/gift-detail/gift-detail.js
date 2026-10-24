@@ -28,16 +28,17 @@ Page({
   },
 
   async reload() {
-    const g = await dataService.getGift(this.giftId);
+    // 一次取齐（记录+联系人名）：原来先取记录再拉全部联系人找一个人名，两趟串行
+    const d = await dataService.getGiftDetail(this.giftId);
+    const g = d && d.gift;
     if (!g) {
       wx.showToast({ title: '记录不存在', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 800);
       return;
     }
     const tag = dataService.getTagById(g.tagId) || {};
-    const contacts = await dataService.listContacts();
-    const c = contacts.find((x) => x._id === g.contactId);
-    const contactName = c ? c.name : '—';
+    const contactName = d.contactName || '—';
+    this._contactName = d.contactName || '';
     const amountAbs = formatAmount(g.amount || 0); // 金额两位小数，详情按"姓名 · 标签 · 金额"
     this.setData({
       gift: g,
@@ -55,7 +56,8 @@ Page({
   goWanglai() {
     const g = this.data.gift;
     if (g && g.contactId) {
-      wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${g.contactId}` });
+      const nameQ = this._contactName ? `&name=${encodeURIComponent(this._contactName)}` : '';
+      wx.navigateTo({ url: `/pages/timeline/timeline?contactId=${g.contactId}${nameQ}` });
     }
   },
 

@@ -20,13 +20,14 @@ Page({
   async onLoad(options) {
     await dataService.init();
     this.recordId = options.id;
-    const r = await dataService.getRecord(this.recordId);
+    const d = await dataService.getRecordDetail(this.recordId);
+    const r = d && d.record;
     if (!r) {
       wx.showToast({ title: '记录不存在', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 800);
       return;
     }
-    const c = await dataService.getContact(r.contactId);
+    const c = d.contact;
     this.setData({
       types: dataService.getRecordTypes(),
       type: r.type || '微信',

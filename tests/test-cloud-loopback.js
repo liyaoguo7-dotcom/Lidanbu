@@ -256,3 +256,41 @@ test('回环：管理员增减通路（云端管理员调 addAdmin，错误原�
     assert.eq(list.viewerCanManage, true, '云端管理员可增减');
   } finally { dataService._resetForTest(); }
 });
+
+test('回环：详情页一趟取齐（RPC 计数：详情聚合各只走 1 趟）', async () => {
+  const { transport, sdk, db } = makeLoopback('loop-perf');
+  let calls = 0;
+  const counting = async (data) => { calls += 1; return transport(data); };
+  try {
+    dataService._resetForTest();
+    dataService._setModeForTest('cloud');
+    dataService._setTransportForTest(counting);
+    const r = await dataService.init();
+    assert(r.ok === true, 'init 应成功');
+    const c = await dataService.createContact({ name: '李四' });
+    const contactId = (c.contact && c.contact._id) || c._id;
+    const ev = await dataService.createEvent({ name: '李四婚宴', tagId: 'jiehun', date: '2026-10-01' });
+    const eventId = (ev.event && ev.event._id) || ev._id;
+    const rec = await dataService.createRecord(eventId, { contactId, amountFen: 66000, type: '微信', date: '2026-10-01' });
+    const recordId = (rec.record && rec.record._id) || rec._id;
+    const gf = await dataService.createGift({ contactId, tagId: 'shengri', amountFen: 20000, date: '2026-09-01' });
+    const giftId = (gf.gift && gf.gift._id) || gf._id;
+
+    calls = 0;
+    const ed = await dataService.getEventDetail(eventId);
+    assert.eq(calls, 1, `礼薄详情应只走 1 趟（实际 ${calls}）`);
+    assert(ed && ed.event && ed.count === 1 && ed.totalFen === 66000, '礼薄详情数据齐');
+    assert.eq(ed.records[0].contactName, '李四', '明细带联系人名');
+
+    calls = 0;
+    const rd = await dataService.getRecordDetail(recordId);
+    assert.eq(calls, 1, `收礼记录详情应只走 1 趟（实际 ${calls}）`);
+    assert(rd && rd.contact && rd.contact.name === '李四' && rd.event && rd.event.name === '李四婚宴', '记录详情三件齐');
+
+    calls = 0;
+    const gd = await dataService.getGiftDetail(giftId);
+    assert.eq(calls, 1, `送礼详情应只走 1 趟（实际 ${calls}）`);
+    assert(gd && gd.contactName === '李四', '送礼详情带联系人名');
+    void sdk; void db;
+  } finally { dataService._resetForTest(); }
+});

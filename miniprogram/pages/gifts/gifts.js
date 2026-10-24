@@ -40,9 +40,11 @@ Page({
   },
 
   async reload() {
-    const list = await dataService.listGifts();
-    // 补联系人姓名与标签名（演示期直接读库）
-    const contacts = await dataService.listContacts();
+    // 记录与联系人并发取（原来串行两趟，2026-10-24 提速）
+    const [list, contacts] = await Promise.all([
+      dataService.listGifts(),
+      dataService.listContacts(),
+    ]);
     const cmap = {};
     contacts.forEach((c) => { cmap[c._id] = c.name; });
     const tags = {};

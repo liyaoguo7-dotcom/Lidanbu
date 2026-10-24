@@ -185,7 +185,7 @@ test('任务Z-12：收礼详情按目标图（红包徽章+事件名/正号金�
   assert(wxml.includes('>类型</text>'), '类型字段同列保留');
   assert(!wxml.includes('bottom-btns'), '旧底部按钮条已删');
   const js = readMp('pages/receive-record-detail/receive-record-detail.js');
-  assert(js.includes('getEvent'), 'JS 取礼薄（事件）名与白事标记');
+  assert(js.includes('getRecordDetail') && js.includes('d.event'), 'JS 经详情聚合取礼薄（事件）名与白事标记（2026-10-24 提速：一趟取齐）');
   const wxss = readMp('pages/receive-record-detail/receive-record-detail.wxss');
   assert(wxss.includes('color: #999999') && wxss.includes('color: #333333'), '标签淡/内容深');
 });

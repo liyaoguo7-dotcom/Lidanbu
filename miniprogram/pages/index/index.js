@@ -58,8 +58,8 @@ Page({
   },
 
   async onShow() {
-    await this.refreshMember();
-    await this.refreshHomeData();
+    // 会员状态与首页数据并发（原来串行排队，首页联系人/小结都跟着等）
+    await Promise.all([this.refreshMember(), this.refreshHomeData()]);
     await this.checkPrivacyPopup();
   },
 

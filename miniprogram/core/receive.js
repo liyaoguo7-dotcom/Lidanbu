@@ -114,6 +114,49 @@ async function listEventSummaries(db, actorId, ownerId) {
   return events.map((e) => ({ ...e, ...(agg.get(e._id) || { count: 0, totalFen: 0 }) }));
 }
 
+/**
+ * 礼薄详情一次取齐（2026-10-24 提速：真机反馈点进礼薄联系人列表延迟）：
+ * 页面原来串行四趟（礼薄→统计→全部联系人→明细）。这里服务端一次取齐：
+ * 礼薄 + 明细（带记账人名与联系人名）+ 条数/合计，客户端只走一趟。
+ * 权限与 listRecords 同口径（authz read receiveRecord）。
+ * @returns {{event, records, count, totalFen} | null}
+ */
+async function getEventDetail(db, actorId, ownerId, eventId) {
+  const event = await getEvent(db, actorId, ownerId, eventId);
+  if (!event) return null;
+  const c = await authz.check(db, actorId, 'read', { kind: 'receiveRecord', ownerId, eventId });
+  if (!c.ok) throw errors.permDenied(c.reason);
+  const [records, contacts] = await Promise.all([
+    db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId, eventId }, { sort: { createdAt: -1 } }),
+    db.collection(COLLECTIONS.Contact).find({ ownerId }),
+  ]);
+  const named = await users.attachCreatorNames(db, records);
+  const cmap = new Map(contacts.map((x) => [x._id, x.name]));
+  const totalFen = records.reduce((s, r) => s + (r.amount || 0), 0);
+  return {
+    event,
+    records: named.map((r) => ({ ...r, contactName: cmap.get(r.contactId) || '' })),
+    count: records.length,
+    totalFen,
+  };
+}
+
+/**
+ * 收礼记录详情一次取齐：记录 + 联系人 + 所属礼薄（页面原来三趟串行）。
+ * @returns {{record, contact, event} | null}
+ */
+async function getRecordDetail(db, actorId, ownerId, recordId) {
+  const record = await getRecord(db, actorId, ownerId, recordId);
+  if (!record) return null;
+  const [contact, event] = await Promise.all([
+    record.contactId
+      ? db.collection(COLLECTIONS.Contact).findOne({ _id: record.contactId, ownerId })
+      : Promise.resolve(null),
+    record.eventId ? getEvent(db, actorId, ownerId, record.eventId) : Promise.resolve(null),
+  ]);
+  return { record, contact, event };
+}
+
 /* ---------- 收礼明细记录 ---------- */
 
 async function createRecord(db, actorId, ownerId, eventId, { contactId, amount, type, remark = '', date }) {
@@ -185,4 +228,4 @@ async function getRecord(db, actorId, ownerId, recordId) {
   return named;
 }
 
-module.exports = { createEvent, updateEvent, deleteEvent, listEvents, listEventSummaries, getEvent, createRecord, updateRecord, deleteRecord, listRecords, getRecord, today };
+module.exports = { createEvent, updateEvent, deleteEvent, listEvents, listEventSummaries, getEvent, getEventDetail, getRecordDetail, createRecord, updateRecord, deleteRecord, listRecords, getRecord, today };

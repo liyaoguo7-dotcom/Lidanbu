@@ -84,4 +84,23 @@ async function getGift(db, actorId, ownerId, giftId) {
   return named;
 }
 
-module.exports = { createGift, updateGift, deleteGift, listGifts, getGift };
+/**
+ * 送礼详情一次取齐（2026-10-24 提速：真机反馈点联系人/详情延迟）：
+ * 页面原来 getGift 后再拉全部联系人只为找一个人名（两趟串行）。
+ * 这里在服务端把记录与联系人一次取齐，客户端只走一趟。
+ * @returns {{gift, contactName, contactRemark} | null}
+ */
+async function getGiftDetail(db, actorId, ownerId, giftId) {
+  const gift = await getGift(db, actorId, ownerId, giftId);
+  if (!gift) return null;
+  const contact = gift.contactId
+    ? await db.collection(COLLECTIONS.Contact).findOne({ _id: gift.contactId, ownerId })
+    : null;
+  return {
+    gift,
+    contactName: contact ? contact.name : '',
+    contactRemark: contact ? (contact.remark || '') : '',
+  };
+}
+
+module.exports = { createGift, updateGift, deleteGift, listGifts, getGift, getGiftDetail };
