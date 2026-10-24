@@ -766,6 +766,12 @@ const service = {
   async listEvents() {
     return core.receive.listEvents(_db, _userId, _userId);
   },
+  /** 礼薄列表页一次取齐：每本带 count/totalFen（替代逐本 getEventStats 的 N+1 往返） */
+  async listEventsWithStats() {
+    try {
+      return await core.receive.listEventSummaries(_db, _userId, _userId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
   async createEvent({ name, tagId, date, remark }) {
     try {
       return await core.receive.createEvent(_db, _userId, _userId, { name, tagId, date, remark });

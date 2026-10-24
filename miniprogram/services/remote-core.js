@@ -80,7 +80,7 @@ function createRemoteCore(transport) {
       'listContacts', 'searchContacts', 'getContact',
     ]),
     receive: makeRemoteModule(t, 'receive', [
-      'createEvent', 'updateEvent', 'deleteEvent', 'listEvents', 'getEvent',
+      'createEvent', 'updateEvent', 'deleteEvent', 'listEvents', 'listEventSummaries', 'getEvent',
       'createRecord', 'updateRecord', 'deleteRecord', 'listRecords', 'getRecord',
     ]),
     gifts: makeRemoteModule(t, 'gifts', [

@@ -34,30 +34,34 @@ Page({
 
   async onShow() {
     await dataService.init();
-    // 缓存会员状态，供行点击时走横置路由判断（横置页内还会再校验一次门禁）
-    try { this._membership = await dataService.getMembership(); } catch (e) { this._membership = null; }
+    // 缓存会员状态，供行点击时走横置路由判断（横置页内还会再校验一次门禁）；
+    // 与列表加载并发，不再排在列表前面堵住显示
+    const membershipP = dataService.getMembership()
+      .then((m) => { this._membership = m; })
+      .catch(() => { this._membership = null; });
     // 小喇叭关闭状态只存内存（horn-state）：本次打开期间不再显示，下次冷启动恢复
     this.setData({ showHorn: !hornState.isDismissed('receive') });
     const hm = hornMarquee(this.data.hornText);
     this.setData({ hornRun: hm.run, hornDur: hm.dur });
     await this.reload();
+    await membershipP;
   },
 
   async reload() {
-    const list = await dataService.listEvents();
+    // 一次取齐（2026-10-24 提速）：原来逐本问统计，本数越多越慢
+    const list = await dataService.listEventsWithStats();
     const rows = [];
     let totalFen = 0;
     for (const e of list) {
-      const st = await dataService.getEventStats(e._id);
-      totalFen += st.totalFen;
+      totalFen += e.totalFen || 0;
       const tag = dataService.getTagById(e.tagId) || {};
       rows.push({
         _id: e._id,
         ownerId: e.ownerId || '',
         name: e.name,
         date: e.date || '',
-        count: st.count,
-        amtText: formatAmountInt(st.totalFen),
+        count: e.count || 0,
+        amtText: formatAmountInt(e.totalFen || 0),
         icon: tagIconPath(tag.id),
         isBaishi: e.tagId === 'baishi',
         offset: 0,

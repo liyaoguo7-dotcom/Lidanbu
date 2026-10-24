@@ -152,3 +152,30 @@ test('无成功邀请时邀请奖励额度为0', async () => {
   const eff = core.quota.getEffectiveQuota(user);
   assert.eq(eff.receiveEvents, 3, '免费用户有效额度=免费3+会员0+邀请0');
 });
+
+test('礼薄列表提速（2026-10-24 真机延迟反馈）：一次取齐聚合，明细只查一遍', async () => {
+  const db = await h.newDB();
+  const owner = await h.newUser(db, 'sumowner');
+  const c = await core.contacts.createContact(db, owner, owner, { name: '甲' });
+  const ev1 = await core.receive.createEvent(db, owner, owner, { name: '婚宴', tagId: 'jiehun', date: '2026-10-01' });
+  const ev2 = await core.receive.createEvent(db, owner, owner, { name: '满月', tagId: 'shengzi', date: '2026-10-02' });
+  await core.receive.createEvent(db, owner, owner, { name: '空本', tagId: 'qita', date: '2026-10-03' });
+  await core.receive.createRecord(db, owner, owner, ev1._id, { contactId: c._id, amount: 10000, type: '现金', date: '2026-10-01' });
+  await core.receive.createRecord(db, owner, owner, ev1._id, { contactId: c._id, amount: 20000, type: '红包', date: '2026-10-01' });
+  await core.receive.createRecord(db, owner, owner, ev2._id, { contactId: c._id, amount: 5000, type: '转账', date: '2026-10-02' });
+  const counts = {};
+  const origCollection = db.collection.bind(db);
+  db.collection = (name) => { counts[name] = (counts[name] || 0) + 1; return origCollection(name); };
+  const sums = await core.receive.listEventSummaries(db, owner, owner);
+  db.collection = origCollection;
+  const C = core.models.COLLECTIONS;
+  assert.eq(counts[C.ReceiveRecord] || 0, 1, '全部礼薄的明细只查一遍（旧实现逐本查）');
+  assert.eq(sums.length, 3, '三本礼薄齐全');
+  const byName = Object.fromEntries(sums.map((s) => [s.name, s]));
+  assert.eq(byName['婚宴'].count, 2, '婚宴 2 条');
+  assert.eq(byName['婚宴'].totalFen, 30000, '婚宴合计 300 元');
+  assert.eq(byName['满月'].count, 1, '满月 1 条');
+  assert.eq(byName['满月'].totalFen, 5000, '满月合计 50 元');
+  assert.eq(byName['空本'].count, 0, '空本 0 条');
+  assert.eq(byName['空本'].totalFen, 0, '空本合计 0');
+});

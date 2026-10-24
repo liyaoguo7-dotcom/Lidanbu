@@ -206,3 +206,40 @@ test('回环：云端导出全链路返回 fileId（任务AE：修"云端未返�
     assert(jobs.length >= 1, '服务端应已写导出历史');
   } finally { dataService._resetForTest(); }
 });
+
+test('回环：礼薄列表一次取齐（listEventsWithStats 云端通路＋聚合正确）', async () => {
+  try {
+    await initCloud('loop-user-sum');
+    const c = await dataService.createContact({ name: '王五' });
+    const contactId = (c.contact && c.contact._id) || c._id;
+    const ev = await dataService.createEvent({ name: '王五婚宴', tagId: 'jiehun', date: '2026-10-01' });
+    const eventId = (ev.event && ev.event._id) || ev._id;
+    await dataService.createRecord(eventId, { contactId, amountFen: 30000, type: '现金', date: '2026-10-01' });
+    await dataService.createRecord(eventId, { contactId, amountFen: 20000, type: '红包', date: '2026-10-01' });
+    await dataService.createEvent({ name: '空本', tagId: 'qita', date: '2026-10-03' });
+    // 云模式下该方法经 remote-core 映射到服务端 receive.listEventSummaries；
+    // 映射漏登记时这里会直接抛「操作失败」（2026-10-24 boot-sim 实锤过的坑）
+    const sums = await dataService.listEventsWithStats();
+    assert.eq(sums.length, 2, '两本礼薄');
+    const byName = Object.fromEntries(sums.map((s) => [s.name, s]));
+    assert.eq(byName['王五婚宴'].count, 2, '婚宴 2 条');
+    assert.eq(byName['王五婚宴'].totalFen, 50000, '婚宴合计 500 元');
+    assert.eq(byName['空本'].count, 0, '空本 0 条');
+  } finally { dataService._resetForTest(); }
+});
+
+test('回环：remote-core 映射清单与本地 core 导出对齐（防漏登记）', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'miniprogram/services/remote-core.js'), 'utf8');
+  const re = /makeRemoteModule\(t, '([a-zA-Z]+)', \[([^\]]+)\]\)/g;
+  let m; let checked = 0;
+  while ((m = re.exec(src)) !== null) {
+    const mod = core[m[1]];
+    assert(mod, `core 应有模块 ${m[1]}`);
+    const names = [...m[2].matchAll(/'([a-zA-Z]+)'/g)].map((x) => x[1]);
+    for (const fn of names) {
+      assert.eq(typeof mod[fn], 'function', `core.${m[1]}.${fn} 应存在（remote-core 已登记）`);
+      checked += 1;
+    }
+  }
+  assert(checked > 40, `应对齐检查应覆盖主要映射（实际 ${checked}）`);
+});

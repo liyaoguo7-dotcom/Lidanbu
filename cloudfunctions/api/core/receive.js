@@ -92,6 +92,28 @@ async function getEvent(db, actorId, ownerId, eventId) {
   return db.collection(COLLECTIONS.ReceiveEvent).findOne({ _id: eventId, ownerId });
 }
 
+/**
+ * 礼薄列表页一次取齐（2026-10-24 提速：真机反馈收礼页礼薄列表延迟）：
+ * 原页面逐本调统计接口（每本一次云端往返，N 本礼薄 = N+1 趟）。
+ * 这里先按 listEvents 的权限口径取可见礼薄，再一条查询取齐这些礼薄的
+ * 全部明细、本地按礼薄聚合条数与金额合计；成员视角只统计其可见礼薄，
+ * 与逐本 listRecords 统计逐字段等价。
+ * @returns 礼薄数组（同 listEvents 顺序），每本另带 count、totalFen
+ */
+async function listEventSummaries(db, actorId, ownerId) {
+  const events = await listEvents(db, actorId, ownerId);
+  if (!events.length) return [];
+  const ids = events.map((e) => e._id);
+  const records = await db.collection(COLLECTIONS.ReceiveRecord)
+    .find({ ownerId, eventId: { $in: ids } });
+  const agg = new Map(ids.map((id) => [id, { count: 0, totalFen: 0 }]));
+  records.forEach((r) => {
+    const a = agg.get(r.eventId);
+    if (a) { a.count += 1; a.totalFen += r.amount || 0; }
+  });
+  return events.map((e) => ({ ...e, ...(agg.get(e._id) || { count: 0, totalFen: 0 }) }));
+}
+
 /* ---------- 收礼明细记录 ---------- */
 
 async function createRecord(db, actorId, ownerId, eventId, { contactId, amount, type, remark = '', date }) {
@@ -163,4 +185,4 @@ async function getRecord(db, actorId, ownerId, recordId) {
   return named;
 }
 
-module.exports = { createEvent, updateEvent, deleteEvent, listEvents, getEvent, createRecord, updateRecord, deleteRecord, listRecords, getRecord, today };
+module.exports = { createEvent, updateEvent, deleteEvent, listEvents, listEventSummaries, getEvent, createRecord, updateRecord, deleteRecord, listRecords, getRecord, today };
