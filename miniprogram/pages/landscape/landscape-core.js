@@ -74,9 +74,9 @@ function scaledSpec(windowWidth) {
 
 /** 字体表：校准系数使三款字体同格视觉等大（定版：文楷 1.00 / 马善政 1.05 / 龙藏 1.20） */
 const FONTS = [
-  { id: 'lxgw', name: '霞鹜文楷', family: 'LxgwWenKai', calibration: 1.00, file: 'lxgw-wenkai.woff2' },
-  { id: 'mashanzheng', name: '马善政毛笔体', family: 'MaShanZheng', calibration: 1.05, file: 'mashanzheng.woff2' },
-  { id: 'longcang', name: '龙藏体', family: 'LongCang', calibration: 1.20, file: 'longcang.woff2' },
+  { id: 'lxgw', name: '霞鹜文楷', family: 'LxgwWenKai', calibration: 1.00, file: 'lxgw-wenkai.woff2', cloudFile: 'lxgw-wenkai.ttf' },
+  { id: 'mashanzheng', name: '马善政毛笔体', family: 'MaShanZheng', calibration: 1.05, file: 'mashanzheng.woff2', cloudFile: 'mashanzheng.ttf' },
+  { id: 'longcang', name: '龙藏体', family: 'LongCang', calibration: 1.20, file: 'longcang.woff2', cloudFile: 'longcang.ttf' },
 ];
 const SONGTI_STACK = '"Songti SC","STSong","Noto Serif CJK SC",SimSun,serif';
 const KAITI_STACK = '"KaiTi","STKaiti","楷体"';

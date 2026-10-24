@@ -119,9 +119,10 @@ test('任务AE-8字体候选序：云链接→分包；CLOUD_FONT_BASE 已填真
   assert.eq(CLOUD_FONT_BASE, 'cloud://cloud1-d3gd7fjdx0d217df0.636c-cloud1-d3gd7fjdx0d217df0-1514234749/fonts/', 'CLOUD_FONT_BASE 为用户 2026-10-23 上传云存储 fonts/ 后的真实前缀');
   const defSrc = createFontSource({ storage: { get: () => '', set: () => {} } });
   const defCands = defSrc.resolveCandidates(LC.fontById('lxgw'));
-  assert.eq(defCands.map((c) => c.kind).join(','), 'cloud-url,subpackage', '候选：云链接第一、分包兜底（本地缓存候选已废除）');
+  assert.eq(defCands.map((c) => c.kind).join(','), 'cloud-url,cloud-url,subpackage', '候选：云端 TTF→woff2→分包兜底（2026-10-25 TTF 优先，本地缓存候选已废除）');
   assert.eq(defCands[0].needsTempUrl, true, 'cloud:// 候选须先换临时链接');
-  assert(defCands[0].fileID.endsWith('/fonts/lxgw-wenkai.woff2'), 'fileID 指向真实云存储字体文件');
+  assert(defCands[0].fileID.endsWith('/fonts/lxgw-wenkai.ttf'), '第一候选 fileID 指向云存储 TTF');
+  assert(defCands[1].fileID.endsWith('/fonts/lxgw-wenkai.woff2'), '第二候选 fileID 指向云存储 woff2');
 });
 
 test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileURL 换 https 链接（不落本地文件）', async () => {
@@ -141,7 +142,7 @@ test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileU
   const src = createFontSource({ wxApi, storage: st, cloudBase: 'cloud://env-x.bucket-y/fonts/' });
   const cand = src.resolveCandidates(LC.fontById('lxgw'))[0];
   const source = await src.materialize(cand, LC.fontById('lxgw'));
-  assert.eq(askedFor, 'cloud://env-x.bucket-y/fonts/lxgw-wenkai.woff2', '换链入参为字体 fileID');
+  assert.eq(askedFor, 'cloud://env-x.bucket-y/fonts/lxgw-wenkai.ttf', '换链入参为 TTF 的 fileID（第一候选）');
   assert.eq(source, 'url("https://tmp.example.com/lxgw.woff2")', 'materialize 返回临时 https 来源串（loadFontFace 官方支持的网络形态）');
   assert.eq(st._m.get('landscape.fontCacheFile.lxgw'), undefined, '不再写本地文件缓存路径（本地路线已废除）');
 });

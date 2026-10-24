@@ -42,11 +42,12 @@ test('字体来源-云地址为空跳过云来源', () => {
 test('字体来源-https 云地址：cloud-url 直链候选排在分包之前', () => {
   const src = createFontSource({ storage: memStorage(), cloudBase: 'https://cdn.example.com/fonts' });
   const list = src.resolveCandidates(LXGW);
-  assert.eq(list.length, 2, '云+分包两个候选');
+  assert.eq(list.length, 3, '云端 TTF+woff2 两个候选＋分包兜底（2026-10-25 TTF 优先）');
   assert.eq(list[0].kind, 'cloud-url', '云直链候选排第一');
-  assert.eq(list[0].source, 'url("https://cdn.example.com/fonts/lxgw-wenkai.woff2")', '云直链来源串（末尾斜杠自动补）');
-  assert.eq(list[1].kind, 'subpackage', '分包降为兜底排最后');
-  assert.eq(list[1].needsSubpackage, true, '分包候选的 needsSubpackage 标记随候选走');
+  assert.eq(list[0].source, 'url("https://cdn.example.com/fonts/lxgw-wenkai.ttf")', 'TTF 直链排第一');
+  assert.eq(list[1].source, 'url("https://cdn.example.com/fonts/lxgw-wenkai.woff2")', 'woff2 直链排第二（末尾斜杠自动补）');
+  assert.eq(list[2].kind, 'subpackage', '分包降为兜底排最后');
+  assert.eq(list[2].needsSubpackage, true, '分包候选的 needsSubpackage 标记随候选走');
 });
 
 test('字体来源-cloud:// 云存储：候选为 cloud-url + needsTempUrl + fileID、排在分包之前', () => {
@@ -54,9 +55,10 @@ test('字体来源-cloud:// 云存储：候选为 cloud-url + needsTempUrl + fil
   const list = src.resolveCandidates(LXGW);
   assert.eq(list[0].kind, 'cloud-url', '云候选排第一');
   assert.eq(list[0].needsTempUrl, true, 'cloud:// 形态须先换临时链接');
-  assert.eq(list[0].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.woff2', 'fileID 拼装');
+  assert.eq(list[0].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', 'TTF 的 fileID 排第一（2026-10-25）');
   assert.eq(list[0].source, undefined, '临时链接不可预先写死在候选里');
-  assert.eq(list[1].kind, 'subpackage', '分包兜底排最后');
+  assert.eq(list[1].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.woff2', 'woff2 的 fileID 排第二');
+  assert.eq(list[2].kind, 'subpackage', '分包兜底排最后');
   assert.eq(src.cloudFileID(LXGW), 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.woff2', 'cloudFileID 拼装');
 });
 
@@ -66,7 +68,7 @@ test('字体来源-materialize：cloud:// 候选换临时 https 链接；会话�
     cloud: {
       getTempFileURL: (o) => {
         calls += 1;
-        assert.eq(o.fileList[0], 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.woff2', '换链入参为 fileID');
+        assert.eq(o.fileList[0], 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', '换链入参为 TTF 的 fileID');
         o.success({ fileList: [{ fileID: o.fileList[0], tempFileURL: 'https://tmp.example.com/f.woff2?sign=x', status: 0 }] });
       },
     },
@@ -116,10 +118,10 @@ test('字体来源-manager 按优先级逐个尝试：临时链接失败才试�
   };
   const fm = createFontManager({ wxApi, storage: st, cloudBase: 'cloud://env-1.bucket-x/fonts/' });
   assert.eq(await fm.load('lxgw'), true, '分包来源兜底成功');
-  assert.eq(tried.length, 2, '按顺序试了两个来源');
+  assert.eq(tried.length, 3, '按顺序试了三个来源（TTF 临时链接→woff2 临时链接→分包）');
   assert(tried[0].indexOf('https://tmp.example.com/') >= 0, '先试云临时链接');
-  assert(tried[1].indexOf('/packages/fonts/') >= 0, '后试分包');
-  assert.eq(st._map.get('landscape.fontLoaded.v4.lxgw'), 1, '成功写缓存标记（v4 构建段）');
+  assert(tried[2].indexOf('/packages/fonts/') >= 0, '最后试分包');
+  assert.eq(st._map.get('landscape.fontLoaded.v5.lxgw'), 1, '成功写缓存标记（v5 构建段）');
 });
 
 test('字体来源-manager 全部来源失败：回退且不抛错、不写标记', async () => {
@@ -131,7 +133,7 @@ test('字体来源-manager 全部来源失败：回退且不抛错、不写标�
   const fm = createFontManager({ wxApi, storage: st });
   assert.eq(await fm.load('lxgw'), false, '全失败返回 false');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.v4.lxgw'), undefined, '不写已加载标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v5.lxgw'), undefined, '不写已加载标记（下次重试）');
 });
 
 test('字体来源-manager 云优先：云直链排在分包之前、首试即成', async () => {
@@ -148,7 +150,7 @@ test('字体来源-manager 云优先：云直链排在分包之前、首试即�
   const fm = createFontManager({ wxApi, storage: st, cloudBase: 'https://cdn.example.com/fonts/' });
   assert.eq(await fm.load('mashanzheng'), true, '云直链首试成功');
   assert.eq(tried.length, 1, '云排在分包之前，首试即成、不再试分包');
-  assert.eq(tried[0], 'url("https://cdn.example.com/fonts/mashanzheng.woff2")', '第一个试的就是云直链');
+  assert.eq(tried[0], 'url("https://cdn.example.com/fonts/mashanzheng.ttf")', '第一个试的就是云直链（TTF 优先）');
 });
 
 test('字体来源-manager cloud:// 形态：先换临时链接再 loadFontFace（任务AE 主路线）', async () => {
@@ -163,5 +165,5 @@ test('字体来源-manager cloud:// 形态：先换临时链接再 loadFontFace�
   assert.eq(await fm.load('mashanzheng'), true, '临时链接加载成功');
   assert.eq(tried.length, 1, '只试临时链接一个来源即成');
   assert.eq(tried[0], 'url("https://tmp.example.com/m.woff2")', 'loadFontFace 吃的是 https 链接，不是本地路径');
-  assert.eq(st._map.get('landscape.fontLoaded.v4.mashanzheng'), 1, '成功写 v4 标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v5.mashanzheng'), 1, '成功写 v5 标记');
 });

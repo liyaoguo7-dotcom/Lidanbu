@@ -95,10 +95,17 @@ function createFontSource(deps = {}) {
   function resolveCandidates(font) {
     const out = [];
     const base = cloudBaseOf(font);
+    // 云端文件名顺序（2026-10-25 改）：TTF 优先、woff2 次之。背景：云存储
+    // 路径与文件已由用户截图核对无误，woff2 临时链接路线真机仍加载不出，
+    // 头号嫌疑是 Android 微信内核对 woff2 的支持不稳；TTF 是各内核都稳的
+    // 格式（与仓库 woff2 同源转换、字体名/字表逐项复验一致）。
+    const cloudFiles = [];
+    if (font.cloudFile && font.cloudFile !== font.file) cloudFiles.push(font.cloudFile);
+    cloudFiles.push(font.file);
     if (base.startsWith('https://')) {
-      out.push({ kind: 'cloud-url', source: `url("${joinUrl(base, font.file)}")` });
+      for (const f of cloudFiles) out.push({ kind: 'cloud-url', source: `url("${joinUrl(base, f)}")` });
     } else if (base.startsWith('cloud://')) {
-      out.push({ kind: 'cloud-url', needsTempUrl: true, fileID: joinUrl(base, font.file) });
+      for (const f of cloudFiles) out.push({ kind: 'cloud-url', needsTempUrl: true, fileID: joinUrl(base, f) });
     }
     out.push({ kind: 'subpackage', source: subpackageSource(font), needsSubpackage: true });
     return out;

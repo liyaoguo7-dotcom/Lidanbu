@@ -27,7 +27,7 @@ const FONT_SRC_BASE = SUBPACKAGE_ROOT;
  * 若曾"加载成功"写下旧键，版本段一变旧键自然失效，强制用当前文件重载
  * （2026-10-22 任务AB 第 6 项：三款字体真机仍不可用的机制修复之一）。
  * 字体文件再重建时必须同步 bump 此版本号。 */
-const FONT_BUILD = 'v4';
+const FONT_BUILD = 'v5'; // v5：云端改走 TTF 优先（woff2 在 Android 微信内核上嫌疑最大）
 const LOADED_KEY_PREFIX = `landscape.fontLoaded.${FONT_BUILD}.`;
 
 function defaultStorage() {
