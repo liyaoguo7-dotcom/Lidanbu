@@ -46,6 +46,7 @@ function createFontManager(deps = {}) {
   const storage = deps.storage || defaultStorage();
   const fontSource = deps.fontSource || createFontSource({ wxApi, storage, cloudBase: deps.cloudBase, fileExists: deps.fileExists });
   const state = {}; // fontId -> 'idle'|'loading'|'loaded'|'failed'
+  const failures = {}; // fontId -> {stage:'temp-url'|'load-face', reason}（页面据此给用户看得懂的提示）
   FONTS.forEach((f) => { state[f.id] = storage.get(LOADED_KEY_PREFIX + f.id) ? 'loaded' : 'idle'; });
 
   function sourceFor(font) {
@@ -83,22 +84,31 @@ function createFontManager(deps = {}) {
     state[font.id] = 'loading';
     return (async () => {
       const candidates = fontSource.resolveCandidates(font);
+      let attemptFailure = null; // 本次尝试里最有信息量的失败（云端换链优先于分包兜底）
       for (const cand of candidates) {
         let source = cand.source || null;
         if (cand.needsSubpackage) await fontSource.ensureSubpackage(); // 尽力触发分包下载，成败都继续尝试
         if (cand.needsTempUrl) {
           source = await fontSource.materialize(cand, font); // 云存储 fileID → 临时 https 链接
-          if (!source) continue;
+          if (!source) {
+            const me = typeof fontSource.getLastMaterializeError === 'function'
+              ? fontSource.getLastMaterializeError() : null;
+            attemptFailure = { stage: 'temp-url', reason: (me && me.reason) || '换链接失败' };
+            continue;
+          }
         }
         if (!source) continue;
         // eslint-disable-next-line no-await-in-loop
         const ok = await tryLoadFace(font.family, source);
         if (ok) {
           state[font.id] = 'loaded';
+          delete failures[font.id];
           storage.set(LOADED_KEY_PREFIX + font.id, 1); // 缓存标记：下次免重复加载
           return true;
         }
+        if (!attemptFailure) attemptFailure = { stage: 'load-face', reason: '字体文件已取到，但手机未能加载' };
       }
+      if (attemptFailure) failures[font.id] = attemptFailure;
       state[font.id] = 'failed';
       return false;
     })();
@@ -109,6 +119,8 @@ function createFontManager(deps = {}) {
     /** 确保当前所选字体就绪（页面 onShow 调；其余字体不预下载，省流量/包体积） */
     ensureSelected(fontId) { return load(fontId); },
     getState(fontId) { return state[fontById(fontId).id]; },
+    /** 最近一次加载失败的阶段与原始原因（成功后清除）；页面提示/排查用 */
+    getLastFailure(fontId) { return failures[fontById(fontId).id] || null; },
     /** 是否处于回退状态（加载失败或从未加载成功）：页面据此仍用同一回退链渲染，不阻断 */
     isFallback(fontId) { return state[fontById(fontId).id] !== 'loaded'; },
     sourceFor,

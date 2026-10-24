@@ -55,6 +55,10 @@ function createFontSource(deps = {}) {
   const wxApi = deps.wxApi || (typeof wx !== 'undefined' ? wx : null);
   const cloudBaseOpt = deps.cloudBase !== undefined ? deps.cloudBase : CLOUD_FONT_BASE;
   const tempUrlMemo = new Map(); // fileID -> tempFileURL（本会话内复用，避免重复取链接）
+  // 最近一次换链接失败的原因（{fileID, reason}）：2026-10-24 加——此前所有
+  // 失败都被静默吞掉、回落到 Android 已知不可用的分包路线，真机上只表现为
+  // 「字体没变」无从定位；现在把云端返回的原始原因留下来供页面提示/排查
+  let lastMaterializeError = null;
 
   function cloudBaseOf(font) {
     const base = typeof cloudBaseOpt === 'function' ? cloudBaseOpt(font) : cloudBaseOpt;
@@ -109,7 +113,10 @@ function createFontSource(deps = {}) {
     if (!cand || cand.kind !== 'cloud-url' || !cand.needsTempUrl || !cand.fileID) return null;
     if (tempUrlMemo.has(cand.fileID)) return `url("${tempUrlMemo.get(cand.fileID)}")`;
     const cloud = wxApi && wxApi.cloud;
-    if (!cloud || typeof cloud.getTempFileURL !== 'function') return null;
+    if (!cloud || typeof cloud.getTempFileURL !== 'function') {
+      lastMaterializeError = { fileID: cand.fileID, reason: '云存储接口不可用' };
+      return null;
+    }
     try {
       const res = await new Promise((resolve, reject) => {
         cloud.getTempFileURL({
@@ -120,10 +127,18 @@ function createFontSource(deps = {}) {
       });
       const item = res && Array.isArray(res.fileList) ? res.fileList[0] : null;
       const url = item && item.status === 0 && item.tempFileURL ? String(item.tempFileURL) : '';
-      if (!url.startsWith('https://')) return null;
+      if (!url.startsWith('https://')) {
+        lastMaterializeError = {
+          fileID: cand.fileID,
+          reason: (item && (item.errMsg || item.error)) || `云端返回状态 ${item ? item.status : '无结果'}`,
+        };
+        return null;
+      }
+      lastMaterializeError = null;
       tempUrlMemo.set(cand.fileID, url);
       return `url("${url}")`;
     } catch (e) {
+      lastMaterializeError = { fileID: cand.fileID, reason: (e && (e.errMsg || e.message)) || '换链接请求失败' };
       return null;
     }
   }
@@ -149,6 +164,7 @@ function createFontSource(deps = {}) {
   return {
     resolveCandidates,
     materialize,
+    getLastMaterializeError: () => lastMaterializeError,
     ensureSubpackage,
     subpackagePath,
     subpackageSource,

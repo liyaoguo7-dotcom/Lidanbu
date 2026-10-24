@@ -191,3 +191,30 @@ test('任务AE-8共计列表复刻：居中大字分段红字、合并一卡、�
   const rd = readMp('pages/receive-detail/receive-detail.wxss');
   assert(rd.includes('left: 16px'), '收礼记录无徽章，分隔线自左内边距起');
 });
+
+test('AC字体诊断：云端找不到文件时原因要留得住（2026-10-24 真机字体定位）', async () => {
+  const { createFontSource } = require('../miniprogram/services/font-source.js');
+  const { createFontManager } = require('../miniprogram/services/font-manager.js');
+  const st = { get: () => '', set: () => {} };
+  const wxApi = {
+    cloud: {
+      getTempFileURL: ({ success }) => success({
+        fileList: [{ status: -503003, errMsg: 'STORAGE_FILE_NONEXIST', tempFileURL: '' }],
+      }),
+    },
+    loadFontFace: ({ fail }) => fail && fail(new Error('loadFontFace:fail')),
+    loadSubpackage: ({ fail }) => fail && fail(new Error('no subpackage')),
+  };
+  const src = createFontSource({ wxApi, storage: st, cloudBase: 'cloud://env-x.bucket-y/fonts/' });
+  const font = { id: 'lxgw', file: 'lxgw-wenkai.woff2', family: 'LxgwWenKai' };
+  const cand = src.resolveCandidates(font)[0];
+  const out = await src.materialize(cand, font);
+  assert.eq(out, null, '文件不存在时物化应失败');
+  const me = src.getLastMaterializeError();
+  assert(me && /NONEXIST/.test(me.reason), `失败原因应保留云端原文（实际 ${me && me.reason}）`);
+  const mgr = createFontManager({ wxApi, storage: st, cloudBase: 'cloud://env-x.bucket-y/fonts/' });
+  const ok = await mgr.load('lxgw');
+  assert.eq(ok, false, '加载应失败');
+  const f = mgr.getLastFailure('lxgw');
+  assert(f && f.stage === 'temp-url' && /NONEXIST/.test(f.reason), '管理器应记录 temp-url 阶段与原因');
+});

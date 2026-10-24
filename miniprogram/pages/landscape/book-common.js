@@ -380,6 +380,21 @@ function createBookPage(kind) {
       this.setData({ fontId: id, selStack: LC.selectedStack(id) });
       const ok = await fontManager.ensureSelected(id); // 选中才下载
       this.setData({ fontLoaded: ok });
+      if (!ok) {
+        // 2026-10-24：字体真机一直显示不了却无任何提示——失败原因必须露出来，
+        // 用户一眼能看到卡在哪一步，也方便截图回传定位
+        const f = typeof fontManager.getLastFailure === 'function' ? fontManager.getLastFailure(id) : null;
+        const fname = LC.fontById(id).name;
+        let content;
+        if (f && f.stage === 'temp-url' && /NONEXIST|not exist|不存在|no such/i.test(f.reason || '')) {
+          content = `云端找不到「${fname}」的字体文件，先用默认字体显示。麻烦把这个提示截图发给我们，马上处理。`;
+        } else if (f && f.stage === 'temp-url') {
+          content = `向云端取「${fname}」字体链接失败：${f.reason}。先用默认字体显示，麻烦截图发给我们排查。`;
+        } else {
+          content = `「${fname}」字体文件加载失败，先用默认字体显示。麻烦把这个提示截图发给我们排查。`;
+        }
+        wx.showModal({ title: '字体没加载上', content, showCancel: false });
+      }
       await this.reload(); // 字号校准系数变了，重排列模型
     },
 
