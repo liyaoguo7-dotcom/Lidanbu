@@ -65,6 +65,8 @@ Page({
   },
 
   async onAddConfirm(e) {
+    if (this._saving) return; // 在途锁（任务AE补修）
+    this._saving = true;
     const { name, remark } = e.detail;
     try {
       const r = await dataService.createContact({ name, remark });
@@ -99,6 +101,6 @@ Page({
       }
     } catch (err) {
       wx.showModal({ title: '提示', content: err.message, showCancel: false });
-    }
+    } finally { this._saving = false; }
   },
 });

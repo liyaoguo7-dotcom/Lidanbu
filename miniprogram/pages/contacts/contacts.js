@@ -111,6 +111,8 @@ Page({
   },
 
   async onEditConfirm(e) {
+    if (this._saving) return; // 在途锁（任务AE补修：全量排查漏锁时补上，防连点重复提交）
+    this._saving = true;
     const { name, remark } = e.detail;
     try {
       await dataService.updateContact(this.data.sheetId, { name, remark });
@@ -119,7 +121,7 @@ Page({
       await this.reload();
     } catch (err) {
       wx.showModal({ title: '提示', content: err.message, showCancel: false });
-    }
+    } finally { this._saving = false; }
   },
 
   async onDelete() {
@@ -143,6 +145,8 @@ Page({
   },
 
   async onConfirmDel() {
+    if (this._deleting) return; // 在途锁（任务AE补修）
+    this._deleting = true;
     try {
       await dataService.deleteContact(this.data.sheetId, true);
       wx.showToast({ title: '已删除', icon: 'success' });
@@ -150,6 +154,7 @@ Page({
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
     } finally {
+      this._deleting = false;
       this.setData({ delModal: false, delContent: '' });
     }
   },
@@ -163,6 +168,8 @@ Page({
   },
 
   async onAddConfirm(e) {
+    if (this._saving) return; // 在途锁（任务AE补修：本页曾漏锁，真机连点 8~9 秒建出十几条重复亲友）
+    this._saving = true;
     const { name, remark } = e.detail;
     try {
       const r = await dataService.createContact({ name, remark });
@@ -180,6 +187,6 @@ Page({
       wx.showToast({ title: '已保存', icon: 'success' });
     } catch (err) {
       wx.showModal({ title: '提示', content: err.message, showCancel: false });
-    }
+    } finally { this._saving = false; }
   },
 });

@@ -73,6 +73,8 @@ Page({
   },
 
   async onConfirmDel() {
+    if (this._deleting) return; // 在途锁（任务AE补修：弹窗在 await 期间还开着，连点会重复删）
+    this._deleting = true;
     try {
       await dataService.deleteRecord(this.recordId);
       wx.showToast({ title: '已删除', icon: 'success' });
@@ -80,6 +82,7 @@ Page({
     } catch (e) {
       wx.showModal({ title: '提示', content: e.message, showCancel: false });
     } finally {
+      this._deleting = false;
       this.setData({ showDelModal: false });
     }
   },

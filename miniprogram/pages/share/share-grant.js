@@ -54,6 +54,8 @@ Page({
   onGiftsToggle() { this.setData({ giftsOn: !this.data.giftsOn, dirty: true }); },
 
   async onSave() {
+    if (this._saving) return; // 在途锁（任务AE补修）
+    this._saving = true;
     const switches = {};
     this.data.switches.forEach((s) => { switches[s.id] = s.on; });
     wx.showLoading({ title: '保存中' });
@@ -71,7 +73,7 @@ Page({
     } catch (e) {
       wx.hideLoading();
       wx.showModal({ title: '保存失败', content: e.message, showCancel: false });
-    }
+    } finally { this._saving = false; }
   },
 
   onRemove() {

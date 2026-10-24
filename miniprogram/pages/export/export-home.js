@@ -47,6 +47,7 @@ Page({
   },
 
   async onExport() {
+    if (this.data.exporting) return; // 在途锁（任务AE补修：原只有置位没有入口判断，连点会重复生成）
     const eventIds = this.data.events.filter((e) => e.checked).map((e) => e._id);
     if (eventIds.length === 0 && !this.data.includeGifts) {
       wx.showToast({ title: '至少勾选一个礼薄或送礼', icon: 'none' });

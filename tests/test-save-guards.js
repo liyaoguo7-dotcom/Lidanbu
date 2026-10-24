@@ -41,3 +41,27 @@ test('保存锁：购买页与导入确认页的既有状态锁不回退', () =>
   const review = fs.readFileSync(path.join(ROOT, 'import/import-review.js'), 'utf8');
   assert(review.includes('if (this.data.writing || this.data.done) return;'), '导入确认应有 writing 锁');
 });
+
+test('保存锁补修（任务AE补修）：亲友新增/编辑、选亲友新增、导入补建、共享设置、删除确认、导出入口', () => {
+  const cases = [
+    ['contacts/contacts.js', 'onAddConfirm', '_saving'],
+    ['contacts/contacts.js', 'onEditConfirm', '_saving'],
+    ['contacts/contacts.js', 'onConfirmDel', '_deleting'],
+    ['choose-contact/choose-contact.js', 'onAddConfirm', '_saving'],
+    ['import/import-review.js', 'onAddConfirm', '_saving'],
+    ['share/share-grant.js', 'onSave', '_saving'],
+    ['gift-detail/gift-detail.js', 'onConfirmDel', '_deleting'],
+    ['receive-record-detail/receive-record-detail.js', 'onConfirmDel', '_deleting'],
+  ];
+  for (const [rel, handler, flag] of cases) {
+    const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const at = src.indexOf(`async ${handler}(`);
+    assert(at >= 0, `${rel} 应有 ${handler}`);
+    const head = src.slice(at, at + 160);
+    assert(head.includes(`if (this.${flag}) return;`), `${rel} ${handler} 入口应有 ${flag} 在途锁（真机连点重复建亲友的教训）`);
+    assert(src.includes(`this.${flag} = false;`), `${rel} 应有 ${flag} 复位`);
+  }
+  const exp = fs.readFileSync(path.join(ROOT, 'export/export-home.js'), 'utf8');
+  const at = exp.indexOf('async onExport(');
+  assert(exp.slice(at, at + 120).includes('if (this.data.exporting) return;'), '导出入口应有在途判断');
+});

@@ -253,6 +253,8 @@ Page({
     this.setData({ addSheetOpen: false, editingIndex: -1 });
   },
   async onAddConfirm(e) {
+    if (this._saving) return; // 在途锁（任务AE补修）
+    this._saving = true;
     const { name, remark } = e.detail;
     const i = this.data.editingIndex;
     try {
@@ -268,7 +270,7 @@ Page({
       wx.showToast({ title: r && r.duplicateWarning ? '该姓名已存在，已选中' : '已添加并选中', icon: 'none' });
     } catch (err) {
       wx.showToast({ title: err.message || '添加失败', icon: 'none' });
-    }
+    } finally { this._saving = false; }
   },
 
   /* ---------- 全部确认导入（整批原子） ---------- */
