@@ -38,7 +38,7 @@ test('任务AA-列序：orderForBook 按创建升序，第一笔在最左', () =
 
 test('任务AA-列序接线：书页两条取数路径都过 orderForBook', () => {
   const bc = readMp('pages/landscape/book-common.js');
-  assert(bc.includes('LC.orderForBook(await dataService.listGiftsFor('), '送礼本路径接线');
+  assert(bc.includes('LC.orderForBook(rawGifts)') && bc.includes('dataService.listGiftsFor('), '送礼本路径接线（2026-10-24 提速：与联系人表并发取后仍过 orderForBook）');
   assert(bc.includes('LC.orderForBook(await dataService.listRecordsFor('), '收礼本路径接线');
 });
 

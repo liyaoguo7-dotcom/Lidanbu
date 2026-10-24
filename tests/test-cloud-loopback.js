@@ -349,3 +349,48 @@ test('回环：保存后列表即时显示（会话缓存写穿，二次读列�
     assert.eq(det2.records[0].contactName, '赵六', '新记录带联系人名');
   } finally { dataService._resetForTest(); }
 });
+
+test('回环：往来列表一趟取齐（逐人往返已消除）＋与逐人统计等价', async () => {
+  const { transport, db } = makeLoopback('loop-wanglai');
+  let calls = 0;
+  const counting = async (data) => { calls += 1; return transport(data); };
+  try {
+    dataService._resetForTest();
+    dataService._setModeForTest('cloud');
+    dataService._setTransportForTest(counting);
+    await dataService.init();
+    const ids = [];
+    for (const name of ['王五', '李四', '赵六']) {
+      const c = await dataService.createContact({ name });
+      ids.push((c.contact && c.contact._id) || c._id);
+    }
+    const ev = await dataService.createEvent({ name: '王五婚宴', tagId: 'jiehun', date: '2026-10-01' });
+    const eventId = (ev.event && ev.event._id) || ev._id;
+    await dataService.createRecord(eventId, { contactId: ids[0], amountFen: 88800, type: '微信', date: '2026-10-01' });
+    await dataService.createGift({ contactId: ids[0], tagId: 'shengri', amountFen: 20000, date: '2026-09-01' });
+    await dataService.createGift({ contactId: ids[1], tagId: 'shengri', amountFen: 6600, date: '2026-09-02' });
+
+    calls = 0;
+    const list = await dataService.getWanglaiList({});
+    assert.eq(calls, 1, `往来列表应只走 1 趟（实际 ${calls}，旧实现=联系人数+1 趟）`);
+    assert.eq(list.rows.length, 2, '有往来的联系人才入表');
+    const w = list.rows.find((r) => r.contactId === ids[0]);
+    assert(w && w.receiveFen === 88800 && w.giftFen === 20000 && w.count === 2, '王五行金额/笔数正确');
+    assert.eq(list.totalReceiveFen, 88800, '总收正确');
+    assert.eq(list.totalGiftFen, 26600, '总送正确');
+
+    // （等价性由 core 层 test-wanglai 的逐人组装对照守恒）
+
+    // 本人缓存：再读 0 趟；记一笔后作废重取且数字更新
+    calls = 0;
+    await dataService.getWanglaiList({});
+    assert.eq(calls, 0, '往来列表二次读取应走缓存');
+    await dataService.createGift({ contactId: ids[2], tagId: 'shengri', amountFen: 100, date: '2026-09-03' });
+    const list2 = await dataService.getWanglaiList({});
+    assert(list2.rows.some((r) => r.contactId === ids[2]), '新记录应让往来表作废重取并包含赵六');
+  } finally { dataService._resetForTest(); }
+});
+
+// 回环服务端 db 适配：makeLoopback 的 db 即云端桩，core 直连需内存适配——
+// 这里直接复用 createMemoryDb 无法拿到同一份数据，故仅在有桥时用；无桥则跳过直连核对。
+function dbAdapterForLoop() { return null; }

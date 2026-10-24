@@ -16,8 +16,10 @@ Page({
   },
 
   async onShow() {
-    const m = await dataService.getMembership().catch(() => null);
-    const received = await dataService.myReceivedShares().catch(() => []);
+    const [m, received] = await Promise.all([
+      dataService.getMembership().catch(() => null),
+      dataService.myReceivedShares().catch(() => []),
+    ]);
     this.setData({
       isMember: !!(m && (m.state === 'member' || m.state === 'grace')),
       received,

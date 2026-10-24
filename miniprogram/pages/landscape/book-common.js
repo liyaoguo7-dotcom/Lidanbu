@@ -83,9 +83,10 @@ function createBookPage(kind) {
       const ok = await fontManager.ensureSelected(prefs.fontId);
       this.setData({ fontLoaded: ok });
 
-      await this._loadPermissions();
+      const permP = this._loadPermissions(); // 权限与内容加载重叠，不再排队
       this._syncOrientation();
       await this.reload();
+      await permP;
       // 字体在列渲染后才就绪的机型上，已排版文字可能不自动刷新（任务AB 第 6 项）：
       // 加载成功后用同内容再 setData 一次列模型，强制按新字体重排。
       if (ok) this._convertCols();
@@ -190,8 +191,22 @@ function createBookPage(kind) {
       }
     },
 
+    /** 联系人姓名表一次取齐（原实现逐条记录查联系人，一本 20 条就是 20 趟串行往返） */
+    async _loadContactMap() {
+      const list = await dataService.listContactsFor(this._ownerId || undefined).catch(() => []);
+      const map = {};
+      (list || []).forEach((c) => { map[c._id] = c.name; });
+      this._contactMap = map;
+    },
+    _contactNameOf(contactId) {
+      return (this._contactMap && this._contactMap[contactId]) || '';
+    },
+
     async _reloadReceive() {
-      const events = await dataService.listEventsFor(this._ownerId || undefined);
+      const [events] = await Promise.all([
+        dataService.listEventsFor(this._ownerId || undefined),
+        this._loadContactMap(),
+      ]);
       if (!events.length) {
         const built = LC.buildColumns([], { fontId: this.data.fontId });
         this.setData({ emptyBook: true, allColumns: built.columns, titleName: '收礼礼簿' });
@@ -206,8 +221,7 @@ function createBookPage(kind) {
       const rows = [];
       this._recordsById = {};
       for (const r of recs) {
-        const c = await dataService.getContact(r.contactId, this._ownerId || undefined);
-        const name = c ? c.name : '';
+        const name = this._contactNameOf(r.contactId);
         this._recordsById[r._id] = { ...r, contactName: name };
         rows.push({ id: r._id, name, amountFen: r.amount || 0, tagId: ev.tagId });
       }
@@ -227,12 +241,15 @@ function createBookPage(kind) {
 
     async _reloadGift() {
       // 同收礼本：横置按记账先后排（创建升序、第一笔最左，任务AA）
-      const gifts = LC.orderForBook(await dataService.listGiftsFor(this._ownerId || undefined));
+      const [rawGifts] = await Promise.all([
+        dataService.listGiftsFor(this._ownerId || undefined),
+        this._loadContactMap(),
+      ]);
+      const gifts = LC.orderForBook(rawGifts);
       const rows = [];
       this._recordsById = {};
       for (const g of gifts) {
-        const c = await dataService.getContact(g.contactId, this._ownerId || undefined);
-        const name = c ? c.name : '';
+        const name = this._contactNameOf(g.contactId);
         this._recordsById[g._id] = { ...g, contactName: name };
         rows.push({ id: g._id, name, amountFen: g.amount || 0, tagId: g.tagId });
       }

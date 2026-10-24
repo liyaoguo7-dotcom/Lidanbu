@@ -87,7 +87,7 @@ function createRemoteCore(transport) {
       'createGift', 'updateGift', 'deleteGift', 'listGifts', 'getGift', 'getGiftDetail',
     ]),
     stats: Object.assign(makeRemoteModule(t, 'stats', [
-      'contactStats', 'memberStats', 'memberTimeline', 'memberEvents', 'getHomeData',
+      'contactStats', 'memberStats', 'memberTimeline', 'memberEvents', 'getHomeData', 'wanglaiList',
     ]), {
       // 纯函数（只算范围，不碰数据）：本地实现，绝不走 RPC
       resolveRangeOpt: localCore.stats.resolveRangeOpt,

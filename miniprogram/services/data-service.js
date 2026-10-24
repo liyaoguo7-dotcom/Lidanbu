@@ -36,6 +36,8 @@ let _homeDataInflight = null; // 首页数据在途去重：小结与最近往�
 // 只缓存本人三张列表与礼薄详情；写入走 write-through（新增直接进缓存、
 // 改删精确同步或整表作废），保证缓存与云端一致，不拿旧数据糊弄。
 let _listCache = { contacts: null, gifts: null, eventsStats: null };
+const _wanglaiCache = new Map(); // 本人往来列表按范围缓存；任一记录/联系人变更即整表作废
+function _dirtyWanglai() { _wanglaiCache.clear(); }
 const _eventDetailCache = new Map();
 function _dirtyLists(...names) { names.forEach((n) => { _listCache[n] = null; }); }
 let _modeForTest = null; // 仅测试注入用：'local' | 'cloud' | null
@@ -361,6 +363,7 @@ const service = {
       if (_listCache.contacts) {
         _listCache.contacts = _listCache.contacts.map((c) => (c._id === contactId ? { ...c, name, remark } : c));
       }
+      _dirtyWanglai(); // 往来行显示姓名/备注
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
@@ -373,6 +376,7 @@ const service = {
           _listCache.contacts = _listCache.contacts.filter((c) => c._id !== contactId);
         }
         _dirtyLists('gifts', 'eventsStats'); // 删联系人连带删其全部往来记录
+        _dirtyWanglai();
         _eventDetailCache.clear();
       }
       return r;
@@ -394,6 +398,7 @@ const service = {
       });
       await evalInviteQuiet(); // 送礼记录是邀请奖励的有效动作之一
       // 写穿缓存：新记录立刻在送礼列表最上方（列表按 createdAt 倒序）
+      _dirtyWanglai();
       if (_listCache.gifts && r && r._id) {
         _listCache.gifts = [{
           _id: r._id, ownerId: _userId, contactId, tagId, amount: amountFen,
@@ -409,6 +414,7 @@ const service = {
       if (_listCache.gifts) {
         _listCache.gifts = _listCache.gifts.map((g) => (g._id === giftId ? { ...g, ...patch } : g));
       }
+      _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
@@ -416,6 +422,7 @@ const service = {
     try {
       const r = await core.gifts.deleteGift(_db, _userId, _userId, giftId);
       if (_listCache.gifts) _listCache.gifts = _listCache.gifts.filter((g) => g._id !== giftId);
+      _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
@@ -857,6 +864,7 @@ const service = {
         _listCache.eventsStats = _listCache.eventsStats.filter((e) => e._id !== eventId);
       }
       _eventDetailCache.delete(eventId);
+      _dirtyWanglai(); // 删礼薄连带删其收礼记录
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
@@ -888,6 +896,7 @@ const service = {
           ? { ...e, count: (e.count || 0) + 1, totalFen: (e.totalFen || 0) + amountFen }
           : e));
       }
+      _dirtyWanglai();
       const det = _eventDetailCache.get(eventId);
       if (det && r && r._id) {
         const cDoc = (_listCache.contacts || []).find((c) => c._id === contactId);
@@ -907,6 +916,7 @@ const service = {
       const r = await core.receive.updateRecord(_db, _userId, _userId, recordId, patch);
       _dirtyLists('eventsStats'); // 金额/归属可能变，礼薄汇总整表作废重取
       _eventDetailCache.clear();
+      _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
@@ -915,6 +925,7 @@ const service = {
       const r = await core.receive.deleteRecord(_db, _userId, _userId, recordId);
       _dirtyLists('eventsStats');
       _eventDetailCache.clear();
+      _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
@@ -947,36 +958,22 @@ const service = {
    */
   async getWanglaiList({ ownerId, range } = {}) {
     const oid = ownerId || _userId;
-    const isMember = oid !== _userId;
+    const own = oid === _userId;
+    const key = own ? JSON.stringify(range || null) : null;
+    if (own && _wanglaiCache.has(key)) return _wanglaiCache.get(key);
     try {
-      const rg = core.stats.resolveRangeOpt(range);
-      const contacts = await core.contacts.listContacts(_db, _userId, oid);
-      const rows = [];
-      let totalReceiveFen = 0, totalGiftFen = 0, totalReceiveCount = 0, totalGiftCount = 0;
-      for (const c of contacts) {
-        const st = isMember
-          ? await core.stats.memberStats(_db, _userId, oid, c._id, { range })
-          : await core.stats.contactStats(_db, oid, c._id, { range });
-        const count = st.receiveCount + st.giftCount;
-        if (count === 0) continue;
-        totalReceiveFen += st.receiveTotalFen;
-        totalGiftFen += st.giftTotalFen;
-        totalReceiveCount += st.receiveCount;
-        totalGiftCount += st.giftCount;
-        rows.push({
-          contactId: c._id, name: c.name, remark: c.remark || '',
-          count, receiveFen: st.receiveTotalFen, giftFen: st.giftTotalFen,
-          diffFen: st.diffFen,
-        });
-      }
-      // 按往来笔数倒序，笔数相同按姓名
-      rows.sort((a, b) => b.count - a.count || String(a.name).localeCompare(String(b.name)));
-      return {
-        rows, totalReceiveFen, totalGiftFen, totalReceiveCount, totalGiftCount,
-        diffFen: totalReceiveFen - totalGiftFen,
-        from: rg.from, to: rg.to, isMember,
-      };
+      // 服务端一趟取齐（core.stats.wanglaiList）：旧实现逐个联系人调
+      // contactStats，云端每人一趟往返，是往来页最大的隐藏延迟
+      const r = await core.stats.wanglaiList(_db, _userId, oid, { range });
+      if (own) _wanglaiCache.set(key, r);
+      return r;
     } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 按账本主人读联系人（横置礼单本等用）：看自己账本走列表缓存，看成员共享账本直查 */
+  async listContactsFor(ownerId) {
+    if (!ownerId || ownerId === _userId) return this.listContacts();
+    try { return await core.contacts.listContacts(_db, _userId, ownerId); }
+    catch (e) { throw new Error(friendly(e)); }
   },
   /** 往来页搜索：输入姓名出联系人（成员视角自动只搜可见的） */
   async searchWanglaiContacts({ ownerId, keyword } = {}) {
@@ -1116,6 +1113,7 @@ const service = {
     if (!r.rawError && r.written > 0) {
       _dirtyLists('gifts', 'eventsStats');
       _eventDetailCache.clear();
+      _dirtyWanglai();
     }
     if (r.rawError) {
       const err = new Error(friendly(r.rawError));
@@ -1361,6 +1359,7 @@ service._resetForTest = () => {
   _db = null; _userId = null; _dbFactory = null;
   _listCache = { contacts: null, gifts: null, eventsStats: null };
   _eventDetailCache.clear();
+  _wanglaiCache.clear();
   _homeDataInflight = null;
   service._featureFlagsCache = null;
   _modeForTest = null; _transportForTest = null; _remoteCore = null;

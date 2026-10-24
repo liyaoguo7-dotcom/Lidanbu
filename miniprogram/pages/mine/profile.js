@@ -31,19 +31,22 @@ Page({
   },
 
   async refresh() {
-    try {
-      const p = await dataService.getProfile();
-      this.setData({ nickname: p.nickname || '', avatarUrl: p.avatarUrl || '' });
-    } catch (e) { /* 忽略 */ }
-    try {
-      const m = await dataService.getMembership();
-      this.setData({ memberText: MEMBER_LABELS[m.state] || m.state });
-    } catch (e) { /* 忽略 */ }
-    try {
-      const c = await dataService.getPrivacyConsent();
-      const verdict = privacyGuard.evaluate({ agreed: !!(c && c.agreed) }, 'chooseAvatar');
-      this.setData({ privacyAgreed: verdict.allowed });
-    } catch (e) { /* 忽略 */ }
+    // 三个读取互相独立，并发取（原串行三趟）
+    await Promise.all([
+      (async () => { try {
+        const p = await dataService.getProfile();
+        this.setData({ nickname: p.nickname || '', avatarUrl: p.avatarUrl || '' });
+      } catch (e) { /* 忽略 */ } })(),
+      (async () => { try {
+        const m = await dataService.getMembership();
+        this.setData({ memberText: MEMBER_LABELS[m.state] || m.state });
+      } catch (e) { /* 忽略 */ } })(),
+      (async () => { try {
+        const c = await dataService.getPrivacyConsent();
+        const verdict = privacyGuard.evaluate({ agreed: !!(c && c.agreed) }, 'chooseAvatar');
+        this.setData({ privacyAgreed: verdict.allowed });
+      } catch (e) { /* 忽略 */ } })(),
+    ]);
   },
 
   /** chooseAvatar 按钮回调：先临时显示，点保存才落库 */

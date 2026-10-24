@@ -149,11 +149,69 @@ async function getHomeData(db, actorId) {
   return { receives, gifts, contacts, events };
 }
 
+/**
+ * 往来列表一次取齐（2026-10-24 全站提速：用户要求连没发现的延迟一起改）：
+ * 原实现放在 data-service 里逐个联系人调 contactStats——云端模式下每人是
+ * 一趟独立往返，20 位亲友就是 20 多趟串行。现整表在服务端算：
+ * 主人视角记录只各取一次本地聚合；成员视角逐人走 memberStats（口径不变，
+ * 但往返只剩一趟）。返回与旧 data-service 组装逐字段等价。
+ */
+async function wanglaiList(db, actorId, ownerId, opts = {}) {
+  const contactsCore = require('./contacts');
+  const range = resolveRangeOpt(opts.range);
+  const isMember = actorId !== ownerId;
+  const contacts = await contactsCore.listContacts(db, actorId, ownerId);
+  const inRange = (r) => r.date >= range.from && r.date <= range.to;
+  const rows = [];
+  let totalReceiveFen = 0, totalGiftFen = 0, totalReceiveCount = 0, totalGiftCount = 0;
+  const pushRow = (c, st) => {
+    const count = st.receiveCount + st.giftCount;
+    if (count === 0) return;
+    totalReceiveFen += st.receiveTotalFen;
+    totalGiftFen += st.giftTotalFen;
+    totalReceiveCount += st.receiveCount;
+    totalGiftCount += st.giftCount;
+    rows.push({
+      contactId: c._id, name: c.name, remark: c.remark || '',
+      count, receiveFen: st.receiveTotalFen, giftFen: st.giftTotalFen,
+      diffFen: st.receiveTotalFen - st.giftTotalFen,
+    });
+  };
+  if (!isMember) {
+    const [receives, gifts] = await Promise.all([
+      db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId }),
+      db.collection(COLLECTIONS.GiftRecord).find({ ownerId }),
+    ]);
+    const agg = new Map();
+    const bump = (id, recv, amount) => {
+      let a = agg.get(id);
+      if (!a) { a = { receiveTotalFen: 0, receiveCount: 0, giftTotalFen: 0, giftCount: 0 }; agg.set(id, a); }
+      if (recv) { a.receiveTotalFen += amount; a.receiveCount += 1; }
+      else { a.giftTotalFen += amount; a.giftCount += 1; }
+    };
+    receives.forEach((r) => { if (inRange(r)) bump(r.contactId, true, r.amount || 0); });
+    gifts.forEach((r) => { if (inRange(r)) bump(r.contactId, false, r.amount || 0); });
+    for (const c of contacts) {
+      pushRow(c, agg.get(c._id) || { receiveTotalFen: 0, receiveCount: 0, giftTotalFen: 0, giftCount: 0 });
+    }
+  } else {
+    for (const c of contacts) {
+      pushRow(c, await memberStats(db, actorId, ownerId, c._id, opts));
+    }
+  }
+  rows.sort((a, b) => b.count - a.count || String(a.name).localeCompare(String(b.name)));
+  return {
+    rows, totalReceiveFen, totalGiftFen, totalReceiveCount, totalGiftCount,
+    diffFen: totalReceiveFen - totalGiftFen,
+    from: range.from, to: range.to, isMember,
+  };
+}
+
 module.exports = {
   resolveRange, resolveRangeOpt,
   getWanglaiStats, getContactTimeline, visibleRecords,
   contactStats, timeline, memberStats, memberTimeline, memberEvents, findContactsByName,
-  getHomeData,
+  getHomeData, wanglaiList,
 };
 
 /**

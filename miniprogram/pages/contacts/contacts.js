@@ -50,10 +50,12 @@ Page({
   },
 
   async reload() {
+    const seq = (this._reloadSeq = (this._reloadSeq || 0) + 1);
     const kw = (this.data.keyword || '').trim();
     const list = kw
       ? await dataService.searchContacts(kw)
       : await dataService.listContacts();
+    if (seq !== this._reloadSeq) return; // 已有更新的查询，丢弃过期结果
     const by = {};
     list.forEach((c) => {
       const k = pinyinInitial(c.name);
@@ -65,7 +67,9 @@ Page({
 
   onSearchInput(e) {
     this.setData({ keyword: e.detail.value });
-    this.reload();
+    // 防抖：连续打字只查最后一次（原实现每敲一键一趟云端，结果还会乱序）
+    if (this._searchTimer) clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(() => this.reload(), 250);
   },
 
   onCancelSearch() {

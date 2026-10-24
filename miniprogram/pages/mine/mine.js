@@ -59,16 +59,19 @@ Page({
   },
 
   async refresh() {
+    // 六个区块互相独立，全部并发取（原实现逐个串行等云端，切到「我的」
+    // 要等 6 趟才齐，2026-10-24 全站提速改为同一波发出、谁先回谁先上屏）
+    const jobs = [];
     // ① 资料条：头像+昵称+会员状态（昵称改后全局读最新值）
-    try {
+    jobs.push((async () => { try {
       const p = await dataService.getProfile();
       this.setData({
         displayName: p.displayName,
         avatarUrl: p.avatarUrl || '',
         avatarInitial: (p.displayName || '微').slice(0, 1),
       });
-    } catch (e) { /* 演示期忽略 */ }
-    try {
+    } catch (e) { /* 演示期忽略 */ } })());
+    jobs.push((async () => { try {
       const m = await dataService.getMembership();
       const isMember = m.state === 'member' || m.state === 'grace';
       let memberText;
@@ -82,27 +85,27 @@ Page({
         memberStateText: MEMBER_STATE_LABELS[m.state] || m.state,
         demoStateText: DEMO_STATE_LABELS[m.state] || m.state,
       });
-    } catch (e) { /* 演示期忽略 */ }
+    } catch (e) { /* 演示期忽略 */ } })());
     // ④ 邀请进度：已邀请 x/上限（读真实汇总，页面不写死）
-    try {
+    jobs.push((async () => { try {
       const s = await dataService.getInviteSummary();
       this.setData({
         inviteRewardEnabled: !!s.enabled,
         inviteDone: s.successfulInvites || 0,
         inviteMax: s.maxSuccessfulInvites || 0,
       });
-    } catch (e) { /* 忽略 */ }
+    } catch (e) { /* 忽略 */ } })());
     // 通知未读数（顺带触发会员三提醒判定，见 core/notify）+ 待注销提示
-    try {
+    jobs.push((async () => { try {
       const unreadCount = await dataService.getUnreadCount();
       this.setData({ unreadCount });
-    } catch (e) { /* 忽略 */ }
+    } catch (e) { /* 忽略 */ } })());
     // 积分余额（会员与积分卡展示；积分不过期，与会员状态无关）
-    try {
+    jobs.push((async () => { try {
       const pointsBalance = await dataService.getPointsBalance();
       this.setData({ pointsBalance });
-    } catch (e) { /* 忽略 */ }
-    try {
+    } catch (e) { /* 忽略 */ } })());
+    jobs.push((async () => { try {
       const st = await dataService.getCancellationStatus();
       if (st.status === 'pendingCancel') {
         this.setData({
@@ -114,7 +117,8 @@ Page({
       } else {
         this.setData({ cancelPending: null });
       }
-    } catch (e) { /* 忽略 */ }
+    } catch (e) { /* 忽略 */ } })());
+    await Promise.all(jobs);
   },
 
   /** 演示专用：切换会员状态（免费/会员/会员已到期），切换后全局按新状态走现行规则 */

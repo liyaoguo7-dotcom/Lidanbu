@@ -33,16 +33,19 @@ Page({
   },
 
   async reload() {
+    const seq = (this._reloadSeq = (this._reloadSeq || 0) + 1);
     const kw = (this.data.keyword || '').trim();
     const list = kw
       ? await dataService.searchContacts(kw)
       : await dataService.listContacts();
+    if (seq !== this._reloadSeq) return; // 丢弃过期查询结果
     this.setData({ contacts: list });
   },
 
   onSearchInput(e) {
     this.setData({ keyword: e.detail.value });
-    this.reload();
+    if (this._searchTimer) clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(() => this.reload(), 250);
   },
 
   onCancelSearch() {
