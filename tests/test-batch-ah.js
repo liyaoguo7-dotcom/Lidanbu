@@ -48,6 +48,13 @@ const read = (p) => fs.readFileSync(p, 'utf8');
   const outSum = -tamts.filter((a) => a < 0).reduce((x, y) => x + y, 0);
   const inSum = tamts.filter((a) => a > 0).reduce((x, y) => x + y, 0);
   assert(tl.includes(`送出：¥${outSum.toFixed(2)}`) && tl.includes(`收到：¥${inSum.toFixed(2)}`), '竖线树汇总与条目自洽');
+  const fsA = require('fs'), pathA = require('path');
+  const dims = ['guide-receive.png', 'guide-gifts.png', 'guide-timeline.png'].map((f) => {
+    const b = fsA.readFileSync(pathA.join(__dirname, '..', 'miniprogram', 'images', 'guide', f));
+    return [b.readUInt32BE(16), b.readUInt32BE(20)];
+  });
+  assert(dims.every((d) => d[0] === dims[0][0] && d[1] === dims[0][1]), '三张引导图必须同尺寸（全屏图）');
+  assert(Math.abs(dims[0][1] / dims[0][0] - 818 / 390) < 0.02, '引导图宽高比必须为全屏 390×818');
   for (const src of [recv, gifts, tl]) {
     assert(!/\.songti \{ font-family:"Songti/.test(src) && !src.includes('STSong'), '复刻图字体须与真实页面同口径（全站黑体、无宋体）');
   }

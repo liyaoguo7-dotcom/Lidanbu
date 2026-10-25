@@ -3,7 +3,9 @@
 礼单簿 · 引导页截图一键重生成
 
 流程：复刻源 HTML（docs/screens/guide-assets-src/*.html）
-  → 无头 Chromium（CDP，390 逻辑宽、deviceScaleFactor=2、整页截图）
+  → 无头 Chromium（CDP，390 逻辑宽、deviceScaleFactor=2、全屏视口截图
+     390×818——与用户手机截图 976×2048 同比例；2026-10-25 用户定：
+     三张图必须是全屏图、与小程序里实际样子一致、底部不得留白）
   → 源图存档（docs/screens/guide-assets-src/*.png）
   → PIL 压缩（宽 750 起、256 色量化；超限逐步收窄至 600）
   → 成品落位主包（miniprogram/images/guide/guide-*.png，单张 ≤150KB，超限报错退出）
@@ -31,6 +33,7 @@ PKG_DIR = ROOT / "miniprogram" / "images" / "guide"
 ARCHIVE_DIR = ROOT / "docs" / "screens"
 CHROME = "/opt/meta-chromium/chrome"
 PORT = 9223
+SCREEN_H = 818  # 全屏高：390 × 2048/976（用户手机截图比例）≈ 818
 LIMIT = 150 * 1024
 
 # (复刻源文件名, 分包成品名, 配文) —— 配文与 pages/guide/guide.js 保持一致
@@ -112,14 +115,9 @@ def shoot(page, url, width, height, out_path):
     page.evaluate("Promise.all([...document.images].map(i => i.complete ? 1 : i.decode().catch(()=>{})))",
                   await_promise=True)
     time.sleep(0.2)
-    full_h = int(page.evaluate("document.body.scrollHeight"))
-    if full_h != height:
-        page.call("Emulation.setDeviceMetricsOverride", width=width, height=full_h,
-                  deviceScaleFactor=2, mobile=False)
-        time.sleep(0.2)
-    shot = page.call("Page.captureScreenshot", format="png", captureBeyondViewport=True)
+    shot = page.call("Page.captureScreenshot", format="png", captureBeyondViewport=False)
     out_path.write_bytes(base64.b64decode(shot["data"]))
-    return full_h
+    return height
 
 
 def compress(src_png, dest_png):
@@ -175,7 +173,7 @@ def main():
             page = Page(browser)
             src_html = SRC_DIR / f"{name}.html"
             src_png = SRC_DIR / f"{name}.png"
-            h = shoot(page, src_html.as_uri(), 390, 844, src_png)
+            h = shoot(page, src_html.as_uri(), 390, SCREEN_H, src_png)
             dest = PKG_DIR / pkg_name
             got = compress(src_png, dest)
             if got is None:
