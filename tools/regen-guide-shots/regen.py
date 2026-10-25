@@ -6,7 +6,7 @@
   → 无头 Chromium（CDP，390 逻辑宽、deviceScaleFactor=2、整页截图）
   → 源图存档（docs/screens/guide-assets-src/*.png）
   → PIL 压缩（宽 750 起、256 色量化；超限逐步收窄至 600）
-  → 成品落位分包（miniprogram/packages/guide/guide-*.png，单张 ≤150KB，超限报错退出）
+  → 成品落位主包（miniprogram/images/guide/guide-*.png，单张 ≤150KB，超限报错退出）
   → 引导成品存档图（docs/screens/guide-new-1/2/3.png，整屏含配文与按钮）
 
 页面改版后：先改复刻源 HTML（数据口径见各 HTML 头注释），再跑本脚本即可。
@@ -27,7 +27,7 @@ import websocket
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = ROOT / "docs" / "screens" / "guide-assets-src"
-PKG_DIR = ROOT / "miniprogram" / "packages" / "guide"
+PKG_DIR = ROOT / "miniprogram" / "images" / "guide"
 ARCHIVE_DIR = ROOT / "docs" / "screens"
 CHROME = "/opt/meta-chromium/chrome"
 PORT = 9223
@@ -204,7 +204,7 @@ def main():
     if failures:
         print("\n".join(failures), file=sys.stderr)
         sys.exit(1)
-    print("全部完成：三张成品均 ≤150KB 并已落位 miniprogram/packages/guide/")
+    print("全部完成：三张成品均 ≤150KB 并已落位 miniprogram/images/guide/")
 
 
 if __name__ == "__main__":

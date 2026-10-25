@@ -9,7 +9,7 @@
 2. 跑脚本：`python3 tools/regen-guide-shots/regen.py`
 3. 脚本自动：CDP 整页截图（390 逻辑宽、2 倍图）→ 源图存档在 `guide-assets-src/*.png`
    → 压缩（宽 750 起、256 色量化，单张 ≤150KB，超限自动收窄、到 600 宽仍超限则报错退出）
-   → 成品落位 `miniprogram/packages/guide/guide-*.png` → 顺带重出汇报存档图
+   → 成品落位 `miniprogram/images/guide/guide-*.png` → 顺带重出汇报存档图
    `docs/screens/guide-new-1/2/3.png`。终端会逐张打印体积与是否达标。
 
 依赖：`/opt/meta-chromium/chrome`、python3 的 `websocket-client` 与 `PIL`。

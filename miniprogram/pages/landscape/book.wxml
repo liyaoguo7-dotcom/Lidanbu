@@ -60,7 +60,7 @@
                      中段区钉列高正中、金额区钉列底（下偏 amtBottomPad＝innerPad−字体墨迹补偿，
                      使「整」字墨迹下空白与姓名首字墨迹上空白一致，模型实测量过）。纸面实际
                      高度随真机屏高浮动，流式堆叠会把差值全堆在金额区下方（真机「整」字悬空的根因）。 -->
-                <view class="zone zone-name" style="top:{{spec.innerPad}}px;height:{{spec.nameH}}px;">
+                <view class="zone zone-name" style="top:{{spec.nameTop}}px;height:{{spec.nameH}}px;">
                   <text wx:for="{{item.nameChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
                     style="top:{{ch.topPx}}px;font-size:{{item.nameFontPx}}px;font-family:{{selStack}};color:{{theme.inkColor}};">{{ch.ch}}</text>
                 </view>

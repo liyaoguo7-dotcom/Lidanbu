@@ -26,7 +26,8 @@ const SPEC = {
   COL_W: 50,             // 固定列宽（2026-10-23 任务AC 第 9 项：56→50，用户反馈左右再窄一点；历程 64.5→56→50）
   COLS_PER_SCREEN: 12,   // 一屏列数（格子印满整幅纸面的列数下限）
   INNER_PAD: 6,          // 列内上下各留
-  NAME_H: 114.5, NAME_FONT: 22, NAME_PITCH: 26, NAME_SLOTS: 3, // 历程：AC 反推 116 → AE(GAP 3.5) 114.5 → 本轮(GAP 4＋中段上移3＋中段字号23) 按墨迹间距 4 反推 111，模型量测校准
+  NAME_H: 104, NAME_FONT: 22, NAME_PITCH: 26, NAME_SLOTS: 3, // 历程：AC 反推 116 → AE(GAP 3.5) 114.5 → AF 校准 114.5 → 2026-10-25 真机反馈「人名上下往中间缩小一点」收 10.5 至 104，区顶同步下移（NAME_TOP）保整段中心不动
+  NAME_TOP: 11.25, // 姓名区顶距（= 原顶距 6 + 收缩量 10.5 的一半 5.25）：姓名整段中心与旧版一致，只是上下往中间收
   GAP: 4,                // 姓名末字墨迹底↔贺礼首字墨迹顶、贺礼末字墨迹底↔金额首字墨迹顶 的目标间距（历程：5→2 任务AC → 3.5 任务AE → 4 本轮，用户逐轮真机看图定版）
   MID_H: 52, MID_FONT: 23, MID_PITCH: 27, // 中段字号 23（任务AF真机反馈：贺礼/奠仪比姓名金额大一号，姓名/金额仍 22）；字位距随字号 +1
   MID_SHIFT_UP: 3,       // 中段整体上移 3px（任务AF真机反馈）：区位 = 列高正中 − 3
@@ -44,7 +45,7 @@ const SPEC = {
  * 2026-10-23 任务AC 第 9 项纠正：旧注释的 258 名义堆叠从未在渲染中成立——三段是
  * 独立锚定的：姓名区顶距 6、金额区底距 4、中段区钉在列正中，与 258 堆叠无关，
  * 旧版式实测墨迹间距高达 28/25px，正是用户"空白太大"的来源）。
- * 现行锚定几何（列内容高 290，本轮任务AF真机反馈）：姓名区 6..120.5（高 114.5）；
+ * 现行锚定几何（列内容高 290）：姓名区 11.25..115.25（高 104，2026-10-25 上下往中间收，中心与旧版 6..120.5 一致）；
  * 中段区上移 3 后 116..168（区高 52、字号 23/字位距 27）；金额区 167.5..286
  * （高 118.5、底距 4）。区高经模型实测校准（gen-model+measure2，LXGW）：
  * 姓名墨迹 8.5..116、中段墨迹 120.5..165.5、金额墨迹 170..283.5 →
@@ -63,7 +64,7 @@ function scaledSpec(windowWidth) {
     scale: s,
     marginV: r(SPEC.MARGIN_V), paperH: r(SPEC.PAPER_H), scrollW: r(SPEC.SCROLL_W),
     colW: r(SPEC.COL_W), innerPad: r(SPEC.INNER_PAD),
-    nameH: r(SPEC.NAME_H), nameFont: r(SPEC.NAME_FONT), namePitch: r(SPEC.NAME_PITCH),
+    nameH: r(SPEC.NAME_H), nameTop: r(SPEC.NAME_TOP), nameFont: r(SPEC.NAME_FONT), namePitch: r(SPEC.NAME_PITCH),
     gap: r(SPEC.GAP), midH: r(SPEC.MID_H), midFont: r(SPEC.MID_FONT), midPitch: r(SPEC.MID_PITCH),
     marginB: r(SPEC.MARGIN_B), midShift: r(-SPEC.MID_SHIFT_UP),
     amtH: r(SPEC.AMT_H), amtFont: r(SPEC.AMT_FONT), amtPitch: r(SPEC.AMT_PITCH),

@@ -23,7 +23,7 @@ const colHtml = (c, fid) => {
   const chars = (arr, fontPx, family, color) => arr.map((ch) =>
     `<span class="vchar" style="top:${ch.top}px;font-size:${fontPx}px;font-family:${family};color:${color}">${ch.ch}</span>`).join('');
   return `<div class="col" style="width:${spec.colW}px">
-    <div class="zone zone-name" style="top:${spec.innerPad}px;height:${spec.nameH}px">${chars(c.nameChars, c.nameFontSize, stack(fid), theme.inkColor)}</div>
+    <div class="zone zone-name" style="top:${spec.nameTop}px;height:${spec.nameH}px">${chars(c.nameChars, c.nameFontSize, stack(fid), theme.inkColor)}</div>
     <div class="zone zone-mid" style="height:${spec.midH}px;margin-top:${spec.midShift}px">${chars(c.midChars, LC.SPEC.MID_FONT, LC.SONGTI_STACK.replace(/"/g, "'"), theme.midColor)}</div>
     <div class="zone zone-amt" style="bottom:${LC.SPEC.AMT_BOTTOM_PAD}px;height:${spec.amtH}px">${chars(c.amountChars, c.amountFontSize, stack(fid), theme.inkColor)}</div>
   </div>`;

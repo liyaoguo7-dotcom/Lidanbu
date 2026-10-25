@@ -38,6 +38,8 @@ page {
   border-radius: 28px;
   margin: 0 24px;
 }
+/* 进行中置灰（导出生成等长操作：按钮本身写明状态，不只靠系统转圈） */
+.btn-off { background: #C9C9C9; color: #fff; }
 .btn-bottom {
   position: fixed;
   left: 0;

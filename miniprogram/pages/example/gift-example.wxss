@@ -33,8 +33,8 @@
 }
 .gift-row.last::after { display: none; }
 .pat {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #F1E6D3;
   display: flex;
@@ -43,7 +43,7 @@
   flex: none;
 }
 .pat.baishi { background: #E8EAED; }
-.pat-img { width: 40px; height: 40px; }
+.pat-img { width: 30px; height: 30px; }
 .mid { flex: 1; margin-left: 12px; display: flex; flex-direction: column; }
 .nm { font-size: 16px; font-weight: 600; }
 .subline { display: flex; flex-direction: row; align-items: baseline; margin-top: 3px; }

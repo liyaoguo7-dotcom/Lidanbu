@@ -31,6 +31,7 @@ Page({
 
   touchStartX: 0,
   _membership: null,
+  _membershipP: null,
 
   async onShow() {
     await dataService.init();
@@ -39,6 +40,7 @@ Page({
     const membershipP = dataService.getMembership()
       .then((m) => { this._membership = m; })
       .catch(() => { this._membership = null; });
+    this._membershipP = membershipP;
     // 小喇叭关闭状态只存内存（horn-state）：本次打开期间不再显示，下次冷启动恢复
     this.setData({ showHorn: !hornState.isDismissed('receive') });
     const hm = hornMarquee(this.data.hornText);
@@ -110,18 +112,32 @@ Page({
     this.setData({ events: this.data.events.map((r) => ({ ...r, offset: 0 })) });
   },
 
+  /** 会员状态确保就绪（2026-10-25 真机修复）：此前行点击直接读缓存的
+   * _membership，进页面点得快、或 onShow 那次取会员状态还没回来/失败时，
+   * 缓存是 null，会被当成非会员放行竖版——横置跳转时有时无（用户实测）。
+   * 现在点击时先等在途的那次取回；仍为空（曾失败）就当场再取一次，
+   * 保证路由判断永远基于确认过的状态，不看运气。 */
+  async _ensureMembership() {
+    if (this._membership) return this._membership;
+    if (this._membershipP) { try { await this._membershipP; } catch (e) { /* 已在链上置 null */ } }
+    if (this._membership) return this._membership;
+    try { this._membership = await dataService.getMembership(); } catch (e) { this._membership = null; }
+    return this._membership;
+  },
+
   // 行点击：有滑开的行先收回，否则进礼薄详情
   // 横置开关开 + 会员 → 进横置礼单本；其余情况与原行为一致（竖置详情）
-  onRowTap(e) {
+  async onRowTap(e) {
     const id = e.currentTarget.dataset.id;
     if (this.data.events.some((r) => r.offset !== 0)) {
       this.closeAllSwipes();
       return;
     }
     const row = this.data.events.find((r) => r._id === id);
+    const membership = await this._ensureMembership();
     const route = landscapeRoute.resolveBookRoute({
       landscapeOn: landscapeRoute.readLandscapeOn(),
-      membership: this._membership,
+      membership,
     });
     if (route === 'landscape' && row) {
       const owner = row.ownerId ? `&ownerId=${row.ownerId}` : '';

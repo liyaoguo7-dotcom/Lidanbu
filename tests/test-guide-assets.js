@@ -1,7 +1,8 @@
-/** 引导页真实截图素材（任务R）：
- * - 引导页引用分包 packages/guide 的三张图、配文逐字
+/** 引导页真实截图素材（任务R；2026-10-25 改主包）：
+ * - 引导页引用主包 images/guide 的三张图、配文逐字
  * - 三张成品图单张 ≤150KB（文件断言）
- * - app.json 注册 guide 纯资源分包 + 首页 preloadRule 预下载
+ * - app.json 不再注册 guide 分包：引导页是启动首屏，分包未下载时图片
+ *   永远空白（真机实测「从来没加载出来过」），素材改随主包到达
  * - 线框示意已清除（guide.wxml/wxss 无旧线框结构） */
 const fs = require('fs');
 const path = require('path');
@@ -17,32 +18,31 @@ const SHOTS = [
 ];
 const LIMIT = 150 * 1024;
 
-test('引导素材：三张成品图都在分包内且单张 ≤150KB', async () => {
+test('引导素材：三张成品图都在主包内且单张 ≤150KB', async () => {
   for (const s of SHOTS) {
-    const p = path.join(ROOT, 'miniprogram/packages/guide', s.file);
-    assert(fs.existsSync(p), `${s.file} 应存在于 packages/guide 分包`);
+    const p = path.join(ROOT, 'miniprogram/images/guide', s.file);
+    assert(fs.existsSync(p), `${s.file} 应存在于主包 images/guide`);
     const size = fs.statSync(p).size;
     assert(size > 0 && size <= LIMIT, `${s.file} 体积 ${size} 应在 (0, ${LIMIT}] 内`);
   }
 });
 
-test('引导素材：引导页引用分包图路径且三句配文逐字正确', async () => {
+test('引导素材：引导页引用主包图路径且三句配文逐字正确', async () => {
   const js = read('miniprogram/pages/guide/guide.js');
   for (const s of SHOTS) {
-    assert(js.includes(`/packages/guide/${s.file}`), `guide.js 应引用 /packages/guide/${s.file}`);
+    assert(js.includes(`/images/guide/${s.file}`), `guide.js 应引用 /images/guide/${s.file}`);
     assert(js.includes(`caption: '${s.caption}'`), `配文应逐字为「${s.caption}」`);
   }
   const wxml = read('miniprogram/pages/guide/guide.wxml');
   assert(wxml.includes('item.img') && wxml.includes('item.caption'), 'wxml 应渲染图片与配文');
 });
 
-test('引导素材：app.json 注册 guide 分包（preloadRule 已删，见用例内注）', async () => {
+test('引导素材：app.json 不再注册 guide 分包（素材已进主包）', async () => {
   const app = JSON.parse(read('miniprogram/app.json'));
   const sub = (app.subpackages || []).find((s) => s.root === 'packages/guide');
-  assert(sub && Array.isArray(sub.pages), '应注册 packages/guide 纯资源分包');
+  assert(!sub, 'packages/guide 分包应已删除（素材在主包 images/guide）');
   // preloadRule 已于 2026-10-21 整体删除（开发者工具版本对该配置解析口径与文档不一致，
-  // name 与 root 两种写法均报"未找到"导致启动失败）；预下载仅为提速优化，
-  // 删除后引导/字体分包改为按需加载，功能不变。此处不断言 preloadRule。
+  // name 与 root 两种写法均报"未找到"导致启动失败）；此处不断言 preloadRule。
 });
 
 test('引导素材：线框示意已清除', async () => {

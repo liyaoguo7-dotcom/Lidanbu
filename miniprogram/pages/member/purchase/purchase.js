@@ -40,8 +40,38 @@ Page({
 
   async onLoad() {
     this.paintStatic();
+    this.restoreCache();
     await dataService.init();
     await this.refresh();
+  },
+
+  /** 上次数据秒显（2026-10-25 真机反馈：方块立刻出、数据晚约 1 秒）：
+   * 进页先把上次打开时存下的数据整页摆出来（价格/会员状态/积分余额），
+   * 后台 refresh() 拿到新数据再整页替换——第二次起打开就没有那一秒的
+   * 数据空白。缓存只影响显示：购买按钮仍等真数据到达（hydrated）才出现，
+   * 且下单时服务端再验开关与价格，不会按旧数据成交。缓存超 7 天不用。 */
+  restoreCache() {
+    try {
+      const c = wx.getStorageSync('purchasePageCacheV1');
+      if (!c || !c.data || !c.at || Date.now() - c.at > 7 * 86400e3) return;
+      this.setData({ ...c.data, loading: false });
+    } catch (e) { /* 读缓存失败不拦正常加载 */ }
+  },
+
+  saveCache() {
+    try {
+      const d = this.data;
+      wx.setStorageSync('purchasePageCacheV1', {
+        at: Date.now(),
+        data: {
+          stateText: d.stateText, expireText: d.expireText,
+          pointsBalance: d.pointsBalance, photoImportCost: d.photoImportCost,
+          plans: d.plans, packs: d.packs, packsLocked: d.packsLocked,
+          buyEnabled: d.buyEnabled, platformDisabledTip: d.platformDisabledTip,
+          selectedPlanId: d.selectedPlanId, selectedPackId: d.selectedPackId,
+        },
+      });
+    } catch (e) { /* 存缓存失败不影响购买 */ }
   },
 
   /** 先出方块（2026-10-24 真机反馈：套餐要等 3~4 秒才出现）：进页先用
@@ -105,7 +135,7 @@ Page({
         packsLocked: view.packsLocked,
         buyEnabled: view.buyEnabled,
         platformDisabledTip: d.platformDisabledTip,
-      });
+      }, () => this.saveCache());
     } catch (e) {
       this.setData({ loading: false });
       wx.showToast({ title: e.message, icon: 'none' });

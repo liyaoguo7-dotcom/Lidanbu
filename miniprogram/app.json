@@ -68,11 +68,6 @@
       "root": "packages/fonts",
       "name": "fonts",
       "pages": []
-    },
-    {
-      "root": "packages/guide",
-      "name": "guide",
-      "pages": []
     }
   ],
   "sitemapLocation": "sitemap.json",

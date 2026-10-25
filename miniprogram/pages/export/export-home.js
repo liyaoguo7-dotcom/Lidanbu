@@ -64,10 +64,25 @@ Page({
       const fileId = result && result.fileId;
       if (!fileId) throw new Error('云端未返回文件，请稍后重试');
       const dl = await wx.cloud.downloadFile({ fileID: fileId });
+      // 文件名（2026-10-25 用户亲定）：人情礼单簿＋日期（只到日，不带时分）。
+      // 下载得到的是临时文件（名字是随机串，真机上看着像乱码），先复制成
+      // 正式名再打开——预览标题、转发、保存出去用的都是这个名字；
+      // 复制失败不挡路，回落到临时文件照常打开。
+      let openPath = dl.tempFilePath;
+      try {
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const niceName = `人情礼单簿${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.xlsx`;
+        const dest = `${wx.env.USER_DATA_PATH}/${niceName}`;
+        await new Promise((resolve, reject) => {
+          wx.getFileSystemManager().copyFile({ srcPath: dl.tempFilePath, destPath: dest, success: resolve, fail: reject });
+        });
+        openPath = dest;
+      } catch (e) { /* 改名失败不挡打开 */ }
       // 任务Z 第 14 项：只生成文件并打开预览，转发/保存由用户在文档菜单（右上角「···」）里自己操作，
       // 页面不再直接把文件发到聊天。
       wx.openDocument({
-        filePath: dl.tempFilePath,
+        filePath: openPath,
         fileType: 'xlsx',
         showMenu: true,
         fail: () => wx.showModal({

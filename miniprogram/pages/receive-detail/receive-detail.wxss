@@ -20,6 +20,7 @@
 .rec-row {
   display: flex;
   align-items: center;
+  text-align: left; /* 合卡后记录行进了 .pat-card（text-align:center），人名被连带居中（2026-10-25 真机反馈）：行内显式改回左对齐，头部与共计的居中不受影响 */
   height: 64px;
   box-sizing: border-box;
   padding: 6px 16px;
