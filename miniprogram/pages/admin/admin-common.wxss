@@ -9,23 +9,23 @@
   text-align: center;
 }
 .stat-num { font-size: 26px; font-weight: bold; color: #333333; }
-.stat-label { font-size: 13px; color: #999999; margin-top: 6px; }
-.note { font-size: 13px; color: #999999; margin: 12px 16px; line-height: 1.6; }
+.stat-label { font-size: 14px; color: #999999; margin-top: 6px; }
+.note { font-size: 14px; color: #999999; margin: 12px 16px; line-height: 1.6; }
 .warn-banner {
   background: #FFF7E6;
   border: 1px solid #F5DFA8;
   color: #8A6D1B;
-  font-size: 14px;
+  font-size: 15px;
   border-radius: 12px;
   margin: 12px;
   padding: 14px 16px;
   line-height: 1.6;
 }
-.mask { font-family: monospace; font-size: 13px; color: #666666; }
+.mask { font-family: monospace; font-size: 14px; color: #666666; }
 .row-between { display: flex; justify-content: space-between; align-items: center; }
 .pill {
   display: inline-block;
-  font-size: 12px;
+  font-size: 13px;
   border: 1px solid #E0E0E0;
   border-radius: 14px;
   padding: 4px 12px;
@@ -35,7 +35,7 @@
 .pill.on { border-color: #E05353; color: #E05353; font-weight: bold; }
 .mini-btn {
   display: inline-block;
-  font-size: 13px;
+  font-size: 15px;
   color: #E05353;
   border: 1px solid #E05353;
   border-radius: 16px;
@@ -50,6 +50,12 @@
   display: flex;
   align-items: center;
 }
-.input-line input { flex: 1; height: 58px; font-size: 15px; }
-.iron { font-size: 13px; color: #B0492F; margin: 12px 16px; line-height: 1.6; }
-.btn-danger-sm { display: inline-block; margin-left: auto; padding: 2px 14px; font-size: 13px; line-height: 1.9; color: #F0575A; background: #fff; border: 1px solid #F0575A; border-radius: 16px; }
+.input-line input { flex: 1; height: 58px; font-size: 16px; }
+.iron { font-size: 14px; color: #B0492F; margin: 12px 16px; line-height: 1.6; }
+.btn-danger-sm { display: inline-block; margin-left: auto; padding: 2px 14px; font-size: 15px; line-height: 1.9; color: #F0575A; background: #fff; border: 1px solid #F0575A; border-radius: 16px; }
+
+/* 字号口径（2026-10-25 用户定）：老板后台主文字与前台姓名一样大（16px）。
+ * 全局 .form-label/.form-val 无字号、继承页面基准，故在后台统一抬到 16；
+ * 次要文字（注/标签/脱敏号等）已在本文件逐项上调 1~2px 保持层级。 */
+page { font-size: 16px; }
+.form-label, .form-val { font-size: 16px; }
