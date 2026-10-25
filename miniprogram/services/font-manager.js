@@ -27,7 +27,7 @@ const FONT_SRC_BASE = SUBPACKAGE_ROOT;
  * 若曾"加载成功"写下旧键，版本段一变旧键自然失效，强制用当前文件重载
  * （2026-10-22 任务AB 第 6 项：三款字体真机仍不可用的机制修复之一）。
  * 字体文件再重建时必须同步 bump 此版本号。 */
-const FONT_BUILD = 'v6'; // v6：云端首选改为下载 TTF 转 Data URL 加载（绕开临时链接的跨域/重定向）；v5 为 TTF 临时链接优先、v4 为 woff2 临时链接
+const FONT_BUILD = 'v7'; // v7：云端首选改为经 api 云函数服务端取 TTF 回 base64 拼 Data URL（AH批：v6 的客户端 downloadFile 真机回 empty download url）；v6 为客户端下载转 Data URL、v5 为 TTF 临时链接优先、v4 为 woff2 临时链接
 const LOADED_KEY_PREFIX = `landscape.fontLoaded.${FONT_BUILD}.`;
 
 function defaultStorage() {
@@ -90,6 +90,16 @@ function createFontManager(deps = {}) {
       for (const cand of candidates) {
         let source = cand.source || null;
         if (cand.needsSubpackage) await fontSource.ensureSubpackage(); // 尽力触发分包下载，成败都继续尝试
+        if (cand.needsApiData) {
+          source = typeof fontSource.materializeApiData === 'function'
+            ? await fontSource.materializeApiData(cand) : null;
+          if (!source) {
+            const me = typeof fontSource.getLastMaterializeError === 'function'
+              ? fontSource.getLastMaterializeError() : null;
+            attemptFailure = { stage: 'api-data', reason: (me && me.reason) || '服务端取字体失败' };
+            continue;
+          }
+        }
         if (cand.needsDataUrl) {
           source = typeof fontSource.materializeDataUrl === 'function'
             ? await fontSource.materializeDataUrl(cand) : null;

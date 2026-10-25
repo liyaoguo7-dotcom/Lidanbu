@@ -394,3 +394,38 @@ test('回环：往来列表一趟取齐（逐人往返已消除）＋与逐人�
 // 回环服务端 db 适配：makeLoopback 的 db 即云端桩，core 直连需内存适配——
 // 这里直接复用 createMemoryDb 无法拿到同一份数据，故仅在有桥时用；无桥则跳过直连核对。
 function dbAdapterForLoop() { return null; }
+
+test('回环：往来明细会话缓存（首开在途去重、再开零往返、写后作废）', async () => {
+  const { transport } = makeLoopback('loop-timeline-cache');
+  let calls = 0;
+  const counting = async (data) => { calls += 1; return transport(data); };
+  try {
+    dataService._resetForTest();
+    dataService._setModeForTest('cloud');
+    dataService._setTransportForTest(counting);
+    const r = await dataService.init();
+    assert(r.ok === true, 'init 应成功');
+    const c = await dataService.createContact({ name: '缓存测试' });
+    const contactId = (c.contact && c.contact._id) || c._id;
+    await dataService.createGift({ contactId, tagId: 'shengri', amountFen: 10000, date: '2026-09-01' });
+
+    calls = 0;
+    // 模拟页面 onLoad 与 onShow 首开各调一次（并发）：只应有一批往返（明细+联系人=2 趟）
+    const [t1, t2] = await Promise.all([
+      dataService.getTimeline({ contactId }),
+      dataService.getTimeline({ contactId }),
+    ]);
+    assert.eq(calls, 2, `首开并发两调应去重为一批 2 趟（实际 ${calls}）`);
+    assert(t1.items.length === 1 && t2.items.length === 1, '两次结果都应有那条送礼');
+
+    const t3 = await dataService.getTimeline({ contactId });
+    assert.eq(calls, 2, '再开应命中缓存、零往返');
+    assert(t3.items.length === 1, '缓存结果正确');
+
+    await dataService.createGift({ contactId, tagId: 'qiaoqian', amountFen: 20000, date: '2026-09-02' });
+    calls = 0;
+    const t4 = await dataService.getTimeline({ contactId });
+    assert.eq(calls, 2, '写操作后缓存作废、重新取一批');
+    assert.eq(t4.items.length, 2, '新数据应有 2 条');
+  } finally { dataService._resetForTest(); }
+});

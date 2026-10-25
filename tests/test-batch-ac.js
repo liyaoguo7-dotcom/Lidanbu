@@ -119,12 +119,13 @@ test('任务AE-8字体候选序：云链接→分包；CLOUD_FONT_BASE 已填真
   assert.eq(CLOUD_FONT_BASE, 'cloud://cloud1-d3gd7fjdx0d217df0.636c-cloud1-d3gd7fjdx0d217df0-1514234749/fonts/', 'CLOUD_FONT_BASE 为用户 2026-10-23 上传云存储 fonts/ 后的真实前缀');
   const defSrc = createFontSource({ storage: { get: () => '', set: () => {} } });
   const defCands = defSrc.resolveCandidates(LC.fontById('lxgw'));
-  assert.eq(defCands.map((c) => c.kind).join(','), 'cloud-data,cloud-url,cloud-url,subpackage', '候选：下载转 Data URL（TTF）→临时链接 TTF→woff2→分包兜底（2026-10-25 v6 路线）');
-  assert.eq(defCands[0].needsDataUrl, true, '第一候选走下载转 Data URL');
+  assert.eq(defCands.map((c) => c.kind).join(','), 'cloud-api,cloud-data,cloud-url,cloud-url,subpackage', '候选：服务端代取（TTF）→直下载 Data URL→临时链接 TTF→woff2→分包兜底（2026-10-25 AH批 v7 路线）');
+  assert.eq(defCands[0].needsApiData, true, '第一候选走服务端代取（AH批 v7）');
   assert(defCands[0].fileID.endsWith('/fonts/lxgw-wenkai.ttf'), '第一候选 fileID 指向云存储 TTF');
-  assert.eq(defCands[1].needsTempUrl, true, '临时链接候选须先换链');
-  assert(defCands[1].fileID.endsWith('/fonts/lxgw-wenkai.ttf'), '第二候选 fileID 指向云存储 TTF');
-  assert(defCands[2].fileID.endsWith('/fonts/lxgw-wenkai.woff2'), '第三候选 fileID 指向云存储 woff2');
+  assert.eq(defCands[1].needsDataUrl, true, '第二候选走直下载转 Data URL（v6 路线保留）');
+  assert.eq(defCands[2].needsTempUrl, true, '临时链接候选须先换链');
+  assert(defCands[2].fileID.endsWith('/fonts/lxgw-wenkai.ttf'), '第三候选 fileID 指向云存储 TTF');
+  assert(defCands[3].fileID.endsWith('/fonts/lxgw-wenkai.woff2'), '第四候选 fileID 指向云存储 woff2');
 });
 
 test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileURL 换 https 链接（不落本地文件）', async () => {

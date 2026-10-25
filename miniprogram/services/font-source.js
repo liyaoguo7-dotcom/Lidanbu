@@ -110,6 +110,12 @@ function createFontSource(deps = {}) {
       // 嫌疑集中在链接的跨域/重定向与 webview 取字体环节；Data URL 不经网络
       // 取字体、也绕开本地文件路径（AC 已证伪），是唯一没试过的形态。
       // 只给首选文件（TTF）这一条，失败自动落回下面的临时链接候选。
+      // 2026-10-25 AH批新路线排最前：请 api 云函数在服务端把 TTF 取回 base64，
+      // 客户端拼 Data URL。背景：v6 的客户端 downloadFile 真机回「internal server
+      // error: empty download url」——fileID 与控制台逐字一致、文件也在，手机端
+      // 就是拿不到（疑似存储权限/通道问题）；服务端身份取同一 fileID 正常
+      //（导出 xlsx 落存储已实证）。downloadFile 路线保留为第二候选。
+      out.push({ kind: 'cloud-api', needsApiData: true, fileID: joinUrl(base, cloudFiles[0]) });
       out.push({ kind: 'cloud-data', needsDataUrl: true, fileID: joinUrl(base, cloudFiles[0]) });
       for (const f of cloudFiles) out.push({ kind: 'cloud-url', needsTempUrl: true, fileID: joinUrl(base, f) });
     }
@@ -157,6 +163,50 @@ function createFontSource(deps = {}) {
   }
 
   const dataUrlMemo = new Map(); // fileID -> data: 来源串（本会话内复用，避免重复下载）
+
+  /**
+   * 把 cloud-api 候选物化成 Data URL 来源串（AH批）：经 wx.cloud.callFunction
+   * 请 api 云函数在服务端取字体文件回 base64，本端拼 data:font/ttf 来源串。
+   * 成功返回来源串（与 materializeDataUrl 共用会话缓存）；失败返回 null 并把
+   * 原因记 lastMaterializeError。永不抛错。
+   */
+  async function materializeApiData(cand) {
+    if (!cand || cand.kind !== 'cloud-api' || !cand.needsApiData || !cand.fileID) return null;
+    if (dataUrlMemo.has(cand.fileID)) return dataUrlMemo.get(cand.fileID);
+    const cloud = wxApi && wxApi.cloud;
+    if (!cloud || typeof cloud.callFunction !== 'function') {
+      lastMaterializeError = { fileID: cand.fileID, reason: '云函数接口不可用' };
+      return null;
+    }
+    try {
+      const res = await new Promise((resolve, reject) => {
+        cloud.callFunction({
+          name: 'api',
+          data: { action: 'fontFile', fileID: cand.fileID },
+          success: resolve,
+          fail: reject,
+        });
+      });
+      const r = res && res.result;
+      if (!r || r.ok !== true || !r.data || typeof r.data.base64 !== 'string' || !r.data.base64) {
+        lastMaterializeError = {
+          fileID: cand.fileID,
+          reason: `服务端取字体失败：${(r && r.error) || '无数据返回'}`,
+        };
+        return null;
+      }
+      const source = `url("data:font/ttf;base64,${r.data.base64}")`;
+      lastMaterializeError = null;
+      dataUrlMemo.set(cand.fileID, source);
+      return source;
+    } catch (e) {
+      lastMaterializeError = {
+        fileID: cand.fileID,
+        reason: `服务端取字体失败：${(e && (e.errMsg || e.message)) || '未知错误'}`,
+      };
+      return null;
+    }
+  }
 
   /**
    * 把 cloud-data 候选物化成 Data URL 来源串：wx.cloud.downloadFile 下载到
@@ -216,6 +266,7 @@ function createFontSource(deps = {}) {
   return {
     resolveCandidates,
     materialize,
+    materializeApiData,
     materializeDataUrl,
     getLastMaterializeError: () => lastMaterializeError,
     ensureSubpackage,

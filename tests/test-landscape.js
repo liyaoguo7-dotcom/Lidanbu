@@ -112,13 +112,13 @@ test('横置-字体加载失败：回退标记、不抛错、成功后写缓存�
   assert.eq(ok, false, '离线加载返回 false');
   assert.eq(fm.getState('lxgw'), 'failed', '失败状态');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.v6.lxgw'), undefined, '失败不写缓存标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v7.lxgw'), undefined, '失败不写缓存标记（下次重试）');
 
   const okWx = { loadFontFace: (o) => o.success() };
   const fm2 = createFontManager({ wxApi: okWx, storage: st });
   assert.eq(await fm2.load('lxgw'), true, '加载成功');
   assert.eq(fm2.isFallback('lxgw'), false, '成功后非回退');
-  assert.eq(st._map.get('landscape.fontLoaded.v6.lxgw'), 1, '成功写缓存标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v7.lxgw'), 1, '成功写缓存标记');
 
   const fm3 = createFontManager({ wxApi: {}, storage: memStorage() });
   assert.eq(await fm3.load('longcang'), false, '无 loadFontFace 时安全回退不抛错');

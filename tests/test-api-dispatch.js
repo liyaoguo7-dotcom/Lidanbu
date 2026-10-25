@@ -107,3 +107,28 @@ test('api分发：支付经服务端注入 Mock 适配器完成购买；错误�
   assert(bad.ok === false, '不存在的档位应被拒');
   assert.eq(bad.code, 'plan-not-found', '信封应透传机器错误码 plan-not-found');
 });
+
+test('api分发：fontFile 服务端代取字体（白名单＋容器缓存＋非法 fileID 拒绝）', async () => {
+  const sdk = makeFakeSdk();
+  sdk.getWXContext = () => ({ OPENID: 'font-user' });
+  let downloads = 0;
+  sdk.downloadFile = async ({ fileID }) => {
+    downloads += 1;
+    assert(fileID.endsWith('.ttf'), '只应取 TTF');
+    return { fileContent: Buffer.from('FONTBYTES') };
+  };
+  const db = new core.db.CloudDB({ sdk });
+  const main = createMain({ sdk, core, db });
+  const FID = 'cloud://cloud1-x.636c-bucket/fonts/mashanzheng.ttf';
+  const r1 = await main({ action: 'fontFile', fileID: FID });
+  assert(r1.ok === true, `代取应成功（实际 ${JSON.stringify(r1)}）`);
+  assert.eq(r1.data.base64, Buffer.from('FONTBYTES').toString('base64'), '回的是文件 base64');
+  const r2 = await main({ action: 'fontFile', fileID: FID });
+  assert(r2.ok === true && downloads === 1, '同容器第二次应走缓存、不再下载');
+  const bad = await main({ action: 'fontFile', fileID: 'cloud://cloud1-x.636c-bucket/fonts/evil.ttf' });
+  assert(bad.ok === false && downloads === 1, '白名单外字体应被拒');
+  const bad2 = await main({ action: 'fontFile', fileID: 'https://x.example/fonts/mashanzheng.ttf' });
+  assert(bad2.ok === false, '非 cloud:// 形态应被拒');
+  const bad3 = await main({ action: 'fontFile', fileID: 'cloud://cloud1-x.636c-bucket/other/mashanzheng.ttf' });
+  assert(bad3.ok === false, 'fonts/ 目录外应被拒');
+});

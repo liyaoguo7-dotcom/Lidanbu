@@ -50,19 +50,22 @@ test('字体来源-https 云地址：cloud-url 直链候选排在分包之前', 
   assert.eq(list[2].needsSubpackage, true, '分包候选的 needsSubpackage 标记随候选走');
 });
 
-test('字体来源-cloud:// 云存储：Data URL 候选排第一、临时链接次之、分包兜底', () => {
+test('字体来源-cloud:// 云存储：服务端代取候选排第一、直下载第二、临时链接次之、分包兜底', () => {
   const src = createFontSource({ storage: memStorage(), cloudBase: 'cloud://env-1.bucket-x/fonts/' });
   const list = src.resolveCandidates(LXGW);
-  assert.eq(list.length, 4, '候选数（data＋temp TTF＋temp woff2＋分包）');
-  assert.eq(list[0].kind, 'cloud-data', '下载转 Data URL 候选排第一（2026-10-25 v6 路线）');
-  assert.eq(list[0].needsDataUrl, true, '第一候选须先下载转码');
-  assert.eq(list[0].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', 'Data 候选指向 TTF');
+  assert.eq(list.length, 5, '候选数（api＋data＋temp TTF＋temp woff2＋分包）');
+  assert.eq(list[0].kind, 'cloud-api', '服务端代取候选排第一（2026-10-25 AH批 v7 路线）');
+  assert.eq(list[0].needsApiData, true, '第一候选须先经云函数取代取');
+  assert.eq(list[0].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', '代取候选指向 TTF');
+  assert.eq(list[1].kind, 'cloud-data', '客户端直下载转 Data URL 候选排第二（v6 路线保留）');
+  assert.eq(list[1].needsDataUrl, true, '第二候选须先下载转码');
+  assert.eq(list[1].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', 'Data 候选指向 TTF');
   assert.eq(list[0].source, undefined, '来源串不可预先写死在候选里');
-  assert.eq(list[1].kind, 'cloud-url', '临时链接候选排第二');
-  assert.eq(list[1].needsTempUrl, true, 'cloud:// 形态须先换临时链接');
-  assert.eq(list[1].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', 'TTF 临时链接排第二');
-  assert.eq(list[2].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.woff2', 'woff2 临时链接排第三');
-  assert.eq(list[3].kind, 'subpackage', '分包兜底排最后');
+  assert.eq(list[2].kind, 'cloud-url', '临时链接候选排第三');
+  assert.eq(list[2].needsTempUrl, true, 'cloud:// 形态须先换临时链接');
+  assert.eq(list[2].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', 'TTF 临时链接排第三');
+  assert.eq(list[3].fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.woff2', 'woff2 临时链接排第四');
+  assert.eq(list[4].kind, 'subpackage', '分包兜底排最后');
   assert.eq(src.cloudFileID(LXGW), 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.woff2', 'cloudFileID 拼装');
 });
 
@@ -125,7 +128,7 @@ test('字体来源-manager 按优先级逐个尝试：临时链接失败才试�
   assert.eq(tried.length, 3, '按顺序试了三个来源（TTF 临时链接→woff2 临时链接→分包）');
   assert(tried[0].indexOf('https://tmp.example.com/') >= 0, '先试云临时链接');
   assert(tried[2].indexOf('/packages/fonts/') >= 0, '最后试分包');
-  assert.eq(st._map.get('landscape.fontLoaded.v6.lxgw'), 1, '成功写缓存标记（v6 构建段）');
+  assert.eq(st._map.get('landscape.fontLoaded.v7.lxgw'), 1, '成功写缓存标记（v7 构建段）');
 });
 
 test('字体来源-manager 全部来源失败：回退且不抛错、不写标记', async () => {
@@ -137,7 +140,7 @@ test('字体来源-manager 全部来源失败：回退且不抛错、不写标�
   const fm = createFontManager({ wxApi, storage: st });
   assert.eq(await fm.load('lxgw'), false, '全失败返回 false');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.v6.lxgw'), undefined, '不写已加载标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v7.lxgw'), undefined, '不写已加载标记（下次重试）');
 });
 
 test('字体来源-manager 云优先：云直链排在分包之前、首试即成', async () => {
@@ -169,7 +172,7 @@ test('字体来源-manager cloud:// 形态：先换临时链接再 loadFontFace�
   assert.eq(await fm.load('mashanzheng'), true, '临时链接加载成功');
   assert.eq(tried.length, 1, '只试临时链接一个来源即成');
   assert.eq(tried[0], 'url("https://tmp.example.com/m.woff2")', 'loadFontFace 吃的是 https 链接，不是本地路径');
-  assert.eq(st._map.get('landscape.fontLoaded.v6.mashanzheng'), 1, '成功写 v6 标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v7.mashanzheng'), 1, '成功写 v7 标记');
 });
 
 test('字体来源-materializeDataUrl：下载 TTF→读 base64→Data URL 来源串；会话内复用不重复下载', async () => {
@@ -191,8 +194,8 @@ test('字体来源-materializeDataUrl：下载 TTF→读 base64→Data URL 来�
     }),
   };
   const src = createFontSource({ storage: memStorage(), wxApi, cloudBase: 'cloud://env-1.bucket-x/fonts/' });
-  const cand = src.resolveCandidates(LXGW)[0];
-  assert.eq(cand.kind, 'cloud-data', '第一候选为 cloud-data');
+  const cand = src.resolveCandidates(LXGW).find((c) => c.needsDataUrl);
+  assert.eq(cand.kind, 'cloud-data', '按标记取到 cloud-data 候选');
   const s1 = await src.materializeDataUrl(cand);
   assert.eq(s1, 'url("data:font/ttf;base64,QUJD")', '物化为 Data URL 来源串（不经网络取字体）');
   const s2 = await src.materializeDataUrl(cand);
@@ -202,23 +205,63 @@ test('字体来源-materializeDataUrl：下载 TTF→读 base64→Data URL 来�
 
 test('字体来源-materializeDataUrl 容错：无接口/下载失败回 null 并留原因', async () => {
   const noApi = createFontSource({ storage: memStorage(), wxApi: {}, cloudBase: 'cloud://e.b/fonts/' });
-  assert.eq(await noApi.materializeDataUrl(noApi.resolveCandidates(LXGW)[0]), null, '无 downloadFile 回 null');
+  assert.eq(await noApi.materializeDataUrl(noApi.resolveCandidates(LXGW).find((c) => c.needsDataUrl)), null, '无 downloadFile 回 null');
   assert(/接口不可用/.test(noApi.getLastMaterializeError().reason), '原因应写明接口不可用');
   const failApi = {
     cloud: { downloadFile: (o) => o.fail({ errMsg: 'downloadFile:fail timeout' }) },
     getFileSystemManager: () => ({ readFile: (o) => o.success({ data: 'QUJD' }) }),
   };
   const failSrc = createFontSource({ storage: memStorage(), wxApi: failApi, cloudBase: 'cloud://e.b/fonts/' });
-  assert.eq(await failSrc.materializeDataUrl(failSrc.resolveCandidates(LXGW)[0]), null, '下载失败回 null');
+  assert.eq(await failSrc.materializeDataUrl(failSrc.resolveCandidates(LXGW).find((c) => c.needsDataUrl)), null, '下载失败回 null');
   assert(/下载字体文件失败/.test(failSrc.getLastMaterializeError().reason), '原因应保留下载失败原文');
 });
 
-test('字体来源-manager Data URL 首选：下载转码后 loadFontFace 首试即成', async () => {
-  const st = memStorage();
-  const tried = [];
+test('字体来源-materializeApiData：云函数回 base64→Data URL 来源串；会话内复用不重复调用', async () => {
+  let calls = 0;
   const wxApi = {
     cloud: {
-      downloadFile: (o) => o.success({ tempFilePath: 'wxfile://tmp/f.ttf' }),
+      callFunction: (o) => {
+        calls += 1;
+        assert.eq(o.data.fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', '入参为 TTF 的 fileID');
+        o.success({ result: { ok: true, data: { base64: 'QUJD', mime: 'font/ttf' } } });
+      },
+    },
+  };
+  const src = createFontSource({ storage: memStorage(), wxApi, cloudBase: 'cloud://env-1.bucket-x/fonts/' });
+  const cand = src.resolveCandidates(LXGW)[0];
+  assert.eq(cand.kind, 'cloud-api', '第一候选为 cloud-api');
+  const s1 = await src.materializeApiData(cand);
+  assert.eq(s1, 'url("data:font/ttf;base64,QUJD")', '物化为 Data URL 来源串');
+  const s2 = await src.materializeApiData(cand);
+  assert.eq(s2, s1, '第二次同结果');
+  assert.eq(calls, 1, '同会话同文件只代取一次');
+});
+
+test('字体来源-materializeApiData 容错：无接口/服务端拒绝回 null 并留原因', async () => {
+  const noApi = createFontSource({ storage: memStorage(), wxApi: {}, cloudBase: 'cloud://e.b/fonts/' });
+  assert.eq(await noApi.materializeApiData(noApi.resolveCandidates(LXGW)[0]), null, '无 callFunction 回 null');
+  assert(/接口不可用/.test(noApi.getLastMaterializeError().reason), '原因应写明接口不可用');
+  const denyApi = { cloud: { callFunction: (o) => o.success({ result: { ok: false, error: '云端取字体失败' } }) } };
+  const denySrc = createFontSource({ storage: memStorage(), wxApi: denyApi, cloudBase: 'cloud://e.b/fonts/' });
+  assert.eq(await denySrc.materializeApiData(denySrc.resolveCandidates(LXGW)[0]), null, '服务端拒绝回 null');
+  assert(/服务端取字体失败/.test(denySrc.getLastMaterializeError().reason), '原因应保留服务端文案');
+});
+
+test('字体来源-manager 服务端代取首选：云函数回 base64 后 loadFontFace 首试即成', async () => {
+  const st = memStorage();
+  const tried = [];
+  let apiCalls = 0;
+  let downloads = 0;
+  const wxApi = {
+    cloud: {
+      callFunction: (o) => {
+        apiCalls += 1;
+        assert.eq(o.name, 'api', '代取走 api 云函数');
+        assert.eq(o.data.action, 'fontFile', '代取动作为 fontFile');
+        assert.eq(o.data.fileID, 'cloud://env-1.bucket-x/fonts/lxgw-wenkai.ttf', '代取入参为 TTF 的 fileID');
+        o.success({ result: { ok: true, data: { base64: 'QUJD', mime: 'font/ttf' } } });
+      },
+      downloadFile: (o) => { downloads += 1; o.success({ tempFilePath: 'wxfile://tmp/f.ttf' }); },
       getTempFileURL: (o) => o.success({ fileList: [{ fileID: o.fileList[0], tempFileURL: 'https://tmp.example.com/x.ttf', status: 0 }] }),
     },
     getFileSystemManager: () => ({ readFile: (o) => o.success({ data: 'QUJD' }) }),
@@ -226,7 +269,9 @@ test('字体来源-manager Data URL 首选：下载转码后 loadFontFace 首试
     loadFontFace: (o) => { tried.push(o.source); o.success(); },
   };
   const fm = createFontManager({ wxApi, storage: st, cloudBase: 'cloud://env-1.bucket-x/fonts/' });
-  assert.eq(await fm.load('lxgw'), true, 'Data URL 路线加载成功');
+  assert.eq(await fm.load('lxgw'), true, '服务端代取路线加载成功');
+  assert.eq(apiCalls, 1, '只调一次云函数代取');
+  assert.eq(downloads, 0, '代取成功时不再走客户端直下载');
   assert.eq(tried.length, 1, '首试即成，不再试临时链接/分包');
   assert(tried[0].indexOf('url("data:font/ttf;base64,') === 0, 'loadFontFace 吃的是 Data URL');
 });

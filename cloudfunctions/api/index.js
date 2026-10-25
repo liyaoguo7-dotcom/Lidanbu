@@ -9,6 +9,9 @@
  *   { action: '<模块>.<函数>', args: [...] } → 调 core.<模块>.<函数>(db, openid, ...args)
  *   { action: 'whoami' }                     → { ok:true, data:{ openid } }（管理员初始化/联调用）
  *   { action: 'exportXlsx', eventIds?, includeGifts? } → routes-export 专用路由
+ *   { action: 'fontFile', fileID } → 服务端取字体 TTF 回 base64（AH批：真机实测
+ *     小程序端 wx.cloud.downloadFile 对控制台上传的字体文件回「empty download
+ *     url」拿不到文件；服务端身份取同一 fileID 正常。仅白名单三款 TTF）
  * 返回统一信封：{ ok:true, data } / { ok:false, error:'用户可读文案' }。
  *
  * 部署：core/ 与 config 由 tools/sync-api.sh 同步进本目录（core/、miniprogram/config/），
@@ -53,7 +56,7 @@ async function ensureServerUser(db, core, openid, cache) {
 }
 
 /** 依赖注入工厂（本地测试用假 SDK 在进程内跑通全链路；云端用默认导出） */
-function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
+function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile }) {
   const _ensuredUsers = new Set(); // 本容器内已确认建号的用户（见 ensureServerUser）
   // 导出处理器懒加载：buildXlsx 依赖 exceljs（体积大、加载慢），绝不能在
   // 函数冷启动时就 require——2026-10-23 真云端实测：急切加载导致 whoami
@@ -79,6 +82,32 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
     return _exportXlsx;
   };
 
+  // —— 字体文件服务端代取（AH批）：白名单三款 TTF、容器内缓存 base64 ——
+  const FONT_FILE_WHITELIST = ['lxgw-wenkai.ttf', 'mashanzheng.ttf', 'longcang.ttf'];
+  const _fontBase64Cache = new Map();
+  async function handleFontFile(event) {
+    const fileID = String((event && event.fileID) || '');
+    const base = fileID.split('/').pop();
+    if (!fileID.startsWith('cloud://') || !fileID.endsWith(`/fonts/${base}`)
+      || !FONT_FILE_WHITELIST.includes(base)) {
+      return { ok: false, error: '字体文件不合法' };
+    }
+    if (_fontBase64Cache.has(base)) {
+      return { ok: true, data: { base64: _fontBase64Cache.get(base), mime: 'font/ttf' } };
+    }
+    let content = null;
+    if (typeof downloadFile === 'function') {
+      content = await downloadFile(fileID);
+    } else if (sdk && typeof sdk.downloadFile === 'function') {
+      const r = await sdk.downloadFile({ fileID });
+      content = r && r.fileContent;
+    }
+    if (!content) return { ok: false, error: '云端取字体失败' };
+    const b64 = Buffer.from(content).toString('base64');
+    _fontBase64Cache.set(base, b64);
+    return { ok: true, data: { base64: b64, mime: 'font/ttf' } };
+  }
+
   return async function main(event = {}) {
     // 定时保活触发（config.json 的 timer 触发器）：空转返回，目的只是让
     // 容器保持热乎、减少用户撞上冷启动（真机反馈保存/删除等数秒的主因）。
@@ -96,6 +125,10 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile }) {
         // routes-export 自有信封是 { ok:false, reason }，在这里归一化为全站统一的 error 字段
         if (r && r.ok === false && r.reason && !r.error) return { ok: false, error: r.reason };
         return r;
+      }
+      if (action === 'fontFile') {
+        try { return await handleFontFile(event); }
+        catch (e) { return { ok: false, error: '云端取字体失败' }; }
       }
       const dot = action.indexOf('.');
       const modName = dot > 0 ? action.slice(0, dot) : '';

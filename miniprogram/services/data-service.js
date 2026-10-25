@@ -37,7 +37,8 @@ let _homeDataInflight = null; // 首页数据在途去重：小结与最近往�
 // 改删精确同步或整表作废），保证缓存与云端一致，不拿旧数据糊弄。
 let _listCache = { contacts: null, gifts: null, eventsStats: null };
 const _wanglaiCache = new Map(); // 本人往来列表按范围缓存；任一记录/联系人变更即整表作废
-function _dirtyWanglai() { _wanglaiCache.clear(); }
+const _timelineCache = new Map(); // 本人往来明细（竖线树）按联系人缓存；与往来列表同批作废（AH批：真机点开联系人第一下 2 秒多、在途去重+缓存后第二下起秒开）
+function _dirtyWanglai() { _wanglaiCache.clear(); _timelineCache.clear(); }
 const _eventDetailCache = new Map();
 function _dirtyLists(...names) { names.forEach((n) => { _listCache[n] = null; }); }
 let _modeForTest = null; // 仅测试注入用：'local' | 'cloud' | null
@@ -988,14 +989,28 @@ const service = {
    */
   async getTimeline({ contactId, ownerId, range } = {}) {
     const oid = ownerId || _userId;
-    try {
-      // 竖线树与联系人详情互相独立，并发取（原来串行多一个云端往返）
-      const [tl, c] = await Promise.all([
-        core.stats.memberTimeline(_db, _userId, oid, contactId, { range }),
-        this.getContact(contactId, oid),
-      ]);
-      return { ...tl, contactName: c ? c.name : '' };
-    } catch (e) { throw new Error(friendly(e)); }
+    // 本人账本走会话缓存（AH批）：存「在途 promise」实现去重——页面 onLoad 与
+    // onShow 首开各调一次 reload，此前是两批完整云端往返（真机 2 秒多的主因
+    // 之一）；任一记录/联系人变更经 _dirtyWanglai 整表作废，不会读到旧数据。
+    // 成员视角（看他人账本）不缓存，口径与往来列表一致。
+    const own = oid === _userId;
+    const key = own ? `${oid}|${contactId}|${JSON.stringify(range || null)}` : null;
+    if (own && _timelineCache.has(key)) return _timelineCache.get(key);
+    const p = (async () => {
+      try {
+        // 竖线树与联系人详情互相独立，并发取（原来串行多一个云端往返）
+        const [tl, c] = await Promise.all([
+          core.stats.memberTimeline(_db, _userId, oid, contactId, { range }),
+          this.getContact(contactId, oid),
+        ]);
+        return { ...tl, contactName: c ? c.name : '' };
+      } catch (e) { throw new Error(friendly(e)); }
+    })();
+    if (own) {
+      _timelineCache.set(key, p);
+      p.catch(() => { if (_timelineCache.get(key) === p) _timelineCache.delete(key); });
+    }
+    return p;
   },
   async getContact(contactId, ownerId) {
     const oid = ownerId || _userId;
@@ -1360,6 +1375,7 @@ service._resetForTest = () => {
   _listCache = { contacts: null, gifts: null, eventsStats: null };
   _eventDetailCache.clear();
   _wanglaiCache.clear();
+  _timelineCache.clear();
   _homeDataInflight = null;
   service._featureFlagsCache = null;
   _modeForTest = null; _transportForTest = null; _remoteCore = null;

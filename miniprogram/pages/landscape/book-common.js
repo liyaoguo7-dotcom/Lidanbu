@@ -407,6 +407,8 @@ function createBookPage(kind) {
           content = `云端找不到「${fname}」的字体文件，先用默认字体显示。麻烦把这个提示截图发给我们，马上处理。`;
         } else if (f && f.stage === 'temp-url') {
           content = `向云端取「${fname}」字体链接失败：${f.reason}。先用默认字体显示，麻烦截图发给我们排查。`;
+        } else if (f && f.stage === 'api-data') {
+          content = `「${fname}」字体文件从云端获取失败：${f.reason || '未知原因'}。先用默认字体显示，麻烦截图发给我们排查。`;
         } else if (f && f.stage === 'data-url') {
           content = `「${fname}」字体文件下载失败：${f.reason || '未知原因'}。先用默认字体显示，麻烦截图发给我们排查。`;
         } else if (f && f.reason) {
