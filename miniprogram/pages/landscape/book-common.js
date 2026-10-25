@@ -50,7 +50,6 @@ function createBookPage(kind) {
       perms: { canAdd: true, canEdit: true, canDelete: true },
       emptyBook: false,
       safePadL: 0, safePadR: 0,
-      showDelModal: false, delContent: '', delTitle: '删除记录',
     },
 
     // ---- 内部状态（不进 data） ----
@@ -353,31 +352,16 @@ function createBookPage(kind) {
       wx.navigateTo({ url });
     },
 
+    // 删除改走竖屏操作（2026-10-25 用户定：与查看往来/修改一致，跳竖屏详情页里删，
+    // 横屏内不再弹删除确认）：竖屏送礼详情/收礼记录详情均有统一删除弹窗。
     onDetailDelete() {
       const d = this.data.detail;
       if (!d) return;
-      this.setData({
-        showDelModal: true,
-        delTitle: '删除记录',
-        delContent: `${d.occasion} · ${d.name}\n日期 ${d.date || '-'} · 金额 ¥${d.amountText}`,
-      });
-    },
-
-    onCancelDel() { this.setData({ showDelModal: false }); },
-
-    async onConfirmDel() {
-      const d = this.data.detail;
-      this.setData({ showDelModal: false });
-      if (!d) return;
-      try {
-        if (isReceive) await dataService.deleteRecord(d.recordId);
-        else await dataService.deleteGift(d.recordId);
-        wx.showToast({ title: '已删除', icon: 'success' });
-        this._closeDetail();
-        await this.reload();
-      } catch (err) {
-        wx.showToast({ title: (err && err.message) || '删除失败', icon: 'none' });
-      }
+      this._closeDetail();
+      const url = isReceive
+        ? `/pages/receive-record-detail/receive-record-detail?id=${d.recordId}`
+        : `/pages/gift-detail/gift-detail?id=${d.recordId}`;
+      wx.navigateTo({ url });
     },
 
     // ---- 样式面板（字体/样式两组独立、互不重置、立即生效） ----

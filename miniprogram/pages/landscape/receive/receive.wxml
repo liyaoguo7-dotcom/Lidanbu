@@ -1,2 +1,2 @@
 <import src="../book.wxml" />
-<template is="book" data="{{ready, isLandscape, rotateCopy, credit, spec, theme, fontId, styleId, selStack, songtiStack, titleName, titleDate, titleIcon, cols, scrollLeft, styleRightPx, selectedKey, detailOpen, detail, panelOpen, fonts, themeList, perms, safePadL, safePadR, view, showDelModal, delTitle, delContent}}" />
+<template is="book" data="{{ready, isLandscape, rotateCopy, credit, spec, theme, fontId, styleId, selStack, songtiStack, titleName, titleDate, titleIcon, cols, scrollLeft, styleRightPx, selectedKey, detailOpen, detail, panelOpen, fonts, themeList, perms, safePadL, safePadR, view}}" />
