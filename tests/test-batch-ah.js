@@ -43,6 +43,11 @@ const read = (p) => fs.readFileSync(p, 'utf8');
   assert(recvNames.every((n) => !giftNames.includes(n)), '收礼与送礼人名不得重名（用户定）');
   assert((tl.match(/<div class="trow">/g) || []).length === 3, '竖线树共 3 条（用户定 3-4 条、去掉儿子的婚礼）');
   assert(tl.includes('女儿的升学宴') && tl.includes('周小梅'), '竖线树收礼用亲人称谓事件命名、联系人周小梅');
+  const tamts = [...tl.matchAll(/class="tamt">([+-][0-9.]+)</g)].map((m) => parseFloat(m[1]));
+  assert(tamts.every((a) => Math.abs(a) === 1000 || Math.abs(a) === 2000), '竖线树金额只许 1000/2000（用户定）');
+  const outSum = -tamts.filter((a) => a < 0).reduce((x, y) => x + y, 0);
+  const inSum = tamts.filter((a) => a > 0).reduce((x, y) => x + y, 0);
+  assert(tl.includes(`送出：¥${outSum.toFixed(2)}`) && tl.includes(`收到：¥${inSum.toFixed(2)}`), '竖线树汇总与条目自洽');
   for (const src of [recv, gifts, tl]) {
     assert(!/\.songti \{ font-family:"Songti/.test(src) && !src.includes('STSong'), '复刻图字体须与真实页面同口径（全站黑体、无宋体）');
   }
