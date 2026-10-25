@@ -316,6 +316,8 @@ paymentEnabled: (doc.payment && typeof doc.payment.enabled === 'boolean') ? doc.
 photoImportEnabled: (doc.features && typeof doc.features.photoImport === 'boolean') ? doc.features.photoImport : !!(StaticConfig.features && StaticConfig.features.photoImport),
 eInvitationEnabled: (doc.features && typeof doc.features.eInvitation === 'boolean') ? doc.features.eInvitation : !!(StaticConfig.features && StaticConfig.features.eInvitation),
 familyShareEnabled: (doc.features && typeof doc.features.familyShare === 'boolean') ? doc.features.familyShare : !!(StaticConfig.features && StaticConfig.features.familyShare),
+maintenanceEnabled: (doc.features && typeof doc.features.maintenance === 'boolean') ? doc.features.maintenance : !!(StaticConfig.features && StaticConfig.features.maintenance),
+registrationEnabled: (doc.features && typeof doc.features.registration === 'boolean') ? doc.features.registration : !!(StaticConfig.features && StaticConfig.features.registration),
 updatedAt: doc.updatedAt || null,
 };
 }
@@ -598,20 +600,26 @@ if ('paymentEnabled' in switches && typeof switches.paymentEnabled !== 'boolean'
 if ('photoImportEnabled' in switches && typeof switches.photoImportEnabled !== 'boolean') throw badConfig('拍照导入开关必须为开/关');
 if ('eInvitationEnabled' in switches && typeof switches.eInvitationEnabled !== 'boolean') throw badConfig('电子请柬开关必须为开/关');
 if ('familyShareEnabled' in switches && typeof switches.familyShareEnabled !== 'boolean') throw badConfig('家庭共享开关必须为开/关');
+if ('maintenanceEnabled' in switches && typeof switches.maintenanceEnabled !== 'boolean') throw badConfig('维护模式开关必须为开/关');
+if ('registrationEnabled' in switches && typeof switches.registrationEnabled !== 'boolean') throw badConfig('注册开关必须为开/关');
 const hasPay = typeof switches.paymentEnabled === 'boolean';
 const hasPhoto = typeof switches.photoImportEnabled === 'boolean';
 const hasInvite = typeof switches.eInvitationEnabled === 'boolean';
 const hasShare = typeof switches.familyShareEnabled === 'boolean';
-if (!hasPay && !hasPhoto && !hasInvite && !hasShare) throw badConfig('发布开关不能为空');
+const hasMaint = typeof switches.maintenanceEnabled === 'boolean';
+const hasReg = typeof switches.registrationEnabled === 'boolean';
+if (!hasPay && !hasPhoto && !hasInvite && !hasShare && !hasMaint && !hasReg) throw badConfig('发布开关不能为空');
 const doc = (await readConfigDoc(db)) || {};
 const patch = {};
 const changed = [];
 if (hasPay) { patch.payment = { ...(doc.payment || {}), enabled: switches.paymentEnabled }; changed.push('云端购买'); }
-if (hasPhoto || hasInvite || hasShare) {
+if (hasPhoto || hasInvite || hasShare || hasMaint || hasReg) {
 patch.features = { ...(doc.features || {}) };
 if (hasPhoto) { patch.features.photoImport = switches.photoImportEnabled; changed.push('拍照导入'); }
 if (hasInvite) { patch.features.eInvitation = switches.eInvitationEnabled; changed.push('电子请柬'); }
 if (hasShare) { patch.features.familyShare = switches.familyShareEnabled; changed.push('家庭共享'); }
+if (hasMaint) { patch.features.maintenance = switches.maintenanceEnabled; changed.push('维护模式'); }
+if (hasReg) { patch.features.registration = switches.registrationEnabled; changed.push('新用户注册'); }
 }
 const updatedAt = await writeConfigPatch(db, actorId, patch, `修改发布开关：${changed.join('、')}`);
 const after = (await readConfigDoc(db)) || {};
@@ -620,6 +628,8 @@ paymentEnabled: (after.payment && typeof after.payment.enabled === 'boolean') ? 
 photoImportEnabled: (after.features && typeof after.features.photoImport === 'boolean') ? after.features.photoImport : !!(StaticConfig.features && StaticConfig.features.photoImport),
 eInvitationEnabled: (after.features && typeof after.features.eInvitation === 'boolean') ? after.features.eInvitation : !!(StaticConfig.features && StaticConfig.features.eInvitation),
 familyShareEnabled: (after.features && typeof after.features.familyShare === 'boolean') ? after.features.familyShare : !!(StaticConfig.features && StaticConfig.features.familyShare),
+maintenanceEnabled: (after.features && typeof after.features.maintenance === 'boolean') ? after.features.maintenance : !!(StaticConfig.features && StaticConfig.features.maintenance),
+registrationEnabled: (after.features && typeof after.features.registration === 'boolean') ? after.features.registration : !!(StaticConfig.features && StaticConfig.features.registration),
 updatedAt,
 };
 }

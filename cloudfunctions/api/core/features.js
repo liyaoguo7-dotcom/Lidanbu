@@ -25,6 +25,8 @@ async function resolveFlags(db, staticCfg = AppConfig) {
     photoImport: typeof seg.photoImport === 'boolean' ? seg.photoImport : !!base.photoImport,
     eInvitation: typeof seg.eInvitation === 'boolean' ? seg.eInvitation : !!base.eInvitation,
     familyShare: typeof seg.familyShare === 'boolean' ? seg.familyShare : !!base.familyShare,
+    maintenance: typeof seg.maintenance === 'boolean' ? seg.maintenance : !!base.maintenance,
+    registration: typeof seg.registration === 'boolean' ? seg.registration : !!base.registration,
   };
 }
 

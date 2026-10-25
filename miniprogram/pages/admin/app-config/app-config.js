@@ -1,6 +1,6 @@
 /**
  * 老板平台 · 配置编辑页（第5/8/13项）
- * ?section=pricing 额度与会员价格设置 / switches 功能开关 / features 会员专属功能清单
+ * ?section=pricing 额度与会员价格设置 / switches 功能开关（开关中心：总开关·会员开关·会员专属功能·支付平台开关四组）
  *
  * 页面内直接编辑、保存落库：全部走 core.admin 写接口（管理员校验在 core），
  * 保存前二次确认，每次修改写操作记录（审计）。价格只从配置读，页面不写死。
@@ -22,9 +22,7 @@ function yuanToFen(str) {
 const SECTIONS = {
   pricing: { title: '额度与会员价格设置' },
   switches: { title: '功能开关' },
-  features: { title: '会员专属功能清单设置' },
   points: { title: '会员与积分配置' },
-  platforms: { title: '支付平台开关' },
 };
 const QUOTA_FIELDS = [
   { key: 'receiveEvents', label: '收礼礼薄（个）' },
@@ -51,7 +49,7 @@ Page({
     pointsCfg: { registerGrant: '', photoImportCost: '' }, packs: [],
     platforms: { ios: true, android: true },
     launch: { paymentEnabled: false, photoImportEnabled: false },
-    gates: { eInvitation: true, familyShare: true }, // 功能总开关（电子请柬/家庭共享），在「功能开关」节里改
+    gates: { eInvitation: true, familyShare: true, maintenance: false, registration: true }, // 总开关组（与 launch 一起在「功能开关」页总开关组保存）
     featureChecked: {}, // 会员专属清单的勾选映射（WXML 不能调 .indexOf()，须 JS 预先算好）
   },
 
@@ -106,6 +104,8 @@ Page({
         gates: {
           eInvitation: cfg.eInvitationEnabled !== false,
           familyShare: cfg.familyShareEnabled !== false,
+          maintenance: cfg.maintenanceEnabled === true,
+          registration: cfg.registrationEnabled !== false,
         },
         featureChecked: Object.fromEntries(FEATURE_FIELDS.map((f) => [f.key, (cfg.memberOnlyFeatures || []).includes(f.key)])),
       });
@@ -141,12 +141,14 @@ Page({
   onSwitchToggle(e) {
     this.setData({ [`features.${e.currentTarget.dataset.key}`]: e.detail.value });
   },
-  onFeatureCheck(e) {
-    const selected = e.detail.value || [];
-    this.setData({
-      memberOnly: selected,
-      featureChecked: Object.fromEntries(FEATURE_FIELDS.map((f) => [f.key, selected.includes(f.key)])),
-    });
+  /** 会员专属功能开关（AL-7：原打钩改开关样式）；只动本组名单，保存走 onSaveFeatures */
+  onMemberSwitch(e) {
+    const key = e.currentTarget.dataset.key;
+    const on = !!e.detail.value;
+    const memberOnly = on
+      ? [...new Set([...this.data.memberOnly, key])]
+      : this.data.memberOnly.filter((f) => f !== key);
+    this.setData({ memberOnly, [`featureChecked.${key}`]: on });
   },
 
   confirmSave(what, fn) {
@@ -224,7 +226,7 @@ Page({
 
   onSaveFeatures() {
     const features = [...this.data.memberOnly];
-    this.confirmSave('会员专属功能清单', () => ds.adminUpdateMemberOnlyFeatures(features));
+    this.confirmSave('会员专属功能', () => ds.adminUpdateMemberOnlyFeatures(features));
   },
 
   // —— 积分规则（任务P2） ——
@@ -282,23 +284,16 @@ Page({
   onLaunchToggle(e) {
     this.setData({ [`launch.${e.currentTarget.dataset.key}`]: e.detail.value });
   },
-  // —— 功能总开关：电子请柬 / 家庭共享（2026-10-25 用户加，与发布开关同一服务端接口） ——
-  onGateToggle(e) {
-    this.setData({ [`gates.${e.currentTarget.dataset.key}`]: e.detail.value });
-  },
-  onSaveGates() {
-    const switches = {
-      eInvitationEnabled: !!this.data.gates.eInvitation,
-      familyShareEnabled: !!this.data.gates.familyShare,
-    };
-    this.confirmSave('功能总开关', () => ds.adminUpdateLaunchSwitches(switches));
-  },
-
-  onSaveLaunch() {
+  // —— 总开关组保存（AL-7）：只写总开关六闸，各组保存各管各的 ——
+  onSaveMaster() {
     const switches = {
       paymentEnabled: !!this.data.launch.paymentEnabled,
       photoImportEnabled: !!this.data.launch.photoImportEnabled,
+      eInvitationEnabled: !!this.data.gates.eInvitation,
+      familyShareEnabled: !!this.data.gates.familyShare,
+      maintenanceEnabled: !!this.data.gates.maintenance,
+      registrationEnabled: !!this.data.gates.registration,
     };
-    this.confirmSave('发布开关', () => ds.adminUpdateLaunchSwitches(switches));
+    this.confirmSave('总开关', () => ds.adminUpdateLaunchSwitches(switches));
   },
 });

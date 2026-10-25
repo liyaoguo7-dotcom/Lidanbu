@@ -1,0 +1,5 @@
+<view style="padding:120px 40px;text-align:center">
+  <view style="font-size:22px;color:#333;margin-bottom:16px">系统维护中</view>
+  <view style="font-size:15px;color:#999;line-height:1.7">我们正在做一次小升级，\n请稍后再来看看。</view>
+  <button class="btn-primary" style="margin-top:48px" bindtap="onRetry">重试</button>
+</view>

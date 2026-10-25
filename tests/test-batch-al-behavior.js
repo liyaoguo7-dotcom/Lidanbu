@@ -54,3 +54,14 @@ test('AL-5 非管理员改闸被拒；非法值被拒', async () => {
   try { await core.admin.updateLaunchSwitches(db, BOSS, { familyShareEnabled: 'yes' }); } catch (e) { threw = true; }
   assert(threw, '非布尔值应被拒');
 });
+
+test('AL-7 维护/注册两闸：默认值与落库（resolveFlags 五闸口径）', async () => {
+  const db = await newDB(); await seed(db);
+  let f = await core.features.resolveFlags(db);
+  assert(f.maintenance === false && f.registration === true, '默认维护关/注册开，实际 ' + JSON.stringify(f));
+  const r = await core.admin.updateLaunchSwitches(db, BOSS, { maintenanceEnabled: true, registrationEnabled: false });
+  assert(r.maintenanceEnabled === true && r.registrationEnabled === false, '两闸应落库');
+  f = await core.features.resolveFlags(db);
+  assert(f.maintenance === true && f.registration === false, '生效值应翻转');
+  assert(f.familyShare === true && f.eInvitation === true, '其他闸不应被冲掉');
+});

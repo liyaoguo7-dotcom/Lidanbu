@@ -33,10 +33,10 @@ const homeWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/admin-
 const grpNames = [...homeJs.matchAll(/\{ name: '([^']+)', items:/g)].map((m) => m[1]);
 assert.deepStrictEqual(grpNames, ['会员与收入', '用户与安全', '运营设置', '只看数据'], 'AL-6 四组顺序应为会员与收入→用户与安全→运营设置→只看数据');
 const titles = [...homeJs.matchAll(/title: '([^']+)'/g)].map((m) => m[1]);
-assert.strictEqual(titles.length, 17, 'AL-7 入口总数为17（邀请设置与数据合并后）');
-assert.deepStrictEqual(titles.slice(0, 6), ['会员管理', '会员订单与收入', '额度与会员价格设置', '会员与积分配置', '支付平台开关', '会员专属功能清单设置'], 'AL-7 会员与钱相关占前六');
-assert.deepStrictEqual(titles.slice(9, 12), ['功能开关', '邀请奖励', '用户反馈列表'], 'AL-7 运营设置组含合并后的邀请奖励');
-assert.deepStrictEqual(titles.slice(12), ['数据概览', '用户额度使用情况', '拍照导入用量监控', '家庭共享概况', '示例截图管理'], 'AL-7 只看数据五项垫底');
+assert.strictEqual(titles.length, 15, 'AL-7 入口总数为15（支付平台与会员专属并入功能开关后）');
+assert.deepStrictEqual(titles.slice(0, 4), ['会员管理', '会员订单与收入', '额度与会员价格设置', '会员与积分配置'], 'AL-7 会员与钱相关占首组');
+assert.deepStrictEqual(titles.slice(7, 10), ['功能开关', '邀请奖励', '用户反馈列表'], 'AL-7 运营设置组含开关中心与合并后的邀请奖励');
+assert.deepStrictEqual(titles.slice(10), ['数据概览', '用户额度使用情况', '拍照导入用量监控', '家庭共享概况', '示例截图管理'], 'AL-7 只看数据五项垫底');
 assert.ok(titles.includes('邀请奖励') && !titles.includes('邀请奖励数据') && !titles.includes('邀请奖励设置'), 'AL-8 邀请设置与数据已合并为一个入口');
 const invWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/invite/invite.wxml', 'utf8');
 assert.ok(invWxml.includes('bindtap="onSaveInvite"'), 'AL-8 邀请页应含设置保存');
@@ -69,10 +69,31 @@ console.log('✓ AL批·导出图标断言全过');
 /* AL-11 功能总开关静态断言：配置页有两闸、首页/我的有入口拦截 */
 const acfgWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/app-config/app-config.wxml', 'utf8');
 assert.ok(acfgWxml.includes('data-key="eInvitation"') && acfgWxml.includes('data-key="familyShare"'), 'AL-11 配置页功能开关节应有电子请柬/家庭共享两闸');
-assert.ok(acfgWxml.includes('bindtap="onSaveGates"'), 'AL-11 应有保存总开关按钮');
+assert.ok(acfgWxml.includes('bindtap="onSaveMaster"'), 'AL-11 总开关组应有统一保存按钮');
 const idxJs = fs.readFileSync(__dirname + '/../miniprogram/pages/index/index.js', 'utf8');
 assert.ok(idxJs.includes('flags0.eInvitation === false'), 'AL-11 首页请柬入口应受总开关控制');
 assert.ok(idxJs.includes('家庭共享敬请期待'), 'AL-11 首页共享入口应有总闸提示');
 const mineJs2 = fs.readFileSync(__dirname + '/../miniprogram/pages/mine/mine.js', 'utf8');
 assert.ok(mineJs2.includes('flags.familyShare === false'), 'AL-11 我的页共享行应有总闸');
 console.log('✓ AL批·总开关断言全过');
+
+/* AL-12 开关中心：四组各管各的保存，会员专属改开关样式 */
+const swWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/app-config/app-config.wxml', 'utf8');
+const swJs = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/app-config/app-config.js', 'utf8');
+for (const gh of ['总开关', '会员开关', '会员专属功能', '支付平台开关']) {
+  assert.ok(swWxml.includes(`<view class="group-h">${gh}</view>`), 'AL-12 开关中心应有分组：' + gh);
+}
+assert.ok(!swWxml.includes('checkbox-group'), 'AL-12 会员专属功能应改开关样式，无打钩控件');
+assert.ok(swWxml.includes('bindchange="onMemberSwitch"'), 'AL-12 会员专属功能应为开关切换');
+assert.ok(swWxml.includes('data-key="maintenance"') && swWxml.includes('data-key="registration"'), 'AL-12 总开关组应含维护模式与注册开关');
+// 各组保存各管各的：四个保存按钮分别绑四个互不相同的 handler
+for (const h of ['onSaveMaster', 'onSaveSwitches', 'onSaveFeatures', 'onSavePlatforms']) {
+  assert.ok(swWxml.includes(`bindtap="${h}"`), 'AL-12 应有保存按钮 ' + h);
+  assert.ok(swJs.includes(h + '()'), 'AL-12 JS 应有 handler ' + h);
+}
+assert.ok(swJs.includes('adminUpdateLaunchSwitches'), 'AL-12 总开关组保存应走发布开关接口');
+assert.ok(swJs.includes('adminUpdateFeatureSwitches'), 'AL-12 会员开关组保存应走会员功能开关接口');
+assert.ok(swJs.includes('adminUpdateMemberOnlyFeatures'), 'AL-12 会员专属组保存应走专属清单接口');
+assert.ok(swJs.includes('adminUpdatePaymentPlatforms'), 'AL-12 支付平台组保存应走平台开关接口');
+assert.ok(!swWxml.includes("section === 'platforms'") && !swWxml.includes("section === 'features'"), 'AL-12 旧平台/专属节应已并入开关中心');
+console.log('✓ AL批·开关中心断言全过');

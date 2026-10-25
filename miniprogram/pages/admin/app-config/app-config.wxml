@@ -34,19 +34,44 @@
 
 <!-- 功能开关 -->
 <block wx:if="{{!loading && !error && section === 'switches'}}">
+  <view class="group-h">总开关</view>
+  <view class="card">
+    <view class="form-row"><text class="form-label" style="width:170px">云端购买</text><switch checked="{{launch.paymentEnabled}}" bindchange="onLaunchToggle" data-key="paymentEnabled" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">拍照导入</text><switch checked="{{launch.photoImportEnabled}}" bindchange="onLaunchToggle" data-key="photoImportEnabled" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">电子请柬</text><switch checked="{{gates.eInvitation}}" bindchange="onGateToggle" data-key="eInvitation" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">家庭共享</text><switch checked="{{gates.familyShare}}" bindchange="onGateToggle" data-key="familyShare" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">维护模式</text><switch checked="{{gates.maintenance}}" bindchange="onGateToggle" data-key="maintenance" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">新用户注册</text><switch checked="{{gates.registration}}" bindchange="onGateToggle" data-key="registration" /></view>
+  </view>
+  <button class="btn-primary" bindtap="onSaveMaster" loading="{{saving}}">保存总开关</button>
+  <view class="note">总开关管所有人。云端购买：关掉后普通用户买不了（提示暂未开放），管理员可模拟购买；真实支付接入后再打开。拍照导入：关掉后入口提示敬请期待、服务端拒绝。电子请柬：关掉后首页入口不显示（还要配了合作方 AppID 才显示）。家庭共享：关掉后入口提示敬请期待，共享的新建/接受/改权限/移除/列表在服务端同步拒绝，已共享记录不删除。维护模式：打开后非管理员只看到「系统维护中」，管理员不受限。注册：关掉后新用户进不来，老用户不受影响。</view>
+
+  <view class="group-h">会员开关</view>
   <view class="card">
     <view class="form-row" wx:for="{{switchFields}}" wx:key="key">
       <text class="form-label" style="width:170px">{{item.label}}</text>
       <switch checked="{{features[item.key]}}" data-key="{{item.key}}" bindchange="onSwitchToggle" />
     </view>
   </view>
-  <button class="btn-primary" bindtap="onSaveSwitches" loading="{{saving}}">保存功能开关</button>
+  <button class="btn-primary" bindtap="onSaveSwitches" loading="{{saving}}">保存会员开关</button>
+
+  <view class="group-h">会员专属功能</view>
   <view class="card">
-    <view class="form-row"><text class="form-label" style="width:170px">电子请柬</text><switch checked="{{gates.eInvitation}}" bindchange="onGateToggle" data-key="eInvitation" /></view>
-    <view class="form-row"><text class="form-label" style="width:170px">家庭共享</text><switch checked="{{gates.familyShare}}" bindchange="onGateToggle" data-key="familyShare" /></view>
+    <view class="form-row" wx:for="{{featureFields}}" wx:key="key">
+      <text class="form-label" style="width:170px">{{item.label}}</text>
+      <switch checked="{{featureChecked[item.key]}}" data-key="{{item.key}}" bindchange="onMemberSwitch" />
+    </view>
   </view>
-  <button class="btn-primary" bindtap="onSaveGates" loading="{{saving}}">保存总开关</button>
-  <view class="note">电子请柬：关掉后首页入口不显示（入口出现还需合作方 AppID 已配置）。家庭共享：关掉后首页和「我的」的入口点击提示「家庭共享敬请期待」，共享的新建、接受、改权限、移除、列表在服务端同步拒绝；已经共享出去的记录不删除。邀请奖励在老板平台「邀请奖励」页里改（设置与数据同页）。</view>
+  <button class="btn-primary" bindtap="onSaveFeatures" loading="{{saving}}">保存会员专属功能</button>
+  <view class="note">打开的功能只有会员能用；关掉后免费用户也能用。</view>
+
+  <view class="group-h">支付平台开关</view>
+  <view class="card">
+    <view class="form-row"><text class="form-label" style="width:170px">iPhone（iOS）购买入口</text><switch checked="{{platforms.ios}}" data-key="ios" bindchange="onPlatformToggle" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">安卓（Android）购买入口</text><switch checked="{{platforms.android}}" data-key="android" bindchange="onPlatformToggle" /></view>
+  </view>
+  <button class="btn-primary" bindtap="onSavePlatforms" loading="{{saving}}">保存支付平台开关</button>
+  <view class="note">关掉某个终端后，该终端的购买页只显示提示、不出现购买按钮。邀请奖励在老板平台「邀请奖励」页里改（设置与数据同页）。</view>
 </block>
 
 
@@ -73,32 +98,7 @@
 </block>
 
 <!-- 支付平台开关 -->
-<block wx:if="{{!loading && !error && section === 'platforms'}}">
-  <view class="card">
-    <view class="form-row"><text class="form-label" style="width:170px">iPhone（iOS）购买入口</text><switch checked="{{platforms.ios}}" data-key="ios" bindchange="onPlatformToggle" /></view>
-    <view class="form-row"><text class="form-label" style="width:170px">安卓（Android）购买入口</text><switch checked="{{platforms.android}}" data-key="android" bindchange="onPlatformToggle" /></view>
-  </view>
-  <button class="btn-primary" bindtap="onSavePlatforms" loading="{{saving}}">保存平台开关</button>
-  <view class="note">关掉某个终端后，该终端的购买页只显示提示、不出现购买按钮；改开关不用改任何页面代码。</view>
 
-  <view class="card">
-    <view class="form-row"><text class="form-label" style="width:170px">云端购买总开关</text><switch checked="{{launch.paymentEnabled}}" bindchange="onLaunchToggle" data-key="paymentEnabled" /></view>
-    <view class="form-row"><text class="form-label" style="width:170px">拍照导入开关</text><switch checked="{{launch.photoImportEnabled}}" bindchange="onLaunchToggle" data-key="photoImportEnabled" /></view>
-  </view>
-  <button class="btn-primary" bindtap="onSaveLaunch" loading="{{saving}}">保存发布开关</button>
-  <view class="note">第一版发布口径（任务AF）：云端购买默认关——普通用户购买提示「会员购买暂未开放，敬请期待」，管理员不受限（模拟购买、订单标"模拟"）；真实支付接入后再打开。拍照导入默认关——入口点击提示「拍照导入敬请期待」，服务端同步拒绝；真实识别接入后再打开。</view>
-</block>
 
 <!-- 会员专属清单 -->
-<block wx:if="{{!loading && !error && section === 'features'}}">
-  <view class="card">
-    <checkbox-group bindchange="onFeatureCheck">
-      <label class="form-row" wx:for="{{featureFields}}" wx:key="key">
-        <text class="form-label" style="width:170px">{{item.label}}</text>
-        <checkbox value="{{item.key}}" checked="{{featureChecked[item.key]}}" />
-      </label>
-    </checkbox-group>
-  </view>
-  <button class="btn-primary" bindtap="onSaveFeatures" loading="{{saving}}">保存会员专属清单</button>
-  <view class="note">勾选的功能只有会员能用；取消勾选后免费用户也能用。</view>
-</block>
+

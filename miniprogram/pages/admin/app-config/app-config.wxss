@@ -3,3 +3,4 @@
 .plan { border-top: 1px solid #F0F0F0; padding: 6px 0; }
 .del { color: #C0392B; font-size: 14px; padding: 8px 0 2px; }
 .add { color: #F0575A; font-size: 15px; padding: 10px 0 2px; }
+.group-h { margin: 18px 14px 6px; font-size: 14px; color: #999; }

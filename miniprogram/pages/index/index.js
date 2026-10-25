@@ -50,6 +50,15 @@ Page({
     }
     const r = await dataService.init();
     this.setData({ initFailed: !(r && r.ok) });
+    // 维护模式分流（AL-7）：开启时非管理员导向维护页；管理员不受限。
+    // 服务端接口层另有停服兜底（api 分发），这里是入口体验层。
+    try {
+      const mflags = await dataService.getFeatureFlags();
+      if (mflags && mflags.maintenance && !(await dataService.isAdmin())) {
+        wx.reLaunch({ url: '/pages/maintenance/maintenance' });
+        return;
+      }
+    } catch (e) { /* 状态取不到按正常流程走 */ }
     // 首次使用引导：只显示一次（storage 标记），未看过先去引导页
     const entry = guideState.resolveGuideEntry({ seen: guideState.readSeen() });
     if (entry.enter) {

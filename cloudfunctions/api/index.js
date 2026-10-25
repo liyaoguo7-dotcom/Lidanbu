@@ -43,6 +43,19 @@ async function ensureServerUser(db, core, openid, cache) {
   const col = db.collection(core.models.COLLECTIONS.User);
   const user = await col.findOne({ _id: openid });
   if (user) { if (cache) cache.add(openid); return user; }
+  // 新用户注册总闸（AL-7）：老板平台关掉注册后，新号首次进入被拒；
+  // 老用户不受影响，管理员名单内的新号放行（防老板自己被关在门外）。
+  {
+    const cfgDoc = await db.collection(core.models.COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+    if (cfgDoc && cfgDoc.features && cfgDoc.features.registration === false) {
+      const admins = [...(Array.isArray(cfgDoc.adminIds) ? cfgDoc.adminIds : []), ...(Array.isArray(cfgDoc.addedAdminIds) ? cfgDoc.addedAdminIds : [])];
+      if (!admins.includes(openid)) {
+        const e = new Error('新用户注册暂未开放，敬请期待');
+        e.code = 'registration-closed';
+        throw e;
+      }
+    }
+  }
   const doc = {
     _id: openid,
     profile: { nickname: '', avatarUrl: '' },
@@ -165,6 +178,18 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile }) {
         if (last && typeof last === 'object') args[args.length - 1] = { ...last, cloudGate: true };
       }
       await ensureServerUser(db, core, OPENID, _ensuredUsers);
+      // 维护模式总闸（AL-7）：开启时非管理员一律停服；管理员不受限，
+      // features.getFlags 与 admin.isAdmin 放行（客户端要靠它们判断状态）。
+      if (action !== 'features.getFlags' && action !== 'admin.isAdmin') {
+        const cfgDoc = await db.collection(core.models.COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+        const maint = cfgDoc && cfgDoc.features && typeof cfgDoc.features.maintenance === 'boolean'
+          ? cfgDoc.features.maintenance
+          : !!(core.config && core.config.features && core.config.features.maintenance);
+        if (maint) {
+          const admins = cfgDoc ? [...(Array.isArray(cfgDoc.adminIds) ? cfgDoc.adminIds : []), ...(Array.isArray(cfgDoc.addedAdminIds) ? cfgDoc.addedAdminIds : [])] : [];
+          if (!admins.includes(OPENID)) return { ok: false, error: '系统维护中，请稍后再来', code: 'maintenance' };
+        }
+      }
       const data = await fn(db, OPENID, ...args);
       // importer.writeImport 的失败以 { rawError } 形态返回（非抛错）：Error
       // 对象过不了云端序列化，这里归一化为普通对象 {message, code, itemIndex}，

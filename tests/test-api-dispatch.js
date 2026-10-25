@@ -132,3 +132,28 @@ test('api分发：fontFile 服务端代取字体（白名单＋容器缓存＋�
   const bad3 = await main({ action: 'fontFile', fileID: 'cloud://cloud1-x.636c-bucket/other/mashanzheng.ttf' });
   assert(bad3.ok === false, 'fonts/ 目录外应被拒');
 });
+
+test('api分发 AL-7 注册闸：关注册后新号被拒（registration-closed），名单内新号放行', async () => {
+  const main = makeMain('newbie-al7', { adminIds: ['boss-al7'], features: { registration: false } });
+  await main.seedPromise;
+  const blocked = await main({ action: 'contacts.createContact', args: ['newbie-al7', { name: '新人', remark: '' }] });
+  assert(blocked.ok === false && blocked.code === 'registration-closed', `新号应被注册闸拒绝，实际 ${JSON.stringify(blocked)}`);
+  const main2 = makeMain('boss-al7', { adminIds: ['boss-al7'], features: { registration: false } });
+  await main2.seedPromise;
+  const okBoss = await main2({ action: 'contacts.createContact', args: ['boss-al7', { name: '老板', remark: '' }] });
+  assert(okBoss.ok, `管理员新号应放行，实际 ${JSON.stringify(okBoss)}`);
+});
+
+test('api分发 AL-7 维护闸：维护中非管理员停服（maintenance），管理员与状态查询放行', async () => {
+  const seed = { adminIds: ['boss-al8'], features: { maintenance: true } };
+  const main = makeMain('user-al8', seed);
+  await main.seedPromise;
+  const blocked = await main({ action: 'contacts.createContact', args: ['user-al8', { name: '路人', remark: '' }] });
+  assert(blocked.ok === false && blocked.code === 'maintenance', `维护中应停服，实际 ${JSON.stringify(blocked)}`);
+  const flags = await main({ action: 'features.getFlags', args: ['user-al8'] });
+  assert(flags.ok && flags.data.maintenance === true, 'getFlags 应放行且报维护中');
+  const main2 = makeMain('boss-al8', seed);
+  await main2.seedPromise;
+  const adm = await main2({ action: 'admin.isAdmin', args: ['boss-al8'] });
+  assert(adm.ok, `管理员应不受维护闸影响，实际 ${JSON.stringify(adm)}`);
+});

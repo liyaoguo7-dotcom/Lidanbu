@@ -60,7 +60,8 @@
     "pages/mine/faq",
     "pages/mine/about",
     "pages/mine/profile",
-    "pages/guide/guide"
+    "pages/guide/guide",
+    "pages/maintenance/maintenance"
   ],
   "navigateToMiniProgramAppIdList": [],
   "subpackages": [

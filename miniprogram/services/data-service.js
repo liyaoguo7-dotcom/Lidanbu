@@ -1344,13 +1344,16 @@ const service = {
   async getFeatureFlags() {
     if (this._featureFlagsCache) return this._featureFlagsCache;
     const base = AppConfig.features || {};
-    let flags = { photoImport: !!base.photoImport, eInvitation: !!base.eInvitation, familyShare: !!base.familyShare };
+    let flags = {
+      photoImport: !!base.photoImport, eInvitation: !!base.eInvitation, familyShare: !!base.familyShare,
+      maintenance: !!base.maintenance, registration: !!base.registration,
+    };
     try {
       const f = await core.features.getFlags(_db, _userId);
       if (f) {
-        if (typeof f.photoImport === 'boolean') flags.photoImport = f.photoImport;
-        if (typeof f.eInvitation === 'boolean') flags.eInvitation = f.eInvitation;
-        if (typeof f.familyShare === 'boolean') flags.familyShare = f.familyShare;
+        for (const k of ['photoImport', 'eInvitation', 'familyShare', 'maintenance', 'registration']) {
+          if (typeof f[k] === 'boolean') flags[k] = f[k];
+        }
       }
     } catch (e) { /* 取不到按静态默认（第一版为关） */ }
     this._featureFlagsCache = flags;
