@@ -27,6 +27,11 @@
 
 const SUBPACKAGE_ROOT = '/packages/fonts/';
 const SUBPACKAGE_NAME = 'fonts';
+// 仍保留分包文件的字体（2026-10-25 AK批瘦身）：马善政/龙藏的 woff2 各超
+// 200K 触发开发者工具代码质量建议项，且分包路线在 Android 本就是已知死路、
+// 云端代取（v7）已真机验通——两款的分包文件已删、候选不再带分包兜底；
+// 霞鹜文楷 woff2 167K 未超限，保留分包兜底一份。
+const LOCAL_SUBPACKAGE_FILES = new Set(['lxgw-wenkai.woff2']);
 
 /**
  * 云端字体目录（cloud:// fileID 前缀或 https:// 直链前缀，末尾斜杠可有可无）。
@@ -119,7 +124,7 @@ function createFontSource(deps = {}) {
       out.push({ kind: 'cloud-data', needsDataUrl: true, fileID: joinUrl(base, cloudFiles[0]) });
       for (const f of cloudFiles) out.push({ kind: 'cloud-url', needsTempUrl: true, fileID: joinUrl(base, f) });
     }
-    out.push({ kind: 'subpackage', source: subpackageSource(font), needsSubpackage: true });
+    if (LOCAL_SUBPACKAGE_FILES.has(font.file)) out.push({ kind: 'subpackage', source: subpackageSource(font), needsSubpackage: true });
     return out;
   }
 

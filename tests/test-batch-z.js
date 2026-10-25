@@ -102,12 +102,15 @@ test('任务Z-6：样式按钮 17px 红字、下移 6px、左移再加 10px', ()
 });
 
 // ---------- 第 7 项：字体切换修复 ----------
-test('任务Z-7（AC 第 8 项修订）：book.wxss 已无 @font-face、字体文件仍在分包作兜底', () => {
+test('任务Z-7（AK 第 8 项再修订）：book.wxss 已无 @font-face、分包只保留霞鹜文楷兜底', () => {
   const wxss = readMp('pages/landscape/book.wxss');
   const LC = require('../miniprogram/pages/landscape/landscape-core.js');
   assert(!wxss.includes('@font-face'), 'book.wxss 不得再有 @font-face（Android 加载不了分包字体，官方 Known BUG；任务AC 第 8 项删除）');
-  for (const f of LC.FONTS) {
-    assert(fs.existsSync(path.join(MP, 'packages/fonts', f.file)), `字体文件 ${f.file} 存在（分包兜底）`);
+  // AK批瘦身（2026-10-25）：马善政/龙藏 woff2 超 200K 且分包路线 Android 已知死路、
+  // 云端代取已真机验通——两文件已删；霞鹜文楷（167K 未超限）保留分包兜底。
+  assert(fs.existsSync(path.join(MP, 'packages/fonts', 'lxgw-wenkai.woff2')), '霞鹜文楷分包文件保留');
+  for (const gone of ['mashanzheng.woff2', 'longcang.woff2']) {
+    assert(!fs.existsSync(path.join(MP, 'packages/fonts', gone)), `${gone} 已按 AK 瘦身移除`);
   }
   const fm = readMp('services/font-manager.js');
   assert(fm.includes('global: true'), 'loadFontFace 带 global:true（增强路径保留）');

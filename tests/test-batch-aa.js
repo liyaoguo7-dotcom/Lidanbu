@@ -160,14 +160,18 @@ test('任务AA-会员页：导出按钮删除、功能行标题不折行', () =>
 });
 
 // ---------- 7 字体专项 ----------
-test('任务AA-字体专项：三款字体文件为真 woff2 且与声明族名一致', () => {
+test('任务AA-字体专项（AK批修订）：分包仅存霞鹜文楷为真 woff2、三款声明族名一致', () => {
   const dir = path.join(MP, 'packages/fonts');
   const expect = { 'lxgw-wenkai': 'LxgwWenKai', 'mashanzheng': 'MaShanZheng', 'longcang': 'LongCang' };
   for (const [file, family] of Object.entries(expect)) {
-    const buf = fs.readFileSync(path.join(dir, `${file}.woff2`));
-    assert.eq(buf.slice(0, 4).toString('ascii'), 'wOF2', `${file} 是真 woff2（旧龙藏为 TTF 套壳）`);
     assert.eq(LC.fontById({ 'lxgw-wenkai': 'lxgw', mashanzheng: 'mashanzheng', longcang: 'longcang' }[file]).family,
       family, `${file} 声明族名`);
+  }
+  // AK批瘦身后分包只剩霞鹜文楷一份实体文件，验它仍是真 woff2；另两款已删（云端 TTF 为正源）
+  const buf = fs.readFileSync(path.join(dir, 'lxgw-wenkai.woff2'));
+  assert.eq(buf.slice(0, 4).toString('ascii'), 'wOF2', 'lxgw-wenkai 是真 woff2');
+  for (const gone of ['mashanzheng.woff2', 'longcang.woff2']) {
+    assert(!fs.existsSync(path.join(dir, gone)), `${gone} 已按 AK 瘦身移除`);
   }
   const bookWxss = readMp('pages/landscape/book.wxss');
   assert(!bookWxss.includes('@font-face'), 'book.wxss 已无 @font-face（任务AC 第 8 项删除分包字体声明，族名对齐改由 font-manager loadFontFace 保证）');

@@ -88,8 +88,8 @@ test('任务AB-5Tab栏：栏高 50px、颜色与 app.json 一致（图标/字号
 // ---------- 6 字体三修 ----------
 test('任务AB-6字体：已加载标记带构建版本段、app 启动预下载 fonts 分包、book 加载成功后重排', () => {
   const fm = require('../miniprogram/services/font-manager.js');
-  assert(fm.FONT_BUILD === 'v7', '字体构建版本号 v7（2026-10-25 AH批服务端代取路线再 bump）');
-  assert(fm.LOADED_KEY_PREFIX === 'landscape.fontLoaded.v7.', '标记键带版本段，旧键自然失效');
+  assert(fm.FONT_BUILD === 'v8', '字体构建版本号 v8（2026-10-25 AK批分包瘦身再 bump）');
+  assert(fm.LOADED_KEY_PREFIX === 'landscape.fontLoaded.v8.', '标记键带版本段，旧键自然失效');
   const app = readMp('app.js');
   assert(app.includes('wx.preDownloadSubpackage'), 'app.js 应预下载分包');
   assert(app.includes("name: 'fonts'"), '预下载的正是 fonts 分包');

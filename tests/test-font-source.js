@@ -17,6 +17,17 @@ function memStorage() {
 }
 const LXGW = fontById('lxgw');
 
+test('字体来源-AK批瘦身：马善政/龙藏无分包候选、霞鹜文楷保留', () => {
+  const src = createFontSource({ storage: memStorage(), cloudBase: 'cloud://env-1.bucket-x/fonts/' });
+  const msz = src.resolveCandidates(fontById('mashanzheng'));
+  assert(msz.every((c) => c.kind !== 'subpackage'), '马善政候选不得含分包（文件已删）');
+  assert.eq(msz.length, 4, '马善政候选数（api＋data＋temp TTF＋temp woff2）');
+  const lc = src.resolveCandidates(fontById('longcang'));
+  assert(lc.every((c) => c.kind !== 'subpackage'), '龙藏候选不得含分包（文件已删）');
+  const lx = src.resolveCandidates(fontById('lxgw'));
+  assert.eq(lx[lx.length - 1].kind, 'subpackage', '霞鹜文楷仍以分包兜底');
+});
+
 test('字体来源-分包路径正确性：路径与 app.json 分包结构一致', () => {
   const src = createFontSource({ storage: memStorage() });
   assert.eq(src.subpackagePath(LXGW), '/packages/fonts/lxgw-wenkai.woff2', '分包内路径');
@@ -128,7 +139,7 @@ test('字体来源-manager 按优先级逐个尝试：临时链接失败才试�
   assert.eq(tried.length, 3, '按顺序试了三个来源（TTF 临时链接→woff2 临时链接→分包）');
   assert(tried[0].indexOf('https://tmp.example.com/') >= 0, '先试云临时链接');
   assert(tried[2].indexOf('/packages/fonts/') >= 0, '最后试分包');
-  assert.eq(st._map.get('landscape.fontLoaded.v7.lxgw'), 1, '成功写缓存标记（v7 构建段）');
+  assert.eq(st._map.get('landscape.fontLoaded.v8.lxgw'), 1, '成功写缓存标记（v8 构建段）');
 });
 
 test('字体来源-manager 全部来源失败：回退且不抛错、不写标记', async () => {
@@ -140,7 +151,7 @@ test('字体来源-manager 全部来源失败：回退且不抛错、不写标�
   const fm = createFontManager({ wxApi, storage: st });
   assert.eq(await fm.load('lxgw'), false, '全失败返回 false');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.v7.lxgw'), undefined, '不写已加载标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v8.lxgw'), undefined, '不写已加载标记（下次重试）');
 });
 
 test('字体来源-manager 云优先：云直链排在分包之前、首试即成', async () => {
@@ -172,7 +183,7 @@ test('字体来源-manager cloud:// 形态：先换临时链接再 loadFontFace�
   assert.eq(await fm.load('mashanzheng'), true, '临时链接加载成功');
   assert.eq(tried.length, 1, '只试临时链接一个来源即成');
   assert.eq(tried[0], 'url("https://tmp.example.com/m.woff2")', 'loadFontFace 吃的是 https 链接，不是本地路径');
-  assert.eq(st._map.get('landscape.fontLoaded.v7.mashanzheng'), 1, '成功写 v7 标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v8.mashanzheng'), 1, '成功写 v8 标记');
 });
 
 test('字体来源-materializeDataUrl：下载 TTF→读 base64→Data URL 来源串；会话内复用不重复下载', async () => {
