@@ -52,3 +52,10 @@ for (const f of ['account/account.wxss', 'admins/admins.wxss', 'app-config/app-c
   assert.ok(btns.length > 0 && btns.every((v) => v === '16'), 'AL-9 ' + f + ' 主按钮应为16px，实际 ' + btns.join(','));
 }
 console.log('✓ AL批·后台字号断言全过');
+
+/* AL-10 导出备份图标对称性：托盘横向跨度中心须与箭头轴线 x=24 一致 */
+const svg = fs.readFileSync(__dirname + '/../miniprogram/images/icons/export.svg', 'utf8');
+assert.ok(svg.includes('M24 38V8'), 'AL-10 箭头轴线应在 x=24');
+assert.ok(svg.includes('M14 26v12'), 'AL-10 托盘左壁应在 x=14');
+assert.ok(/h16a2 2 0 0 0 2-2V26/.test(svg), 'AL-10 托盘右壁应收于 x=34（跨度14~34中心24）');
+console.log('✓ AL批·导出图标断言全过');
