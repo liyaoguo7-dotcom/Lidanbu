@@ -1,13 +1,16 @@
-<view class="warn-banner">邀请奖励数据只看数量。设置经管理员接口修改（core.admin.updateInviteSettings），每次修改记入操作记录。</view>
+<view class="warn-banner">邀请奖励：上面改设置、下面看数据。数据只看数量，不涉及任何人的账本内容；设置每次修改记入操作记录。</view>
+<view class="card">
+  <view class="form-row"><text class="form-label" style="width:170px">邀请奖励开关</text><switch checked="{{inviteCfg.enabled}}" bindchange="onInviteToggle" /></view>
+  <view class="form-row"><text class="form-label" style="width:170px">每邀请奖励·收礼池（+条）</text><input class="form-val" type="number" value="{{inviteCfg.receivePool}}" data-key="receivePool" bindinput="onInviteInput" /></view>
+  <view class="form-row"><text class="form-label" style="width:170px">每邀请奖励·送礼（+条）</text><input class="form-val" type="number" value="{{inviteCfg.giftRecords}}" data-key="giftRecords" bindinput="onInviteInput" /></view>
+  <view class="form-row"><text class="form-label" style="width:170px">成功邀请上限（次/人）</text><input class="form-val" type="number" value="{{inviteCfg.maxSuccessfulInvites}}" data-key="maxSuccessfulInvites" bindinput="onInviteInput" /></view>
+</view>
+<button class="btn-primary" bindtap="onSaveInvite" loading="{{saving}}">保存邀请奖励设置</button>
+<view class="note">改动对之后的发放立即生效，历史发放不追溯。</view>
 <view wx:if="{{stats}}" class="stat-grid">
   <view class="stat-card"><view class="stat-num">{{stats.inviterCount}}</view><view class="stat-label">邀请人数</view></view>
   <view class="stat-card"><view class="stat-num">{{stats.totalInvites}}</view><view class="stat-label">成功邀请次数</view></view>
   <view class="stat-card"><view class="stat-num">{{stats.totalPoolGranted}}</view><view class="stat-label">已发放收礼额度</view></view>
   <view class="stat-card"><view class="stat-num">{{stats.totalGiftsGranted}}</view><view class="stat-label">已发放送礼额度</view></view>
 </view>
-<view class="card" wx:if="{{cfg}}">
-  <view class="form-row"><text class="form-label">开关</text><text class="form-val">{{cfg.enabled ? '开启' : '关闭'}}</text></view>
-  <view class="form-row"><text class="form-label">每邀请奖励</text><text class="form-val">收礼池 +{{cfg.rules.perInvite.receivePool}} / 送礼 +{{cfg.rules.perInvite.giftRecords}}</text></view>
-  <view class="form-row"><text class="form-label">成功邀请上限</text><text class="form-val">每位邀请人最多 {{cfg.rules.maxSuccessfulInvites}} 次</text></view>
-</view>
-<view class="note">生效设置以服务端为准（静态配置为默认，管理员修改后覆盖）；修改入口在配置管理（云函数待联调，上线前必须有管理员二次验证）。</view>
+<view wx:if="{{loading}}" class="note">加载中…</view>

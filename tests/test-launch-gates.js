@@ -194,10 +194,11 @@ test('AF老板后台三修：专属清单勾选不用 WXML 方法调用、邀请
   const wxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/app-config/app-config.wxml'), 'utf8');
   assert(!wxml.includes('indexOf('), 'WXML 不得调用 .indexOf()（真机勾选没反应的实锤）');
   assert(wxml.includes('featureChecked[item.key]'), '勾选态应走 JS 预计算的映射');
-  assert(wxml.includes("section === 'invite'"), '配置页应有邀请奖励设置节');
-  assert(wxml.includes('onSaveInvite'), '邀请节应有保存入口');
+  const invWxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/invite/invite.wxml'), 'utf8');
+  assert(invWxml.includes('onSaveInvite'), '邀请奖励页应有设置保存入口（2026-10-25 与数据页合并）');
+  assert(!wxml.includes("section === 'invite'"), '配置页不应再有邀请节（已合并到邀请页）');
   const home = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/admin/admin-home/admin-home.js'), 'utf8');
-  assert(home.includes("section: 'invite'"), '老板平台菜单应有邀请奖励设置入口');
+  assert(home.includes("page: 'invite'"), '老板平台菜单应有邀请奖励入口');
   const ds = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/services/data-service.js'), 'utf8');
   const seg = ds.slice(ds.indexOf('async getPurchasePageData'), ds.indexOf('async getPurchasePageData') + 900);
   assert(seg.includes('Promise.all'), '购买页数据五个读应并发（串行真机 3~4 秒）');

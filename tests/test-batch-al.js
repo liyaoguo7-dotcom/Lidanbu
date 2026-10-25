@@ -33,10 +33,16 @@ const homeWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/admin-
 const grpNames = [...homeJs.matchAll(/\{ name: '([^']+)', items:/g)].map((m) => m[1]);
 assert.deepStrictEqual(grpNames, ['会员与收入', '用户与安全', '运营设置', '只看数据'], 'AL-6 四组顺序应为会员与收入→用户与安全→运营设置→只看数据');
 const titles = [...homeJs.matchAll(/title: '([^']+)'/g)].map((m) => m[1]);
-assert.strictEqual(titles.length, 18, 'AL-7 入口总数仍为18');
+assert.strictEqual(titles.length, 17, 'AL-7 入口总数为17（邀请设置与数据合并后）');
 assert.deepStrictEqual(titles.slice(0, 6), ['会员管理', '会员订单与收入', '额度与会员价格设置', '会员与积分配置', '支付平台开关', '会员专属功能清单设置'], 'AL-7 会员与钱相关占前六');
-assert.deepStrictEqual(titles.slice(12), ['数据概览', '用户额度使用情况', '拍照导入用量监控', '邀请奖励数据', '家庭共享概况', '示例截图管理'], 'AL-7 只看数据六项垫底');
-assert.ok(!titles.includes('邀请奖励设置与数据'), 'AL-8 邀请数据页已改名与设置页区分');
+assert.deepStrictEqual(titles.slice(9, 12), ['功能开关', '邀请奖励', '用户反馈列表'], 'AL-7 运营设置组含合并后的邀请奖励');
+assert.deepStrictEqual(titles.slice(12), ['数据概览', '用户额度使用情况', '拍照导入用量监控', '家庭共享概况', '示例截图管理'], 'AL-7 只看数据五项垫底');
+assert.ok(titles.includes('邀请奖励') && !titles.includes('邀请奖励数据') && !titles.includes('邀请奖励设置'), 'AL-8 邀请设置与数据已合并为一个入口');
+const invWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/invite/invite.wxml', 'utf8');
+assert.ok(invWxml.includes('bindtap="onSaveInvite"'), 'AL-8 邀请页应含设置保存');
+assert.ok(invWxml.indexOf('onSaveInvite') < invWxml.indexOf('stat-grid'), 'AL-8 设置应在数据之上');
+const acfgWxml2 = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/app-config/app-config.wxml', 'utf8');
+assert.ok(!acfgWxml2.includes("section === 'invite'"), 'AL-8 配置页不应再有邀请节（已合并）');
 assert.ok(homeWxml.includes('wx:for="{{groups}}"') && homeWxml.includes('group-title'), 'AL-8 首页应按组渲染带组标题');
 console.log('✓ AL批·首页分组断言全过');
 
