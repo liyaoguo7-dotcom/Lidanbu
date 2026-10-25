@@ -60,9 +60,10 @@ function normalizeScope(input = {}) {
 async function invite(db, ownerId, { switches, scope }) {
   await assertFamilyShareOn(db);
   await restriction.assertWritable(db, ownerId);
-  // 会员门禁：有效会员才能发起邀请（缓冲期内不算有效，不能新邀请）
+  // 会员门禁（AM批接「会员功能」名单）：名单含 familyShareInvite 时，
+  // 有效会员才能发起邀请（缓冲期内不算有效）；名单不含时免费用户也能邀。
   const inviter = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
-  if (!quota.isMemberActive(inviter || {})) {
+  if ((await features.isMemberOnlyFeature(db, 'familyShareInvite')) && !quota.isMemberActive(inviter || {})) {
     throw errors.memberRequired('家庭共享邀请');
   }
   const sw = normalizeSwitches(switches);

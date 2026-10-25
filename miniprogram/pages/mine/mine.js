@@ -153,7 +153,8 @@ Page({
       wx.showToast({ title: '家庭共享敬请期待', icon: 'none' });
       return;
     }
-    if (!this.data.isMember) {
+    const shareOnly = !flags || !Array.isArray(flags.memberOnly) || flags.memberOnly.includes('familyShareInvite');
+    if (shareOnly && !this.data.isMember) {
       wx.showModal({
         title: '会员专属功能',
         content: '「家庭共享邀请」是会员专属功能，开通会员后即可使用。',
@@ -166,18 +167,28 @@ Page({
     wx.navigateTo({ url: '/pages/share/share-home' });
   },
 
-  onLandscapeToggle() {
+  async onLandscapeToggle() {
     const next = !this.data.landscapeOn;
-    // 任务AE 第 2 项：关不验会员（关一个开关不需要会员），只有「开」才过会员门禁
-    if (next && !this.data.isMember) {
+    // 任务AE 第 2 项：关不验会员（关一个开关不需要会员），只有「开」才过门禁。
+    // AM批两道闸：先总开关（关→谁都开不了），再会员功能名单（含 landscapeMode
+    // 才拦非会员）；名单取不到按含处理（宁可拦住）。
+    if (next) {
+      const flags = await dataService.getFeatureFlags().catch(() => null);
+      if (flags && flags.landscape === false) {
+        wx.showToast({ title: '横置礼单本暂未开放', icon: 'none' });
+        return;
+      }
+      const landOnly = !flags || !Array.isArray(flags.memberOnly) || flags.memberOnly.includes('landscapeMode');
+      if (landOnly && !this.data.isMember) {
       wx.showModal({
         title: '会员专属功能',
         content: '「横置礼单本」是会员专属功能，开通会员后即可使用。',
         confirmText: '去看看',
         cancelText: '再想想',
         success: (res) => { if (res.confirm) wx.navigateTo({ url: '/pages/member/member-home' }); },
-      });
-      return;
+        });
+        return;
+      }
     }
     this.setData({ landscapeOn: next });
     landscapeRoute.writeLandscapeOn(next);

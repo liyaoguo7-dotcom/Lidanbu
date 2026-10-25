@@ -23,7 +23,14 @@ Page({
     this._ownerId = options.ownerId || '';
     await dataService.init();
     const m = await dataService.getMembership();
-    if (m.state !== 'member' && m.state !== 'grace') {
+    const flags = await dataService.getFeatureFlags().catch(() => null);
+    const gate = landscapeRoute.resolveLandscapeGate({ membership: m, flags });
+    if (gate === 'master-off') {
+      wx.showToast({ title: '横置礼单本暂未开放', icon: 'none' });
+      wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: '/pages/index/index' }) });
+      return;
+    }
+    if (gate === 'member-only') {
       wx.showToast({ title: '横置礼单本是会员专属功能', icon: 'none' });
       wx.redirectTo({ url: '/pages/member/member-home' });
       return;

@@ -318,6 +318,7 @@ eInvitationEnabled: (doc.features && typeof doc.features.eInvitation === 'boolea
 familyShareEnabled: (doc.features && typeof doc.features.familyShare === 'boolean') ? doc.features.familyShare : !!(StaticConfig.features && StaticConfig.features.familyShare),
 maintenanceEnabled: (doc.features && typeof doc.features.maintenance === 'boolean') ? doc.features.maintenance : !!(StaticConfig.features && StaticConfig.features.maintenance),
 registrationEnabled: (doc.features && typeof doc.features.registration === 'boolean') ? doc.features.registration : !!(StaticConfig.features && StaticConfig.features.registration),
+landscapeEnabled: (doc.features && typeof doc.features.landscape === 'boolean') ? doc.features.landscape : !!(StaticConfig.features && StaticConfig.features.landscape),
 updatedAt: doc.updatedAt || null,
 };
 }
@@ -602,24 +603,27 @@ if ('eInvitationEnabled' in switches && typeof switches.eInvitationEnabled !== '
 if ('familyShareEnabled' in switches && typeof switches.familyShareEnabled !== 'boolean') throw badConfig('家庭共享开关必须为开/关');
 if ('maintenanceEnabled' in switches && typeof switches.maintenanceEnabled !== 'boolean') throw badConfig('维护模式开关必须为开/关');
 if ('registrationEnabled' in switches && typeof switches.registrationEnabled !== 'boolean') throw badConfig('注册开关必须为开/关');
+if ('landscapeEnabled' in switches && typeof switches.landscapeEnabled !== 'boolean') throw badConfig('横置礼单本开关必须为开/关');
 const hasPay = typeof switches.paymentEnabled === 'boolean';
 const hasPhoto = typeof switches.photoImportEnabled === 'boolean';
 const hasInvite = typeof switches.eInvitationEnabled === 'boolean';
 const hasShare = typeof switches.familyShareEnabled === 'boolean';
 const hasMaint = typeof switches.maintenanceEnabled === 'boolean';
 const hasReg = typeof switches.registrationEnabled === 'boolean';
-if (!hasPay && !hasPhoto && !hasInvite && !hasShare && !hasMaint && !hasReg) throw badConfig('发布开关不能为空');
+const hasLand = typeof switches.landscapeEnabled === 'boolean';
+if (!hasPay && !hasPhoto && !hasInvite && !hasShare && !hasMaint && !hasReg && !hasLand) throw badConfig('发布开关不能为空');
 const doc = (await readConfigDoc(db)) || {};
 const patch = {};
 const changed = [];
 if (hasPay) { patch.payment = { ...(doc.payment || {}), enabled: switches.paymentEnabled }; changed.push('云端购买'); }
-if (hasPhoto || hasInvite || hasShare || hasMaint || hasReg) {
+if (hasPhoto || hasInvite || hasShare || hasMaint || hasReg || hasLand) {
 patch.features = { ...(doc.features || {}) };
 if (hasPhoto) { patch.features.photoImport = switches.photoImportEnabled; changed.push('拍照导入'); }
 if (hasInvite) { patch.features.eInvitation = switches.eInvitationEnabled; changed.push('电子请柬'); }
 if (hasShare) { patch.features.familyShare = switches.familyShareEnabled; changed.push('家庭共享'); }
 if (hasMaint) { patch.features.maintenance = switches.maintenanceEnabled; changed.push('维护模式'); }
 if (hasReg) { patch.features.registration = switches.registrationEnabled; changed.push('新用户注册'); }
+if (hasLand) { patch.features.landscape = switches.landscapeEnabled; changed.push('横置礼单本'); }
 }
 const updatedAt = await writeConfigPatch(db, actorId, patch, `修改发布开关：${changed.join('、')}`);
 const after = (await readConfigDoc(db)) || {};
@@ -630,6 +634,7 @@ eInvitationEnabled: (after.features && typeof after.features.eInvitation === 'bo
 familyShareEnabled: (after.features && typeof after.features.familyShare === 'boolean') ? after.features.familyShare : !!(StaticConfig.features && StaticConfig.features.familyShare),
 maintenanceEnabled: (after.features && typeof after.features.maintenance === 'boolean') ? after.features.maintenance : !!(StaticConfig.features && StaticConfig.features.maintenance),
 registrationEnabled: (after.features && typeof after.features.registration === 'boolean') ? after.features.registration : !!(StaticConfig.features && StaticConfig.features.registration),
+landscapeEnabled: (after.features && typeof after.features.landscape === 'boolean') ? after.features.landscape : !!(StaticConfig.features && StaticConfig.features.landscape),
 updatedAt,
 };
 }

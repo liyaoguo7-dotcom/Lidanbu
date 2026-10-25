@@ -1,6 +1,6 @@
 /**
  * 老板平台 · 配置编辑页（第5/8/13项）
- * ?section=pricing 额度与会员价格设置 / switches 功能开关（开关中心：总开关·会员开关·会员专属功能·支付平台开关四组）
+ * ?section=pricing 额度与会员价格设置 / switches 功能开关（开关中心：总开关·会员功能·支付开关三组（AM批定版））
  *
  * 页面内直接编辑、保存落库：全部走 core.admin 写接口（管理员校验在 core），
  * 保存前二次确认，每次修改写操作记录（审计）。价格只从配置读，页面不写死。
@@ -30,10 +30,6 @@ const QUOTA_FIELDS = [
   { key: 'giftRecords', label: '送礼记录（条）' },
   { key: 'contacts', label: '亲友录联系人（人）' },
 ];
-const SWITCH_FIELDS = [
-  { key: 'photoImport', label: '拍照导入' },
-  { key: 'redLedgerMode', label: '横置红字礼单本' },
-];
 const FEATURE_FIELDS = [
   { key: 'familyShareInvite', label: '家庭共享邀请' },
   { key: 'photoImport', label: '拍照导入' },
@@ -43,13 +39,13 @@ const FEATURE_FIELDS = [
 Page({
   data: {
     title: '', section: 'pricing', loading: true, error: '',
-    quotaFields: QUOTA_FIELDS, switchFields: SWITCH_FIELDS, featureFields: FEATURE_FIELDS,
-    freeQuota: {}, memberQuota: {}, plans: [], features: {}, memberOnly: [],
+    quotaFields: QUOTA_FIELDS, featureFields: FEATURE_FIELDS,
+    freeQuota: {}, memberQuota: {}, plans: [], memberOnly: [],
     pricingFromStatic: false, saving: false,
     pointsCfg: { registerGrant: '', photoImportCost: '' }, packs: [],
     platforms: { ios: true, android: true },
     launch: { paymentEnabled: false, photoImportEnabled: false },
-    gates: { eInvitation: true, familyShare: true, maintenance: false, registration: true }, // 总开关组（与 launch 一起在「功能开关」页总开关组保存）
+    gates: { eInvitation: true, familyShare: true, maintenance: false, registration: true, landscape: true }, // 总开关组（在「功能开关」页总开关组保存）
     featureChecked: {}, // 会员专属清单的勾选映射（WXML 不能调 .indexOf()，须 JS 预先算好）
   },
 
@@ -84,7 +80,7 @@ Page({
       const pf = cfg.paymentPlatforms || {};
       this.setData({
         freeQuota: { ...cfg.freeQuota }, memberQuota: { ...cfg.memberQuota },
-        features: { ...cfg.membershipFeatures }, memberOnly: [...(cfg.memberOnlyFeatures || [])],
+        memberOnly: [...(cfg.memberOnlyFeatures || [])],
         plans, pricingFromStatic, loading: false,
         pointsCfg: {
           registerGrant: String(pts.registerGrant !== undefined ? pts.registerGrant : ''),
@@ -106,6 +102,7 @@ Page({
           familyShare: cfg.familyShareEnabled !== false,
           maintenance: cfg.maintenanceEnabled === true,
           registration: cfg.registrationEnabled !== false,
+          landscape: cfg.landscapeEnabled !== false,
         },
         featureChecked: Object.fromEntries(FEATURE_FIELDS.map((f) => [f.key, (cfg.memberOnlyFeatures || []).includes(f.key)])),
       });
@@ -138,10 +135,7 @@ Page({
     const plans = this.data.plans.filter((_, i) => i !== Number(e.currentTarget.dataset.idx));
     this.setData({ plans });
   },
-  onSwitchToggle(e) {
-    this.setData({ [`features.${e.currentTarget.dataset.key}`]: e.detail.value });
-  },
-  /** 会员专属功能开关（AL-7：原打钩改开关样式）；只动本组名单，保存走 onSaveFeatures */
+  /** 会员功能开关（AM批改名，原「会员专属功能」）；只动本组名单，保存走 onSaveFeatures */
   onMemberSwitch(e) {
     const key = e.currentTarget.dataset.key;
     const on = !!e.detail.value;
@@ -218,15 +212,9 @@ Page({
     });
   },
 
-  onSaveSwitches() {
-    const features = {};
-    for (const f of SWITCH_FIELDS) features[f.key] = !!this.data.features[f.key];
-    this.confirmSave('功能开关', () => ds.adminUpdateFeatureSwitches(features));
-  },
-
   onSaveFeatures() {
     const features = [...this.data.memberOnly];
-    this.confirmSave('会员专属功能', () => ds.adminUpdateMemberOnlyFeatures(features));
+    this.confirmSave('会员功能', () => ds.adminUpdateMemberOnlyFeatures(features));
   },
 
   // —— 积分规则（任务P2） ——
@@ -272,12 +260,18 @@ Page({
   onPlatformToggle(e) {
     this.setData({ [`platforms.${e.currentTarget.dataset.key}`]: e.detail.value });
   },
-  onSavePlatforms() {
+  // —— 支付开关组保存（AM批：云端购买与支付平台放一组，一个保存）——
+  // 云端购买写 payment 段、平台入口写 paymentPlatforms 段，两次调用各写各段不串。
+  onSavePayment() {
+    const paymentEnabled = !!this.data.launch.paymentEnabled;
     const platforms = {
       ios: { purchaseEnabled: !!this.data.platforms.ios },
       android: { purchaseEnabled: !!this.data.platforms.android },
     };
-    this.confirmSave('支付平台开关', () => ds.adminUpdatePaymentPlatforms(platforms));
+    this.confirmSave('支付开关', async () => {
+      await ds.adminUpdateLaunchSwitches({ paymentEnabled });
+      await ds.adminUpdatePaymentPlatforms(platforms);
+    });
   },
 
   // —— 第一版发布开关（任务AF） ——
@@ -287,12 +281,12 @@ Page({
   // —— 总开关组保存（AL-7）：只写总开关六闸，各组保存各管各的 ——
   onSaveMaster() {
     const switches = {
-      paymentEnabled: !!this.data.launch.paymentEnabled,
       photoImportEnabled: !!this.data.launch.photoImportEnabled,
       eInvitationEnabled: !!this.data.gates.eInvitation,
       familyShareEnabled: !!this.data.gates.familyShare,
       maintenanceEnabled: !!this.data.gates.maintenance,
       registrationEnabled: !!this.data.gates.registration,
+      landscapeEnabled: !!this.data.gates.landscape,
     };
     this.confirmSave('总开关', () => ds.adminUpdateLaunchSwitches(switches));
   },

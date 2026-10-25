@@ -89,12 +89,16 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
   await restriction.assertWritable(db, actorId);
   validateTarget(kind, eventId);
 
-  /* —— 第一关：会员门禁（与导入页现行口径一致：member / grace 可用） —— */
+  /* —— 第一关：会员门禁（AM批接「会员功能」名单：名单含 photoImport 时
+   * 才拦非会员，member / grace 可用；名单不含时免费用户也能导入，
+   * 后面的积分关照旧。名单读不到时回退静态默认=含，宁可拦住） —— */
   const owner = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
   if (!owner) throw new Error('账本主人不存在');
-  const state = quota.getMembershipState(owner, AppConfig);
-  if (state !== 'member' && state !== 'grace') {
-    throw errors.memberRequired('拍照导入');
+  if (await features.isMemberOnlyFeature(db, 'photoImport')) {
+    const state = quota.getMembershipState(owner, AppConfig);
+    if (state !== 'member' && state !== 'grace') {
+      throw errors.memberRequired('拍照导入');
+    }
   }
 
   /* —— 第二关：积分预检（余额 < 单价直接拦下，不识别、不扣款） —— */

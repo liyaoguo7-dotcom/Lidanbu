@@ -161,8 +161,10 @@ test('任务AE：我的页无导出备份入口（只留首页）；横置开关
   assert(i >= 0, '应有 onLandscapeToggle');
   const body = mineJs.slice(i, i + 1000);
   const nextPos = body.indexOf('const next = !this.data.landscapeOn;');
-  const gatePos = body.indexOf('if (next && !this.data.isMember)');
-  assert(nextPos >= 0 && gatePos > nextPos, '应先算 next，会员门禁只在 next 为开时触发（关不验会员）');
+  // AM批两道闸：总开关+会员功能名单，仍只在 next 为开时触发（关不验会员）
+  const gatePos = body.indexOf('if (next) {');
+  const memberPos = body.indexOf('landOnly && !this.data.isMember');
+  assert(nextPos >= 0 && gatePos > nextPos && memberPos > gatePos, '应先算 next，两道闸只在 next 为开时触发（关不验会员）');
 });
 
 test('任务AE：我的页字体统一 16px（=亲友录联系人姓名 .nm 大小）且上下紧凑', async () => {

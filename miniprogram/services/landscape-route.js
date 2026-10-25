@@ -46,14 +46,29 @@ function isMemberLike(membership) {
   return membership.state === 'member' || membership.state === 'grace';
 }
 
+const MEMBER_ONLY_DEFAULT = ['familyShareInvite', 'photoImport', 'landscapeMode'];
+
 /**
- * @param {{landscapeOn?: boolean, membership?: object|boolean}} input
+ * 横置两道闸（AM批）：先总开关（features.landscape，关→谁都进不去），
+ * 再会员功能名单（含 landscapeMode 且非会员→拦）。flags 取不到时按
+ * 总开+算专属处理（与接线前行为一致）。
+ * @returns {'ok'|'master-off'|'member-only'}
+ */
+function resolveLandscapeGate({ membership, flags } = {}) {
+  if (flags && flags.landscape === false) return 'master-off';
+  const list = flags && Array.isArray(flags.memberOnly) ? flags.memberOnly : MEMBER_ONLY_DEFAULT;
+  if (list.includes('landscapeMode') && !isMemberLike(membership)) return 'member-only';
+  return 'ok';
+}
+
+/**
+ * @param {{landscapeOn?: boolean, membership?: object|boolean, flags?: object}} input
  * @returns {'landscape'|'portrait'}
  */
-function resolveBookRoute({ landscapeOn, membership } = {}) {
+function resolveBookRoute({ landscapeOn, membership, flags } = {}) {
   if (!landscapeOn) return 'portrait';
-  if (!isMemberLike(membership)) return 'portrait';
+  if (resolveLandscapeGate({ membership, flags }) !== 'ok') return 'portrait';
   return 'landscape';
 }
 
-module.exports = { STORAGE_KEY, readLandscapeOn, writeLandscapeOn, isMemberLike, resolveBookRoute };
+module.exports = { STORAGE_KEY, readLandscapeOn, writeLandscapeOn, isMemberLike, resolveBookRoute, resolveLandscapeGate };

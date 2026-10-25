@@ -231,8 +231,15 @@ Page({
       }
     }
     if ((id === 'share' || id === 'photo') && !this.data.isMember) {
-      this.memberOnly(id);
-      return;
+      // 会员功能名单（AM批接上）：名单含该功能才拦非会员；不含则免费用户也能用。
+      // 名单取不到时按含处理（宁可拦住，与接线前行为一致）。
+      const key = id === 'share' ? 'familyShareInvite' : 'photoImport';
+      const mflags = await dataService.getFeatureFlags().catch(() => null);
+      const only = !mflags || !Array.isArray(mflags.memberOnly) || mflags.memberOnly.includes(key);
+      if (only) {
+        this.memberOnly(id);
+        return;
+      }
     }
     if (id === 'share') { wx.navigateTo({ url: '/pages/share/share-home' }); return; }
     if (id === 'photo') { this.goPhotoImport(); return; }

@@ -20,7 +20,7 @@ Page({
         { no: '7', title: '管理员账号、权限与操作记录', target: 'page', page: 'admins' },
       ] },
       { name: '运营设置', items: [
-        { no: '8', title: '功能开关', desc: '总开关、会员开关、会员专属功能、支付平台开关都在这里', target: 'config', section: 'switches' },
+        { no: '8', title: '功能开关', desc: '总开关、会员功能、支付开关都在这里', target: 'config', section: 'switches' },
         { no: '9', title: '邀请奖励', desc: '设置在上、数据在下', target: 'page', page: 'invite' },
         { no: '10', title: '用户反馈列表', target: 'page', page: 'feedback' },
       ] },

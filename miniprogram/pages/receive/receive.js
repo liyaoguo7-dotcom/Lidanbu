@@ -135,9 +135,11 @@ Page({
     }
     const row = this.data.events.find((r) => r._id === id);
     const membership = await this._ensureMembership();
+    const flags = await dataService.getFeatureFlags().catch(() => null);
     const route = landscapeRoute.resolveBookRoute({
       landscapeOn: landscapeRoute.readLandscapeOn(),
       membership,
+      flags,
     });
     if (route === 'landscape' && row) {
       const owner = row.ownerId ? `&ownerId=${row.ownerId}` : '';

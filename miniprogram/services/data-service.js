@@ -1346,14 +1346,16 @@ const service = {
     const base = AppConfig.features || {};
     let flags = {
       photoImport: !!base.photoImport, eInvitation: !!base.eInvitation, familyShare: !!base.familyShare,
-      maintenance: !!base.maintenance, registration: !!base.registration,
+      maintenance: !!base.maintenance, registration: !!base.registration, landscape: !!base.landscape,
+      memberOnly: Array.isArray(AppConfig.memberOnlyFeatures) ? [...AppConfig.memberOnlyFeatures] : [],
     };
     try {
       const f = await core.features.getFlags(_db, _userId);
       if (f) {
-        for (const k of ['photoImport', 'eInvitation', 'familyShare', 'maintenance', 'registration']) {
+        for (const k of ['photoImport', 'eInvitation', 'familyShare', 'maintenance', 'registration', 'landscape']) {
           if (typeof f[k] === 'boolean') flags[k] = f[k];
         }
+        if (Array.isArray(f.memberOnly)) flags.memberOnly = [...f.memberOnly];
       }
     } catch (e) { /* 取不到按静态默认（第一版为关） */ }
     this._featureFlagsCache = flags;

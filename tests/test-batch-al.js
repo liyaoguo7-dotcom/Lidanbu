@@ -77,26 +77,32 @@ const mineJs2 = fs.readFileSync(__dirname + '/../miniprogram/pages/mine/mine.js'
 assert.ok(mineJs2.includes('flags.familyShare === false'), 'AL-11 我的页共享行应有总闸');
 console.log('✓ AL批·总开关断言全过');
 
-/* AL-12 开关中心：四组各管各的保存，会员专属改开关样式 */
+/* AL-12 开关中心 —— AM批由用户改定为三组，本节断言随之更新：
+ * 总开关（加横置、不含云端购买）/ 会员功能（原会员专属功能改名）/ 支付开关
+ * （云端购买+双平台入口一组一存）；旧「会员开关」组删除。 */
 const swWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/app-config/app-config.wxml', 'utf8');
 const swJs = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/app-config/app-config.js', 'utf8');
-for (const gh of ['总开关', '会员开关', '会员专属功能', '支付平台开关']) {
+for (const gh of ['总开关', '会员功能', '支付开关']) {
   assert.ok(swWxml.includes(`<view class="group-h">${gh}</view>`), 'AL-12 开关中心应有分组：' + gh);
 }
-assert.ok(!swWxml.includes('checkbox-group'), 'AL-12 会员专属功能应改开关样式，无打钩控件');
-assert.ok(swWxml.includes('bindchange="onMemberSwitch"'), 'AL-12 会员专属功能应为开关切换');
-assert.ok(swWxml.includes('data-key="maintenance"') && swWxml.includes('data-key="registration"'), 'AL-12 总开关组应含维护模式与注册开关');
-// 各组保存各管各的：四个保存按钮分别绑四个互不相同的 handler
-for (const h of ['onSaveMaster', 'onSaveSwitches', 'onSaveFeatures', 'onSavePlatforms']) {
+for (const gh of ['会员开关', '会员专属功能', '支付平台开关']) {
+  assert.ok(!swWxml.includes(`<view class="group-h">${gh}</view>`), 'AL-12 旧分组应已删除：' + gh);
+}
+assert.ok(!swWxml.includes('checkbox-group'), 'AL-12 会员功能应为开关样式，无打钩控件');
+assert.ok(swWxml.includes('bindchange="onMemberSwitch"'), 'AL-12 会员功能应为开关切换');
+assert.ok(swWxml.includes('data-key="maintenance"') && swWxml.includes('data-key="registration"') && swWxml.includes('data-key="landscape"'), 'AL-12 总开关组应含维护模式/注册/横置礼单本');
+// 云端购买只出现在支付开关组：整页只应出现一次 data-key="paymentEnabled"，且在「支付开关」组标题之后
+assert.ok(swWxml.indexOf('data-key="paymentEnabled"') > swWxml.indexOf('<view class="group-h">支付开关</view>'), 'AL-12 云端购买应归支付开关组');
+// 三组保存各管各的
+for (const h of ['onSaveMaster', 'onSaveFeatures', 'onSavePayment']) {
   assert.ok(swWxml.includes(`bindtap="${h}"`), 'AL-12 应有保存按钮 ' + h);
   assert.ok(swJs.includes(h + '()'), 'AL-12 JS 应有 handler ' + h);
 }
-assert.ok(swJs.includes('adminUpdateLaunchSwitches'), 'AL-12 总开关组保存应走发布开关接口');
-assert.ok(swJs.includes('adminUpdateFeatureSwitches'), 'AL-12 会员开关组保存应走会员功能开关接口');
-assert.ok(swJs.includes('adminUpdateMemberOnlyFeatures'), 'AL-12 会员专属组保存应走专属清单接口');
-assert.ok(swJs.includes('adminUpdatePaymentPlatforms'), 'AL-12 支付平台组保存应走平台开关接口');
-assert.ok(!swWxml.includes("section === 'platforms'") && !swWxml.includes("section === 'features'"), 'AL-12 旧平台/专属节应已并入开关中心');
+assert.ok(!swWxml.includes('bindtap="onSaveSwitches"') && !swWxml.includes('bindtap="onSavePlatforms"'), 'AL-12 旧保存按钮应已删除');
+assert.ok(swJs.includes('adminUpdateLaunchSwitches'), 'AL-12 总开关/支付组保存应走发布开关接口');
+assert.ok(swJs.includes('adminUpdateMemberOnlyFeatures'), 'AL-12 会员功能组保存应走专属清单接口');
+assert.ok(swJs.includes('adminUpdatePaymentPlatforms'), 'AL-12 支付组保存应走平台开关接口');
+assert.ok(!swJs.includes('adminUpdateFeatureSwitches'), 'AL-12 会员开关组删除后不应再走旧会员功能开关接口');
+assert.ok(swWxml.includes('管「功能开和关」') || swWxml.includes('管「算不算会员专属」'), 'AL-12 应有区别说明小字');
+assert.ok(swWxml.includes('管「算不算会员专属」'), 'AL-12 会员功能组应有区别说明小字');
 console.log('✓ AL批·开关中心断言全过');
-
-assert.ok(swWxml.includes('管「会员功能本身开不开」'), 'AL-12 会员开关组应有区别说明小字');
-assert.ok(swWxml.includes('管「哪些功能算会员专属」'), 'AL-12 会员专属组应有区别说明小字');
