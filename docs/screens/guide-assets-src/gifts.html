@@ -15,8 +15,11 @@ body { width:390px; height:818px; overflow:hidden; position:relative; background
 .searchbar { display:flex; align-items:center; padding:10px 12px 2px; }
 .searchbox { flex:1; background:#F2F2F2; border-radius:17px; height:34px; display:flex; align-items:center; padding:0 14px; color:#C2C2C2; font-size:14px; }
 .search-cancel { color:#F0575A; font-size:14px; margin-left:8px; white-space:nowrap; }
-.summary { padding:14px 16px; font-size:14px; }
-.summary .red { color:#F0575A; font-weight:600; }
+.total-line { text-align:center; font-size:20px; padding:14px 16px 12px; color:#333; border-bottom:1px solid #F0F0F0; }
+.total-line .red { color:#F0575A; font-weight:600; }
+.list-end { display:flex; align-items:center; gap:10px; padding:17px 60px 19px; }
+.end-line { flex:1; height:1px; background:#F0F0F0; }
+.end-text { font-size:12px; color:#C2C2C2; }
 .gift-row { display:flex; align-items:center; padding:12px 16px; min-height:68px; border-bottom:1px solid #F0F0F0; }
 .gift-row:last-child { border-bottom:none; }
 .pat { width:44px; height:44px; border-radius:50%; background:#F5F6F4; display:flex; align-items:center; justify-content:center; flex:none; }
@@ -36,15 +39,15 @@ body { width:390px; height:818px; overflow:hidden; position:relative; background
 
 <div class="searchbar"><div class="searchbox">搜索姓名</div><span class="search-cancel">取消</span></div>
 
-<div class="card summary"><span>共计：</span><span class="red">6 笔 ￥6000 元</span></div>
-
 <div class="card">
+  <div class="total-line">共计：<span class="red">6</span> 笔 ¥<span class="red">6000</span> 元</div>
   <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/01-jiehun.svg"></div><div class="mid"><span class="nm songti">赵子墨</span><span class="sub">结婚｜2026-10-11</span></div><span class="amt">-2000.00</span></div>
   <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/07-qiaoqian.svg"></div><div class="mid"><span class="nm songti">钱佳怡</span><span class="sub">乔迁｜2026-09-26</span></div><span class="amt">-1000.00</span></div>
   <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/02-shengzi.svg"></div><div class="mid"><span class="nm songti">沈一鸣</span><span class="sub">生子｜2026-09-12</span></div><span class="amt">-1000.00</span></div>
   <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/05-shengri.svg"></div><div class="mid"><span class="nm songti">韩雨桐</span><span class="sub">生日｜2026-08-30</span></div><span class="amt">-500.00</span></div>
   <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/06-shengxue.svg"></div><div class="mid"><span class="nm songti">杨晨曦</span><span class="sub">升学｜2026-08-22</span></div><span class="amt">-1000.00</span></div>
   <div class="gift-row"><div class="pat"><img src="../../../miniprogram/icons/09-baishi.svg"></div><div class="mid"><span class="nm songti">何子睿</span><span class="sub">白事｜2026-06-28</span></div><span class="amt">-500.00</span></div>
+  <div class="list-end"><div class="end-line"></div><span class="end-text">完</span><div class="end-line"></div></div>
 </div>
 
 <div class="fab-zone"><div class="fab">＋</div></div>

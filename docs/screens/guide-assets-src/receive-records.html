@@ -14,25 +14,24 @@ body { width:390px; height:818px; overflow:hidden; position:relative; background
 .card { background:#FFF; border-radius:12px; margin:12px; }
 .songti { font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; } /* 与真实页面同口径：全站黑体、无宋体（AA 清零后复刻同步） */
 .num { font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
-.pat-card { text-align:center; padding:24px 0 14px; }
+.pat-card { text-align:center; padding:24px 0 8px; }
 .pat-big { width:72px; height:72px; border-radius:50%; background:#F1E6D3; margin:0 auto; display:flex; align-items:center; justify-content:center; }
 .pat-big img { width:52px; height:52px; }
 .pat-name { font-size:14px; color:#E05353; font-weight:700; margin-top:8px; display:block; }
 .event-name { font-size:20px; font-weight:600; margin-top:6px; display:block; }
 .event-date { font-size:13px; color:#C2C2C2; margin-top:4px; display:block; }
-.summary { padding:14px 16px; font-size:14px; }
-.summary .red { color:#F0575A; font-weight:600; }
-.rec-row { display:flex; align-items:center; padding:12px 16px; min-height:60px; border-bottom:1px solid #F0F0F0; }
+.total-line { text-align:center; font-size:20px; padding:14px 16px 12px; color:#333; border-bottom:1px solid #F0F0F0; }
+.total-line .red { color:#F0575A; font-weight:600; }
+.list-end { display:flex; align-items:center; gap:10px; padding:17px 60px 19px; }
+.end-line { flex:1; height:1px; background:#F0F0F0; }
+.end-text { font-size:12px; color:#C2C2C2; }
+.rec-row { display:flex; align-items:center; text-align:left; padding:12px 16px; min-height:60px; border-bottom:1px solid #F0F0F0; }
 .rec-row:last-child { border-bottom:none; }
 .mid { flex:1; display:flex; flex-direction:column; }
 .nm { font-size:16px; font-weight:500; }
 .sub { font-size:12px; color:#C2C2C2; margin-top:3px; }
 .amt { font-size:16px; font-weight:600; color:#F0575A; }
-.fab-zone { position:relative; height:120px; }
-.fab { position:absolute; left:50%; margin-left:-29px; bottom:62px; width:58px; height:58px; border-radius:50%; background:#F0575A; color:#fff; font-size:34px; font-weight:300; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(240,87,90,.45); }
-.bottom-btns { display:flex; gap:12px; margin:0 24px 26px; }
-.btn-outline { flex:1; height:56px; line-height:54px; background:#fff; color:#F0575A; border:1px solid #F0575A; text-align:center; font-size:17px; border-radius:28px; }
-.btn-primary { flex:1; height:56px; line-height:56px; background:#F0575A; color:#fff; text-align:center; font-size:17px; border-radius:28px; }
+.fab { position:absolute; left:50%; margin-left:-29px; bottom:24px; width:58px; height:58px; border-radius:50%; background:#F0575A; color:#fff; font-size:34px; font-weight:300; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(240,87,90,.45); }
 </style></head><body>
 <div class="nav"><div class="back">‹</div><div class="title">礼薄详情</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
 
@@ -41,11 +40,7 @@ body { width:390px; height:818px; overflow:hidden; position:relative; background
   <span class="pat-name songti">结婚</span>
   <span class="event-name songti">儿子的婚礼</span>
   <span class="event-date num">2026-10-18</span>
-</div>
-
-<div class="card summary"><span>共计：</span><span class="red num">12 笔 ￥14000 元</span></div>
-
-<div class="card">
+  <div class="total-line">共计：<span class="red num">12</span> 笔 ¥<span class="red num">14000</span> 元</div>
   <div class="rec-row"><div class="mid"><span class="nm songti">陈子轩</span><span class="sub">红包｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
   <div class="rec-row"><div class="mid"><span class="nm songti">林浩然</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
   <div class="rec-row"><div class="mid"><span class="nm songti">王欣怡</span><span class="sub">转账｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
@@ -58,8 +53,8 @@ body { width:390px; height:818px; overflow:hidden; position:relative; background
   <div class="rec-row"><div class="mid"><span class="nm songti">徐俊杰</span><span class="sub">微信｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
   <div class="rec-row"><div class="mid"><span class="nm songti">孙晓彤</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
   <div class="rec-row"><div class="mid"><span class="nm songti">马文博</span><span class="sub">支付宝｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
+  <div class="list-end"><div class="end-line"></div><span class="end-text">完</span><div class="end-line"></div></div>
 </div>
 
-<div class="fab-zone"><div class="fab">＋</div></div>
-<div class="bottom-btns"><div class="btn-outline">删除</div><div class="btn-primary">修改</div></div>
+<div class="fab">＋</div>
 </body></html>
