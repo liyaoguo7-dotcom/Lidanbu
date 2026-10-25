@@ -30,7 +30,7 @@ Component({
   },
   methods: {
     _syncHorn(text) {
-      const m = hornMarquee(text || '', { avail: 300 });
+      const m = hornMarquee(text || '', { fontPx: 14, avail: 284 });
       this.setData({ hornRun: m.run, hornDur: m.dur });
     },
     onClose() {

@@ -59,3 +59,4 @@ require('./test-batch-ah');
   process.exit(ok ? 0 : 1);
 })();
 require('./test-launch-gates');
+  require('./test-batch-ai.js');

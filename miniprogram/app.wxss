@@ -78,18 +78,17 @@ page {
 .num { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
 .tip {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   background: #FFF8E1;
-  padding: 8px 14px;
-  font-size: 12px;
-  color: #999;
-  line-height: 1.6;
+  margin: 0; padding: 10px 12px;
+  font-size: 14px;
+  color: #E8912D;
 }
 .tip-icon {
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   flex: none;
-  margin-top: 2px; /* 与小字行高对齐 */
+  margin-right: 8px;
 }
 /* 小喇叭统一规格（2026-10-22 任务AB 第 8 项，用户第三次改口径，以此为准，AA 硬闪作废）：
    淡黄底 #FFF8E1 统一；**不闪烁、常驻显示**，右侧 × 关闭后本次打开期间不再显示
@@ -107,7 +106,8 @@ page {
 }
 .tip-txt-ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tip-txt-nowrap { white-space: nowrap; }
-.tip-close { flex: none; color: #C2C2C2; font-size: 16px; line-height: 1; padding: 1px 2px 0 10px; }
+.tip-close { flex: none; color: #E8912D; font-size: 20px; line-height: 1; padding: 0 2px 0 8px; }
+.tip .horn-marquee { margin-left: 0; }
 .searchbar { display: flex; align-items: center; padding: 10px 12px; }
 .searchbox {
   flex: 1;

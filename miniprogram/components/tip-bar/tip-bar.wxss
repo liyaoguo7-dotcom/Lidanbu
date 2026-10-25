@@ -4,19 +4,19 @@
   display: flex;
   align-items: center;
   background: #FFF8E1;
-  padding: 12rpx 24rpx;
+  padding: 20rpx 24rpx;
 }
 
 .horn {
-  width: 24rpx; /* 很小的小喇叭 */
-  height: 24rpx;
-  margin-right: 8rpx;
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
   flex: none;
 }
 
 .text {
-  font-size: 24rpx; /* 动态小字 */
-  color: #999999;
+  font-size: 28rpx;
+  color: #E8912D;
 }
 
 .horn-marquee { flex: 1; min-width: 0; overflow: hidden; }
@@ -32,8 +32,8 @@
 
 .close {
   flex: none;
-  color: #C2C2C2;
-  font-size: 30rpx;
+  color: #E8912D;
+  font-size: 40rpx;
   line-height: 1;
   padding: 0 4rpx 0 16rpx;
 }
