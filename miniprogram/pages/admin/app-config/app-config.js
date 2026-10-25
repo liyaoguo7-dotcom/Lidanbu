@@ -52,6 +52,7 @@ Page({
     pointsCfg: { registerGrant: '', photoImportCost: '' }, packs: [],
     platforms: { ios: true, android: true },
     launch: { paymentEnabled: false, photoImportEnabled: false },
+    gates: { eInvitation: true, familyShare: true }, // 功能总开关（电子请柬/家庭共享），在「功能开关」节里改
     featureChecked: {}, // 会员专属清单的勾选映射（WXML 不能调 .indexOf()，须 JS 预先算好）
     inviteCfg: { enabled: true, receivePool: '', giftRecords: '', maxSuccessfulInvites: '' },
   },
@@ -103,6 +104,10 @@ Page({
         launch: {
           paymentEnabled: cfg.paymentEnabled === true,
           photoImportEnabled: cfg.photoImportEnabled === true,
+        },
+        gates: {
+          eInvitation: cfg.eInvitationEnabled !== false,
+          familyShare: cfg.familyShareEnabled !== false,
         },
         featureChecked: Object.fromEntries(FEATURE_FIELDS.map((f) => [f.key, (cfg.memberOnlyFeatures || []).includes(f.key)])),
         inviteCfg: {
@@ -306,6 +311,18 @@ Page({
   onLaunchToggle(e) {
     this.setData({ [`launch.${e.currentTarget.dataset.key}`]: e.detail.value });
   },
+  // —— 功能总开关：电子请柬 / 家庭共享（2026-10-25 用户加，与发布开关同一服务端接口） ——
+  onGateToggle(e) {
+    this.setData({ [`gates.${e.currentTarget.dataset.key}`]: e.detail.value });
+  },
+  onSaveGates() {
+    const switches = {
+      eInvitationEnabled: !!this.data.gates.eInvitation,
+      familyShareEnabled: !!this.data.gates.familyShare,
+    };
+    this.confirmSave('功能总开关', () => ds.adminUpdateLaunchSwitches(switches));
+  },
+
   onSaveLaunch() {
     const switches = {
       paymentEnabled: !!this.data.launch.paymentEnabled,

@@ -18,6 +18,7 @@ require('./test-wanglai');
 require('./test-admin');
 require('./test-admin-config');
 require('./test-admin-full');
+require('./test-batch-al-behavior');
 require('./test-cloud-export');
 require('./test-db-cloud');
 require('./test-api-dispatch');

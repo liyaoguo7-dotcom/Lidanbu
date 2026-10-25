@@ -16,13 +16,15 @@ async function readDoc(db) {
   catch (e) { return null; }
 }
 
-/** 生效功能开关 { photoImport:boolean }（文档段缺字段时逐项回退静态默认） */
+/* 生效功能开关 { photoImport, eInvitation, familyShare }（文档段缺字段时逐项回退静态默认） */
 async function resolveFlags(db, staticCfg = AppConfig) {
   const doc = await readDoc(db);
   const seg = (doc && doc.features) || {};
   const base = (staticCfg && staticCfg.features) || {};
   return {
     photoImport: typeof seg.photoImport === 'boolean' ? seg.photoImport : !!base.photoImport,
+    eInvitation: typeof seg.eInvitation === 'boolean' ? seg.eInvitation : !!base.eInvitation,
+    familyShare: typeof seg.familyShare === 'boolean' ? seg.familyShare : !!base.familyShare,
   };
 }
 
@@ -31,9 +33,14 @@ async function photoImportEnabled(db) {
   return f.photoImport === true;
 }
 
+async function familyShareEnabled(db) {
+  const f = await resolveFlags(db);
+  return f.familyShare === true;
+}
+
 /** 页面用：取生效开关（签名对齐 api 分发 (db, actorId) 口径，actorId 不用） */
 async function getFlags(db, actorId) { // eslint-disable-line no-unused-vars
   return resolveFlags(db);
 }
 
-module.exports = { resolveFlags, photoImportEnabled, getFlags };
+module.exports = { resolveFlags, photoImportEnabled, familyShareEnabled, getFlags };

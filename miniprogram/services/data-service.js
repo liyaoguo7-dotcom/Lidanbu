@@ -1339,14 +1339,19 @@ const service = {
   },
 
   _featureFlagsCache: null,
-  /** 生效功能开关 { photoImport }（任务AF）：服务端 appConfig 文档优先、
-   * 静态默认兜底；会话内缓存（老板改开关后重开小程序生效）。 */
+  /** 生效功能开关 { photoImport, eInvitation, familyShare }：服务端
+   * appConfig 文档优先、静态默认兜底；会话内缓存（老板改开关后重开小程序生效）。 */
   async getFeatureFlags() {
     if (this._featureFlagsCache) return this._featureFlagsCache;
-    let flags = { photoImport: !!((AppConfig.features || {}).photoImport) };
+    const base = AppConfig.features || {};
+    let flags = { photoImport: !!base.photoImport, eInvitation: !!base.eInvitation, familyShare: !!base.familyShare };
     try {
       const f = await core.features.getFlags(_db, _userId);
-      if (f && typeof f.photoImport === 'boolean') flags = { photoImport: f.photoImport };
+      if (f) {
+        if (typeof f.photoImport === 'boolean') flags.photoImport = f.photoImport;
+        if (typeof f.eInvitation === 'boolean') flags.eInvitation = f.eInvitation;
+        if (typeof f.familyShare === 'boolean') flags.familyShare = f.familyShare;
+      }
     } catch (e) { /* 取不到按静态默认（第一版为关） */ }
     this._featureFlagsCache = flags;
     return flags;

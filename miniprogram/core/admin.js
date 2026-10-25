@@ -314,6 +314,8 @@ points: await points.resolvePointsSettings(db),
 paymentPlatforms: doc.paymentPlatforms || { ...(StaticConfig.payment ? StaticConfig.payment.platforms : {}) },
 paymentEnabled: (doc.payment && typeof doc.payment.enabled === 'boolean') ? doc.payment.enabled : !!(StaticConfig.payment && StaticConfig.payment.enabled),
 photoImportEnabled: (doc.features && typeof doc.features.photoImport === 'boolean') ? doc.features.photoImport : !!(StaticConfig.features && StaticConfig.features.photoImport),
+eInvitationEnabled: (doc.features && typeof doc.features.eInvitation === 'boolean') ? doc.features.eInvitation : !!(StaticConfig.features && StaticConfig.features.eInvitation),
+familyShareEnabled: (doc.features && typeof doc.features.familyShare === 'boolean') ? doc.features.familyShare : !!(StaticConfig.features && StaticConfig.features.familyShare),
 updatedAt: doc.updatedAt || null,
 };
 }
@@ -594,19 +596,30 @@ await requireAdmin(db, actorId);
 if (!switches || typeof switches !== 'object' || Array.isArray(switches)) throw badConfig('发布开关必须是对象');
 if ('paymentEnabled' in switches && typeof switches.paymentEnabled !== 'boolean') throw badConfig('云端购买开关必须为开/关');
 if ('photoImportEnabled' in switches && typeof switches.photoImportEnabled !== 'boolean') throw badConfig('拍照导入开关必须为开/关');
+if ('eInvitationEnabled' in switches && typeof switches.eInvitationEnabled !== 'boolean') throw badConfig('电子请柬开关必须为开/关');
+if ('familyShareEnabled' in switches && typeof switches.familyShareEnabled !== 'boolean') throw badConfig('家庭共享开关必须为开/关');
 const hasPay = typeof switches.paymentEnabled === 'boolean';
 const hasPhoto = typeof switches.photoImportEnabled === 'boolean';
-if (!hasPay && !hasPhoto) throw badConfig('发布开关不能为空');
+const hasInvite = typeof switches.eInvitationEnabled === 'boolean';
+const hasShare = typeof switches.familyShareEnabled === 'boolean';
+if (!hasPay && !hasPhoto && !hasInvite && !hasShare) throw badConfig('发布开关不能为空');
 const doc = (await readConfigDoc(db)) || {};
 const patch = {};
 const changed = [];
 if (hasPay) { patch.payment = { ...(doc.payment || {}), enabled: switches.paymentEnabled }; changed.push('云端购买'); }
-if (hasPhoto) { patch.features = { ...(doc.features || {}), photoImport: switches.photoImportEnabled }; changed.push('拍照导入'); }
+if (hasPhoto || hasInvite || hasShare) {
+patch.features = { ...(doc.features || {}) };
+if (hasPhoto) { patch.features.photoImport = switches.photoImportEnabled; changed.push('拍照导入'); }
+if (hasInvite) { patch.features.eInvitation = switches.eInvitationEnabled; changed.push('电子请柬'); }
+if (hasShare) { patch.features.familyShare = switches.familyShareEnabled; changed.push('家庭共享'); }
+}
 const updatedAt = await writeConfigPatch(db, actorId, patch, `修改发布开关：${changed.join('、')}`);
 const after = (await readConfigDoc(db)) || {};
 return {
 paymentEnabled: (after.payment && typeof after.payment.enabled === 'boolean') ? after.payment.enabled : !!(StaticConfig.payment && StaticConfig.payment.enabled),
 photoImportEnabled: (after.features && typeof after.features.photoImport === 'boolean') ? after.features.photoImport : !!(StaticConfig.features && StaticConfig.features.photoImport),
+eInvitationEnabled: (after.features && typeof after.features.eInvitation === 'boolean') ? after.features.eInvitation : !!(StaticConfig.features && StaticConfig.features.eInvitation),
+familyShareEnabled: (after.features && typeof after.features.familyShare === 'boolean') ? after.features.familyShare : !!(StaticConfig.features && StaticConfig.features.familyShare),
 updatedAt,
 };
 }

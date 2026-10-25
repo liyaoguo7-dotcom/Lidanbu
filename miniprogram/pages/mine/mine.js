@@ -146,7 +146,13 @@ Page({
     wx.navigateTo({ url: '/pages/member/purchase/purchase' });
   },
 
-  onShareHome() {
+  async onShareHome() {
+    // 家庭共享总闸（2026-10-25）：关掉时只提示敬请期待，先于会员判断（与首页入口同口径）
+    const flags = await dataService.getFeatureFlags().catch(() => null);
+    if (flags && flags.familyShare === false) {
+      wx.showToast({ title: '家庭共享敬请期待', icon: 'none' });
+      return;
+    }
     if (!this.data.isMember) {
       wx.showModal({
         title: '会员专属功能',

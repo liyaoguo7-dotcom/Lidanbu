@@ -42,8 +42,10 @@ Page({
     this.setData({ hornOff: hornState.isDismissed('index') }); this._syncHorn();
     // 电子请柬（任务AF）：合作小程序 AppID 未配置时入口整个不显示，
     // 不再露一个点了只报「敬请期待」的空入口；配置好自动出现。
+    // 2026-10-25 加总开关：老板平台关掉电子请柬后，即使配了 AppID 也不显示（双条件）。
     const ext = dataService.getExternalInvitation();
-    if (!ext || !ext.appId) {
+    const flags0 = await dataService.getFeatureFlags().catch(() => null);
+    if (!ext || !ext.appId || (flags0 && flags0.eInvitation === false)) {
       this.setData({ entries: this.data.entries.filter((e) => e.id !== 'invite') });
     }
     const r = await dataService.init();
@@ -208,6 +210,14 @@ Page({
       const flags = await dataService.getFeatureFlags();
       if (!flags.photoImport) {
         wx.showToast({ title: '拍照导入敬请期待', icon: 'none' });
+        return;
+      }
+    }
+    if (id === 'share') {
+      // 家庭共享总闸（2026-10-25）：关掉时谁点都只提示敬请期待（与拍照总闸同构，先于会员判断）
+      const flags = await dataService.getFeatureFlags();
+      if (!flags.familyShare) {
+        wx.showToast({ title: '家庭共享敬请期待', icon: 'none' });
         return;
       }
     }

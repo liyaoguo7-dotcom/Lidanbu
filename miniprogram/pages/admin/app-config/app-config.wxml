@@ -41,7 +41,12 @@
     </view>
   </view>
   <button class="btn-primary" bindtap="onSaveSwitches" loading="{{saving}}">保存功能开关</button>
-  <view class="note">邀请奖励开关在本页「邀请奖励设置」节里改（老板平台菜单第 18 项）。</view>
+  <view class="card">
+    <view class="form-row"><text class="form-label" style="width:170px">电子请柬</text><switch checked="{{gates.eInvitation}}" bindchange="onGateToggle" data-key="eInvitation" /></view>
+    <view class="form-row"><text class="form-label" style="width:170px">家庭共享</text><switch checked="{{gates.familyShare}}" bindchange="onGateToggle" data-key="familyShare" /></view>
+  </view>
+  <button class="btn-primary" bindtap="onSaveGates" loading="{{saving}}">保存总开关</button>
+  <view class="note">电子请柬：关掉后首页入口不显示（入口出现还需合作方 AppID 已配置）。家庭共享：关掉后首页和「我的」的入口点击提示「家庭共享敬请期待」，共享的新建、接受、改权限、移除、列表在服务端同步拒绝；已经共享出去的记录不删除。邀请奖励开关在本页「邀请奖励设置」节里改。</view>
 </block>
 
 <!-- 邀请奖励设置 -->

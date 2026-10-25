@@ -59,3 +59,14 @@ assert.ok(svg.includes('M24 38V8'), 'AL-10 箭头轴线应在 x=24');
 assert.ok(svg.includes('M14 26v12'), 'AL-10 托盘左壁应在 x=14');
 assert.ok(/h16a2 2 0 0 0 2-2V26/.test(svg), 'AL-10 托盘右壁应收于 x=34（跨度14~34中心24）');
 console.log('✓ AL批·导出图标断言全过');
+
+/* AL-11 功能总开关静态断言：配置页有两闸、首页/我的有入口拦截 */
+const acfgWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/app-config/app-config.wxml', 'utf8');
+assert.ok(acfgWxml.includes('data-key="eInvitation"') && acfgWxml.includes('data-key="familyShare"'), 'AL-11 配置页功能开关节应有电子请柬/家庭共享两闸');
+assert.ok(acfgWxml.includes('bindtap="onSaveGates"'), 'AL-11 应有保存总开关按钮');
+const idxJs = fs.readFileSync(__dirname + '/../miniprogram/pages/index/index.js', 'utf8');
+assert.ok(idxJs.includes('flags0.eInvitation === false'), 'AL-11 首页请柬入口应受总开关控制');
+assert.ok(idxJs.includes('家庭共享敬请期待'), 'AL-11 首页共享入口应有总闸提示');
+const mineJs2 = fs.readFileSync(__dirname + '/../miniprogram/pages/mine/mine.js', 'utf8');
+assert.ok(mineJs2.includes('flags.familyShare === false'), 'AL-11 我的页共享行应有总闸');
+console.log('✓ AL批·总开关断言全过');

@@ -13,6 +13,17 @@ const audit = require('./audit');
 const restriction = require('./restriction');
 const quota = require('./quota');
 const errors = require('./errors');
+const features = require('./features');
+
+/** 家庭共享总开关守卫（2026-10-25 用户加）：老板平台关掉后，共享的
+ * 新建/接受/改权限/移除/列表一律拒绝（入口层另有提示，双保险）。 */
+async function assertFamilyShareOn(db) {
+  if (!(await features.familyShareEnabled(db))) {
+    const e = new Error(errors.userMessage('family-share-closed'));
+    e.code = 'family-share-closed';
+    throw e;
+  }
+}
 const notify = require('./notify');
 
 /** 共享变更通知（任务L）：通知失败绝不影响共享操作本身 */
@@ -47,6 +58,7 @@ function normalizeScope(input = {}) {
  * @returns {{membershipId}}
  */
 async function invite(db, ownerId, { switches, scope }) {
+  await assertFamilyShareOn(db);
   await restriction.assertWritable(db, ownerId);
   // 会员门禁：有效会员才能发起邀请（缓冲期内不算有效，不能新邀请）
   const inviter = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
@@ -77,6 +89,7 @@ async function invite(db, ownerId, { switches, scope }) {
  * 参数序 2026-10-23 任务AD 对调为全站统一的 (db, actorId, ...) 口径
  * （原 (db, membershipId, memberId) 与 api 分发约定冲突，云端无法调用）。 */
 async function accept(db, memberId, membershipId) {
+  await assertFamilyShareOn(db);
   await restriction.assertWritable(db, memberId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
   if (!ms) throw new Error('邀请不存在');
@@ -92,6 +105,7 @@ async function accept(db, memberId, membershipId) {
 
 /** 修改成员权限（主人操作，立即生效） */
 async function updateGrant(db, ownerId, membershipId, { switches, scope }) {
+  await assertFamilyShareOn(db);
   await restriction.assertWritable(db, ownerId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
   if (!ms) throw new Error('成员关系不存在');
@@ -116,6 +130,7 @@ async function updateGrant(db, ownerId, membershipId, { switches, scope }) {
  * 其此前新增的记录保留在主人账本，createdBy 保留"谁加的"
  */
 async function removeMember(db, ownerId, membershipId) {
+  await assertFamilyShareOn(db);
   await restriction.assertWritable(db, ownerId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
   if (!ms) throw new Error('成员关系不存在');
@@ -128,6 +143,7 @@ async function removeMember(db, ownerId, membershipId) {
 
 /** 成员列表（含权限摘要） */
 async function listMembers(db, ownerId) {
+  await assertFamilyShareOn(db);
   const mss = await db.collection(COLLECTIONS.ShareMembership).find({ ownerId });
   const out = [];
   for (const ms of mss) {
@@ -156,6 +172,7 @@ async function getMembership(db, actorId, membershipId) {
  * 主人文档不存在时返回 owner:null，调用方兜底显示"家人"）。
  */
 async function listReceived(db, actorId) {
+  await assertFamilyShareOn(db);
   const mss = await db.collection(COLLECTIONS.ShareMembership)
     .find({ memberId: actorId, status: 'active' });
   const out = [];
