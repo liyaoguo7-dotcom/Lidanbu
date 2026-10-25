@@ -61,3 +61,4 @@ require('./test-batch-ah');
 require('./test-launch-gates');
   require('./test-batch-ai.js');
   require('./test-batch-aj.js');
+  require('./test-batch-al.js');

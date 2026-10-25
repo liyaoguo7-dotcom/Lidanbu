@@ -1,14 +1,35 @@
-<view class="warn-banner">名单分两档：云端管理员（在云开发后台导入）只有这一档能增减管理员；后加管理员能用老板平台、不能增减名单。加人去「账号查询」的用户列表里点「设为管理员」。所有操作记录的操作者都已脱敏。</view>
+<view class="warn-banner">名单分两档：云端管理员（在云开发后台导入）只有这一档能增减管理员；后加管理员能用老板平台、不能增减名单。云端管理员不在本页移除（防误操作，名单在云开发后台维护）；后加管理员可在本页移除。加人在本页下方「添加管理员」里选（加进来的是后加管理员），也可以去「账号查询」里加。所有操作记录的操作者都已脱敏。</view>
 <view class="card">
   <view class="form-row"><text class="form-val" style="font-weight:bold">管理员账号（{{admins.length}} 人）</text></view>
   <view class="form-row" wx:for="{{admins}}" wx:key="userId">
     <text class="mask">{{item.userId}}</text>
     <text class="pill">{{item.tier === 'console' ? '云端管理员' : '后加管理员'}}</text>
     <text wx:if="{{item.self}}" class="pill">我</text>
-    <button wx:if="{{canManage}}" class="btn-danger-sm" data-id="{{item.userId}}" data-self="{{item.self}}" bindtap="onRemoveAdmin">移除</button>
+    <button wx:if="{{canManage && item.tier !== 'console'}}" class="btn-danger-sm" data-id="{{item.userId}}" data-self="{{item.self}}" bindtap="onRemoveAdmin">移除</button>
   </view>
   <view wx:if="{{admins.length === 0}}" class="note">名单为空时，任何人都不能执行管理员操作（安全兜底）。</view>
   <view wx:if="{{!canManage && admins.length > 0}}" class="note">你不在云端管理员名单里，不能增减管理员（名单维护找云端管理员操作，或在云开发后台改）。</view>
+</view>
+<view wx:if="{{canManage}}" class="card">
+  <view class="form-row"><text class="form-val" style="font-weight:bold">添加管理员</text></view>
+  <view class="note">从已注册用户里选一位设为管理员。加进来的是「后加管理员」：能用老板平台，不能增减名单。</view>
+  <button class="btn-primary" bindtap="onTogglePicker">{{pickerOpen ? '收起' : '＋ 选择用户'}}</button>
+  <block wx:if="{{pickerOpen}}">
+    <view class="form-row"><text class="form-label">编号片段</text><input class="form-val" placeholder="可空，空则按注册时间倒序列出" value="{{pickerFrag}}" bindinput="onPickerFrag" /></view>
+    <button class="btn-primary" bindtap="onPickerSearch" loading="{{pickerLoading}}">查询用户（共 {{pickerTotal}} 人）</button>
+    <view class="card" wx:for="{{pickerList}}" wx:key="userId">
+      <view class="row-between">
+        <text class="mask">{{item.userId}}</text>
+        <text class="pill">{{item.stateName}}</text>
+        <text wx:if="{{item.restricted}}" class="pill pill-danger">已限制</text>
+      </view>
+      <view class="note">注册：{{item.createdText}}</view>
+      <view wx:if="{{item.isAdmin}}" class="note">已是管理员</view>
+      <button wx:elif="{{canManage}}" class="btn-danger-sm" data-id="{{item.userId}}" catchtap="onMakeAdmin">设为管理员</button>
+    </view>
+    <button wx:if="{{pickerList.length < pickerTotal}}" class="btn-primary" bindtap="onPickerMore" loading="{{pickerLoading}}">加载更多（已显示 {{pickerList.length}} / 共 {{pickerTotal}}）</button>
+    <view wx:if="{{pickerList.length === 0 && !pickerLoading}}" class="note">没有查到符合条件的账号。</view>
+  </block>
 </view>
 <view class="card">
   <view class="form-row"><text class="form-label">动作过滤</text><input class="form-val" placeholder="如 config / restrict，可空" value="{{action}}" bindinput="onActionInput" /></view>
