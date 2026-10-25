@@ -1,17 +1,17 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><style>
 /* 引导图3 · 往来竖线树（静态复刻）
-   数据口径（2026-10-25 用户定）：与亲友「王建国」的往来；送礼多条、标签不限；
-   收礼条目用自家亲人的事件命名（李福田的寿宴、李明轩的婚礼）。
+   数据口径（2026-10-25 用户定）：与亲友「陆子昂」的往来，全图共 4 条；送礼用标签；
+   收礼条目不出现人名、用亲人称谓的事件命名（女儿的升学宴、儿子的婚礼）。
    顺序与真实页面一致：core/stats 按日期从早到晚。金额：条目无 ¥ 前缀、
    送出负号/收到正号、两位小数（formatAmount）；底部汇总带 ¥ 两位小数，
    差额 = |收到 − 送出|。版式按 pages/timeline 的 wxml/wxss（rpx 按 390/750 换算）。 */
 * { margin:0; padding:0; box-sizing:border-box; }
 body { width:390px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; color:#333; font-size:15px; }
 .nav { background:#FFFFFF; height:88px; position:relative; }
-.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
 .nav .back { position:absolute; left:14px; bottom:12px; font-size:20px; color:#333; }
 .nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
-.songti { font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.songti { font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; } /* 与真实页面同口径：全站黑体、无宋体（AA 清零后复刻同步） */
 .kindbar { display:flex; background:#CEA64F; color:#fff; font-size:16px; font-weight:600; }
 .kind-half { flex:1; text-align:center; padding:10px 0; }
 .tl { position:relative; background:#fff; padding:19px 0 6px; }
@@ -28,24 +28,21 @@ body { width:390px; background:#F6F6F6; font-family:-apple-system,"PingFang SC",
 .sumbar { background:#FDF6E3; text-align:center; padding:15px 0 19px; font-size:16px; line-height:2; color:#333; }
 .sumbar .dl { color:#E05353; font-weight:700; }
 </style></head><body>
-<div class="nav"><div class="back">‹</div><div class="title">往来记录 - 王建国</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
+<div class="nav"><div class="back">‹</div><div class="title">往来记录 - 陆子昂</div><div class="capsule"><span>•••</span><span style="border-left:1px solid rgba(0,0,0,.15);padding-left:10px">◉</span></div></div>
 
 <div class="kindbar"><div class="kind-half songti">送出</div><div class="kind-half songti">收到</div></div>
 
 <div class="tl">
   <div class="tl-line"></div>
-  <div class="trow"><div class="tcell left"><div class="tdate">2023-05-20</div><div class="treason songti">结婚<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">-2000.00</div></div><div class="tdot"></div><div class="tcell right"></div></div>
-  <div class="trow"><div class="tcell left"><div class="tdate">2024-02-10</div><div class="treason songti">压岁<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">-500.00</div></div><div class="tdot"></div><div class="tcell right"></div></div>
   <div class="trow"><div class="tcell left"><div class="tdate">2024-11-03</div><div class="treason songti">乔迁<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">-1000.00</div></div><div class="tdot"></div><div class="tcell right"></div></div>
-  <div class="trow"><div class="tcell left"><div class="tdate">2025-06-15</div><div class="treason songti">生子<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">-800.00</div></div><div class="tdot"></div><div class="tcell right"></div></div>
-  <div class="trow"><div class="tcell left"></div><div class="tdot"></div><div class="tcell right"><div class="tdate">2025-09-12</div><div class="treason songti">李福田的寿宴<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">+1000.00</div></div></div>
+  <div class="trow"><div class="tcell left"></div><div class="tdot"></div><div class="tcell right"><div class="tdate">2025-09-12</div><div class="treason songti">女儿的升学宴<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">+1000.00</div></div></div>
   <div class="trow"><div class="tcell left"><div class="tdate">2026-03-08</div><div class="treason songti">生日<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">-600.00</div></div><div class="tdot"></div><div class="tcell right"></div></div>
-  <div class="trow"><div class="tcell left"></div><div class="tdot"></div><div class="tcell right"><div class="tdate">2026-10-18</div><div class="treason songti">李明轩的婚礼<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">+2000.00</div></div></div>
+  <div class="trow"><div class="tcell left"></div><div class="tdot"></div><div class="tcell right"><div class="tdate">2026-10-18</div><div class="treason songti">儿子的婚礼<img class="tpen" src="../../../miniprogram/images/icons/pen.svg"></div><div class="tamt">+2000.00</div></div></div>
 </div>
 
 <div class="sumbar">
-  <div>送出：¥4900.00</div>
+  <div>送出：¥1600.00</div>
   <div>收到：¥3000.00</div>
-  <div><span class="dl">差额：</span>¥1900.00</div>
+  <div><span class="dl">差额：</span>¥1400.00</div>
 </div>
 </body></html>

@@ -1,18 +1,18 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><style>
 /* 引导图1 · 收礼记录列表（礼薄详情页静态复刻）
-   数据口径（2026-10-25 用户定）：真实感人名、不用编号式假名；单个礼薄 12 条、
-   礼薄「李明轩的婚礼」（自家亲人事件）日期 2026-10-18，全图只用这一个礼薄的结婚图案。
+   数据口径（2026-10-25 用户定）：现代人名（不用老一辈名字）、不用编号式假名；单个礼薄 12 条、
+   礼薄「儿子的婚礼」（亲人称谓、不出现人名）日期 2026-10-18，全图只用这一个礼薄的结婚图案。
    列表顺序与真实页面一致：core 按 createdAt 倒序，种子按名单顺序写入，
    故显示为名单逆序。金额：条目 +formatAmount 两位小数（红色），
    共计行 formatAmountInt 整数场景。版式按 pages/receive-detail 的 wxml/wxss。 */
 * { margin:0; padding:0; box-sizing:border-box; }
 body { width:390px; background:#F6F6F6; font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; color:#333; font-size:15px; }
 .nav { background:#F0E6D4; height:88px; position:relative; }
-.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.nav .title { position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:17px; font-weight:bold; font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
 .nav .back { position:absolute; left:14px; bottom:12px; font-size:20px; color:#333; }
 .nav .capsule { position:absolute; right:8px; bottom:8px; width:82px; height:30px; border:1px solid rgba(0,0,0,.15); border-radius:15px; background:rgba(255,255,255,.6); display:flex; align-items:center; justify-content:space-around; color:#333; font-size:13px; }
 .card { background:#FFF; border-radius:12px; margin:12px; }
-.songti { font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif; }
+.songti { font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; } /* 与真实页面同口径：全站黑体、无宋体（AA 清零后复刻同步） */
 .num { font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
 .pat-card { text-align:center; padding:24px 0 14px; }
 .pat-big { width:72px; height:72px; border-radius:50%; background:#F1E6D3; margin:0 auto; display:flex; align-items:center; justify-content:center; }
@@ -39,25 +39,25 @@ body { width:390px; background:#F6F6F6; font-family:-apple-system,"PingFang SC",
 <div class="card pat-card">
   <div class="pat-big"><img src="../../../miniprogram/icons/01-jiehun.svg"></div>
   <span class="pat-name songti">结婚</span>
-  <span class="event-name songti">李明轩的婚礼</span>
+  <span class="event-name songti">儿子的婚礼</span>
   <span class="event-date num">2026-10-18</span>
 </div>
 
 <div class="card summary"><span>共计：</span><span class="red num">12 笔 ￥14000 元</span></div>
 
 <div class="card">
-  <div class="rec-row"><div class="mid"><span class="nm songti">王建国</span><span class="sub">红包｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">刘秀英</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">陈志强</span><span class="sub">转账｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">赵雪梅</span><span class="sub">微信｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">周文斌</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">吴丽娟</span><span class="sub">红包｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">郑天明</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">孙桂兰</span><span class="sub">红包｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">徐国栋</span><span class="sub">转账｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">林小芳</span><span class="sub">微信｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">何建军</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
-  <div class="rec-row"><div class="mid"><span class="nm songti">马雪梅</span><span class="sub">支付宝｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">陈子轩</span><span class="sub">红包｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">林浩然</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">王欣怡</span><span class="sub">转账｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">刘子涵</span><span class="sub">微信｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">张雨泽</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">李思远</span><span class="sub">红包｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">周嘉怡</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">吴宇航</span><span class="sub">红包｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">郑梦瑶</span><span class="sub">转账｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">徐俊杰</span><span class="sub">微信｜<span class="num">2026-10-18</span></span></div><span class="amt num">+1000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">孙晓彤</span><span class="sub">现金｜<span class="num">2026-10-18</span></span></div><span class="amt num">+2000.00</span></div>
+  <div class="rec-row"><div class="mid"><span class="nm songti">马文博</span><span class="sub">支付宝｜<span class="num">2026-10-18</span></span></div><span class="amt num">+500.00</span></div>
 </div>
 
 <div class="fab-zone"><div class="fab">＋</div></div>

@@ -27,17 +27,24 @@ const read = (p) => fs.readFileSync(p, 'utf8');
   assert(wxss.includes('.act-edit { background: #FCA523; }'), '修改橙 #FCA523');
   assert(wxss.includes('.act-del { background: #F06D6A; }'), '删除红 #F06D6A');
 
-  const OLD = ['欧阳修远', '周十', '孙九', '陈八', '刘七', '赵六', '王五', '张三', '李四'];
+  const OLD = ['欧阳修远', '周十', '孙九', '陈八', '刘七', '赵六', '王五', '张三', '李四',
+    '王建国', '刘秀英', '陈志强', '孙桂兰', '李明轩', '李福田'];
   const recv = read('docs/screens/guide-assets-src/receive-records.html');
   const gifts = read('docs/screens/guide-assets-src/gifts.html');
   const tl = read('docs/screens/guide-assets-src/timeline.html');
   for (const [name, src] of [['收礼图', recv], ['送礼图', gifts], ['竖线树图', tl]]) {
     for (const o of OLD) assert(!src.includes(o), `${name}不得再有假名 ${o}`);
   }
-  assert(recv.includes('李明轩的婚礼') && recv.includes('王建国'), '收礼图为李明轩婚礼、真实人名');
-  assert((tl.match(/<div class="trow">/g) || []).length === 7, '竖线树 7 条');
-  assert(tl.includes('李福田的寿宴') && tl.includes('李明轩的婚礼'), '竖线树收礼用自家亲人事件命名');
-  const giftsLeft = (tl.match(/tcell left"><div class="tdate">/g) || []).length;
-  assert(giftsLeft >= 5, `竖线树送礼至少 5 条（实际 ${giftsLeft}）`);
+  assert(recv.includes('儿子的婚礼') && recv.includes('陈子轩'), '收礼图为儿子的婚礼、现代人名');
+  assert(gifts.includes('赵子墨'), '送礼图为另一批现代人名');
+  const namesOf = (src) => [...src.matchAll(/class="nm songti">([^<]+)</g)].map((m) => m[1]);
+  const recvNames = namesOf(recv); const giftNames = namesOf(gifts);
+  assert(recvNames.length === 12 && giftNames.length === 8, '收礼 12 人、送礼 8 人');
+  assert(recvNames.every((n) => !giftNames.includes(n)), '收礼与送礼人名不得重名（用户定）');
+  assert((tl.match(/<div class="trow">/g) || []).length === 4, '竖线树共 4 条（用户定 3-4 条）');
+  assert(tl.includes('女儿的升学宴') && tl.includes('儿子的婚礼'), '竖线树收礼用亲人称谓事件命名、不出现人名');
+  for (const src of [recv, gifts, tl]) {
+    assert(!/\.songti \{ font-family:"Songti/.test(src) && !src.includes('STSong'), '复刻图字体须与真实页面同口径（全站黑体、无宋体）');
+  }
   console.log('test-batch-ah OK');
 })();
