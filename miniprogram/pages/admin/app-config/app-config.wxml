@@ -54,6 +54,7 @@
     </view>
   </view>
   <button class="btn-primary" bindtap="onSaveSwitches" loading="{{saving}}">保存会员开关</button>
+  <view class="note">这一组管「会员功能本身开不开」：功能层面的启用与停用（比如横置礼单本这个功能，整体开还是关）。</view>
 
   <view class="group-h">会员专属功能</view>
   <view class="card">
@@ -63,7 +64,7 @@
     </view>
   </view>
   <button class="btn-primary" bindtap="onSaveFeatures" loading="{{saving}}">保存会员专属功能</button>
-  <view class="note">打开的功能只有会员能用；关掉后免费用户也能用。</view>
+  <view class="note">这一组管「哪些功能算会员专属」：打开的功能只有会员能用，关掉后免费用户也能用。和上面一组的区别：那组管功能本身开不开，这组管谁能用。（注：这两组目前只存设置，真正的会员拦截由各功能自身的会员判断执行。）</view>
 
   <view class="group-h">支付平台开关</view>
   <view class="card">

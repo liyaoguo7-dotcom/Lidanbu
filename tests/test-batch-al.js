@@ -97,3 +97,6 @@ assert.ok(swJs.includes('adminUpdateMemberOnlyFeatures'), 'AL-12 会员专属组
 assert.ok(swJs.includes('adminUpdatePaymentPlatforms'), 'AL-12 支付平台组保存应走平台开关接口');
 assert.ok(!swWxml.includes("section === 'platforms'") && !swWxml.includes("section === 'features'"), 'AL-12 旧平台/专属节应已并入开关中心');
 console.log('✓ AL批·开关中心断言全过');
+
+assert.ok(swWxml.includes('管「会员功能本身开不开」'), 'AL-12 会员开关组应有区别说明小字');
+assert.ok(swWxml.includes('管「哪些功能算会员专属」'), 'AL-12 会员专属组应有区别说明小字');
