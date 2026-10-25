@@ -1,20 +1,21 @@
 /* 收礼主页 */
 
-/* 小喇叭提示条（统一规格 2026-10-22 任务AB 第 8 项：淡黄底、常驻不闪烁；文字过长
+/* 小喇叭提示条（2026-10-25 AH批按用户视频复刻：通栏长条、无圆角、图标20px、字14px；
+   淡黄底、常驻不闪烁沿用 2026-10-22 任务AB 第 8 项；文字过长
    缓慢向左滚动（轨道样式见 app.wxss .horn-marquee/.horn-track）；× 关闭后本次
    打开期间不再显示，状态只存内存） */
 .horn {
   display: flex; align-items: center;
-  background: #FFF8E1; border-radius: 8px;
-  margin: 12px 12px 0; padding: 8px 10px;
+  background: #FFF8E1;
+  margin: 0; padding: 10px 12px;
 }
-.horn-icon { width: 14px; height: 14px; margin-right: 6px; flex: none; }
+.horn-icon { width: 20px; height: 20px; margin-right: 8px; flex: none; }
 .horn-text {
-  font-size: 12px; color: #E8912D; line-height: 1.5;
+  font-size: 14px; color: #E8912D; line-height: 1.5;
 }
 .horn-ellipsis { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .horn-nowrap { white-space: nowrap; }
-.horn-close { color: #E8912D; font-size: 18px; padding: 0 2px 0 8px; flex: none; }
+.horn-close { color: #E8912D; font-size: 20px; padding: 0 2px 0 8px; flex: none; }
 
 /* 共计行（淡色小字，金额红） */
 .total-line { font-size: 12px; color: #C2C2C2; padding: 10px 16px 0; }
@@ -32,11 +33,11 @@
   display: flex; z-index: 0;
 }
 .act {
-  width: 75px; display: flex; align-items: center; justify-content: center;
+  width: 56px; display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 15px;
 }
-.act-edit { background: #C2C2C2; }
-.act-del { background: #F0575A; }
+.act-edit { background: #FCA523; }
+.act-del { background: #F06D6A; }
 .event-row {
   position: relative; z-index: 1; background: #fff;
   display: flex; align-items: center;

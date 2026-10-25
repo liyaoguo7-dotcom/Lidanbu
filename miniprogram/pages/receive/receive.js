@@ -13,7 +13,7 @@ const { hornMarquee } = require('../../services/horn-marquee.js');
 const { tagIconPath } = require('../../config/tag-icons.js');
 const { formatAmount, formatAmountInt } = require('../../core/format.js');
 
-const SWIPE_W = 150; // 修改75 + 删除75
+const SWIPE_W = 112; // AH批按视频复刻：修改56 + 删除56（原各75）
 
 Page({
   data: {
@@ -43,7 +43,7 @@ Page({
     this._membershipP = membershipP;
     // 小喇叭关闭状态只存内存（horn-state）：本次打开期间不再显示，下次冷启动恢复
     this.setData({ showHorn: !hornState.isDismissed('receive') });
-    const hm = hornMarquee(this.data.hornText);
+    const hm = hornMarquee(this.data.hornText, { fontPx: 14, avail: 284 }); // AH批：喇叭字 14px、通栏可用宽
     this.setData({ hornRun: hm.run, hornDur: hm.dur });
     await this.reload();
     await membershipP;
