@@ -41,8 +41,8 @@ const read = (p) => fs.readFileSync(p, 'utf8');
   const recvNames = namesOf(recv); const giftNames = namesOf(gifts);
   assert(recvNames.length === 12 && giftNames.length === 8, '收礼 12 人、送礼 8 人');
   assert(recvNames.every((n) => !giftNames.includes(n)), '收礼与送礼人名不得重名（用户定）');
-  assert((tl.match(/<div class="trow">/g) || []).length === 4, '竖线树共 4 条（用户定 3-4 条）');
-  assert(tl.includes('女儿的升学宴') && tl.includes('儿子的婚礼'), '竖线树收礼用亲人称谓事件命名、不出现人名');
+  assert((tl.match(/<div class="trow">/g) || []).length === 3, '竖线树共 3 条（用户定 3-4 条、去掉儿子的婚礼）');
+  assert(tl.includes('女儿的升学宴') && tl.includes('周小梅'), '竖线树收礼用亲人称谓事件命名、联系人周小梅');
   for (const src of [recv, gifts, tl]) {
     assert(!/\.songti \{ font-family:"Songti/.test(src) && !src.includes('STSong'), '复刻图字体须与真实页面同口径（全站黑体、无宋体）');
   }
