@@ -88,10 +88,10 @@ const AppConfig = {
    * onShelf=false 即"一键下架"：购买页不显示、下单被拒（与不存在同口径）。
    */
   pricing: [
-    { id: 'month', name: '月卡', priceFen: 1000, days: 30, grantPoints: 10, recommended: false, onShelf: true },
-    { id: 'halfYear', name: '半年卡', priceFen: 4900, days: 180, grantPoints: 50, recommended: false, onShelf: true },
-    { id: 'year', name: '年卡', priceFen: 7000, days: 365, grantPoints: 100, recommended: true, onShelf: true },
-    { id: 'decade', name: '十年卡', priceFen: 19800, days: 3650, grantPoints: 500, recommended: false, onShelf: true },
+    { id: 'month', name: '月卡', priceFen: 1000, days: 30, grantPoints: 10, quota: { receiveEvents: 10, recordsPerEvent: 200, giftRecords: 200, contacts: 200 }, recommended: false, onShelf: true },
+    { id: 'halfYear', name: '半年卡', priceFen: 4900, days: 180, grantPoints: 50, quota: { receiveEvents: 20, recordsPerEvent: 350, giftRecords: 350, contacts: 350 }, recommended: false, onShelf: true },
+    { id: 'year', name: '年卡', priceFen: 7000, days: 365, grantPoints: 100, quota: { receiveEvents: 30, recordsPerEvent: 500, giftRecords: 500, contacts: 500 }, recommended: true, onShelf: true },
+    { id: 'decade', name: '十年卡', priceFen: 19800, days: 3650, grantPoints: 500, quota: { receiveEvents: 50, recordsPerEvent: 1000, giftRecords: 1000, contacts: 1000 }, recommended: false, onShelf: true },
   ],
 
   /** 积分规则（用户 2026-10-21 确认口径；数字全放配置，老板平台可覆盖 appConfig 文档 points 段）

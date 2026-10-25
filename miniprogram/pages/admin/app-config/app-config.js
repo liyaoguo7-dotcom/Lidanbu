@@ -63,10 +63,19 @@ Page({
     this.setData({ title: meta.title, section });
     try {
       const cfg = await ds.adminGetConfig();
-      const planView = (p) => ({
-        id: p.id, name: p.name, yuan: formatAmount(p.priceFen), days: String(p.days),
-        grantPoints: String(p.grantPoints || 0), recommended: !!p.recommended, onShelf: p.onShelf !== false,
-      });
+      const planView = (p) => {
+        // 档位额度（2026-10-25）：落库档位没配额度时回落静态同 id 档位的额度展示，避免打开即空白保存被拦
+        const sq = ((AppConfig.pricing || []).find((x) => x.id === p.id) || {}).quota || {};
+        const q = p.quota || sq;
+        return {
+          id: p.id, name: p.name, yuan: formatAmount(p.priceFen), days: String(p.days),
+          grantPoints: String(p.grantPoints || 0), recommended: !!p.recommended, onShelf: p.onShelf !== false,
+          qEvents: String(q.receiveEvents !== undefined ? q.receiveEvents : ''),
+          qPerEvent: String(q.recordsPerEvent !== undefined ? q.recordsPerEvent : ''),
+          qGifts: String(q.giftRecords !== undefined ? q.giftRecords : ''),
+          qContacts: String(q.contacts !== undefined ? q.contacts : ''),
+        };
+      };
       let plans = (cfg.pricing || []).map(planView);
       let pricingFromStatic = false;
       if (plans.length === 0) {
@@ -120,6 +129,7 @@ Page({
     const plans = [...this.data.plans, {
       id: `plan${Date.now().toString(36)}`, name: '新档位', yuan: '1.00', days: '30',
       grantPoints: '0', recommended: false, onShelf: true,
+      qEvents: '30', qPerEvent: '500', qGifts: '500', qContacts: '500',
     }];
     this.setData({ plans });
   },
@@ -203,9 +213,20 @@ Page({
         if (!Number.isInteger(days) || days < 1) throw new Error(`第 ${i + 1} 个档位天数不正确`);
         const grantPoints = Number(p.grantPoints);
         if (!Number.isInteger(grantPoints) || grantPoints < 0) throw new Error(`第 ${i + 1} 个档位赠送积分不正确`);
+        const qn = (v, label) => {
+          const n = Number(v);
+          if (!Number.isInteger(n) || n < 0) throw new Error(`第 ${i + 1} 个档位${label}不正确`);
+          return n;
+        };
         return {
           id: p.id, name: p.name.trim(), priceFen, days, grantPoints,
           recommended: !!p.recommended, onShelf: p.onShelf !== false,
+          quota: {
+            receiveEvents: qn(p.qEvents, '额度·礼薄数'),
+            recordsPerEvent: qn(p.qPerEvent, '额度·每礼薄条数'),
+            giftRecords: qn(p.qGifts, '额度·送礼条数'),
+            contacts: qn(p.qContacts, '额度·联系人数'),
+          },
         };
       });
     } catch (e) {

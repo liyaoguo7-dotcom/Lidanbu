@@ -162,7 +162,8 @@ async function _batchCapacity(db, ownerId, kind, eventId) {
   if (!user) throw new Error('账本主人不存在');
   const successfulInvites = await quota.countSuccessfulInvites(db, ownerId);
   const settings = await quota.resolveInviteSettings(db, AppConfig);
-  const q = quota.getEffectiveQuota(user, AppConfig, Date.now(), { successfulInvites, settings });
+  const planQuota = await quota.resolveMemberBaseQuota(db, user, AppConfig);
+  const q = quota.getEffectiveQuota(user, AppConfig, Date.now(), { successfulInvites, settings, planQuota });
   if (kind === 'gift') {
     const used = await db.collection(COLLECTIONS.GiftRecord).count({ ownerId });
     return { capacity: Math.max(0, q.giftRecords - used), quotaReason: 'quota-exceeded:gift' };

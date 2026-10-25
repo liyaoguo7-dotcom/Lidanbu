@@ -91,16 +91,32 @@ test('三次提醒时间点', async () => {
   assert.eq(pts[1], expireAt, '第2个应为到期当天');
 });
 
-test('会员额度新口径：有效会员取安全上限（不设业务额度）', async () => {
+test('会员额度口径（2026-10-25 按档位分，覆盖 2026-10-21 不设业务额度旧口径）', async () => {
   const cfg = core.config;
-  const member = {
+  // 无档位会员（后台手动开通）：全局会员额度兜底
+  const noPlan = {
     _id: 'u', membership: { status: 'member', expireAt: Date.now() + 30 * 86400e3, graceUntil: null },
   };
-  const q = core.quota.getEffectiveQuota(member);
-  assert.eq(q.receiveEvents, cfg.safetyCaps.books, '礼薄数=安全上限');
-  assert.eq(q.recordsPerEvent, cfg.safetyCaps.perBook, '每薄笔数=安全上限（一本 5000 笔）');
-  assert.eq(q.giftRecords, cfg.safetyCaps.giftRecords, '送礼=安全上限');
-  assert.eq(q.contacts, cfg.safetyCaps.contacts, '亲友=安全上限');
+  const q0 = core.quota.getEffectiveQuota(noPlan);
+  assert.eq(q0.receiveEvents, cfg.membership.quota.receiveEvents, '无档位：礼薄=全局会员额度');
+  assert.eq(q0.recordsPerEvent, cfg.membership.quota.recordsPerEvent, '无档位：每薄=全局会员额度');
+  assert.eq(q0.giftRecords, cfg.membership.quota.giftRecords, '无档位：送礼=全局会员额度');
+  assert.eq(q0.contacts, cfg.membership.quota.contacts, '无档位：亲友=全局会员额度');
+  // 有档位会员（月卡）：该档位额度
+  const month = {
+    _id: 'u', membership: { status: 'member', expireAt: Date.now() + 30 * 86400e3, graceUntil: null, planId: 'month' },
+  };
+  const q1 = core.quota.getEffectiveQuota(month);
+  assert.eq(q1.receiveEvents, 10, '月卡：礼薄 10');
+  assert.eq(q1.recordsPerEvent, 200, '月卡：每薄 200');
+  assert.eq(q1.giftRecords, 200, '月卡：送礼 200');
+  assert.eq(q1.contacts, 200, '月卡：亲友 200');
+  // 档位额度超过安全上限时被封顶（防滥用上限仍是天花板）
+  const bigCfg = JSON.parse(JSON.stringify(cfg));
+  bigCfg.pricing = [{ id: 'huge', quota: { receiveEvents: 999999, recordsPerEvent: 200, giftRecords: 200, contacts: 200 } }];
+  const huge = { _id: 'u', membership: { status: 'member', expireAt: Date.now() + 86400e3, planId: 'huge' } };
+  const q2 = core.quota.getEffectiveQuota(huge, bigCfg);
+  assert.eq(q2.receiveEvents, cfg.safetyCaps.books, '档位额度超安全上限时封顶');
 });
 
 test('邀请奖励额度与会员额度的叠加：免费叠池、会员封顶、到期回落免费+池', async () => {
@@ -114,12 +130,12 @@ test('邀请奖励额度与会员额度的叠加：免费叠池、会员封顶�
   assert.eq(free.receivePool, 20, '免费：邀请池生效 +20');
   assert.eq(free.giftRecords, 60, '免费：送礼 50+10');
   assert.eq(free.contacts, 50, '免费：亲友仍为 50');
-  const memberUser = { _id: 'u', membership: { status: 'member', expireAt: nowTs + 30 * 86400e3, graceUntil: null } };
+  const memberUser = { _id: 'u', membership: { status: 'member', expireAt: nowTs + 30 * 86400e3, graceUntil: null, planId: 'year' } };
   const mem = core.quota.getEffectiveQuota(memberUser, cfg, nowTs, opts);
-  assert.eq(mem.receiveEvents, cfg.safetyCaps.books, '会员：礼薄封顶安全上限');
-  assert.eq(mem.recordsPerEvent, cfg.safetyCaps.perBook, '会员：每薄封顶安全上限');
-  assert.eq(mem.giftRecords, cfg.safetyCaps.giftRecords, '会员：送礼封顶安全上限');
-  assert.eq(mem.contacts, cfg.safetyCaps.contacts, '会员：亲友封顶安全上限');
+  assert.eq(mem.receiveEvents, 30, '会员（年卡）：礼薄走年卡档位额度 30');
+  assert.eq(mem.recordsPerEvent, 500, '会员（年卡）：每薄 500');
+  assert.eq(mem.giftRecords, 500, '会员（年卡）：送礼 500');
+  assert.eq(mem.contacts, 500, '会员（年卡）：亲友 500');
   assert.eq(mem.receivePool, 20, '会员：邀请池保留叠加口径');
   const expiredUser = { _id: 'u', membership: { status: 'member', expireAt: nowTs - 40 * 86400e3, graceUntil: null } };
   assert.eq(core.quota.getMembershipState(expiredUser, cfg, nowTs), 'expired', '前提：已过缓冲期');

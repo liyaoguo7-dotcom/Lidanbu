@@ -3,7 +3,10 @@
  *
  * 核心公式（集中计算，勿散落各处）：
  *   非会员（含缓冲期/已过期） = 免费额度 + 邀请奖励额度
- *   有效会员（2026-10-21 新口径） = 防滥用安全上限 safetyCaps（不设业务额度）
+ *   有效会员（2026-10-25 用户改定，覆盖 2026-10-21「不设业务额度」旧口径）：
+ *     有档位（买套餐，membership.planId 有值） = 该档位额度（pricing[].quota）
+ *     无档位（后台手动开通等） = 全局会员额度 membership.quota 兜底
+ *     两者各项再受防滥用安全上限 safetyCaps 封顶；收礼池仍只来自邀请奖励
  *
  * 邀请奖励（用户 2026-10-20 决定正式开启，规则见 core/invite-reward.js）：
  * - 成功邀请一人：收礼额度池 +10（用户级，所有礼薄合计；不增加每礼薄上限，
@@ -91,6 +94,63 @@ function getInviteRewardQuota(userId, successfulInvites = 0, settings = null) {
   };
 }
 
+const PLAN_QUOTA_FIELDS = ['receiveEvents', 'recordsPerEvent', 'giftRecords', 'contacts'];
+
+/**
+ * 档位额度消毒：四项齐全且均为 0~1000000 整数才认，返回干净副本；
+ * 缺项/非法返回 null（调用方走兜底）。静态配置与老板平台落库共用此口径。
+ */
+function sanitizePlanQuota(q) {
+  if (!q || typeof q !== 'object' || Array.isArray(q)) return null;
+  const out = {};
+  for (const k of PLAN_QUOTA_FIELDS) {
+    const v = q[k];
+    if (!Number.isInteger(v) || v < 0 || v > 1000000) return null;
+    out[k] = v;
+  }
+  return out;
+}
+
+/** 同步口径：从配置对象的 pricing 按用户所持档位取额度（无档位/无额度返回 null） */
+function planQuotaFromConfig(user, config = AppConfig) {
+  const planId = user && user.membership && user.membership.planId;
+  if (!planId) return null;
+  const plans = (config && config.pricing) || [];
+  const plan = plans.find((p) => p && p.id === planId);
+  return plan ? sanitizePlanQuota(plan.quota) : null;
+}
+
+/**
+ * 异步口径（服务端检查路径用）：生效档位额度，老板平台落库优先。
+ * - planId 先看 membership.planId；存量会员没有时回查其最近一笔已支付的
+ *   套餐订单推导（kind:'plan'、status:'paid'、createdAt 最大）。
+ * - 档位额度取不到（无档位/档位没配额度）→ 全局会员额度兜底：
+ *   appConfig 文档 memberQuota 覆盖静态 membership.quota。
+ * 非有效会员返回 null（不走会员口径）。
+ */
+async function resolveMemberBaseQuota(db, user, config = AppConfig, now = Date.now()) {
+  if (!db || !user || !isMemberActive(user, now)) return null;
+  if (typeof config === 'string') config = AppConfig; // api 分发身份串守卫（同 resolvePricing 口径）
+  const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+  let planId = (user.membership && user.membership.planId) || null;
+  if (!planId) {
+    const orders = await db.collection(COLLECTIONS.Order).find(
+      { userId: user._id, kind: 'plan', status: 'paid' },
+      { sort: { createdAt: -1 }, limit: 1 }
+    );
+    if (orders && orders[0] && orders[0].planId) planId = orders[0].planId;
+  }
+  if (planId) {
+    const plans = (doc && Array.isArray(doc.pricing) && doc.pricing.length > 0)
+      ? doc.pricing : ((config && config.pricing) || []);
+    const plan = plans.find((p) => p && p.id === planId);
+    const pq = plan ? sanitizePlanQuota(plan.quota) : null;
+    if (pq) return pq;
+  }
+  const mq = { ...((config && config.membership && config.membership.quota) || {}), ...((doc && doc.memberQuota) || {}) };
+  return sanitizePlanQuota(mq);
+}
+
 /** 会员是否在有效期内 */
 function isMemberActive(user, now = Date.now()) {
   const m = user.membership;
@@ -108,18 +168,23 @@ function getMemberQuota(user, config = AppConfig, now = Date.now()) {
 }
 
 /**
- * 某用户当前可用额度（2026-10-21 会员新口径，用户已确认）：
- * - 有效会员（状态机 member）：不设业务额度，四项一律取防滥用安全上限
- *   config.safetyCaps（礼薄 1000 / 每薄 5000 / 送礼 10000 / 亲友 5000，
- *   数字放配置、界面不展示、用户平时碰不到）；收礼池保留邀请奖励部分
- *   （每薄已是安全上限，池实际不会被消耗，保留叠加口径便于对账）。
+ * 某用户当前可用额度（2026-10-25 用户改定：会员额度按档位分）：
+ * - 有效会员（状态机 member）：按所持档位额度（pricing[].quota，老板平台
+ *   逐档可改）；无档位（后台手动开通、或存量推导不出）走全局会员额度
+ *   membership.quota 兜底；四项再受防滥用安全上限 config.safetyCaps
+ *   （礼薄 1000 / 每薄 5000 / 送礼 10000 / 亲友 5000，界面不展示）封顶。
+ *   收礼池仍保留邀请奖励部分（叠加口径便于对账）。
+ *   异步检查路径（checkAddQuota）会先经 resolveMemberBaseQuota 按落库
+ *   配置解析后经 inviteOpts.planQuota 传入；同步调用方（页面展示）按
+ *   membership.planId＋静态 pricing 解析，结果口径一致（落库改价时
+ *   展示可能短暂滞后于拦截口径，拦截永远以服务端解析为准）。
  * - 非会员（含 grace 缓冲期与 expired）：免费额度 + 邀请奖励额度，
  *   与既有到期规则一致——到期回落免费口径、超额记录只读、邀请池继续生效。
  * recordsPerEvent：每礼薄上限（邀请不增加此项）
  * receivePool：用户级收礼额度池（邀请奖励来源）
- * @param {object} [inviteOpts] {successfulInvites, settings}：邀请侧入参；
- *   缺省成功邀请数按 0 计（同步调用方无 db 时用；带 db 的检查路径
- *   checkAddQuota 会从发放记录实数并传入，老板平台覆盖的设置经 settings 传入）
+ * @param {object} [inviteOpts] {successfulInvites, settings, planQuota}：
+ *   邀请侧入参；缺省成功邀请数按 0 计（同步调用方无 db 时用；带 db 的
+ *   检查路径 checkAddQuota 会从发放记录实数并传入）
  */
 function getEffectiveQuota(user, config = AppConfig, now = Date.now(), inviteOpts = {}) {
   const free = config.freeQuota;
@@ -130,12 +195,16 @@ function getEffectiveQuota(user, config = AppConfig, now = Date.now(), inviteOpt
   );
   if (user && isMemberActive(user, now)) {
     const caps = config.safetyCaps || { books: 1000, perBook: 5000, giftRecords: 10000, contacts: 5000 };
+    const base = inviteOpts.planQuota !== undefined && inviteOpts.planQuota !== null
+      ? inviteOpts.planQuota
+      : (planQuotaFromConfig(user, config) || sanitizePlanQuota((config.membership || {}).quota) || {});
+    const cap = (v, c) => Math.min(Number.isInteger(v) ? v : 0, c);
     return {
-      receiveEvents: caps.books,
-      recordsPerEvent: caps.perBook,
+      receiveEvents: cap(base.receiveEvents, caps.books),
+      recordsPerEvent: cap(base.recordsPerEvent, caps.perBook),
       receivePool: invite.receivePool || 0,
-      giftRecords: caps.giftRecords,
-      contacts: caps.contacts,
+      giftRecords: cap(base.giftRecords, caps.giftRecords),
+      contacts: cap(base.contacts, caps.contacts),
     };
   }
   const member = getMemberQuota(user, config, now); // 非有效会员恒为 0（保留旧公式衔接）
@@ -217,7 +286,9 @@ async function checkAddQuota(db, user, kind, config = AppConfig, eventId, now = 
   // 邀请奖励实数：从发放记录计成功邀请数，并读老板平台覆盖后的生效设置
   const successfulInvites = await countSuccessfulInvites(db, user._id);
   const settings = await resolveInviteSettings(db, config);
-  const quota = getEffectiveQuota(user, config, now, { successfulInvites, settings });
+  // 会员档位额度（落库优先，含存量订单推导与无档位兜底）
+  const planQuota = await resolveMemberBaseQuota(db, user, config, now);
+  const quota = getEffectiveQuota(user, config, now, { successfulInvites, settings, planQuota });
   if (kind === 'receiveRecord') {
     return checkAddReceiveRecord(db, user._id, eventId, quota);
   }
@@ -270,6 +341,9 @@ module.exports = {
   countSuccessfulInvites,
   isMemberActive,
   getMemberQuota,
+  sanitizePlanQuota,
+  planQuotaFromConfig,
+  resolveMemberBaseQuota,
   getEffectiveQuota,
   getMembershipState,
   getReminderSchedule,

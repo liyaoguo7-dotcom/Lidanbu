@@ -30,6 +30,8 @@ require('./test-landscape');
 require('./test-landscape-route');
 require('./test-font-source');
 require('./test-invite-reward');
+require('./test-plan-quota');
+require('./test-invite-config-e2e');
 require('./test-demo-seed');
 require('./test-import-points');
 require('./test-payment');

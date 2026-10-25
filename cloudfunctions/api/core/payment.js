@@ -73,7 +73,7 @@ function genOutTradeNo(nowTs) {
 
 /** 档位字段归一化：新字段缺省兜底（存量档位无 grantPoints/recommended/onShelf 时按 0/false/true） */
 function normalizePlan(p) {
-  return {
+  const out = {
     id: p.id,
     name: p.name,
     priceFen: p.priceFen,
@@ -82,6 +82,10 @@ function normalizePlan(p) {
     recommended: !!p.recommended,
     onShelf: p.onShelf !== false, // 只有显式 false 才算下架（一键下架口径）
   };
+  // 档位额度（2026-10-25 会员额度按档位分）：合法才带出，core/quota 据此拦截
+  const q = quota.sanitizePlanQuota(p.quota);
+  if (q) out.quota = q;
+  return out;
 }
 
 /**
@@ -290,7 +294,9 @@ async function handleNotify(db, payload, opts = {}) {
   const newExpireAt = base + order.days * DAY;
   await db.collection(COLLECTIONS.User).update(
     { _id: user._id },
-    { membership: { ...(user.membership || {}), status: 'member', expireAt: newExpireAt, graceUntil: null } }
+    // planId 记所持档位（2026-10-25）：额度按档位解析靠它；退款回收时只调
+    // expireAt 不动 planId（membership 展开保留）
+    { membership: { ...(user.membership || {}), status: 'member', expireAt: newExpireAt, graceUntil: null, planId: order.planId } }
   );
   await col.update({ _id: order._id }, {
     status: 'paid', paidAt: nowTs,

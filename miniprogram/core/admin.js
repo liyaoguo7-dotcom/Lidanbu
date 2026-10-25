@@ -154,7 +154,8 @@ async function quotaUsage(db, actorId, maskedUserId) {
 const user = await findUserByMask(db, maskedUserId);
 const successfulInvites = await quota.countSuccessfulInvites(db, user._id);
 const inviteSettings = await quota.resolveInviteSettings(db);
-const q = quota.getEffectiveQuota(user, StaticConfig, Date.now(), { successfulInvites, settings: inviteSettings });
+const planQuota = await quota.resolveMemberBaseQuota(db, user, StaticConfig);
+const q = quota.getEffectiveQuota(user, StaticConfig, Date.now(), { successfulInvites, settings: inviteSettings, planQuota });
 const usedEvents = await countCol(db, 'ReceiveEvent', { ownerId: user._id});
 const usedGifts = await countCol(db, 'GiftRecord', { ownerId: user._id});
 const usedContacts = await countCol(db, 'Contact', { ownerId: user._id});
@@ -376,7 +377,15 @@ if (p.onShelf!== undefined) {
 if (typeof p.onShelf!== 'boolean') throw badConfig('上架开关必须为开/关');
 onShelf = p.onShelf;
 }
-return { id, name, priceFen: p.priceFen, days: p.days, grantPoints, recommended, onShelf};
+const out = { id, name, priceFen: p.priceFen, days: p.days, grantPoints, recommended, onShelf};
+// 档位额度（2026-10-25 会员额度按档位分）：给了就必须四项齐全合法
+// （与 quota.sanitizePlanQuota 的全有全无口径一致，避免半份配置静默兜底）
+if (p.quota!== undefined) {
+checkQuotaPatch(p.quota, `档位${id}额度`);
+if (Object.keys(p.quota).length!== QUOTA_KEYS.length) throw badConfig(`档位${id}额度必须四项齐全`);
+out.quota = { ...p.quota};
+}
+return out;
 });
 const updatedAt = await writeConfigPatch(db, actorId, { pricing: clean}, `修改会员价格档位：共${clean.length}个档位`);
 return { pricing: clean, updatedAt};
