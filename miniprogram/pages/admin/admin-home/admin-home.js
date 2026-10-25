@@ -29,7 +29,6 @@ Page({
         { no: '12', title: '用户额度使用情况', desc: '只看数量与剩余', target: 'page', page: 'quota-usage' },
         { no: '13', title: '拍照导入用量监控', target: 'page', page: 'photo-usage' },
         { no: '14', title: '家庭共享概况', desc: '每人邀请了几位家人，只看数量', target: 'page', page: 'share-overview' },
-        { no: '15', title: '示例截图管理', desc: '素材清单', target: 'page', page: 'screenshots' },
       ] },
     ],
   },

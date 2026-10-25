@@ -33,10 +33,10 @@ const homeWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/admin-
 const grpNames = [...homeJs.matchAll(/\{ name: '([^']+)', items:/g)].map((m) => m[1]);
 assert.deepStrictEqual(grpNames, ['会员与收入', '用户与安全', '运营设置', '只看数据'], 'AL-6 四组顺序应为会员与收入→用户与安全→运营设置→只看数据');
 const titles = [...homeJs.matchAll(/title: '([^']+)'/g)].map((m) => m[1]);
-assert.strictEqual(titles.length, 15, 'AL-7 入口总数为15（支付平台与会员专属并入功能开关后）');
+assert.strictEqual(titles.length, 14, '入口总数为14（AN批删除示例截图管理后）');
 assert.deepStrictEqual(titles.slice(0, 4), ['会员管理', '会员订单与收入', '额度与会员价格设置', '会员与积分配置'], 'AL-7 会员与钱相关占首组');
 assert.deepStrictEqual(titles.slice(7, 10), ['功能开关', '邀请奖励', '用户反馈列表'], 'AL-7 运营设置组含开关中心与合并后的邀请奖励');
-assert.deepStrictEqual(titles.slice(10), ['数据概览', '用户额度使用情况', '拍照导入用量监控', '家庭共享概况', '示例截图管理'], 'AL-7 只看数据五项垫底');
+assert.deepStrictEqual(titles.slice(10), ['数据概览', '用户额度使用情况', '拍照导入用量监控', '家庭共享概况'], 'AL-7 只看数据四项垫底（AN批删示例截图管理）');
 assert.ok(titles.includes('邀请奖励') && !titles.includes('邀请奖励数据') && !titles.includes('邀请奖励设置'), 'AL-8 邀请设置与数据已合并为一个入口');
 const invWxml = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/invite/invite.wxml', 'utf8');
 assert.ok(invWxml.includes('bindtap="onSaveInvite"'), 'AL-8 邀请页应含设置保存');

@@ -33,7 +33,6 @@
     "pages/admin/photo-usage/photo-usage",
     "pages/admin/feedback/feedback",
     "pages/admin/orders/orders",
-    "pages/admin/screenshots/screenshots",
     "pages/admin/admins/admins",
     "pages/admin/abuse/abuse",
     "pages/admin/todo/todo",

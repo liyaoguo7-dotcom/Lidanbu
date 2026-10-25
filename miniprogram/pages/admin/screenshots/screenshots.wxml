@@ -1,9 +1,0 @@
-<view class="warn-banner">静态清单：示例页素材已随产品上线；替换素材走代码仓库更新，本页不提供上传。</view>
-<view class="card" wx:for="{{groups}}" wx:key="title">
-  <view class="form-row"><text class="form-val" style="font-weight:bold">{{item.title}}</text></view>
-  <view class="form-row" wx:for="{{item.rows}}" wx:key="name">
-    <text class="form-label" style="width:130px">{{item.name}}</text>
-    <view class="form-val"><text class="pill">{{item.status}}</text><view class="note">{{item.note}}</view></view>
-  </view>
-</view>
-<view class="note">空状态「点击查看示例」进入的是假数据真实页面（可点、可滑），不是图片占位。</view>
