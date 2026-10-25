@@ -58,7 +58,7 @@ test('任务AA-金额底锚：任意字数末字字形盒下缘=金额区高', (
 test('任务AA-三段落位：book 模板三段绝对定位（姓名顶/中段正中/金额底）', () => {
   const wxml = readMp('pages/landscape/book.wxml');
   const wxss = readMp('pages/landscape/book.wxss');
-  assert(wxml.includes('zone zone-name') && wxml.includes('top:{{spec.innerPad}}px;height:'), '姓名区钉列顶');
+  assert(wxml.includes('zone zone-name') && wxml.includes('top:{{spec.nameTop}}px;height:'), '姓名区钉列顶');
   assert(wxml.includes('zone zone-mid'), '中段区存在');
   assert(wxml.includes('zone zone-amt') && wxml.includes('bottom:{{spec.amtBottomPad}}px;height:'), '金额区钉列底（下偏补偿）');
   assert(wxss.includes('.zone { position: absolute;'), '三段绝对定位');

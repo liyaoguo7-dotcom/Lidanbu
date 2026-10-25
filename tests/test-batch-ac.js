@@ -119,10 +119,12 @@ test('任务AE-8字体候选序：云链接→分包；CLOUD_FONT_BASE 已填真
   assert.eq(CLOUD_FONT_BASE, 'cloud://cloud1-d3gd7fjdx0d217df0.636c-cloud1-d3gd7fjdx0d217df0-1514234749/fonts/', 'CLOUD_FONT_BASE 为用户 2026-10-23 上传云存储 fonts/ 后的真实前缀');
   const defSrc = createFontSource({ storage: { get: () => '', set: () => {} } });
   const defCands = defSrc.resolveCandidates(LC.fontById('lxgw'));
-  assert.eq(defCands.map((c) => c.kind).join(','), 'cloud-url,cloud-url,subpackage', '候选：云端 TTF→woff2→分包兜底（2026-10-25 TTF 优先，本地缓存候选已废除）');
-  assert.eq(defCands[0].needsTempUrl, true, 'cloud:// 候选须先换临时链接');
+  assert.eq(defCands.map((c) => c.kind).join(','), 'cloud-data,cloud-url,cloud-url,subpackage', '候选：下载转 Data URL（TTF）→临时链接 TTF→woff2→分包兜底（2026-10-25 v6 路线）');
+  assert.eq(defCands[0].needsDataUrl, true, '第一候选走下载转 Data URL');
   assert(defCands[0].fileID.endsWith('/fonts/lxgw-wenkai.ttf'), '第一候选 fileID 指向云存储 TTF');
-  assert(defCands[1].fileID.endsWith('/fonts/lxgw-wenkai.woff2'), '第二候选 fileID 指向云存储 woff2');
+  assert.eq(defCands[1].needsTempUrl, true, '临时链接候选须先换链');
+  assert(defCands[1].fileID.endsWith('/fonts/lxgw-wenkai.ttf'), '第二候选 fileID 指向云存储 TTF');
+  assert(defCands[2].fileID.endsWith('/fonts/lxgw-wenkai.woff2'), '第三候选 fileID 指向云存储 woff2');
 });
 
 test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileURL 换 https 链接（不落本地文件）', async () => {
@@ -135,12 +137,11 @@ test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileU
         askedFor = o.fileList[0];
         o.success({ fileList: [{ fileID: o.fileList[0], tempFileURL: 'https://tmp.example.com/lxgw.woff2', status: 0 }] });
       },
-      downloadFile: () => { throw new Error('AE 后不得再走 downloadFile 本地路线'); },
     },
     getStorageSync: () => '', setStorageSync: () => {},
   };
   const src = createFontSource({ wxApi, storage: st, cloudBase: 'cloud://env-x.bucket-y/fonts/' });
-  const cand = src.resolveCandidates(LC.fontById('lxgw'))[0];
+  const cand = src.resolveCandidates(LC.fontById('lxgw')).find((c) => c.needsTempUrl);
   const source = await src.materialize(cand, LC.fontById('lxgw'));
   assert.eq(askedFor, 'cloud://env-x.bucket-y/fonts/lxgw-wenkai.ttf', '换链入参为 TTF 的 fileID（第一候选）');
   assert.eq(source, 'url("https://tmp.example.com/lxgw.woff2")', 'materialize 返回临时 https 来源串（loadFontFace 官方支持的网络形态）');
@@ -148,10 +149,10 @@ test('任务AE-8字体：book.wxss 无 @font-face；materialize 经 getTempFileU
 });
 
 // ---------- 9 横置再收紧 ----------
-test('任务AC-9横置（任务AF 更新 GAP/区高）：COL_W 50/GAP 4/NAME_H 114.5/AMT_H 118.5/总高 290、三字体全长不叠字扫验', () => {
+test('任务AC-9横置（任务AF 更新 GAP/区高；2026-10-25 姓名区再收）：COL_W 50/GAP 4/NAME_H 104/AMT_H 118.5/总高 290、三字体全长不叠字扫验', () => {
   assert.eq(LC.SPEC.COL_W, 50, '列宽 56→50');
   assert.eq(LC.SPEC.GAP, 4, '墨迹间距目标（5→2 任务AC → 3.5 任务AE → 4 任务AF）');
-  assert.eq(LC.SPEC.NAME_H, 114.5, '姓名区（AC 反推 116，AE 为 GAP 3.5 收 1.5，本轮校准后仍 114.5）');
+  assert.eq(LC.SPEC.NAME_H, 104, '姓名区（AC 116 → AE 114.5 → AF 114.5 → 2026-10-25 上下往中间收 104）');
   assert.eq(LC.SPEC.AMT_H, 118.5, '金额区（AC 反推 117，AE 为 GAP 3.5 收 1.5，本轮中段上移后反增至 118.5）');
   assert.eq(LC.COL_INNER_H, 290, '列内总高 = 纸面高 294 − 边框 4');
   // 不叠字：字距 − 校准后字号 ≥ −0.01（round2 尘埃内视为相接不重叠，与旧版式同口径）
@@ -193,7 +194,7 @@ test('任务AE-8共计列表复刻：居中大字分段红字、合并一卡、�
     assert(!x.includes('.summary'), `${wxssP}：旧 .summary 已清除`);
   }
   const g = readMp('pages/gifts/gifts.wxss');
-  assert(g.includes('background: #F1E6D3') && g.includes('width: 56px; height: 56px'), '送礼徽章：56px 米色圆底（定版图口径）');
+  assert(g.includes('background: #F1E6D3') && g.includes('width: 44px; height: 44px'), '送礼徽章：44px 米色圆底（2026-10-25 用户亲改：与收礼礼簿页图标一致，覆盖定版图 56px 口径）');
   assert(g.includes('left: 84px'), '送礼分隔线从姓名左缘起（16+56+12）');
   const rd = readMp('pages/receive-detail/receive-detail.wxss');
   assert(rd.includes('left: 16px'), '收礼记录无徽章，分隔线自左内边距起');
@@ -214,7 +215,7 @@ test('AC字体诊断：云端找不到文件时原因要留得住（2026-10-24 �
   };
   const src = createFontSource({ wxApi, storage: st, cloudBase: 'cloud://env-x.bucket-y/fonts/' });
   const font = { id: 'lxgw', file: 'lxgw-wenkai.woff2', family: 'LxgwWenKai' };
-  const cand = src.resolveCandidates(font)[0];
+  const cand = src.resolveCandidates(font).find((c) => c.needsTempUrl);
   const out = await src.materialize(cand, font);
   assert.eq(out, null, '文件不存在时物化应失败');
   const me = src.getLastMaterializeError();
@@ -223,5 +224,5 @@ test('AC字体诊断：云端找不到文件时原因要留得住（2026-10-24 �
   const ok = await mgr.load('lxgw');
   assert.eq(ok, false, '加载应失败');
   const f = mgr.getLastFailure('lxgw');
-  assert(f && f.stage === 'temp-url' && /NONEXIST/.test(f.reason), '管理器应记录 temp-url 阶段与原因');
+  assert(f && f.stage === 'data-url', '管理器应记录首选路线 data-url 阶段（该 stub 无 downloadFile/读文件接口，下载转码先失败；临时链接的 NONEXIST 已由上方 materialize 断言单独覆盖）');
 });

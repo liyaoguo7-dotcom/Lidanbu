@@ -105,6 +105,12 @@ function createFontSource(deps = {}) {
     if (base.startsWith('https://')) {
       for (const f of cloudFiles) out.push({ kind: 'cloud-url', source: `url("${joinUrl(base, f)}")` });
     } else if (base.startsWith('cloud://')) {
+      // 2026-10-25 新路线排最前：下载 TTF 到本地 → 读成 base64 Data URL 再加载。
+      // 背景：临时 https 链接路线（AE 起）在用户 Android 真机三款字体全灭，
+      // 嫌疑集中在链接的跨域/重定向与 webview 取字体环节；Data URL 不经网络
+      // 取字体、也绕开本地文件路径（AC 已证伪），是唯一没试过的形态。
+      // 只给首选文件（TTF）这一条，失败自动落回下面的临时链接候选。
+      out.push({ kind: 'cloud-data', needsDataUrl: true, fileID: joinUrl(base, cloudFiles[0]) });
       for (const f of cloudFiles) out.push({ kind: 'cloud-url', needsTempUrl: true, fileID: joinUrl(base, f) });
     }
     out.push({ kind: 'subpackage', source: subpackageSource(font), needsSubpackage: true });
@@ -150,6 +156,45 @@ function createFontSource(deps = {}) {
     }
   }
 
+  const dataUrlMemo = new Map(); // fileID -> data: 来源串（本会话内复用，避免重复下载）
+
+  /**
+   * 把 cloud-data 候选物化成 Data URL 来源串：wx.cloud.downloadFile 下载到
+   * 临时文件 → FileSystemManager 读 base64 → 拼 data:font/…;base64 来源。
+   * 成功返回来源串；无 API / 下载失败 / 读失败返回 null（原因记
+   * lastMaterializeError，与 materialize 同口径）。永不抛错。
+   */
+  async function materializeDataUrl(cand) {
+    if (!cand || cand.kind !== 'cloud-data' || !cand.needsDataUrl || !cand.fileID) return null;
+    if (dataUrlMemo.has(cand.fileID)) return dataUrlMemo.get(cand.fileID);
+    const cloud = wxApi && wxApi.cloud;
+    if (!cloud || typeof cloud.downloadFile !== 'function'
+      || !wxApi || typeof wxApi.getFileSystemManager !== 'function') {
+      lastMaterializeError = { fileID: cand.fileID, reason: '下载字体文件的接口不可用' };
+      return null;
+    }
+    try {
+      const dl = await new Promise((resolve, reject) => {
+        cloud.downloadFile({ fileID: cand.fileID, success: resolve, fail: reject });
+      });
+      const tempPath = dl && dl.tempFilePath;
+      if (!tempPath) throw new Error('下载未返回文件');
+      const fsm = wxApi.getFileSystemManager();
+      const data = await new Promise((resolve, reject) => {
+        fsm.readFile({ filePath: tempPath, encoding: 'base64', success: (r) => resolve(r.data), fail: reject });
+      });
+      if (!data || typeof data !== 'string') throw new Error('字体文件读取为空');
+      const mime = cand.fileID.endsWith('.woff2') ? 'font/woff2' : 'font/ttf';
+      const source = `url("data:${mime};base64,${data}")`;
+      lastMaterializeError = null;
+      dataUrlMemo.set(cand.fileID, source);
+      return source;
+    } catch (e) {
+      lastMaterializeError = { fileID: cand.fileID, reason: `下载字体文件失败：${(e && (e.errMsg || e.message)) || '未知错误'}` };
+      return null;
+    }
+  }
+
   /**
    * 尽力预下载字体分包（loadFontFace 取分包内文件前最好先触发）。
    * 成功返回 true；API 不存在/失败返回 false，不抛错（管理器随后仍会尝试
@@ -171,6 +216,7 @@ function createFontSource(deps = {}) {
   return {
     resolveCandidates,
     materialize,
+    materializeDataUrl,
     getLastMaterializeError: () => lastMaterializeError,
     ensureSubpackage,
     subpackagePath,

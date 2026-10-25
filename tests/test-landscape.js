@@ -13,9 +13,10 @@ function memStorage() {
   return { get: (k) => (m.has(k) ? m.get(k) : ''), set: (k, v) => m.set(k, v), _map: m };
 }
 
-test('横置-定版数值：列宽50/姓名区114.5/中段区52/金额区118.5/墨迹间距4/列内总高290', () => {
+test('横置-定版数值：列宽50/姓名区104/中段区52/金额区118.5/墨迹间距4/列内总高290', () => {
   assert.eq(LC.SPEC.COL_W, 50, '列宽（任务AC 第 9 项：56→50 再窄一档；历程 64.5→56→50）');
-  assert.eq(LC.SPEC.NAME_H, 114.5, '姓名区（本轮模型实测校准定版，见 landscape-core COL_INNER_H 注释）');
+  assert.eq(LC.SPEC.NAME_H, 104, '姓名区（2026-10-25 真机反馈上下往中间收：114.5→104，见 landscape-core COL_INNER_H 注释）');
+  assert.eq(LC.SPEC.NAME_TOP, 11.25, '姓名区顶距（原 6＋收缩量一半 5.25，整段中心不动）');
   assert.eq(LC.SPEC.MID_H, 52, '中段区');
   assert.eq(LC.SPEC.AMT_H, 118.5, '金额区（本轮模型实测校准定版；大于姓名区——真机反馈金额占位偏小）');
   assert.eq(LC.SPEC.GAP, 4, '姓名末字墨迹↔贺礼、贺礼↔金额首字墨迹 间距 4（任务AF真机定版；历程 2→3.5→4）');
@@ -111,13 +112,13 @@ test('横置-字体加载失败：回退标记、不抛错、成功后写缓存�
   assert.eq(ok, false, '离线加载返回 false');
   assert.eq(fm.getState('lxgw'), 'failed', '失败状态');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.v5.lxgw'), undefined, '失败不写缓存标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v6.lxgw'), undefined, '失败不写缓存标记（下次重试）');
 
   const okWx = { loadFontFace: (o) => o.success() };
   const fm2 = createFontManager({ wxApi: okWx, storage: st });
   assert.eq(await fm2.load('lxgw'), true, '加载成功');
   assert.eq(fm2.isFallback('lxgw'), false, '成功后非回退');
-  assert.eq(st._map.get('landscape.fontLoaded.v5.lxgw'), 1, '成功写缓存标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v6.lxgw'), 1, '成功写缓存标记');
 
   const fm3 = createFontManager({ wxApi: {}, storage: memStorage() });
   assert.eq(await fm3.load('longcang'), false, '无 loadFontFace 时安全回退不抛错');
@@ -185,11 +186,11 @@ test('横置-空列格子：格子印满整幅，空列数=12-记录数且只有
 test('横置-均布不叠字：首末锚定+字号放不下才缩+字距恒≥字号', () => {
   // 2026-10-22 晚定版：姓名首字区顶、末字区底；金额首字区顶、末字区底，中间均布
   const n4 = LC.layoutName('欧阳修远');
-  assert.eq(n4.scale, 1, '4字名放得下不缩（114.5/4=28.6≥22）');
+  assert.eq(n4.scale, 1, '4字名放得下不缩（104/4=26≥22）');
   assert.eq(n4.chars[0].top, 0, '4字名首字区顶');
   assert.eq(n4.chars[3].top + n4.fontSize, LC.SPEC.NAME_H, '4字名末字贴区底');
-  const n5 = LC.layoutName('欧阳修远明轩'); // 6 字名（任务AE 后区高 114.5，5 字已不需缩：114.5/5=22.9≥22）
-  assert(Math.abs(n5.fontSize - 19.08) < 0.011, '6字名字号缩到 114.5/6≈19.08');
+  const n5 = LC.layoutName('欧阳修远明轩'); // 6 字名（2026-10-25 区高收至 104：104/6≈17.33；5 字名 104/5=20.8 也开始微缩，属不叠字规则内）
+  assert(Math.abs(n5.fontSize - 17.33) < 0.011, '6字名字号缩到 104/6≈17.33');
   assert(n5.pitch >= n5.fontSize - 0.011, '6字名字距≥字号不叠字');
   const a6 = LC.layoutAmount(150000); // 壹仟伍佰元整 = 6 字
   assert.eq(a6.text, '壹仟伍佰元整', '6字金额');

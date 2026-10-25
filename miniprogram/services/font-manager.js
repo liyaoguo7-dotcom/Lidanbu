@@ -27,7 +27,7 @@ const FONT_SRC_BASE = SUBPACKAGE_ROOT;
  * 若曾"加载成功"写下旧键，版本段一变旧键自然失效，强制用当前文件重载
  * （2026-10-22 任务AB 第 6 项：三款字体真机仍不可用的机制修复之一）。
  * 字体文件再重建时必须同步 bump 此版本号。 */
-const FONT_BUILD = 'v5'; // v5：云端改走 TTF 优先（woff2 在 Android 微信内核上嫌疑最大）
+const FONT_BUILD = 'v6'; // v6：云端首选改为下载 TTF 转 Data URL 加载（绕开临时链接的跨域/重定向）；v5 为 TTF 临时链接优先、v4 为 woff2 临时链接
 const LOADED_KEY_PREFIX = `landscape.fontLoaded.${FONT_BUILD}.`;
 
 function defaultStorage() {
@@ -53,6 +53,8 @@ function createFontManager(deps = {}) {
     return fontSource.subpackageSource(font);
   }
 
+  let lastFaceError = ''; // 最近一次 loadFontFace 失败的原始 errMsg（2026-10-25：此前被直接丢弃，弹窗只能给通用文案、无从定位）
+
   /** 单个来源的一次 loadFontFace 尝试；返回 Promise<boolean>，永不 reject */
   function tryLoadFace(family, source) {
     return new Promise((resolve) => {
@@ -63,9 +65,9 @@ function createFontManager(deps = {}) {
           global: true, // 加载成功后全局生效（任务Z 第 7 项：避免只有触发页能用上）
           scopes: ['webview', 'native'],
           success: () => resolve(true),
-          fail: () => resolve(false),
+          fail: (e) => { lastFaceError = (e && (e.errMsg || e.message)) || ''; resolve(false); },
         });
-      } catch (e) { resolve(false); }
+      } catch (e) { lastFaceError = (e && e.message) || ''; resolve(false); }
     });
   }
 
@@ -88,12 +90,22 @@ function createFontManager(deps = {}) {
       for (const cand of candidates) {
         let source = cand.source || null;
         if (cand.needsSubpackage) await fontSource.ensureSubpackage(); // 尽力触发分包下载，成败都继续尝试
+        if (cand.needsDataUrl) {
+          source = typeof fontSource.materializeDataUrl === 'function'
+            ? await fontSource.materializeDataUrl(cand) : null;
+          if (!source) {
+            const me = typeof fontSource.getLastMaterializeError === 'function'
+              ? fontSource.getLastMaterializeError() : null;
+            attemptFailure = { stage: 'data-url', reason: (me && me.reason) || '下载字体文件失败' };
+            continue;
+          }
+        }
         if (cand.needsTempUrl) {
           source = await fontSource.materialize(cand, font); // 云存储 fileID → 临时 https 链接
           if (!source) {
             const me = typeof fontSource.getLastMaterializeError === 'function'
               ? fontSource.getLastMaterializeError() : null;
-            attemptFailure = { stage: 'temp-url', reason: (me && me.reason) || '换链接失败' };
+            if (!attemptFailure) attemptFailure = { stage: 'temp-url', reason: (me && me.reason) || '换链接失败' };
             continue;
           }
         }
@@ -106,7 +118,7 @@ function createFontManager(deps = {}) {
           storage.set(LOADED_KEY_PREFIX + font.id, 1); // 缓存标记：下次免重复加载
           return true;
         }
-        if (!attemptFailure) attemptFailure = { stage: 'load-face', reason: '字体文件已取到，但手机未能加载' };
+        if (!attemptFailure) attemptFailure = { stage: 'load-face', reason: lastFaceError || '字体文件已取到，但手机未能加载' };
       }
       if (attemptFailure) failures[font.id] = attemptFailure;
       state[font.id] = 'failed';
@@ -144,4 +156,7 @@ module.exports = {
   ensureSelected(fontId) { return defaultManager().ensureSelected(fontId); },
   isFallback(fontId) { return defaultManager().isFallback(fontId); },
   getState(fontId) { return defaultManager().getState(fontId); },
+  /** 最近一次加载失败的阶段与原始原因（2026-10-25 补导出：此前实例方法未挂到
+   * 模块层，book-common 的 typeof 守卫恒为 false、弹窗永远走通用文案） */
+  getLastFailure(fontId) { return defaultManager().getLastFailure(fontId); },
 };
