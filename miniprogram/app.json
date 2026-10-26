@@ -62,7 +62,9 @@
     "pages/guide/guide",
     "pages/maintenance/maintenance"
   ],
-  "navigateToMiniProgramAppIdList": [],
+  "navigateToMiniProgramAppIdList": [
+    "wx587c41557aae8144"
+  ],
   "subpackages": [
     {
       "root": "packages/fonts",

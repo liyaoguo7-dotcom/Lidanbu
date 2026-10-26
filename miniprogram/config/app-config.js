@@ -116,7 +116,7 @@ const AppConfig = {
    *   （微信要求：该列表最多 10 个，且跳转目标需要在提审时声明，未声明会跳转失败）。 */
   externalInvitation: {
     miniprogramName: '明天柬邀请函', // 2026-10-21 用户截图核实：主体为宿迁叶行网络科技有限公司
-    appId: '', // 待对方提供（wx 开头的 AppID），填入并同步 app.json 的 navigateToMiniProgramAppIdList 后跳转生效
+    appId: 'wx587c41557aae8144', // 2026-10-26 用户从对方小程序「更多资料」页查得（主体宿迁叶行网络科技有限公司，与服务号原始ID gh_2112ba7894df 是两回事）；已同步 app.json 的 navigateToMiniProgramAppIdList
   },
 
   /** 支付平台开关（按终端控制购买入口显隐，页面读 resolvePlatformPurchaseEnabled 决定，
