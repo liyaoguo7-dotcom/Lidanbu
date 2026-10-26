@@ -19,6 +19,7 @@
  */
 
 const { createExportXlsxHandler } = require('./routes-export');
+const tencentOcr = require('./tencent-ocr');
 
 // 允许远程调用的 core 模块（业务模块，函数签名均为 (db, actorId, ...)）。
 // db/config/models/format/payAdapter/ocr/contentSafety 不开放：
@@ -69,7 +70,7 @@ async function ensureServerUser(db, core, openid, cache) {
 }
 
 /** 依赖注入工厂（本地测试用假 SDK 在进程内跑通全链路；云端用默认导出） */
-function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile }) {
+function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile, ocrHttpPost }) {
   const _ensuredUsers = new Set(); // 本容器内已确认建号的用户（见 ensureServerUser）
   // 导出处理器懒加载：buildXlsx 依赖 exceljs（体积大、加载慢），绝不能在
   // 函数冷启动时就 require——2026-10-23 真云端实测：急切加载导致 whoami
@@ -95,6 +96,30 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile }) {
     return _exportXlsx;
   };
 
+  // —— 服务端按 fileID 取云存储文件（字体代取与 OCR 取图共用同一条链） ——
+  async function downloadCloudFile(fileID) {
+    if (typeof downloadFile === 'function') return downloadFile(fileID);
+    if (sdk && typeof sdk.downloadFile === 'function') {
+      const r = await sdk.downloadFile({ fileID });
+      return r && r.fileContent;
+    }
+    return null;
+  }
+
+  /* —— OCR 真实适配器选择（AQ批）：密钥（云函数环境变量）已配置且调用者
+   * 是管理员（appConfig 名单口径与支付闸/admin 判定一致）才注入腾讯云
+   * 适配器；其余情况返回 null，core 沿用 MockOCR，行为与接入前一致。
+   * 公开开放等用户后续发话，本批不放开非管理员。日志只记实现名。 —— */
+  async function pickServerOcrAdapter(openid) {
+    if (!tencentOcr.isConfigured()) return null;
+    const cfgDoc = await db.collection(core.models.COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+    const admins = cfgDoc
+      ? [...(Array.isArray(cfgDoc.adminIds) ? cfgDoc.adminIds : []), ...(Array.isArray(cfgDoc.addedAdminIds) ? cfgDoc.addedAdminIds : [])]
+      : [];
+    if (!admins.includes(openid)) return null;
+    return tencentOcr.createAdapter({ httpPost: ocrHttpPost, fetchImage: downloadCloudFile });
+  }
+
   // —— 字体文件服务端代取（AH批）：白名单三款 TTF、容器内缓存 base64 ——
   const FONT_FILE_WHITELIST = ['lxgw-wenkai.ttf', 'mashanzheng.ttf', 'longcang.ttf'];
   const _fontBase64Cache = new Map();
@@ -108,13 +133,7 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile }) {
     if (_fontBase64Cache.has(base)) {
       return { ok: true, data: { base64: _fontBase64Cache.get(base), mime: 'font/ttf' } };
     }
-    let content = null;
-    if (typeof downloadFile === 'function') {
-      content = await downloadFile(fileID);
-    } else if (sdk && typeof sdk.downloadFile === 'function') {
-      const r = await sdk.downloadFile({ fileID });
-      content = r && r.fileContent;
-    }
+    const content = await downloadCloudFile(fileID);
     if (!content) return { ok: false, error: '云端取字体失败' };
     const b64 = Buffer.from(content).toString('base64');
     _fontBase64Cache.set(base, b64);
@@ -175,7 +194,18 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile }) {
         // 拍照导入总闸（任务AF）：给最后一个参数（opts 对象）打云端标记，
         // core/import 据此按 features.photoImport 开关拒绝（防绕过页面）
         const last = args[args.length - 1];
-        if (last && typeof last === 'object') args[args.length - 1] = { ...last, cloudGate: true };
+        if (last && typeof last === 'object') {
+          const next = { ...last, cloudGate: true };
+          if (fnName === 'startImportTask') {
+            // OCR 选择（AQ批）：服务端注入真实适配器（函数对象只能在
+            // 服务端组装，与 payment 注入 MockPayAdapter 同路）；未注入
+            // 时 core 走 MockOCR。日志只记实现名，绝不记密钥。
+            const adapter = await pickServerOcrAdapter(OPENID);
+            if (adapter) next.ocrAdapter = adapter;
+            console.log(`[ocr] startImportTask adapter=${adapter ? 'tencent' : 'mock'}`);
+          }
+          args[args.length - 1] = next;
+        }
       }
       await ensureServerUser(db, core, OPENID, _ensuredUsers);
       // 维护模式总闸（AL-7）：开启时非管理员一律停服；管理员不受限，

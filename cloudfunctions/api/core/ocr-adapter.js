@@ -12,6 +12,13 @@
  * 本轮只实现 MockOCR（假识别结果，可编辑）；真实厂商后接。
  * 纯 JS，无微信依赖，可进小程序包。
  *
+ * 【AQ批】真实厂商（腾讯云）走服务端注入：云函数 api 分发在服务端组装
+ * 真实适配器（cloudfunctions/api/tencent-ocr.js），经 startImportTask 的
+ * opts.ocrAdapter 透传到本层的 opts.adapter（与 payment 的 adapter 注入
+ * 同路；函数对象不跨 RPC、不进小程序包）。opts.adapter 存在且带
+ * recognize 函数时优先于 opts.provider 的注册表选择；本层照常做字段
+ * 归一化，不重排、不过滤（契约不变）。
+ *
  * 【识别结果顺序与完整性契约】（用户定版，真实厂商接入时必须遵守，
  * 测试有断言守住本适配层的透传行为）：
  * 1. 条目顺序 = 阅读顺序：按列从左到右（最左一列排第一），同一列内
@@ -96,7 +103,8 @@ const _adapters = { mock: MockOCR, tencent: TencentOCR, ali: AliOCR, wechat: WeC
  */
 async function recognize(imagePath, opts = {}) {
   const provider = opts.provider || 'mock';
-  const adapter = _adapters[provider];
+  const injected = opts.adapter && typeof opts.adapter.recognize === 'function' ? opts.adapter : null;
+  const adapter = injected || _adapters[provider];
   if (!adapter) throw new Error(`未知的 OCR 厂商：${provider}`);
   const list = await adapter.recognize(imagePath, opts);
   if (!Array.isArray(list)) throw new Error('OCR 返回格式异常');

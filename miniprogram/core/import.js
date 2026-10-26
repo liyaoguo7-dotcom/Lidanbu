@@ -76,15 +76,20 @@ function _newJobId() {
  * 开始一次拍照导入任务：会员门禁 → 积分预检 → 识别 → 识别成功后扣费。
  * 一个任务（一个 jobId）只扣一次：重复以同一 jobId 走完整流程时，
  * points.spend 按 refId 幂等返回首次扣费结果，不重复扣。
- * @param opts { jobId?, kind, eventId?, imagePath, provider?, fail? }
+ * @param opts { jobId?, kind, eventId?, imagePath, provider?, fail?, ocrAdapter?, ocrMode? }
  *   jobId 由页面生成并随待确认数据暂存（重试同一任务时复用）；
  *   缺省在此生成。fail 仅供演示/测试触发 MockOCR 失败态。
- * @returns { jobId, items, cost, duplicated }
- *   cost 为本次任务单价（积分）；duplicated=true 表示该 job 此前已扣过费。
+ *   ocrAdapter/ocrMode（AQ批）：真实识别适配器只能由云函数 api 分发在
+ *   服务端注入（函数对象不跨 RPC，客户端传不了）；ocrMode 透传给适配器
+ *   （'print' | 'handwriting'，缺省由适配器按印刷优先策略处理）。
+ * @returns { jobId, items, cost, duplicated, adapter }
+ *   cost 为本次任务单价（积分）；duplicated=true 表示该 job 此前已扣过费；
+ *   adapter 为本次实际用的识别实现名（'mock' / 'tencent'，供日志与排查
+ *   区分，不含任何密钥信息）。
  * @throws memberRequired（非会员）| pointsDenied insufficient-points（余额不足，
  *   识别前拦截，无扣款）| OCR 识别错误（未扣款）
  */
-async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, imagePath, provider, fail, cloudGate } = {}) {
+async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, imagePath, provider, fail, cloudGate, ocrAdapter, ocrMode } = {}) {
   await assertPhotoImportOpen(db, { cloudGate });
   await restriction.assertWritable(db, actorId);
   validateTarget(kind, eventId);
@@ -110,7 +115,9 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
   }
 
   /* —— 第三关：识别（失败抛错，此时尚未扣费，天然不扣） —— */
-  const items = await ocr.recognize(imagePath, { kind, provider, fail });
+  const items = await ocr.recognize(imagePath, { kind, provider, fail, adapter: ocrAdapter, mode: ocrMode });
+  const adapterName = ocrAdapter && typeof ocrAdapter.name === 'string' && ocrAdapter.name
+    ? ocrAdapter.name : (provider || 'mock');
 
   /* —— 识别成功 → 扣费（refId 绑定 job，幂等只扣一次） —— */
   const id = jobId || _newJobId();
@@ -123,7 +130,7 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
     });
     duplicated = !!r.duplicated;
   }
-  return { jobId: id, items, cost, duplicated };
+  return { jobId: id, items, cost, duplicated, adapter: adapterName };
 }
 
 /**
