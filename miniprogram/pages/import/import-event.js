@@ -90,7 +90,7 @@ Page({
         try {
           const r = await dataService.recognizePhoto(photoPath, 'receive', { eventId });
           wx.hideLoading();
-          saveImport({ kind: 'receive', eventId, eventName, photoPath, items: r.items, jobId: r.jobId });
+          saveImport({ kind: 'receive', eventId, eventName, photoPath, photoFileIds: r.photoFileIds || [], items: r.items, jobId: r.jobId });
           wx.navigateTo({ url: '/pages/import/import-review' });
         } catch (e) {
           wx.hideLoading();

@@ -43,6 +43,45 @@ const _eventDetailCache = new Map();
 function _dirtyLists(...names) { names.forEach((n) => { _listCache[n] = null; }); }
 let _modeForTest = null; // 仅测试注入用：'local' | 'cloud' | null
 let _transportForTest = null; // 仅测试注入用：远程传输（进程内回环到 api 云函数）
+let _uploaderForTest = null; // 仅测试注入用：云存储上传（AR批，进程内假实现）
+let _deleterForTest = null; // 仅测试注入用：云存储删除（AR批，进程内假实现）
+
+/**
+ * 默认云存储上传（AR批）：走 app.js 已 init 的 wx.cloud——与 remote-core
+ * 的 callFunction 同一个云实例，不另造传输层。返回 fileID（cloud://…）。
+ * 云不可用时抛带 errMsg 的错误，与 defaultTransport 的失败口径一致。
+ */
+async function defaultUploader(cloudPath, filePath) {
+  const cloud = (typeof wx !== 'undefined') ? wx.cloud : null;
+  if (!cloud || typeof cloud.uploadFile !== 'function') {
+    const e = new Error('uploadFile:fail 云服务不可用');
+    e.errMsg = 'uploadFile:fail cloud not ready';
+    throw e;
+  }
+  const res = await cloud.uploadFile({ cloudPath, filePath });
+  const fileID = res && res.fileID;
+  if (!fileID) throw new Error('uploadFile:fail 未返回 fileID');
+  return fileID;
+}
+
+/** 默认云存储删除（AR批）：同上，走 wx.cloud.deleteFile */
+async function defaultDeleter(fileList) {
+  const cloud = (typeof wx !== 'undefined') ? wx.cloud : null;
+  if (!cloud || typeof cloud.deleteFile !== 'function') {
+    const e = new Error('deleteFile:fail 云服务不可用');
+    e.errMsg = 'deleteFile:fail cloud not ready';
+    throw e;
+  }
+  await cloud.deleteFile({ fileList });
+}
+
+/** OCR 导入照片的云存储路径：ocr-imports/ 前缀 + 时间戳 + 随机段 + 序号（同批多张不撞名、保序可辨） */
+function _ocrCloudPath(localPath, index) {
+  const m = /\.(jpe?g|png|webp|gif)$/i.exec(String(localPath || ''));
+  const ext = m ? `.${m[1].toLowerCase()}` : '.jpg';
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `ocr-imports/${Date.now()}-${rand}-${index}${ext}`;
+}
 let _remoteCore = null;
 let _cloudUserReady = false; // 云模式：服务端静默建号是否已触发
 
@@ -794,30 +833,73 @@ const service = {
     return core.feedback.listMyFeedback(_db, _userId);
   },
 
-  // —— 拍照导入（阶段4；OCR 厂商未拍板，本轮只走 MockOCR） ——
+  // —— 拍照导入（阶段4；AQ批起服务端可选腾讯云真实识别） ——
   /**
-   * 开始拍照导入任务 → { jobId, items, cost }
+   * 开始拍照导入任务 → { jobId, items, cost, photoFileIds }
    * core 任务流顺序：会员门禁 → 积分预检 → 识别 → 识别成功后扣积分。
    * 抛错带 code：'member-required'（非会员）/ 'insufficient-points'（积分不足，
    * 识别前拦截、未扣款），页面据此弹不同引导；识别失败为普通错误（未扣款）。
    * opts.jobId 复用同一任务时传入（重试不重复扣费）；opts.eventId 收礼必传。
+   *
+   * 照片送达（AR批）：云模式下本地临时路径在服务端取不到图（AQ 适配器按
+   * fileID 取图），故启动任务前先把照片按原顺序上传云存储（ocr-imports/
+   * 前缀），任务入参只传 imageFileIds、不再传本地路径；上传任一张失败 →
+   * 直接抛「照片上传失败」停在页面，不启动任务、不扣分。本地演示模式
+   * 不上传、仍传 imagePath，行为与此前一致。
+   * imagePath 可传单张字符串或多张数组（保持顺序）；photoFileIds 随结果
+   * 返回，供核对页在确认写入成功后清理云端照片（见 cleanupImportPhotos）。
    */
   async recognizePhoto(imagePath, kind, opts = {}) {
+    let imageFileIds = null;
+    if (_isCloud()) {
+      const paths = (Array.isArray(imagePath) ? imagePath : [imagePath]).filter((p) => !!p);
+      if (!paths.length) throw new Error('请先拍照');
+      const upload = _uploaderForTest || defaultUploader;
+      imageFileIds = [];
+      for (let i = 0; i < paths.length; i++) {
+        let fileID = '';
+        try {
+          fileID = await upload(_ocrCloudPath(paths[i], i), paths[i]);
+        } catch (e) {
+          const err = new Error('照片上传失败，请检查网络后重试');
+          if (e && e.errMsg) err.errMsg = e.errMsg;
+          throw err;
+        }
+        if (!fileID) throw new Error('照片上传失败，请检查网络后重试');
+        imageFileIds.push(fileID);
+      }
+    }
     try {
       const r = await core.importer.startImportTask(_db, _userId, _userId, {
         jobId: opts.jobId || '',
         kind,
         eventId: opts.eventId || '',
-        imagePath,
+        ...(imageFileIds ? { imageFileIds } : { imagePath }),
         provider: opts.provider,
         fail: opts.fail,
       });
-      return { jobId: r.jobId, items: r.items, cost: r.cost };
+      return { jobId: r.jobId, items: r.items, cost: r.cost, photoFileIds: imageFileIds || [] };
     } catch (e) {
       const err = new Error(friendly(e));
       if (e && e.code) err.code = e.code;
       throw err;
     }
+  },
+  /**
+   * 清理本次导入上传的云端照片（AR批）：核对页确认写入成功后调用，
+   * 删掉 ocr-imports/ 下这批原件。尽力而为——删除失败静默，照片留存
+   * 不该影响已完成的导入结果；本地模式没有上传过照片（photoFileIds
+   * 为空）天然无操作。用户中途放弃核对（未确认写入）的照片没有现成
+   * 的丢弃钩子可挂，不在此清理（留存口径见 docs/OCR腾讯云接入.md）。
+   */
+  async cleanupImportPhotos(photoFileIds) {
+    const list = (Array.isArray(photoFileIds) ? photoFileIds : [])
+      .filter((f) => typeof f === 'string' && f.startsWith('cloud://'));
+    if (!list.length || !_isCloud()) return;
+    try {
+      const del = _deleterForTest || defaultDeleter;
+      await del(list);
+    } catch (e) { /* 清理失败不影响导入结果 */ }
   },
   // —— 收礼礼薄（事件）——
   /** 收礼礼薄列表（导入前先选） */
@@ -1380,6 +1462,11 @@ service._setDbFactoryForTest = (fn) => { _dbFactory = fn || null; };
 // 页面与生产路径恒不设这两个注入口
 service._setModeForTest = (mode) => { _modeForTest = mode || null; _remoteCore = null; };
 service._setTransportForTest = (fn) => { _transportForTest = fn || null; _remoteCore = null; };
+// 仅测试用（AR批）：注入云存储上传/删除假实现——回环/行为测试在进程内
+// 模拟 wx.cloud.uploadFile/deleteFile，断言拍照导入的上传与清理链路；
+// 页面与生产路径恒不设这两个注入口
+service._setUploaderForTest = (fn) => { _uploaderForTest = fn || null; };
+service._setDeleterForTest = (fn) => { _deleterForTest = fn || null; };
 service._resetForTest = () => {
   _db = null; _userId = null; _dbFactory = null;
   _listCache = { contacts: null, gifts: null, eventsStats: null };
@@ -1389,6 +1476,7 @@ service._resetForTest = () => {
   _homeDataInflight = null;
   service._featureFlagsCache = null;
   _modeForTest = null; _transportForTest = null; _remoteCore = null;
+  _uploaderForTest = null; _deleterForTest = null;
   _cloudUserReady = false;
   core = coreLib;
 };

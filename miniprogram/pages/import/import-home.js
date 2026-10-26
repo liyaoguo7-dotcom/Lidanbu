@@ -56,7 +56,7 @@ Page({
         try {
           const r = await dataService.recognizePhoto(photoPath, kind, { eventId: eventId || '' });
           wx.hideLoading();
-          saveImport({ kind, eventId: eventId || '', eventName: '', photoPath, items: r.items, jobId: r.jobId });
+          saveImport({ kind, eventId: eventId || '', eventName: '', photoPath, photoFileIds: r.photoFileIds || [], items: r.items, jobId: r.jobId });
           wx.navigateTo({ url: '/pages/import/import-review' });
         } catch (e) {
           wx.hideLoading();

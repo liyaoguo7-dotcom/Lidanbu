@@ -48,6 +48,9 @@ async function initCloud(openid, seedDoc) {
   dataService._resetForTest();
   dataService._setModeForTest('cloud');
   dataService._setTransportForTest(transport);
+  // AR批：云模式拍照导入先上传云存储再启动任务，回环里用假上传模拟
+  // wx.cloud.uploadFile（fileID 形状与假云 SDK 一致）
+  dataService._setUploaderForTest(async (cloudPath) => `cloud://fake-env.fake-bucket/${cloudPath}`);
   const r = await dataService.init();
   assert(r.ok === true, `云模式 init 应成功（实际 ${JSON.stringify(r)}）`);
   return r;

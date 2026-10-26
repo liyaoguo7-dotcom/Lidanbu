@@ -76,9 +76,12 @@ function _newJobId() {
  * 开始一次拍照导入任务：会员门禁 → 积分预检 → 识别 → 识别成功后扣费。
  * 一个任务（一个 jobId）只扣一次：重复以同一 jobId 走完整流程时，
  * points.spend 按 refId 幂等返回首次扣费结果，不重复扣。
- * @param opts { jobId?, kind, eventId?, imagePath, provider?, fail?, ocrAdapter?, ocrMode? }
+ * @param opts { jobId?, kind, eventId?, imagePath, imageFileIds?, provider?, fail?, ocrAdapter?, ocrMode? }
  *   jobId 由页面生成并随待确认数据暂存（重试同一任务时复用）；
  *   缺省在此生成。fail 仅供演示/测试触发 MockOCR 失败态。
+ *   imageFileIds（AR批）：云模式客户端在启动任务前已把照片按拍照顺序
+ *   上传云存储，这里收到的就是 fileID 数组（见 data-service.recognizePhoto）；
+ *   与 imagePath 二选一，同时给时以 imageFileIds 为准。
  *   ocrAdapter/ocrMode（AQ批）：真实识别适配器只能由云函数 api 分发在
  *   服务端注入（函数对象不跨 RPC，客户端传不了）；ocrMode 透传给适配器
  *   （'print' | 'handwriting'，缺省由适配器按印刷优先策略处理）。
@@ -89,7 +92,7 @@ function _newJobId() {
  * @throws memberRequired（非会员）| pointsDenied insufficient-points（余额不足，
  *   识别前拦截，无扣款）| OCR 识别错误（未扣款）
  */
-async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, imagePath, provider, fail, cloudGate, ocrAdapter, ocrMode } = {}) {
+async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, imagePath, imageFileIds, provider, fail, cloudGate, ocrAdapter, ocrMode } = {}) {
   await assertPhotoImportOpen(db, { cloudGate });
   await restriction.assertWritable(db, actorId);
   validateTarget(kind, eventId);
@@ -114,8 +117,21 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
     if (balance < cost) throw errors.pointsDenied('insufficient-points');
   }
 
-  /* —— 第三关：识别（失败抛错，此时尚未扣费，天然不扣） —— */
-  const items = await ocr.recognize(imagePath, { kind, provider, fail, adapter: ocrAdapter, mode: ocrMode });
+  /* —— 第三关：识别（失败抛错，此时尚未扣费，天然不扣） ——
+   * 图片入参两形（AR批）：imageFileIds＝云模式的 fileID 数组，逐张按序
+   * 识别、结果按序拼接，任一张失败整批抛错（仍未扣费）；imagePath＝
+   * 本地演示/单机口径的单张本地路径。云端只认 fileID——本地临时路径
+   * 在服务端取不到图，不在此兼容。 */
+  let items;
+  if (Array.isArray(imageFileIds) && imageFileIds.length > 0) {
+    items = [];
+    for (const fileId of imageFileIds) {
+      const part = await ocr.recognize(fileId, { kind, provider, fail, adapter: ocrAdapter, mode: ocrMode });
+      items.push(...part);
+    }
+  } else {
+    items = await ocr.recognize(imagePath, { kind, provider, fail, adapter: ocrAdapter, mode: ocrMode });
+  }
   const adapterName = ocrAdapter && typeof ocrAdapter.name === 'string' && ocrAdapter.name
     ? ocrAdapter.name : (provider || 'mock');
 

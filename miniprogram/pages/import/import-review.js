@@ -27,7 +27,8 @@ Page({
     eventId: '',
     eventName: '',
     jobId: '', // 导入任务号（识别时生成；写入时传回 core，额度拦截靠它自动返还积分）
-    photoPath: '',
+    photoPath: '', // 本地原图路径（本页缩略图/大图对照用，云端照片是另一份，见 photoFileIds）
+    photoFileIds: [], // AR批：云模式识别前上传云存储的 fileID 数组；确认写入成功后删云端原件
     items: [], // { name, amountText, note, contactId, unknown, type, tagId, tagName, date }
     tags: [],        // 送礼场合选项
     recordTypes: [], // 收礼类型选项
@@ -80,6 +81,7 @@ Page({
       eventName: pending.eventName || '',
       jobId: pending.jobId || '',
       photoPath: pending.photoPath || '',
+      photoFileIds: pending.photoFileIds || [],
       items,
       tags,
       recordTypes: dataService.getRecordTypes(),
@@ -328,6 +330,9 @@ Page({
       });
       wx.hideLoading();
       this.setData({ writing: false, done: true, doneCount: r.written });
+      // AR批：任务确认完成 → 删掉云端那批照片原件（尽力而为、失败静默；
+      // 本页对照看的是本地 photoPath，不受影响）
+      dataService.cleanupImportPhotos(this.data.photoFileIds);
     } catch (e) {
       wx.hideLoading();
       this.setData({ writing: false });
