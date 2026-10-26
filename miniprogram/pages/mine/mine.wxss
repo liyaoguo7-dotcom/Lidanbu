@@ -78,7 +78,7 @@
 .form-val { font-size: 16px; }
 .chev { font-size: 16px; }
 
-/* AP批「添加到我的小程序」引导条 + 教程层 */
+/* 「添加到我的小程序」引导条 + 教程层（AP批形态，AS批：主红底白字单行不折行） */
 .addmp-bar {
   margin: 10px 12px 0;
   background: #F0575A;
@@ -87,9 +87,9 @@
   padding: 12px 14px;
   display: flex;
   align-items: center;
-  font-size: 16px;
+  font-size: 15px;
 }
-.addmp-text { flex: 1; }
+.addmp-text { flex: 1; white-space: nowrap; overflow: hidden; }
 .addmp-arrow { font-size: 16px; padding-left: 6px; }
 .addmp-close { font-size: 16px; line-height: 1; padding: 2px 0 2px 12px; }
 .addmp-mask {
@@ -113,12 +113,23 @@
   margin: 16px 0 14px;
   background: #F6F6F6;
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 10px 12px 12px;
+}
+.addmp-mock-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .addmp-mock-app { display: flex; align-items: center; }
+.addmp-mock-lines { margin-top: 12px; }
+.addmp-mock-line {
+  height: 8px;
+  border-radius: 4px;
+  background: #E8E8E8;
+}
+.addmp-mock-line + .addmp-mock-line { margin-top: 8px; }
+.addmp-mock-line.w82 { width: 82%; }
+.addmp-mock-line.w64 { width: 64%; }
 .addmp-mock-avatar {
   width: 34px; height: 34px;
   border-radius: 50%;

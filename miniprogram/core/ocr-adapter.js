@@ -108,12 +108,16 @@ async function recognize(imagePath, opts = {}) {
   if (!adapter) throw new Error(`未知的 OCR 厂商：${provider}`);
   const list = await adapter.recognize(imagePath, opts);
   if (!Array.isArray(list)) throw new Error('OCR 返回格式异常');
-  return list.map((it) => ({
+  const out = list.map((it) => ({
     name: String(it.name || '').trim(),
     amountFen: Number.isInteger(it.amountFen) && it.amountFen > 0 ? it.amountFen : null,
     note: String(it.note || ''),
     raw: String(it.raw || ''),
   }));
+  // AS-8：真实适配器的识别留痕（挂在原数组上）随归一化结果透传，
+  // core 据此落 importJobs.ocrRaw；Mock 无此字段、不落痕。
+  if (list.ocrTrace) out.ocrTrace = list.ocrTrace;
+  return out;
 }
 
 module.exports = { recognize, PROVIDERS, MockOCR, TencentOCR, AliOCR, WeChatOCR };

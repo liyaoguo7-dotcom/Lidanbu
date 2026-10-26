@@ -11,20 +11,29 @@
  * 调用策略（简单可解释，startImportTask 的 opts.mode 可指定）：
  *   mode='handwriting' → 只调手写体；
  *   mode='print'       → 只调印刷体；
- *   未指定             → 先印刷体；印刷体没认出任何文字时再调手写体兜底。
+ *   未指定             → 手写优先（纸质礼单多为手写，AS批用户定版）：
+ *                        先调手写体，质量评估（assessQuality：拉丁乱码/
+ *                        置信度低/单字碎片占比高任一命中即判差）过关
+ *                        直接用——常态一张图只调 1 次；质量差或没认出
+ *                        才补调印刷体，两份结果按同一质量分取优。
  * 两次都没认出（或图片取不到）→ 抛「这张照片没认出来」，走既有
  * "识别失败不扣费"语义（core/import 在识别成功后才扣积分）。
  *
  * 返回行与 MockOCR 完全同形：[{ name, amountFen|null, note, raw }]，
- * 顺序与完整性遵守 core/ocr-adapter 的冻结契约：整页先分栏（左栏在前）、
- * 栏内自上而下、行内碎片按 X 拼接；识别不出金额的行保留姓名、金额留空；
- * 只有金额的行保留空姓名占位；不丢行。
+ * 顺序与完整性遵守 core/ocr-adapter 的冻结契约：横排整页先分栏（左栏
+ * 在前）、栏内自上而下、行内碎片按 X 拼接；竖排（传统红纸礼单竖写，
+ * 文本框高大于宽占多数）按 X 分列、列序左到右（与冻结契约一致）、
+ * 列内自上而下拼读成笔，列中纸面印刷字「贺礼」拼读前滤除；
+ * 金额支持阿拉伯数字与中文数字（大写壹贰叁…/小写一二三…＋拾佰仟万，
+ * AS批）；姓名出口前繁体转简体（zh-t2s，AS批）；识别不出金额的行
+ * 保留姓名、金额留空；只有金额的行保留空姓名占位；不丢行。
  *
  * HTTP 层可注入（opts.httpPost），测试一律打桩、绝不真连网；
  * 默认实现只用 Node 内置 https，零新增依赖。
  */
 const crypto = require('crypto');
 const https = require('https');
+const { toSimplified } = require('./zh-t2s');
 
 const SERVICE = 'ocr';
 const HOST = 'ocr.tencentcloudapi.com';
@@ -113,6 +122,50 @@ function ocrServiceError() {
   return e;
 }
 
+/* ---------------- 识别留痕（AS-8，调试用） ----------------
+ * 每次真实识别把腾讯原始要素挂在返回 rows 的 ocrTrace 上，core 随
+ * 导入任务落进 importJobs 文档的 ocrRaw 字段（仅真实适配器，Mock
+ * 不写）：控制台打开对应任务复制该字段即可离线重放解析，不必再
+ * 靠截图猜。体积上限 TRACE_MAX_CHARS，超了从碎片最多的调用尾部
+ * 逐个削碎片并标 truncated。 */
+const TRACE_MAX_CHARS = 60000;
+
+function polygonPoints(d) {
+  if (d && Array.isArray(d.Polygon) && d.Polygon.length) {
+    return d.Polygon.map((p) => [p.X, p.Y]);
+  }
+  const b = d && d.ItemPolygon;
+  if (b) return [[b.X, b.Y], [b.X + b.Width, b.Y], [b.X + b.Width, b.Y + b.Height], [b.X, b.Y + b.Height]];
+  return [];
+}
+
+function buildTraceCall(action, detections, q) {
+  return {
+    action,
+    score: Math.round(q.score * 10) / 10,
+    bad: q.bad,
+    reasons: q.reasons,
+    fragments: (Array.isArray(detections) ? detections : []).map((d) => ({
+      text: String((d && d.DetectedText) || ''),
+      polygon: polygonPoints(d),
+      confidence: d && typeof d.Confidence === 'number' ? d.Confidence : null,
+    })),
+  };
+}
+
+function finalizeTrace(calls, chosen) {
+  const trace = { calls, chosen };
+  if (JSON.stringify(trace).length > TRACE_MAX_CHARS) {
+    trace.truncated = true;
+    while (JSON.stringify(trace).length > TRACE_MAX_CHARS) {
+      const big = calls.reduce((a, c) => (c.fragments.length > (a ? a.fragments.length : 0) ? c : a), null);
+      if (!big || !big.fragments.length) break;
+      big.fragments.pop();
+    }
+  }
+  return trace;
+}
+
 /* ---------------- 结果解析（纯函数） ---------------- */
 
 function bboxOf(det) {
@@ -146,53 +199,165 @@ function overlapRatio(aMin, aW, bMin, bW) {
   return overlap / minW;
 }
 
+/* ---------------- 中文数字金额（AS批） ----------------
+ * 礼单金额常写中文：大写 壹贰叁肆伍陆柒捌玖＋拾佰仟万，或小写
+ * 一二三四五…＋十百千万。按中文计数法换算成「元」数值：
+ * 数字定值、十百千为节内单位（无前置数字按 1 计，如「拾伍」=15）、
+ * 万/亿结算高位节。纯数字串（如姓名里的「三」）无单位不成金额。 */
+const CH_DIGITS = {
+  零: 0, 一: 1, 二: 2, 两: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9,
+  壹: 1, 贰: 2, 貳: 2, 叁: 3, 肆: 4, 伍: 5, 陆: 6, 陸: 6, 柒: 7, 捌: 8, 玖: 9,
+};
+const CH_SMALL = { 十: 10, 拾: 10, 百: 100, 佰: 100, 千: 1000, 仟: 1000 };
+const CH_BIG = { 万: 10000, 萬: 10000, 亿: 100000000, 億: 100000000 };
+const CH_RUN_RE = /[零一二三四五六七八九两兩壹贰貳叁肆伍陆陸柒捌玖十拾百佰千仟万萬亿億]+/g;
+
+/**
+ * 一段纯中文数字串 → 元数值；形态不合法/无单位/无值返回 null。
+ * 合法形态：数字与单位交替（两个数字不得相邻，零作占位除外，如
+ * 「一千零一」）；十/百/千无前置数字按 1 计（「拾伍」=15）；万/亿前
+ * 必须已有数字（防「万三」这类人名被误读成金额）。
+ */
+function parseChineseAmount(run) {
+  if (!run || !/[十拾百佰千仟万萬亿億]/.test(run)) return null;
+  let total = 0;
+  let section = 0;
+  let digit = null;
+  let prevDigit = null; // 上一个字符若为数字，记其值（判相邻数字用）
+  for (const ch of run) {
+    if (ch in CH_DIGITS) {
+      if (prevDigit !== null && prevDigit !== 0) return null; // 数字相邻＝不是金额串
+      digit = CH_DIGITS[ch];
+      prevDigit = digit;
+    } else if (ch in CH_SMALL) {
+      section += (digit === null ? 1 : digit) * CH_SMALL[ch];
+      digit = null;
+      prevDigit = null;
+    } else if (ch in CH_BIG) {
+      if (digit === null && section === 0) return null; // 万/亿前无数字
+      total += (section + (digit || 0)) * CH_BIG[ch];
+      section = 0;
+      digit = null;
+      prevDigit = null;
+    }
+  }
+  const value = total + section + (digit || 0);
+  return value > 0 ? value : null;
+}
+
+/**
+ * 评估一个中文数字串：整段不合法时从左侧逐字裁剪，取最长的合法
+ * 后缀作金额（姓名末字本身是数字字、与金额紧贴时靠这步分开，如
+ * 「張三壹仟」→ 名「張三」＋金额「壹仟」）。hasYuanSuffix 表示串后
+ * 紧跟元/圆，此时单个数字字（「五元」）也可成金额。
+ * 返回 { yuan, start } 或 null（start 为金额在原串中的起始偏移）。
+ */
+function evalChineseRun(run, hasYuanSuffix) {
+  for (let start = 0; start < run.length; start++) {
+    const sub = run.slice(start);
+    const yuan = parseChineseAmount(sub);
+    if (yuan !== null) return { yuan, start };
+    if (hasYuanSuffix && sub.length === 1 && sub in CH_DIGITS && CH_DIGITS[sub] > 0) {
+      return { yuan: CH_DIGITS[sub], start };
+    }
+  }
+  return null;
+}
+
+/**
+ * 在文本里找中文金额（最后一个有效候选）：
+ * 候选＝中文数字串＋可选尾缀（元/圆/整、元整）。返回 { yuan, index, end } 或 null。
+ */
+function findChineseAmount(text) {
+  CH_RUN_RE.lastIndex = 0;
+  let m = null;
+  let found = null;
+  while ((m = CH_RUN_RE.exec(text)) !== null) {
+    let end = m.index + m[0].length;
+    let suffix = '';
+    const tail = text.slice(end, end + 2);
+    if (/^(元整|圆整|元|圆|整)/.test(tail)) { suffix = tail.match(/^(元整|圆整|元|圆|整)/)[1]; end += suffix.length; }
+    const r = evalChineseRun(m[0], /^[元圆]/.test(suffix));
+    if (r) found = { yuan: r.yuan, index: m.index + r.start, end };
+    if (m[0] === '') CH_RUN_RE.lastIndex += 1;
+  }
+  return found;
+}
+
+/**
+ * 扫描文本里全部金额出现（阿拉伯＋中文，按位置排序、重叠取先出现者），
+ * 竖排整列拼读后按金额切笔用。返回 [{ yuan, index, end }]。
+ */
+function findAllAmounts(text) {
+  const out = [];
+  const reA = /(?:¥|￥)?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*(?:元|圆|整)?/g;
+  let m = null;
+  while ((m = reA.exec(text)) !== null) {
+    const yuan = parseFloat(m[1].replace(/,/g, ''));
+    if (yuan > 0) out.push({ yuan, index: m.index, end: m.index + m[0].length });
+    if (m[0] === '') reA.lastIndex += 1;
+  }
+  CH_RUN_RE.lastIndex = 0;
+  while ((m = CH_RUN_RE.exec(text)) !== null) {
+    let end = m.index + m[0].length;
+    const tail = text.slice(end, end + 2);
+    const sm = /^(元整|圆整|元|圆|整)/.test(tail) ? tail.match(/^(元整|圆整|元|圆|整)/)[1] : '';
+    if (sm) end += sm.length;
+    const r = evalChineseRun(m[0], /^[元圆]/.test(sm));
+    if (r) out.push({ yuan: r.yuan, index: m.index + r.start, end });
+    if (m[0] === '') CH_RUN_RE.lastIndex += 1;
+  }
+  out.sort((a, b) => (a.index - b.index) || (b.end - a.end));
+  const picked = [];
+  let covered = -1;
+  for (const c of out) {
+    if (c.index >= covered) { picked.push(c); covered = c.end; }
+  }
+  return picked;
+}
+
+const cleanText = (s) => String(s || '').replace(/^[\s:：,，、]+|[\s:：,，、]+$/g, '');
+
 /**
  * 把一行文本拆成 { name, amountFen, note }：
- * 取行内最后一个数字 token 作金额（元→分，容忍千分位逗号/小数/¥/元/圆/整），
- * 金额之前是姓名、之后残余文本是备注（如"同学"）；没数字则整行是姓名。
+ * 取行内最后一个金额 token 作金额——阿拉伯数字（元→分，容忍千分位
+ * 逗号/小数/¥/元/圆/整）与中文数字（AS批，壹仟元整→1000）两者取
+ * 位置靠后者；金额之前是姓名、之后残余文本是备注（如"同学"）；
+ * 没金额则整行是姓名。姓名出口前繁体转简体（zh-t2s），金额/备注不动。
  */
 function splitNameAmount(text) {
   const re = /(?:¥|￥)?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*(?:元|圆|整)?/g;
   let m = null;
-  let last = null;
+  let arab = null;
   while ((m = re.exec(text)) !== null) {
-    last = { num: m[1], index: m.index, end: m.index + m[0].length };
+    arab = { num: m[1], index: m.index, end: m.index + m[0].length };
     if (m[0] === '') re.lastIndex += 1; // 防零宽死循环（理论不会发生）
   }
-  const clean = (s) => String(s || '').replace(/^[\s:：,，、]+|[\s:：,，、]+$/g, '');
-  if (!last) return { name: clean(text), amountFen: null, note: '' };
-  const numStr = last.num.replace(/,/g, '');
-  const dot = numStr.indexOf('.');
-  const yuan = dot >= 0 ? numStr.slice(0, dot) : numStr;
-  const cents = dot >= 0 ? (numStr.slice(dot + 1) + '00').slice(0, 2) : '00';
-  const amountFen = parseInt(yuan || '0', 10) * 100 + parseInt(cents, 10);
-  let name = clean(text.slice(0, last.index));
-  if (/^[\d\s.,，¥￥元圆整]+$/.test(name)) name = ''; // 姓名位只有数字/符号 → 金额占位行
-  const note = clean(text.slice(last.end));
-  return { name, amountFen: amountFen > 0 ? amountFen : null, note };
+  const chin = findChineseAmount(text);
+  let pick = null; // { amountFen, index, end }
+  if (arab) {
+    const numStr = arab.num.replace(/,/g, '');
+    const dot = numStr.indexOf('.');
+    const yuan = dot >= 0 ? numStr.slice(0, dot) : numStr;
+    const cents = dot >= 0 ? (numStr.slice(dot + 1) + '00').slice(0, 2) : '00';
+    pick = { amountFen: parseInt(yuan || '0', 10) * 100 + parseInt(cents, 10), index: arab.index, end: arab.end };
+  }
+  if (chin && (!pick || chin.end > pick.end || (chin.end === pick.end && chin.index >= pick.index))) {
+    pick = { amountFen: chin.yuan * 100, index: chin.index, end: chin.end };
+  }
+  if (!pick) return { name: toSimplified(cleanText(text)), amountFen: null, note: '' };
+  let name = cleanText(text.slice(0, pick.index));
+  if (/^[\d\s.,，¥￥元圆整]+$/.test(name) || parseChineseAmount(name) === pick.amountFen / 100) {
+    name = ''; // 姓名位整段就是金额 → 金额占位行，不得把金额当姓名
+  }
+  const note = cleanText(text.slice(pick.end));
+  return { name: toSimplified(name), amountFen: pick.amountFen > 0 ? pick.amountFen : null, note };
 }
 
-/**
- * TextDetections → rows（与 MockOCR 同形）。
- * 分栏：碎片按 X 区间重叠（≥50% 较窄者）聚类成栏，栏从左到右；
- * 栏内按 Y 分行（Y 重叠 ≥50% 较矮者为同行），行从上到下；
- * 行内碎片按 X 从左到右拼成一行文本再拆姓名/金额。
- * 窄守卫合并：若某栏全部行都"只有金额没姓名"且与前一栏行数相同、
- * 前一栏全部行都"只有姓名没金额"，按序两两合并（姓名/金额被厂商拆成
- * 两栏碎片时的恢复口径，真实礼单不会出现整栏只有金额的排版）。
- */
-function parseDetections(detections) {
-  const frags = (Array.isArray(detections) ? detections : [])
-    .map((d) => {
-      const text = String((d && d.DetectedText) || '').trim();
-      if (!text) return null;
-      const b = bboxOf(d);
-      return { text, ...b, cy: b.y + b.h / 2 };
-    })
-    .filter(Boolean);
-  if (!frags.length) return [];
+/* ---------------- 版式解析（纯函数） ---------------- */
 
-  /* —— 分栏（并查集：X 区间重叠 ≥ 0.5 聚为一栏） —— */
+/** 按 X 区间重叠（≥50% 较窄者）把碎片聚成栏（横排左→右、竖排右→左由调用方排序） */
+function clusterColumns(frags) {
   const parent = frags.map((_, i) => i);
   const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
   for (let i = 0; i < frags.length; i++) {
@@ -208,16 +373,99 @@ function parseDetections(detections) {
     if (!colMap.has(root)) colMap.set(root, []);
     colMap.get(root).push(f);
   });
-  const columns = [...colMap.values()]
-    .map((list) => ({ list, xMin: Math.min(...list.map((f) => f.x)) }))
-    .sort((a, b) => a.xMin - b.xMin);
+  return [...colMap.values()].map((list) => ({
+    list,
+    xMin: Math.min(...list.map((f) => f.x)),
+    xMax: Math.max(...list.map((f) => f.x + f.w)),
+    yMin: Math.min(...list.map((f) => f.y)),
+    yMax: Math.max(...list.map((f) => f.y + f.h)),
+  }));
+}
 
-  /* —— 栏内分行、行内拼接、拆姓名金额 —— */
-  const colRows = columns.map(({ list }) => {
+/**
+ * 竖排判定（AS批）：① 多数文本框高大于宽（整列竖条）；或
+ * ② 按 X 分栏后多数栏呈"高瘦"形（栏高 ≥ 2.5×栏宽）且栏内碎片近方形/竖长
+ * （单字逐个成框竖排成列的情形）。横排整行碎片（宽远大于高）不会误触 ②。
+ */
+function detectVertical(frags, columns) {
+  const tall = frags.filter((f) => f.h > f.w).length;
+  if (tall > frags.length / 2) return true;
+  if (columns.length < 2) return false;
+  const vertCols = columns.filter((c) => {
+    const colH = c.yMax - c.yMin;
+    const colW = Math.max(1, c.xMax - c.xMin);
+    if (colH < 2.5 * colW) return false;
+    const squarish = c.list.filter((f) => f.w <= f.h * 1.3).length;
+    return squarish > c.list.length / 2;
+  });
+  return vertCols.length > columns.length / 2;
+}
+
+/** 竖排整列拼读文本按金额切笔：每笔止于一个金额，金额后残余并入该笔备注 */
+function splitColumnText(text) {
+  const amounts = findAllAmounts(text);
+  if (!amounts.length) {
+    const { name, amountFen, note } = splitNameAmount(text);
+    return [{ name, amountFen, note, raw: text }];
+  }
+  const rows = [];
+  let prev = 0;
+  amounts.forEach((a, i) => {
+    const seg = text.slice(prev, a.end);
+    const r = splitNameAmount(seg);
+    rows.push({ name: r.name, amountFen: r.amountFen, note: r.note, raw: seg });
+    prev = a.end;
+    if (i === amounts.length - 1) {
+      const tail = cleanText(text.slice(prev));
+      if (tail) rows[rows.length - 1].note = rows[rows.length - 1].note
+        ? `${rows[rows.length - 1].note} ${tail}` : tail;
+    }
+  });
+  return rows;
+}
+
+/**
+ * 竖排解析：按 X 分列（跨列绝不串）、列序左到右（冻结契约：左列→右列，
+ * 与横排同向；真机样例第 1 条正是「張」即最左列首字）、列内 Y 自上
+ * 而下拼读成笔。红纸礼单每列中段的纸面印刷字「贺礼/賀禮」不是内容，
+ * 拼读后先滤除再拆姓名/金额（样例图 12 列每列都有）。
+ */
+function parseVertical(frags, columns) {
+  const cols = [...columns].sort((a, b) => a.xMin - b.xMin);
+  const rows = [];
+  for (const col of cols) {
+    const text = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x))
+      .map((f) => f.text).join('')
+      .replace(/賀禮|贺礼/g, '');
+    if (text) rows.push(...splitColumnText(text));
+  }
+  return rows;
+}
+
+/**
+ * 横排解析：
+ * 分栏：碎片按 X 区间重叠聚类成栏，栏从左到右；
+ * 栏内分行：同一水平带（Y 重叠 ≥35% 较矮者，或中心线距 ≤ 半个较矮框高）
+ * 的碎片合为一笔——姓名与金额同行不得拆成两笔（AS批，修 12 拆 21）；
+ * 行内碎片按 X 从左到右拼成一行文本再拆姓名/金额。
+ * 合并恢复：某栏全部行"只有金额"时，先按窄守卫（与前一栏同数纯姓名行
+ * 按序合并）；不满足再按 Y 就近把金额配给前一栏最近的无金额姓名行，
+ * 配不上的金额行保留为空姓名占位行（不丢行）。
+ */
+function parseHorizontal(frags, columns) {
+  const cols = [...columns].sort((a, b) => a.xMin - b.xMin);
+  const sameBand = (f, ln) => {
+    const overlap = overlapRatio(f.y, f.h, ln.yMin, ln.yMax - ln.yMin);
+    if (overlap >= 0.35) return true;
+    const fcy = f.y + f.h / 2;
+    const lcy = (ln.yMin + ln.yMax) / 2;
+    return Math.abs(fcy - lcy) <= 0.5 * Math.max(1, Math.min(f.h, ln.yMax - ln.yMin));
+  };
+  const colRows = cols.map(({ list }) => {
     const sorted = [...list].sort((a, b) => (a.cy - b.cy) || (a.x - b.x));
     const lines = [];
     for (const f of sorted) {
-      const line = lines.find((ln) => overlapRatio(f.y, f.h, ln.yMin, ln.yMax - ln.yMin) >= 0.5);
+      const line = lines.find((ln) => sameBand(f, ln));
       if (line) {
         line.frags.push(f);
         line.yMin = Math.min(line.yMin, f.y);
@@ -230,31 +478,125 @@ function parseDetections(detections) {
     return lines.map((ln) => {
       const raw = [...ln.frags].sort((a, b) => a.x - b.x).map((f) => f.text).join('');
       const { name, amountFen, note } = splitNameAmount(raw);
-      return { name, amountFen, note, raw };
+      return { name, amountFen, note, raw, _y0: ln.yMin, _y1: ln.yMax };
     });
   });
 
-  /* —— 窄守卫合并（金额栏与姓名栏被拆开的恢复） —— */
   const merged = [];
   for (let c = 0; c < colRows.length; c++) {
     const rows = colRows[c];
     const prev = merged[merged.length - 1];
-    if (prev && rows.length > 0 && rows.length === prev.length
-      && rows.every((r) => !r.name && r.amountFen !== null)
+    const isAmountCol = rows.length > 0 && rows.every((r) => !r.name && r.amountFen !== null);
+    if (prev && isAmountCol && rows.length === prev.length
       && prev.every((r) => r.name && r.amountFen === null)) {
+      // 窄守卫：按序两两合并
       for (let i = 0; i < rows.length; i++) {
         prev[i] = {
-          name: prev[i].name,
+          ...prev[i],
           amountFen: rows[i].amountFen,
           note: prev[i].note || rows[i].note || '',
           raw: `${prev[i].raw} ${rows[i].raw}`.trim(),
         };
       }
+    } else if (prev && isAmountCol
+      && prev.filter((r) => r.name && r.amountFen === null).length >= Math.ceil(prev.length / 2)) {
+      // Y 就近配对：金额行配给中心线最近的无金额姓名行；配不上保留占位行
+      const heights = prev.map((r) => r._y1 - r._y0).filter((h) => h > 0);
+      const medH = heights.length ? heights.sort((a, b) => a - b)[Math.floor(heights.length / 2)] : 30;
+      const leftovers = [];
+      for (const ar of rows) {
+        const acy = (ar._y0 + ar._y1) / 2;
+        let best = null;
+        let bestD = Infinity;
+        for (const pr of prev) {
+          if (!pr.name || pr.amountFen !== null) continue;
+          const d = Math.abs((pr._y0 + pr._y1) / 2 - acy);
+          if (d < bestD) { bestD = d; best = pr; }
+        }
+        if (best && bestD <= 1.5 * medH) {
+          best.amountFen = ar.amountFen;
+          best.note = best.note || ar.note || '';
+          best.raw = `${best.raw} ${ar.raw}`.trim();
+        } else {
+          leftovers.push(ar);
+        }
+      }
+      if (leftovers.length) merged.push(leftovers);
     } else {
       merged.push(rows);
     }
   }
-  return merged.flat();
+  // 欄序即行序（冻结契约：左栏自上而下再右栏），只剥内部几何字段
+  return merged.flat().map(({ _y0, _y1, ...row }) => row);
+}
+
+/**
+ * TextDetections → rows（与 MockOCR 同形）。
+ * 先判竖/横排：竖排走 parseVertical（列内成笔、跨列不串，AS批），
+ * 横排走 parseHorizontal（分栏＋同带合并）。
+ */
+function parseDetections(detections) {
+  const frags = (Array.isArray(detections) ? detections : [])
+    .map((d) => {
+      const text = String((d && d.DetectedText) || '').trim();
+      if (!text) return null;
+      const b = bboxOf(d);
+      return { text, ...b, cy: b.y + b.h / 2 };
+    })
+    .filter(Boolean);
+  if (!frags.length) return [];
+  const columns = clusterColumns(frags);
+  return detectVertical(frags, columns) ? parseVertical(frags, columns) : parseHorizontal(frags, columns);
+}
+
+/* ---------------- 识别质量评估（AS批质量门，纯函数） ----------------
+ * 阈值常量（摘要列明）：平均置信度 < 70 判低（腾讯 Confidence 0–100，
+ * 至少半数碎片带该字段才启用）；碎片中单字碎片占比 > 60%（且碎片 ≥4）
+ * 判碎片化；任一碎片含 ≥4 个连续拉丁字母，或全文拉丁字母占比 ≥25%
+ * （且拉丁字符 ≥4）判拉丁乱码。任一命中即 bad（质量差）。
+ * score 越高越好，用于印刷/手写两份结果取优。 */
+const QUALITY_MIN_CONFIDENCE = 70;
+const QUALITY_SINGLE_CHAR_RATIO = 0.6;
+const QUALITY_LATIN_RUN = 4;
+
+function assessQuality(detections) {
+  const dets = Array.isArray(detections) ? detections : [];
+  const frags = dets
+    .map((d) => ({
+      text: String((d && d.DetectedText) || '').trim(),
+      conf: d && typeof d.Confidence === 'number' ? d.Confidence : null,
+    }))
+    .filter((f) => f.text);
+  const rows = parseDetections(dets);
+  const reasons = [];
+  if (!frags.length) return { bad: true, score: -100, reasons: ['empty'], rows };
+
+  const allText = frags.map((f) => f.text).join('');
+  const latinChars = (allText.match(/[A-Za-z]/g) || []).length;
+  const hasLatinRun = frags.some((f) => new RegExp(`[A-Za-z]{${QUALITY_LATIN_RUN},}`).test(f.text));
+  const latinGibberish = hasLatinRun || (latinChars >= QUALITY_LATIN_RUN && latinChars / Math.max(1, allText.length) >= 0.25);
+  if (latinGibberish) reasons.push('latin-gibberish');
+
+  const confs = frags.filter((f) => f.conf !== null).map((f) => f.conf);
+  const confKnown = confs.length >= Math.ceil(frags.length / 2);
+  const avgConf = confKnown ? confs.reduce((a, b) => a + b, 0) / confs.length : null;
+  if (confKnown && avgConf < QUALITY_MIN_CONFIDENCE) reasons.push('low-confidence');
+
+  const singleChar = frags.filter((f) => f.text.length === 1).length;
+  const singleRatio = frags.length ? singleChar / frags.length : 0;
+  if (frags.length >= 4 && singleRatio > QUALITY_SINGLE_CHAR_RATIO) reasons.push('single-char-fragments');
+
+  const withAmount = rows.filter((r) => r.amountFen !== null).length;
+  const amountRatio = rows.length ? withAmount / rows.length : 0;
+  const nameChars = rows.reduce((n, r) => n + (r.name ? r.name.length : 0), 0);
+  let score = 0;
+  if (confKnown) score += (avgConf - 50) * 0.6;
+  score += amountRatio * 20;
+  score += Math.min(nameChars, 20) * 0.5;
+  if (latinGibberish) score -= 45;
+  if (reasons.includes('single-char-fragments')) score -= 25;
+  if (!rows.length) score -= 100;
+  return { bad: reasons.length > 0, score, reasons, rows, avgConf };
 }
 
 /* ---------------- 适配器工厂 ---------------- */
@@ -308,19 +650,45 @@ function createAdapter(deps = {}) {
         if (!buf) throw new Error('这张照片没认出来');
         imageBase64 = Buffer.from(buf).toString('base64');
       }
+      /* AS-8 留痕：每次真实调用都记一份原始要素（接口/质量分/碎片），
+       * 挂在返回 rows.ocrTrace 上随任务落库；抛错的调用不记。 */
+      const traceCalls = [];
+      const runCall = async (action) => {
+        const dets = await callOcr(action, imageBase64, cfg);
+        const q = assessQuality(dets);
+        traceCalls.push(buildTraceCall(action, dets, q));
+        return { dets, q };
+      };
+      const finish = (rows, chosen) => {
+        rows.ocrTrace = finalizeTrace(traceCalls, chosen);
+        return rows;
+      };
       const mode = opts.mode || opts.ocrMode || '';
-      let rows = [];
-      if (mode !== 'handwriting') {
-        rows = parseDetections(await callOcr('GeneralBasicOCR', imageBase64, cfg));
-        if (rows.length > 0 || mode === 'print') {
-          if (!rows.length) throw new Error('这张照片没认出来');
-          return rows;
-        }
+      if (mode === 'print') {
+        const { q } = await runCall('GeneralBasicOCR');
+        if (!q.rows.length) throw new Error('这张照片没认出来');
+        return finish(q.rows, 'print');
       }
-      // 手写模式，或印刷体没认出任何文字 → 手写体兜底
-      rows = parseDetections(await callOcr('GeneralHandwritingOCR', imageBase64, cfg));
-      if (!rows.length) throw new Error('这张照片没认出来');
-      return rows;
+      if (mode === 'handwriting') {
+        const { q } = await runCall('GeneralHandwritingOCR');
+        if (!q.rows.length) throw new Error('这张照片没认出来');
+        return finish(q.rows, 'handwriting');
+      }
+      /* 未指定模式：手写优先（纸质礼单多为手写）；质量过关直接用
+       * （常态 1 次/图）；没认出 或 质量门判差 → 补调印刷并按质量分取优 */
+      const hw = await runCall('GeneralHandwritingOCR');
+      if (hw.dets.length && !hw.q.bad) return finish(hw.q.rows, 'handwriting');
+      let print = null;
+      try {
+        print = await runCall('GeneralBasicOCR');
+      } catch (e) {
+        if (!hw.q.rows.length) throw e; // 手写也无果才让印刷错误冒泡
+      }
+      let best = hw.q;
+      let chosen = 'handwriting';
+      if (print && print.q.score > hw.q.score) { best = print.q; chosen = 'print'; }
+      if (!best.rows.length) throw new Error('这张照片没认出来');
+      return finish(best.rows, chosen);
     },
   };
 }
@@ -331,7 +699,13 @@ module.exports = {
   buildAuthorization,
   parseDetections,
   splitNameAmount,
+  parseChineseAmount,
+  findAllAmounts,
+  assessQuality,
   createAdapter,
   HOST,
   VERSION,
+  QUALITY_MIN_CONFIDENCE,
+  QUALITY_SINGLE_CHAR_RATIO,
+  QUALITY_LATIN_RUN,
 };

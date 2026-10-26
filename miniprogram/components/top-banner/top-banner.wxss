@@ -1,10 +1,9 @@
-/* 顶部条形弹窗（AP批）：固定在导航栏下方居中，滑下/滑回走 transform+opacity 过渡。
-   组件样式隔离，类名带 tb- 前缀避免与页面冲突。 */
+/* 顶部条形弹窗（AS批）：贴导航胶囊行——纵向中心对齐胶囊（top 由 JS 实测
+   写入），右缘让开胶囊本体；宽度随内容收紧，max-width 78vw 不压满整行。
+   滑下/滑回走 transform+opacity 过渡。组件样式隔离，类名带 tb- 前缀。 */
 .top-banner {
   position: fixed;
-  left: 50%;
-  top: calc(env(safe-area-inset-top) + 52px);
-  transform: translate(-50%, -18px);
+  transform: translateY(calc(-50% - 14px));
   opacity: 0;
   transition: transform .32s ease, opacity .32s ease;
   display: flex;
@@ -14,11 +13,11 @@
   padding: 7px 14px 7px 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, .16);
   z-index: 50;
-  max-width: 92vw;
+  max-width: 78vw;
   box-sizing: border-box;
 }
 .top-banner.in {
-  transform: translate(-50%, 0);
+  transform: translateY(-50%);
   opacity: 1;
 }
 .tb-disc {

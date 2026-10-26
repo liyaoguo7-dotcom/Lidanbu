@@ -14,7 +14,7 @@
 
   <view class="tip" wx:if="{{!hornOff}}"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><view class="horn-marquee"><view wx:if="{{hornRun}}" class="horn-track run" style="animation-duration:{{hornDur}}s"><text class="tip-txt-nowrap horn-cell">{{tipText}}</text><text class="tip-txt-nowrap horn-cell">{{tipText}}</text></view><text wx:else class="tip-txt-ellipsis">{{tipText}}</text></view><text class="tip-close" catchtap="onHornClose">×</text></view>
 
-  <view wx:for="{{items}}" wx:key="index" id="item-{{index}}" class="card item-card {{errorIndex === index ? 'item-error' : ''}}">
+  <view wx:for="{{items}}" wx:key="index" id="item-{{index}}" class="card item-card {{index === 0 ? 'item-first' : ''}} {{index === items.length - 1 ? 'item-last' : ''}} {{errorIndex === index ? 'item-error' : ''}}">
     <view class="item-head">
       <text class="item-no">第{{index + 1}}条</text>
       <text class="item-err" wx:if="{{errorIndex === index}}">这条要改一下</text>
@@ -47,7 +47,8 @@
         <view class="form-val">{{item.tagName}}<text class="chev"> ›</text></view>
       </picker>
     </view>
-    <view class="form-row">
+    <!-- AS批：收礼核对页去掉日期行（记录日期由导入日兜底）；送礼保留 -->
+    <view class="form-row" wx:if="{{kind !== 'receive'}}">
       <text class="form-label">日期</text>
       <picker class="form-picker" mode="date" value="{{item.date}}" data-i="{{index}}" bindchange="onDateChange">
         <view class="form-val num">{{item.date}}<text class="chev"> ›</text></view>

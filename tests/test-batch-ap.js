@@ -48,7 +48,7 @@ assert.ok(/a\.lastDate < b\.lastDate/.test(stats), 'AP-4 排序比较器应以 l
 /* AP-5 顶部条形弹窗组件 */
 ['js', 'json', 'wxml', 'wxss'].forEach((ext) => assert.ok(has(`miniprogram/components/top-banner/top-banner.${ext}`), `AP-5 top-banner 应有 .${ext}`));
 const tbJs = rd('miniprogram/components/top-banner/top-banner.js');
-assert.ok(tbJs.includes('shownThisLaunch'), 'AP-5 应有模块级只弹一次标志');
+assert.ok(tbJs.includes('topBannerShownTick'), 'AP-5 出现规则已由 AS批改版：App 前台化周期 tick（原模块级 shownThisLaunch 已废）');
 assert.ok(tbJs.includes('3500'), 'AP-5 停留时长暂定 3.5 秒');
 assert.ok(rd('miniprogram/components/top-banner/top-banner.wxml').includes('『人情礼单簿』小程序提供服务'), 'AP-5 胶囊文案应为我们的小程序名');
 assert.ok(rd('miniprogram/pages/index/index.json').includes('top-banner'), 'AP-5 首页应注册 top-banner');
@@ -63,7 +63,7 @@ assert.ok(mineWxml.includes('点击『添加到我的小程序』'), 'AP-6 教�
 assert.ok(mineWxml.includes('在微信首页往下拉，就能快速打开『人情礼单簿』'), 'AP-6 教程第 3 步（我们的名称）');
 assert.ok(mineWxml.includes('我知道了'), 'AP-6 教程底部按钮');
 assert.ok(mineWxml.includes('addmp-mock-avatar') && mineWxml.includes('人情礼单簿'), 'AP-6 示意小图应为我们的头像与名称');
-assert.ok(mineJs.includes("wx.setStorageSync('addMpGuideDone'"), 'AP-6 点过我知道了应写永久标志 addMpGuideDone');
-assert.ok(mineJs.includes("wx.getStorageSync('addMpGuideDone')"), 'AP-6 进页应读永久标志决定是否显示');
+assert.ok(!mineJs.includes("setStorageSync('addMpGuideDone'") && !mineJs.includes("getStorageSync('addMpGuideDone'"), 'AP-6 永久标志已由 AS批定版删除：不得再读写 addMpGuideDone');
+assert.ok(mineJs.includes('addMpGuideShow: true'), 'AS批定版：进我的页即显示引导条（onLoad 置 true）');
 
 console.log('✓ AP批·接线静态断言全过');

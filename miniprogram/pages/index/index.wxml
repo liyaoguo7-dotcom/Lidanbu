@@ -1,6 +1,6 @@
 <!-- 礼单簿 · 首页（阶段2 2A；2026-10-21 版式调整：大卡缩小变淡下移、金刚区下移+图标放大加彩色底衬） -->
 <view class="page-flex">
-  <top-banner />
+  <top-banner id="topBanner" />
   <view class="retry-bar" wx:if="{{initFailed}}" bindtap="onRetryInit">网络不太顺，点这里重试</view>
   <view class="tip" wx:if="{{!hornOff}}"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><view class="horn-marquee"><view wx:if="{{hornRun}}" class="horn-track run" style="animation-duration:{{hornDur}}s"><text class="tip-txt-nowrap horn-cell">{{tipText}}</text><text class="tip-txt-nowrap horn-cell">{{tipText}}</text></view><text wx:else class="tip-txt-ellipsis">{{tipText}}</text></view><text class="tip-close" catchtap="onHornClose">×</text></view>
 

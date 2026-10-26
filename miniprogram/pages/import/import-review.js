@@ -71,7 +71,8 @@ Page({
       tagName: other.name,
       date: today(),
     }));
-    const hornText = '对着原图逐条核对：姓名可以从亲友录选，金额、' + (pending.kind === 'receive' ? '类型' : '场合') + '、日期、备注都能改；错的删掉，不够再补录。全部改好点底部"全部确认导入"，一次写进账本。';
+    // AS批：收礼核对页已去掉日期行，喇叭文案对收礼不再提日期（送礼仍可改日期）
+    const hornText = '对着原图逐条核对：姓名可以从亲友录选，金额、' + (pending.kind === 'receive' ? '类型、备注' : '场合、日期、备注') + '都能改；错的删掉，不够再补录。全部改好点底部"全部确认导入"，一次写进账本。';
     this.setData({ tipText: hornText });
     this._syncHorn();
     this.setData({

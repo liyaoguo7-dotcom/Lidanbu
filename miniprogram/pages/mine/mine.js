@@ -39,14 +39,15 @@ Page({
     unreadCount: 0,
     cancelPending: null, // { cancelAtText, remainingDays } 待注销提示（冷静期内）
     version: AppConfig.version || '',
-    addMpGuideShow: false, // AP批「添加到我的小程序」引导条：点过教程「我知道了」后永久不显示
+    addMpGuideShow: false, // 「添加到我的小程序」引导条（AS批定版：每次进我的页都显示，无任何持久标记）
     addMpTutorialShow: false, // AP批：三步图文教程层
   },
 
   async onLoad() {
-    // AP批：引导条显示判定——storage 标志 addMpGuideDone 存在则永不再显示；
-    // 引导条上的 × 只关本次（不写标志），页面重进（冷启动）还会再出现。
-    this.setData({ addMpGuideShow: !wx.getStorageSync('addMpGuideDone') });
+    // AS批定版：引导条每次进入我的页都显示——不读任何 storage 标记
+    // （旧版 addMpGuideDone 永久标记被用户点名删掉：点过就再也不出现、
+    // 删小程序才恢复）。× 与「我知道了」都只关本次进入（页面内状态）。
+    this.setData({ addMpGuideShow: true });
     await dataService.init();
     this._isAdmin = await dataService.isAdmin();
     this.setData({
@@ -58,9 +59,16 @@ Page({
   },
 
   async onShow() {
+    // AS批：引导条每次进入都显示（本次进入内关掉的，离开再回来重新显示）
+    this.setData({ addMpGuideShow: !this._mpGuideClosed });
     // 开关显示与 storage 同步（横置页「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）会在那边写回 false）
     this.setData({ landscapeOn: landscapeRoute.readLandscapeOn() });
     await this.refresh();
+  },
+
+  onHide() {
+    // AS批：离开我的页即结束"本次进入"，下次进来引导条重新显示
+    this._mpGuideClosed = false;
   },
 
   async refresh() {
@@ -143,9 +151,10 @@ Page({
     });
   },
 
-  // ---- AP批「添加到我的小程序」引导 ----
-  /** 引导条 ×：只关本次显示（不写永久标志，页面重进还会出现） */
+  // ---- 「添加到我的小程序」引导（AP批形态，AS批改出现规则） ----
+  /** 引导条 ×：只关本次进入的显示（页面内状态，不写任何持久标记） */
   onCloseAddMpGuide() {
+    this._mpGuideClosed = true;
     this.setData({ addMpGuideShow: false });
   },
 
@@ -154,9 +163,9 @@ Page({
     this.setData({ addMpTutorialShow: true });
   },
 
-  /** 教程层「我知道了」：写永久标志，引导条与教程层从此不再出现 */
+  /** 教程层「我知道了」：只关教程层与本次进入的红条，下次进入再显示 */
   onAddMpKnow() {
-    wx.setStorageSync('addMpGuideDone', 1);
+    this._mpGuideClosed = true;
     this.setData({ addMpTutorialShow: false, addMpGuideShow: false });
   },
 

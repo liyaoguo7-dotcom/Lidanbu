@@ -731,6 +731,7 @@ let partial = 0;
 const periods = new Map();
 const reasons = new Map();
 for (const j of jobs) {
+if (j.status === 'recognized') continue; // AS批识别留痕文档不是一次完成导入，不计用量
 const st = j.status === 'success' ? 'success' : j.status === 'partial' ? 'partial' : 'failed';
 if (st === 'success') success += 1; else if (st === 'partial') partial += 1; else failed += 1;
 const key = periodKey(j.createdAt || 0, granularity);
@@ -743,7 +744,7 @@ const r = j.failReason || 'validation';
 reasons.set(r, (reasons.get(r) || 0) + 1);
 }
 }
-const total = jobs.length;
+const total = success + failed + partial; // 已跳过 'recognized' 留痕文档
 return {
 total, success, failed, partial,
 successRate: total > 0 ? Math.round((success / total) * 1000) / 10 : 0,

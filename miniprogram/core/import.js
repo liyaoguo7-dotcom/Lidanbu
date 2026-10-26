@@ -123,14 +123,17 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
    * 本地演示/单机口径的单张本地路径。云端只认 fileID——本地临时路径
    * 在服务端取不到图，不在此兼容。 */
   let items;
+  const ocrTraces = []; // AS-8 识别留痕（仅真实适配器的结果带 ocrTrace）
   if (Array.isArray(imageFileIds) && imageFileIds.length > 0) {
     items = [];
     for (const fileId of imageFileIds) {
       const part = await ocr.recognize(fileId, { kind, provider, fail, adapter: ocrAdapter, mode: ocrMode });
+      if (part && part.ocrTrace) ocrTraces.push(part.ocrTrace);
       items.push(...part);
     }
   } else {
     items = await ocr.recognize(imagePath, { kind, provider, fail, adapter: ocrAdapter, mode: ocrMode });
+    if (items && items.ocrTrace) { ocrTraces.push(items.ocrTrace); delete items.ocrTrace; }
   }
   const adapterName = ocrAdapter && typeof ocrAdapter.name === 'string' && ocrAdapter.name
     ? ocrAdapter.name : (provider || 'mock');
@@ -145,6 +148,22 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
       note: '拍照录入',
     });
     duplicated = !!r.duplicated;
+  }
+
+  /* —— AS-8 识别留痕落库：真实识别才写一条 importJobs 文档
+   * （status 'recognized'，用量统计跳过这类文档），ocrRaw 存每个
+   * 接口的原始碎片/质量分，供控制台取回离线重放解析调试；Mock
+   * 不写。落痕失败不影响导入主流程（同 _recordImportJob 口径）。 —— */
+  if (ocrTraces.length && !duplicated) {
+    try {
+      await db.collection(COLLECTIONS.ImportJob).insert({
+        ownerId, kind, eventId: eventId || null,
+        status: 'recognized', failReason: null, itemCount: items.length,
+        jobId: id,
+        ocrRaw: ocrTraces.length === 1 ? ocrTraces[0] : ocrTraces,
+        createdAt: Date.now(),
+      });
+    } catch (e) { /* 留痕失败不拦导入 */ }
   }
   return { jobId: id, items, cost, duplicated, adapter: adapterName };
 }

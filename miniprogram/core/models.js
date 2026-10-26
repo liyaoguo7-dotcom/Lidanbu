@@ -47,9 +47,12 @@ const COLLECTIONS = {
  * ShareGrant: {_id, membershipId, switches:{view,add,edit,del,export}, scope:{events:[eventId], gifts:bool}, updatedAt}
  *   // view 恒 true；export 默认 false；新建事件默认不共享（不自动进 scope.events）
  * AuditLog: {_id, ownerId, actorId, action, targetType, targetId, detail(不含金额/姓名原文的摘要), createdAt}
- * ImportJob: {_id, ownerId, kind:'gift'|'receive', eventId?, status:'success'|'failed'|'partial',
- *   failReason:'quota'|'validation'|'write-error'|null, itemCount(本批条数), createdAt}
+ * ImportJob: {_id, ownerId, kind:'gift'|'receive', eventId?, status:'success'|'failed'|'partial'|'recognized',
+ *   failReason:'quota'|'validation'|'write-error'|null, itemCount(本批条数), createdAt,
+ *   jobId?, ocrRaw?}
  *   // writeImport 每次确认写入都记一条（只记条数级，供老板平台用量统计；不含姓名/金额/备注）
+ *   // AS批另有 status:'recognized' 文档：真实 OCR 识别时落的调试留痕（ocrRaw＝原始碎片/质量分，
+ *   // 仅管理员测试期产生、供离线重放解析）；用量统计跳过这类文档，不计成功率
  * ExportJob: {_id, ownerId, scope, status, createdAt}  // 阶段3用，T1.1只建模
  * AppConfig: {_id:'singleton', freeQuota, membership, memberOnlyFeatures(会员专属功能清单),
  *   inviteReward(老板平台可覆盖:{enabled, perInvite:{receivePool,giftRecords}, maxSuccessfulInvites}), updatedAt}

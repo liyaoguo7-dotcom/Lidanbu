@@ -106,15 +106,15 @@ test('AQ 解析：手写体同形响应（只有 Polygon）可解析；空响应
 const ENV = { TENCENT_SECRET_ID: FAKE_ID, TENCENT_SECRET_KEY: FAKE_KEY };
 const okResp = (dets) => ({ status: 200, json: { Response: { TextDetections: dets, RequestId: 'r1' } } });
 
-test('AQ 适配器：印刷体有结果只调印刷体；请求头/载荷合规', async () => {
+test('AQ 适配器：未指定模式手写优先（AS批定版），手写有结果只调手写体；请求头/载荷合规', async () => {
   const calls = [];
   const adapter = tencentOcr.createAdapter({
     env: ENV,
     httpPost: async (req) => { calls.push(req); return okResp([det('张三 1000', 10, 10)]); },
   });
   const rows = await adapter.recognize('cloud://fake/x.jpg', { imageBase64: 'aGVsbG8=' });
-  assert.eq(calls.length, 1, '印刷体命中不应再调手写体');
-  assert.eq(calls[0].headers['X-TC-Action'], 'GeneralBasicOCR', '先调印刷体');
+  assert.eq(calls.length, 1, '手写体命中不应再调印刷体（常态 1 次/图）');
+  assert.eq(calls[0].headers['X-TC-Action'], 'GeneralHandwritingOCR', '先调手写体（AS批策略）');
   assert.eq(calls[0].headers['X-TC-Version'], '2018-11-19', '版本头');
   assert(/^TC3-HMAC-SHA256 /.test(calls[0].headers.Authorization), '带 TC3 签名头');
   assert.eq(JSON.parse(calls[0].body).ImageBase64, 'aGVsbG8=', '载荷带 ImageBase64');
@@ -122,24 +122,24 @@ test('AQ 适配器：印刷体有结果只调印刷体；请求头/载荷合规'
   assert.eq(rows[0].amountFen, 100000, '识别结果金额');
 });
 
-test('AQ 适配器：印刷体空结果 → 手写体兜底；mode=handwriting 只调手写体', async () => {
+test('AQ 适配器：手写空结果 → 印刷体兜底（AS批手写优先后的兜底向）；mode=print 只调印刷体', async () => {
   const actions = [];
   const adapter = tencentOcr.createAdapter({
     env: ENV,
     httpPost: async (req) => {
       actions.push(req.headers['X-TC-Action']);
-      return req.headers['X-TC-Action'] === 'GeneralHandwritingOCR'
-        ? okResp([det('手写名 300', 10, 10)]) : okResp([]);
+      return req.headers['X-TC-Action'] === 'GeneralBasicOCR'
+        ? okResp([det('印刷名 300', 10, 10)]) : okResp([]);
     },
   });
   const rows = await adapter.recognize('cloud://fake/x.jpg', { imageBase64: 'aA==' });
-  assert.eq(actions.join(','), 'GeneralBasicOCR,GeneralHandwritingOCR', '印刷空 → 手写兜底顺序');
-  assert.eq(rows[0].name, '手写名', '兜底结果来自手写体');
+  assert.eq(actions.join(','), 'GeneralHandwritingOCR,GeneralBasicOCR', '手写空 → 印刷兜底顺序');
+  assert.eq(rows[0].name, '印刷名', '兜底结果来自印刷体');
 
   actions.length = 0;
-  const rows2 = await adapter.recognize('cloud://fake/x.jpg', { imageBase64: 'aA==', mode: 'handwriting' });
-  assert.eq(actions.join(','), 'GeneralHandwritingOCR', 'mode=handwriting 只调手写体');
-  assert.eq(rows2[0].amountFen, 30000, '手写模式金额');
+  const rows2 = await adapter.recognize('cloud://fake/x.jpg', { imageBase64: 'aA==', mode: 'print' });
+  assert.eq(actions.join(','), 'GeneralBasicOCR', 'mode=print 只调印刷体');
+  assert.eq(rows2[0].amountFen, 30000, '印刷模式金额');
 });
 
 test('AQ 适配器：两接口都空 → 抛「没认出来」（不扣费口径）；厂商报错 → ocr-failed', async () => {
@@ -227,8 +227,8 @@ test('AQ 选择：有密钥且管理员 → 真实适配器（取图→签名请
     });
     assert(r.ok === true, `应成功（实际 ${JSON.stringify(r)}）`);
     assert.eq(r.data.adapter, 'tencent', '管理员 adapter 应标 tencent');
-    assert.eq(calls.length, 1, '只发一次 OCR 请求（印刷体命中）');
-    assert.eq(calls[0].headers['X-TC-Action'], 'GeneralBasicOCR', '请求头含 X-TC-Action');
+    assert.eq(calls.length, 1, '只发一次 OCR 请求（手写体命中，AS批手写优先）');
+    assert.eq(calls[0].headers['X-TC-Action'], 'GeneralHandwritingOCR', '请求头含 X-TC-Action（AS批先调手写）');
     assert(
       JSON.parse(calls[0].body).ImageBase64 === Buffer.from('fake-jpeg-bytes').toString('base64'),
       '请求体 ImageBase64 应为按 fileID 取回的图片字节',
