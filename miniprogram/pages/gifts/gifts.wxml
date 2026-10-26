@@ -34,6 +34,7 @@
 <view class="empty" wx:if="{{shown.length === 0 && !searching}}">
   <image class="empty-icon" src="/images/icons/folder.svg" mode="aspectFit" />
   <text class="empty-text">还没有记录，请点击下方红色＋按钮添加</text>
+  <text class="empty-slogan">今年你送出去了多少礼？</text>
   <text class="empty-sample" bindtap="goSample">点击查看示例</text>
 </view>
 

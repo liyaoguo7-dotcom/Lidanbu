@@ -39,9 +39,14 @@ Page({
     unreadCount: 0,
     cancelPending: null, // { cancelAtText, remainingDays } 待注销提示（冷静期内）
     version: AppConfig.version || '',
+    addMpGuideShow: false, // AP批「添加到我的小程序」引导条：点过教程「我知道了」后永久不显示
+    addMpTutorialShow: false, // AP批：三步图文教程层
   },
 
   async onLoad() {
+    // AP批：引导条显示判定——storage 标志 addMpGuideDone 存在则永不再显示；
+    // 引导条上的 × 只关本次（不写标志），页面重进（冷启动）还会再出现。
+    this.setData({ addMpGuideShow: !wx.getStorageSync('addMpGuideDone') });
     await dataService.init();
     this._isAdmin = await dataService.isAdmin();
     this.setData({
@@ -136,6 +141,23 @@ Page({
         }
       },
     });
+  },
+
+  // ---- AP批「添加到我的小程序」引导 ----
+  /** 引导条 ×：只关本次显示（不写永久标志，页面重进还会出现） */
+  onCloseAddMpGuide() {
+    this.setData({ addMpGuideShow: false });
+  },
+
+  /** 点引导条 → 打开三步图文教程层 */
+  onOpenAddMpTutorial() {
+    this.setData({ addMpTutorialShow: true });
+  },
+
+  /** 教程层「我知道了」：写永久标志，引导条与教程层从此不再出现 */
+  onAddMpKnow() {
+    wx.setStorageSync('addMpGuideDone', 1);
+    this.setData({ addMpTutorialShow: false, addMpGuideShow: false });
   },
 
   onProfile() {

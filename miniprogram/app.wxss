@@ -123,6 +123,8 @@ page {
 .search-cancel { color: #F0575A; font-size: 14px; margin-left: 8px; white-space: nowrap; }
 .divider { height: 1px; background: #F0F0F0; }
 .section-title { padding: 4px 12px 0; font-size: 13px; color: #999; }
+/* 分组标题下的括号解释小字（AP批，共享邀请页权限组首用） */
+.section-note { padding: 2px 12px 0; font-size: 12px; color: #999; }
 .switch {
   width: 46px; height: 26px; border-radius: 13px;
   background: #DDD; position: relative; flex: none;

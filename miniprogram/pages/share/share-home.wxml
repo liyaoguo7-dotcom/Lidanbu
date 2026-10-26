@@ -1,4 +1,7 @@
 <!-- 家庭共享 -->
+<!-- AP批：黄色提醒条移到两行入口上方（页面顶部），文案不动 -->
+<view class="tip">邀请家人共记一本账：允许查看我标记的项目，权限由你定，随时可改、立即生效。</view>
+
 <view class="card">
   <view class="form-row" bindtap="onInvite">
     <text class="form-label">邀请家人</text>
@@ -11,8 +14,6 @@
     <text class="chev">›</text>
   </view>
 </view>
-
-<view class="tip">邀请家人共记一本账：允许查看我标记的项目，权限由你定，随时可改、立即生效。</view>
 
 <view class="section-title" wx:if="{{received.length}}">我收到的共享</view>
 <view class="card" wx:if="{{received.length}}">

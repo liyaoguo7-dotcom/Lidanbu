@@ -31,6 +31,13 @@ Page({
     monthSummary: null,    // 本月小结（任务V）：{hasRecords, receiveText, giftText}
     recent: [],            // 最近往来：取最近 10 条（任务AA）；空数组时整卡不渲染
     recentRolling: false,  // 任务AA：>4 条时竖向自动滚动（同时可见 4 条），不足则静态
+    homeLoaded: false,     // AP批：首页数据已回来才判最近往来空/非空（防标语块闪现）
+    slogans: [             // AP批 痛点标语（用户 2026-10-26 定稿，一字不差）
+      '今年你送出去了多少礼？',
+      '出门在外，想查往来却找不到礼簿？',
+      '纸质礼簿越记越厚，翻找一笔好费劲？',
+    ],
+    sloganIdx: 0,          // AP批：当前轮播到第几句（约 3 秒一切，淡入淡出）
   },
 
   // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
@@ -74,6 +81,25 @@ Page({
     await this.checkPrivacyPopup();
   },
 
+  onHide() { this._stopSlogan(); },
+  onUnload() { this._stopSlogan(); },
+
+  // ---- AP批 痛点标语轮播：只在最近往来为空时转，约 3 秒一句；离开页面停 ----
+  _startSlogan() {
+    if (this._sloganTimer) return;
+    this._sloganTimer = setInterval(() => {
+      this.setData({ sloganIdx: (this.data.sloganIdx + 1) % this.data.slogans.length });
+    }, 3000);
+  },
+  _stopSlogan() {
+    if (this._sloganTimer) { clearInterval(this._sloganTimer); this._sloganTimer = null; }
+  },
+
+  /** 标语块整块可点 → 去记第一笔（添加送礼页） */
+  onSloganTap() {
+    wx.navigateTo({ url: '/pages/gift-add/gift-add' });
+  },
+
   /** 本月小结 + 最近往来（任务V）：只读本人账本真实数据（data-service 口径） */
   async refreshHomeData() {
     try {
@@ -90,8 +116,12 @@ Page({
         },
         recent: list,
         recentRolling: list.length > 4,
+        homeLoaded: true,
+      }, () => {
+        // 最近往来为空才轮播标语；一有数据立即停并撤块（wxml 条件控制）
+        if (list.length === 0) this._startSlogan(); else this._stopSlogan();
       });
-    } catch (e) { /* 演示期忽略 */ }
+    } catch (e) { this.setData({ homeLoaded: true }); /* 演示期忽略 */ }
   },
 
   /** 最近往来「查看全部」→ 往来 Tab */

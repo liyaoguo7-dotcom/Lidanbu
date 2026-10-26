@@ -77,3 +77,84 @@
 .form-row { min-height: 50px; }
 .form-val { font-size: 16px; }
 .chev { font-size: 16px; }
+
+/* AP批「添加到我的小程序」引导条 + 教程层 */
+.addmp-bar {
+  margin: 10px 12px 0;
+  background: #F0575A;
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+}
+.addmp-text { flex: 1; }
+.addmp-arrow { font-size: 16px; padding-left: 6px; }
+.addmp-close { font-size: 16px; line-height: 1; padding: 2px 0 2px 12px; }
+.addmp-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, .5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+.addmp-card {
+  width: 300px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 20px 20px;
+  box-sizing: border-box;
+}
+.addmp-title { text-align: center; font-size: 16px; font-weight: 600; color: #333; }
+.addmp-mock {
+  margin: 16px 0 14px;
+  background: #F6F6F6;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.addmp-mock-app { display: flex; align-items: center; }
+.addmp-mock-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #F0575A;
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.addmp-mock-name { font-size: 16px; color: #333; margin-left: 8px; }
+.addmp-mock-capsule {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #DDD;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.addmp-mock-dots { font-size: 16px; color: #333; letter-spacing: 1px; line-height: 1; }
+.addmp-mock-ring {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  box-sizing: border-box;
+  margin-left: 7px;
+}
+.addmp-step { font-size: 16px; color: #333; line-height: 1.6; padding: 2px 0; }
+.addmp-step-no { color: #F0575A; font-weight: 700; font-size: 16px; margin-right: 6px; }
+.addmp-btn {
+  margin-top: 16px;
+  background: #F0575A;
+  color: #fff;
+  text-align: center;
+  height: 46px;
+  line-height: 46px;
+  border-radius: 23px;
+  font-size: 16px;
+}

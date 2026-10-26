@@ -1,0 +1,47 @@
+/* 顶部条形弹窗（AP批）：固定在导航栏下方居中，滑下/滑回走 transform+opacity 过渡。
+   组件样式隔离，类名带 tb- 前缀避免与页面冲突。 */
+.top-banner {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 52px);
+  transform: translate(-50%, -18px);
+  opacity: 0;
+  transition: transform .32s ease, opacity .32s ease;
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 999px;
+  padding: 7px 14px 7px 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .16);
+  z-index: 50;
+  max-width: 92vw;
+  box-sizing: border-box;
+}
+.top-banner.in {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+.tb-disc {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #F0575A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.tb-icon { width: 15px; height: 15px; }
+.tb-text {
+  font-size: 13px;
+  color: #333;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.tb-close {
+  flex: none;
+  color: #999;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 0 2px 10px;
+}

@@ -4,6 +4,14 @@
   你的账号已申请注销，将在 {{cancelPending.cancelAtText}} 执行（还剩 {{cancelPending.remainingDays}} 天）。点这里可以撤销 ›
 </view>
 
+<!-- AP批「添加到我的小程序」引导条（顶部红条）：点开三步教程；× 只关本次；
+     教程里点过「我知道了」后永久不再显示（storage 标志 addMpGuideDone） -->
+<view class="addmp-bar" wx:if="{{addMpGuideShow}}">
+  <text class="addmp-text" bindtap="onOpenAddMpTutorial">点击[添加到我的小程序]，下次打开更快捷</text>
+  <text class="addmp-arrow" bindtap="onOpenAddMpTutorial">＞</text>
+  <text class="addmp-close" catchtap="onCloseAddMpGuide">×</text>
+</view>
+
 <!-- ① 个人资料条 -->
 <view class="card profile" bindtap="onProfile">
   <image wx:if="{{avatarUrl}}" class="avatar avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
@@ -86,3 +94,25 @@
   <text style="font-size:16px;color:#D8D8D8">{{version}}</text>
 </view>
 <view style="height:30px"></view>
+
+<!-- AP批「添加到我的小程序」三步图文教程层：示意小图为 CSS 画的微信界面顶部
+     （红色圆头像白『礼』字＋人情礼单簿＋假胶囊），只出现我们自己的名称与头像 -->
+<view class="addmp-mask" wx:if="{{addMpTutorialShow}}">
+  <view class="addmp-card">
+    <view class="addmp-title">添加到我的小程序</view>
+    <view class="addmp-mock">
+      <view class="addmp-mock-app">
+        <view class="addmp-mock-avatar">礼</view>
+        <text class="addmp-mock-name">人情礼单簿</text>
+      </view>
+      <view class="addmp-mock-capsule">
+        <text class="addmp-mock-dots">···</text>
+        <view class="addmp-mock-ring"></view>
+      </view>
+    </view>
+    <view class="addmp-step"><text class="addmp-step-no">1.</text>点击屏幕右上角的三个点</view>
+    <view class="addmp-step"><text class="addmp-step-no">2.</text>点击『添加到我的小程序』</view>
+    <view class="addmp-step"><text class="addmp-step-no">3.</text>在微信首页往下拉，就能快速打开『人情礼单簿』</view>
+    <view class="addmp-btn" bindtap="onAddMpKnow">我知道了</view>
+  </view>
+</view>

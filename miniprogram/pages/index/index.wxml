@@ -1,5 +1,6 @@
 <!-- 礼单簿 · 首页（阶段2 2A；2026-10-21 版式调整：大卡缩小变淡下移、金刚区下移+图标放大加彩色底衬） -->
 <view class="page-flex">
+  <top-banner />
   <view class="retry-bar" wx:if="{{initFailed}}" bindtap="onRetryInit">网络不太顺，点这里重试</view>
   <view class="tip" wx:if="{{!hornOff}}"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><view class="horn-marquee"><view wx:if="{{hornRun}}" class="horn-track run" style="animation-duration:{{hornDur}}s"><text class="tip-txt-nowrap horn-cell">{{tipText}}</text><text class="tip-txt-nowrap horn-cell">{{tipText}}</text></view><text wx:else class="tip-txt-ellipsis">{{tipText}}</text></view><text class="tip-close" catchtap="onHornClose">×</text></view>
 
@@ -20,6 +21,18 @@
       <text>送 <text class="month-give">¥{{monthSummary.giftText}}</text></text>
     </block>
     <text wx:else class="month-empty">本月还没有记录</text>
+  </view>
+
+  <!-- AP批 痛点标语块：最近往来为空时占这块位置——三句慢速轮播（约 3 秒一句）
+       + 固定一行行动引导，整块可点去记第一笔；有数据后自动撤、照常列表 -->
+  <view class="card recent-card slogan-card" wx:if="{{homeLoaded && recent.length === 0}}" bindtap="onSloganTap">
+    <view class="recent-head">
+      <text class="recent-title">最近往来</text>
+    </view>
+    <view class="slogan-stage">
+      <text class="slogan-line {{sloganIdx === index ? 'on' : ''}}" wx:for="{{slogans}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view class="slogan-cta">点底部记第一笔，人情往来更轻松</view>
   </view>
 
   <view class="card recent-card" wx:if="{{recent.length}}">

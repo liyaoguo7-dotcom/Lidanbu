@@ -21,6 +21,9 @@
   <view class="contact-row" wx:if="{{groups.length === 0}}">
     <text class="ph">还没有亲友，点击下方红色＋添加</text>
   </view>
+  <view class="contact-row" wx:if="{{groups.length === 0}}">
+    <text class="ph">出门在外，想查往来却找不到礼簿？</text>
+  </view>
 </view>
 
 <!-- 右侧字母快选栏：全部字母，没联系人的置灰；点按/滑动选字母跳分组 -->

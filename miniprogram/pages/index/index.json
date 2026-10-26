@@ -1,1 +1,1 @@
-{"navigationBarBackgroundColor":"#F0E6D4","navigationBarTextStyle":"black","navigationBarTitleText":"礼单簿","usingComponents":{"privacy-modal":"/components/privacy-modal/privacy-modal"}}
+{"navigationBarBackgroundColor":"#F0E6D4","navigationBarTextStyle":"black","navigationBarTitleText":"礼单簿","usingComponents":{"privacy-modal":"/components/privacy-modal/privacy-modal","top-banner":"/components/top-banner/top-banner"}}

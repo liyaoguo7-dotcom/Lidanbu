@@ -175,6 +175,7 @@ async function wanglaiList(db, actorId, ownerId, opts = {}) {
       contactId: c._id, name: c.name, remark: c.remark || '',
       count, receiveFen: st.receiveTotalFen, giftFen: st.giftTotalFen,
       diffFen: st.receiveTotalFen - st.giftTotalFen,
+      lastDate: st.lastDate || '', // AP批排序键：筛选范围内最近一笔往来的日期
     });
   };
   if (!isMember) {
@@ -183,23 +184,29 @@ async function wanglaiList(db, actorId, ownerId, opts = {}) {
       db.collection(COLLECTIONS.GiftRecord).find({ ownerId }),
     ]);
     const agg = new Map();
-    const bump = (id, recv, amount) => {
+    const bump = (id, recv, amount, date) => {
       let a = agg.get(id);
-      if (!a) { a = { receiveTotalFen: 0, receiveCount: 0, giftTotalFen: 0, giftCount: 0 }; agg.set(id, a); }
+      if (!a) { a = { receiveTotalFen: 0, receiveCount: 0, giftTotalFen: 0, giftCount: 0, lastDate: '' }; agg.set(id, a); }
       if (recv) { a.receiveTotalFen += amount; a.receiveCount += 1; }
       else { a.giftTotalFen += amount; a.giftCount += 1; }
+      if (date && date > a.lastDate) a.lastDate = date;
     };
-    receives.forEach((r) => { if (inRange(r)) bump(r.contactId, true, r.amount || 0); });
-    gifts.forEach((r) => { if (inRange(r)) bump(r.contactId, false, r.amount || 0); });
+    receives.forEach((r) => { if (inRange(r)) bump(r.contactId, true, r.amount || 0, r.date); });
+    gifts.forEach((r) => { if (inRange(r)) bump(r.contactId, false, r.amount || 0, r.date); });
     for (const c of contacts) {
-      pushRow(c, agg.get(c._id) || { receiveTotalFen: 0, receiveCount: 0, giftTotalFen: 0, giftCount: 0 });
+      pushRow(c, agg.get(c._id) || { receiveTotalFen: 0, receiveCount: 0, giftTotalFen: 0, giftCount: 0, lastDate: '' });
     }
   } else {
     for (const c of contacts) {
       pushRow(c, await memberStats(db, actorId, ownerId, c._id, opts));
     }
   }
-  rows.sort((a, b) => b.count - a.count || String(a.name).localeCompare(String(b.name)));
+  // 排序口径（AP批，用户 2026-10-26 定，替代原"笔数优先"）：按最近往来时间
+  // 倒序——每人以筛选范围内最近一笔的日期为键，新→旧；同日期再按笔数
+  // 多→少、姓名 localeCompare 兜底。主人/成员两条构建路径共用此排序。
+  rows.sort((a, b) => (a.lastDate < b.lastDate ? 1 : a.lastDate > b.lastDate ? -1 : 0)
+    || b.count - a.count
+    || String(a.name).localeCompare(String(b.name)));
   return {
     rows, totalReceiveFen, totalGiftFen, totalReceiveCount, totalGiftCount,
     diffFen: totalReceiveFen - totalGiftFen,
@@ -295,8 +302,16 @@ async function contactStats(db, ownerId, contactId, opts = {}) {
     receiveTotalFen, receiveCount: rs.length,
     giftTotalFen, giftCount: gs.length,
     diffFen: receiveTotalFen - giftTotalFen, // 差额=收到-送出，可为负
+    lastDate: lastDateOf(rs, gs), // AP批：范围内最近一笔日期（往来列表排序键）
     from: range.from, to: range.to,
   };
+}
+
+/** 一组记录里最大的日期（YYYY-MM-DD 字符串比较即可）；无记录返回 '' */
+function lastDateOf(...groups) {
+  let last = '';
+  groups.forEach((rs) => rs.forEach((r) => { if (r.date && r.date > last) last = r.date; }));
+  return last;
 }
 
 /**
@@ -395,6 +410,7 @@ async function memberStats(db, actorId, ownerId, contactId, opts = {}) {
     receiveTotalFen, receiveCount: rs.length,
     giftTotalFen, giftCount: gs.length,
     diffFen: receiveTotalFen - giftTotalFen,
+    lastDate: lastDateOf(rs, gs), // AP批：与 contactStats 同口径（往来列表排序键）
     from: range.from, to: range.to,
     isMember: !isOwner, // 成员版页面顶部显示"仅统计已授权给你的记录"
   };

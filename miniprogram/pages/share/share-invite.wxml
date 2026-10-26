@@ -1,6 +1,10 @@
 <!-- 发起邀请（2026-10-22 任务AB 第 7 项：取消"先生成、再分享"两步——邀请在进入页面/勾选变化时
      已于后台静默备好，主按钮从一开始就是微信分享，点一次直接发给好友，对方点开即接受） -->
-<view class="section-title">允许查看我标记的项目</view>
+<!-- AP批标语：顶部说明区一行小字 -->
+<view style="padding:2px 12px 0;font-size:13px;color:#B08D57">纸质礼簿越记越厚，翻找一笔好费劲？</view>
+
+<view class="section-title">被邀请人的操作权限</view>
+<view class="section-note">（勾上哪项，被邀请人就能对你共享的记录做哪项操作）</view>
 <view class="card">
   <view class="form-row" wx:for="{{switches}}" wx:key="id" bindtap="onSwitchToggle" data-id="{{item.id}}">
     <text class="form-label">{{item.name}}</text>
@@ -10,7 +14,7 @@
   </view>
 </view>
 
-<view class="section-title">共享范围（至少选一项）</view>
+<view class="section-title">共享范围（至少选一项；你选中的礼薄和送礼记录，被邀请人都能看到）</view>
 <view class="card">
   <view class="form-row" wx:for="{{events}}" wx:key="_id" bindtap="onEventToggle" data-id="{{item._id}}">
     <text class="form-label">{{item.name}}</text>
@@ -33,6 +37,6 @@
 
 <view style="height:110px"></view>
 <view class="btn-bottom">
-  <button class="btn-primary" open-type="share" disabled="{{!inviteCode}}" style="{{inviteCode ? '' : 'opacity:.45'}}">邀请家人</button>
+  <button class="btn-primary" open-type="share" disabled="{{!canInvite}}" style="{{canInvite ? '' : 'opacity:.45'}}">邀请家人</button>
   <view wx:if="{{inviteHint}}" style="text-align:center;font-size:12px;color:#999;margin-top:10px">{{inviteHint}}</view>
 </view>

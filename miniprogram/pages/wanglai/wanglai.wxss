@@ -8,11 +8,13 @@
   padding: 8px 0 0;
 }
 /* 时间标签行 */
+/* AP批版式：整页上移——顶部 padding 10px→6px；头部区与下方各白卡之间留
+   明确的独立灰隔，不再连成一片灰带（对照卡 margin-top 配合见 .compare） */
 .timerow {
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 10px 12px 2px;
+  padding: 6px 12px 2px;
   flex-wrap: wrap;
 }
 .tchip {
@@ -36,12 +38,15 @@
   text-align: center;
   font-size: 13px;
   color: #999;
-  padding: 6px 0 4px;
+  padding: 4px 0 2px;
 }
+/* AP批：搜索框行与"全部时间"行的距离缩小（全局 .searchbar 上下 10px →
+   本页 4px；与 .daterange 下边距合计 14px→6px）。只覆盖本页，不动全局。 */
+.searchbar { padding: 4px 12px; }
 /* 左右对照：收礼（左）、送礼（右）；上总额、下笔数 */
 .compare {
   display: flex;
-  margin: 4px 12px 0;
+  margin: 10px 12px 0;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
@@ -86,10 +91,11 @@
   font-weight: 700;
 }
 .diff-amount { font-size: 16px; font-weight: 700; margin-left: 8px; }
+/* AP批：联系人行间隔加大（上下 padding 9px→13px，行高随之 +8px） */
 .wl-row {
   display: flex;
   align-items: center;
-  padding: 9px 16px;
+  padding: 13px 16px;
   border-bottom: 1px solid #F0F0F0;
 }
 .wl-row:last-child { border-bottom: none; }
@@ -107,7 +113,7 @@
 .contact-row {
   display: flex;
   align-items: center;
-  padding: 9px 16px;
+  padding: 13px 16px;
   border-bottom: 1px solid #F0F0F0;
 }
 .contact-row:last-child { border-bottom: none; }

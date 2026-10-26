@@ -9,6 +9,11 @@
  *   邀请，用户无感知、不多点一次。校验未通过（未选范围/非会员等）时不生成，
  *   按钮置灰并在下方给出原有提示文案。
  * 旧流程「先从亲友录 picker 选人」与「点生成邀请→再点分享」两步均已删除。
+ * AP批（按钮延迟修复）：按钮灰/红此前只由 inviteCode 决定，而 inviteCode 要等
+ *   预生成的服务端往返（云端一趟 RPC）回来才 setData，勾选后红得慢。现按钮
+ *   可用状态改由本地同步计算的 canInvite 决定（只看范围勾选，与勾选同一次
+ *   setData 落地）；inviteCode 只负责给分享 path 带码，预生成失败（如非会员
+ *   被服务端拦）时再把 canInvite 压回 false 并显示服务端原因。
  */
 const dataService = require('../../services/data-service.js');
 
@@ -17,7 +22,8 @@ Page({
     switches: [],   // [{id,name,alwaysOn,on}]
     events: [],     // [{_id,name,checked}]
     giftsOn: false,
-    inviteCode: '', // 预生成后 = membershipId；为空 = 暂不可发（按钮置灰）
+    inviteCode: '', // 预生成后 = membershipId（只给分享 path 带码，不再决定按钮颜色）
+    canInvite: false, // 按钮可用状态：勾选处理内同步重算（AP批延迟修复）
     inviteHint: '', // 不可发时的提示文案（未选范围/生成失败原因）
   },
 
@@ -49,15 +55,25 @@ Page({
 
   onEventToggle(e) {
     const id = e.currentTarget.dataset.id;
-    this.setData({
-      events: this.data.events.map((ev) => (ev._id === id ? { ...ev, checked: !ev.checked } : ev)),
-    });
+    const events = this.data.events.map((ev) => (ev._id === id ? { ...ev, checked: !ev.checked } : ev));
+    // canInvite 与勾选同一次 setData 落地，不再等预生成往返（AP批）
+    this.setData({ events, ...this._syncBtnState(events, this.data.giftsOn) });
     this._prepareInvite();
   },
 
   onGiftsToggle() {
-    this.setData({ giftsOn: !this.data.giftsOn });
+    const giftsOn = !this.data.giftsOn;
+    this.setData({ giftsOn, ...this._syncBtnState(this.data.events, giftsOn) });
     this._prepareInvite();
+  },
+
+  /** 按钮可用状态的本地同步口径：范围至少勾一项即可邀请（服务端拒绝另行压回） */
+  _syncBtnState(events, giftsOn) {
+    const ready = (events || []).some((e) => e.checked) || !!giftsOn;
+    return {
+      canInvite: ready,
+      inviteHint: ready ? '' : '至少勾选一个收礼事件或"送礼"才能发出',
+    };
   },
 
   _payload() {
@@ -83,7 +99,7 @@ Page({
   async _doPrepare() {
     const payload = this._payload();
     if (payload.scope.events.length === 0 && !payload.scope.gifts) {
-      this.setData({ inviteCode: '', inviteHint: '至少勾选一个收礼事件或"送礼"才能发出' });
+      this.setData({ inviteCode: '', canInvite: false, inviteHint: '至少勾选一个收礼事件或"送礼"才能发出' });
       return;
     }
     try {
@@ -93,10 +109,14 @@ Page({
       } else {
         await dataService.updateGrant(this._pendingId, payload);
       }
-      // 期间勾选可能又变了：以最新 payload 为准的结果才写回按钮状态
-      this.setData({ inviteCode: this._pendingId, inviteHint: '' });
+      // 期间勾选可能又变了：canInvite 按最新勾选回写，inviteCode 只带码
+      this.setData({
+        inviteCode: this._pendingId, inviteHint: '',
+        canInvite: this._syncBtnState(this.data.events, this.data.giftsOn).canInvite,
+      });
     } catch (e) {
-      this.setData({ inviteCode: '', inviteHint: (e && e.message) || '邀请准备失败，请重试' });
+      // 服务端拒绝（如非会员）：按钮压回置灰，原因走原有提示文案
+      this.setData({ inviteCode: '', canInvite: false, inviteHint: (e && e.message) || '邀请准备失败，请重试' });
     }
   },
 

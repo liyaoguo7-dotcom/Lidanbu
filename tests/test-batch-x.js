@@ -74,7 +74,9 @@ test('任务X-共享邀请：页面已去 picker、主按钮即微信分享（�
   assert(!wxml.includes('生成邀请') && !js.includes('onCreate'), '不得再有「生成邀请」按钮/步骤（任务AB 第 7 项）');
   assert(wxml.includes('open-type="share"'), '主按钮应为 open-type=share 的微信分享按钮');
   assert(wxml.includes('>邀请家人</button>'), '分享按钮文案为「邀请家人」');
-  assert(wxml.includes('disabled="{{!inviteCode}}"'), '未预生成成功时按钮置灰');
+  // AP批延迟修复后：按钮置灰改由本地同步计算的 canInvite 决定（勾选同一次
+  // setData 落地），inviteCode 只给分享 path 带码——断言随新机制更新
+  assert(wxml.includes('disabled="{{!canInvite}}"'), '未选范围时按钮置灰（AP批 canInvite 口径）');
   assert(js.includes('_prepareInvite') && js.includes('updateGrant'), 'js 应静默预生成并在勾选变化后更新同一份邀请');
   assert(js.includes('onShareAppMessage'), '页面应实现 onShareAppMessage');
   assert(js.includes('/pages/share/share-view?code='), '分享 path 应带 code 落到 share-view');

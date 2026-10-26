@@ -1,0 +1,6 @@
+<!-- 顶部条形弹窗：白胶囊 + 红色礼单图标 + 服务文案 + ×（AP批） -->
+<view class="top-banner {{animIn ? 'in' : ''}}" wx:if="{{show}}">
+  <view class="tb-disc"><image class="tb-icon" src="/images/icons/hongbao.svg" mode="aspectFit" /></view>
+  <text class="tb-text">『人情礼单簿』小程序提供服务</text>
+  <text class="tb-close" catchtap="onClose">×</text>
+</view>

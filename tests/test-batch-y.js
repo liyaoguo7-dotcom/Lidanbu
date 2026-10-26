@@ -118,7 +118,9 @@ test('任务Y-G行距：五处联系人列表行数值再收紧一档（送礼/�
   const gf = readMp('pages/gifts/gifts.wxss');
   assert(gf.includes('height: 64px'), '送礼行：2026-10-24 用户改定固定高 64px');
   const wl = readMp('pages/wanglai/wanglai.wxss');
-  assert(!wl.includes('padding: 11px 16px') && wl.includes('padding: 9px 16px'), '往来行 padding 11→9');
+  // AP批用户改定（2026-10-26，晚于 Y 批）：往来页联系人行间隔加大 9→13px，
+  // 仅往来页本行覆盖 Y 的收紧值，其余四处不动
+  assert(!wl.includes('padding: 11px 16px') && wl.includes('padding: 13px 16px'), '往来行 padding AP批改定 13px');
   const rv = readMp('pages/receive/receive.wxss');
   assert(rv.includes('padding: 8px 16px; min-height: 58px'), '收礼礼薄行 padding 10→8、min-height 62→58');
 });
