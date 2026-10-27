@@ -965,11 +965,25 @@ function assessQuality(detections) {
 
   const withAmount = rows.filter((r) => r.amountFen !== null).length;
   const amountRatio = rows.length ? withAmount / rows.length : 0;
-  const nameChars = rows.reduce((n, r) => n + (r.name ? r.name.length : 0), 0);
+  /* BM批：计分按"像姓名的程度"——姓位是真姓、名字字落在姓名用字池才
+   * 计分。旧版按名字总字数计分，手写引擎的垃圾长串（那来河无类）反而
+   * 靠字多刷分赢过印刷（升学宴真机实证）。 */
+  let plausibleChars = 0;
+  let surnameRows = 0;
+  for (const r of rows) {
+    const nm = String(r.name || '');
+    if (!nm) continue;
+    if (NAME_DB.SURNAMES.has(nm[0]) || nm[0] === '□') surnameRows += 1;
+    for (const ch of nm) {
+      if (NAME_DB.isNameChar(ch) || NAME_DB.SURNAMES.has(ch) || ch === '□') plausibleChars += 1;
+    }
+  }
+  const surnameRatio = rows.length ? surnameRows / rows.length : 0;
   let score = 0;
   if (confKnown) score += (avgConf - 50) * 0.6;
   score += amountRatio * 20;
-  score += Math.min(nameChars, 20) * 0.5;
+  score += Math.min(plausibleChars, 20) * 0.5;
+  score += surnameRatio * 15;
   if (latinGibberish) score -= 45;
   if (reasons.includes('single-char-fragments')) score -= 25;
   if (!rows.length) score -= 100;
@@ -1099,12 +1113,11 @@ function createAdapter(deps = {}) {
           const { q } = await runCall('GeneralHandwritingOCR');
           return { rows: q.rows, chosen: 'handwriting', score: q.score, traceCalls, firstDets };
         }
-        /* 未指定模式：手写优先（纸质礼单多为手写）；质量过关直接用
-         * （常态 1 次/图）；没认出 或 质量门判差 → 补调印刷并按质量分取优 */
+        /* BM批（用户拍板试效果）：双调取优——手写、印刷都调，按质量分
+         * （含姓名可信度）选优。旧版手写过关即短路，模板单上印刷根本没机
+         * 会上场、手写垃圾长名蒙混过关（升学宴真机实证）。代价：每图
+         * 固定 2 次调用。 */
         const hw = await runCall('GeneralHandwritingOCR');
-        if (hw.dets.length && !hw.q.bad) {
-          return { rows: hw.q.rows, chosen: 'handwriting', score: hw.q.score, traceCalls, firstDets };
-        }
         let print = null;
         try {
           print = await runCall('GeneralBasicOCR');

@@ -106,15 +106,15 @@ test('AQ 解析：手写体同形响应（只有 Polygon）可解析；空响应
 const ENV = { TENCENT_SECRET_ID: FAKE_ID, TENCENT_SECRET_KEY: FAKE_KEY };
 const okResp = (dets) => ({ status: 200, json: { Response: { TextDetections: dets, RequestId: 'r1' } } });
 
-test('AQ 适配器：未指定模式手写优先（AS批定版），手写有结果只调手写体；请求头/载荷合规', async () => {
+test('AQ 适配器：未指定模式双调取优（BM批），两引擎都调；请求头/载荷合规', async () => {
   const calls = [];
   const adapter = tencentOcr.createAdapter({
     env: ENV,
     httpPost: async (req) => { calls.push(req); return okResp([det('张三 1000', 10, 10)]); },
   });
   const rows = await adapter.recognize('cloud://fake/x.jpg', { imageBase64: 'aGVsbG8=' });
-  assert.eq(calls.length, 1, '手写体命中不应再调印刷体（常态 1 次/图）');
-  assert.eq(calls[0].headers['X-TC-Action'], 'GeneralHandwritingOCR', '先调手写体（AS批策略）');
+  assert.eq(calls.length, 2, 'BM 后两引擎都调（双调取优）');
+  assert.eq(calls[0].headers['X-TC-Action'], 'GeneralHandwritingOCR', '先调手写体');
   assert.eq(calls[0].headers['X-TC-Version'], '2018-11-19', '版本头');
   assert(/^TC3-HMAC-SHA256 /.test(calls[0].headers.Authorization), '带 TC3 签名头');
   assert.eq(JSON.parse(calls[0].body).ImageBase64, 'aGVsbG8=', '载荷带 ImageBase64');
@@ -227,8 +227,8 @@ test('AQ 选择：有密钥且管理员 → 真实适配器（取图→签名请
     });
     assert(r.ok === true, `应成功（实际 ${JSON.stringify(r)}）`);
     assert.eq(r.data.adapter, 'tencent', '管理员 adapter 应标 tencent');
-    assert.eq(calls.length, 1, '只发一次 OCR 请求（手写体命中，AS批手写优先）');
-    assert.eq(calls[0].headers['X-TC-Action'], 'GeneralHandwritingOCR', '请求头含 X-TC-Action（AS批先调手写）');
+    assert.eq(calls.length, 2, 'BM 双调取优发两次 OCR 请求（手写＋印刷）');
+    assert.eq(calls[0].headers['X-TC-Action'], 'GeneralHandwritingOCR', '请求头含 X-TC-Action（先调手写）');
     assert(
       JSON.parse(calls[0].body).ImageBase64 === Buffer.from('fake-jpeg-bytes').toString('base64'),
       '请求体 ImageBase64 应为按 fileID 取回的图片字节',

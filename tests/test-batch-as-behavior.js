@@ -175,7 +175,7 @@ test('AS 质量门：拉丁乱码/低置信/单字碎片任一命中即判质量
 const ENV = { TENCENT_SECRET_ID: 'AKIDastest000000000000000000000000', TENCENT_SECRET_KEY: 'astestsecretkey000000000000000' };
 const okResp = (dets) => ({ status: 200, json: { Response: { TextDetections: dets, RequestId: 'r1' } } });
 
-test('AS 质量门：手写优先常态——手写竖排过关只调手写一次（1 次/图）', async () => {
+test('AS 质量门（BM改）：双调取优——两引擎都调，同分取手写', async () => {
   const actions = [];
   const adapter = tencentOcr.createAdapter({
     env: ENV,
@@ -185,7 +185,7 @@ test('AS 质量门：手写优先常态——手写竖排过关只调手写一�
     },
   });
   const rows = await adapter.recognize('cloud://fake/x.jpg', { imageBase64: 'aA==' });
-  assert.eq(actions.join(','), 'GeneralHandwritingOCR', '手写过关不补调印刷');
+  assert.eq(actions.join(','), 'GeneralHandwritingOCR,GeneralBasicOCR', 'BM 后两引擎都调');
   assert.eq(rows.length, 2, '手写竖排两笔');
   assert.eq(rows[0].name, '张三', '手写竖排左列先行（x=200 列）');
   assert.eq(rows[0].amountFen, 100000, '手写竖排左列金额');
@@ -233,7 +233,7 @@ test('AS-8 留痕：真实适配器给结果挂 ocrTrace（接口/质量分/碎�
   const rows = await adapter.recognize('cloud://fake/x.jpg', { imageBase64: 'aA==' });
   assert(rows.ocrTrace, '真实适配器结果应带留痕');
   assert.eq(rows.ocrTrace.chosen, 'handwriting', '留痕记最终采用的接口');
-  assert.eq(rows.ocrTrace.calls.length, 1, '常态只调一次、记一份');
+  assert.eq(rows.ocrTrace.calls.length, 2, 'BM 双调、记两份');
   const call = rows.ocrTrace.calls[0];
   assert.eq(call.action, 'GeneralHandwritingOCR', '留痕记接口名');
   assert.eq(call.fragments.length, 1, '留痕记碎片数');

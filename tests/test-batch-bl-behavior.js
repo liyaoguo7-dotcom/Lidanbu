@@ -78,7 +78,7 @@ test('BL 端到端：转置照片自动转正重识并取优，留痕标 rotated
   assert.eq(rows.ocrTrace.rotated, 'cw', '留痕应标明转正方向');
 });
 
-test('BL 端到端：正常竖排照片不触发转正（只调一轮）', async () => {
+test('BL 端到端：正常竖排照片不触发转正（只跑原图一轮）', async () => {
   const origB64 = makeJpegB64(64, 48);
   const clean = [det('張三壹仟元整', 200, 50, 42, 300, 95), det('李四伍佰元整', 320, 50, 42, 300, 94)];
   let calls = 0;
@@ -88,6 +88,6 @@ test('BL 端到端：正常竖排照片不触发转正（只调一轮）', async
   });
   const rows = await adapter.recognize('cloud://fake/upright.jpg', { imageBase64: origB64 });
   assert.eq(rows.length, 2, '正常照片两笔');
-  assert.eq(calls, 1, '正常照片只调一轮');
+  assert.eq(calls, 2, 'BM 双调取优下一轮两调、不再转正重跑');
   assert(!rows.ocrTrace.rotated, '留痕不标转正');
 });
