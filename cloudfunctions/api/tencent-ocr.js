@@ -174,10 +174,12 @@ function finalizeTrace(calls, chosen) {
 /* ---------------- 结果解析（纯函数） ---------------- */
 
 function bboxOf(det) {
-  const ip = det && det.ItemPolygon;
-  if (ip && typeof ip.X === 'number' && typeof ip.Width === 'number') {
-    return { x: ip.X, y: ip.Y || 0, w: ip.Width, h: ip.Height || 0 };
-  }
+  /* BH批：优先用 Polygon 轮廓外框，不用 ItemPolygon——真机留痕实证：
+   * 印刷引擎的 ItemPolygon 是粗定位框，系统性右移且过宽（如「往雪琳」
+   * 轮廓框 x622/w68、ItemPolygon 却是 x690/w210，横跨邻列），拿它分列
+   * 会把整页列位带偏（旧解析在本留痕上把「贺」「礼」都解成了姓名行）。
+   * Polygon 是逐字紧框，分列/列序/列带定界都以它为准；ItemPolygon 只在
+   * 无 Polygon 时兜底（手写引擎本来就只给 Polygon）。 */
   const poly = det && det.Polygon;
   if (Array.isArray(poly) && poly.length) {
     const xs = poly.map((p) => p.X || 0);
@@ -185,6 +187,10 @@ function bboxOf(det) {
     const x = Math.min(...xs);
     const y = Math.min(...ys);
     return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+  }
+  const ip = det && det.ItemPolygon;
+  if (ip && typeof ip.X === 'number' && typeof ip.Width === 'number') {
+    return { x: ip.X, y: ip.Y || 0, w: ip.Width, h: ip.Height || 0 };
   }
   return { x: 0, y: 0, w: 0, h: 0 };
 }
@@ -424,6 +430,40 @@ function clusterByCentroid(frags) {
 }
 
 /**
+ * 跨列宽碎片按字拆分（BH批）：引擎会把相邻两列的同行字连读成一个宽框
+ * （真机留痕实证：印刷引擎把第 3 列「成」与第 4 列「侯」连成「成侯」
+ * 一框，宽 164px≈两列距——后续任何聚类都拆不开，侯就此串列；纸面印刷
+ * 「贺礼」连读宽框同理）。竖排定界改按列带：先由首轮中心聚类的列中心
+ * 估出列距（相邻列中心距中位数），宽 >1.3 列距且 ≥2 字的碎片按字均分
+ * 子框，逐字生成新碎片——每个字落回自己那一列的带里，再重新聚类。
+ * 单列内的连读（如「杨力」宽 95<1.3 列距）不动，拼读结果不变。
+ */
+function splitWideFragments(frags, centroidCols) {
+  const centers = (centroidCols || [])
+    .map((c) => (c.cxMin + c.cxMax) / 2)
+    .sort((a, b) => a - b);
+  if (centers.length < 2) return frags;
+  const gaps = [];
+  for (let i = 1; i < centers.length; i++) gaps.push(centers[i] - centers[i - 1]);
+  gaps.sort((a, b) => a - b);
+  const pitch = gaps[Math.floor(gaps.length / 2)];
+  if (!pitch || pitch <= 0) return frags;
+  const out = [];
+  for (const f of frags) {
+    const chars = [...String(f.text)];
+    if (chars.length >= 2 && f.w > pitch * 1.3) {
+      const subW = f.w / chars.length;
+      chars.forEach((ch, i) => {
+        out.push({ ...f, text: ch, x: f.x + subW * i, w: subW, cx: f.x + subW * i + subW / 2 });
+      });
+    } else {
+      out.push(f);
+    }
+  }
+  return out;
+}
+
+/**
  * 竖排判定（AS批立、BB批改 ②）：① 多数文本框高大于宽（整列竖条）；或
  * ② 按中心聚类后，多数列呈"高瘦"形：列内中心 X 跨度加中位字宽仍远小于
  * 列高（≥2.5×），且每列至少 3 个碎片（单字逐个成框竖排成列的情形）。
@@ -486,7 +526,11 @@ function splitColumnText(text) {
  * （防姓名末字是永/的等被误吞）。尾串含拾/仟/万（高阶金额）不救，
  * 交回标准路径/留空待用户在核对页补——宁缺毋滥。
  * 姓名顺带清理：去掉标点（、，,。·）与拉丁碎字（引擎杂讯）。 */
-const VERT_NUM = { 壹: 1, 贰: 2, 叁: 3, 肆: 4, 伍: 5, 陆: 6, 柒: 7, 捌: 8, 玖: 9, 式: 2 };
+/* 他→5（BH批）：手写「伍」与「他」同为亻旁、形近，两份真机留痕里金额位
+ * 的伍都被认成他（「E峰他o元」实为伍佰元整）。本表只在金额尾串语境
+ * 使用（decodeVerticalAmountTail 从列尾回扫、且须有佰位/元佐证才解码），
+ * 姓名中的他不受影响——尾串之外的字根本不进本表。 */
+const VERT_NUM = { 壹: 1, 贰: 2, 叁: 3, 肆: 4, 伍: 5, 陆: 6, 柒: 7, 捌: 8, 玖: 9, 式: 2, 他: 5 };
 const VERT_BAI = new Set(['佰', '伯', '们', '的', '永', '旧', '日', '修', '花']);
 const VERT_YUAN = new Set(['元', '圆', '不']);
 const VERT_HIGH = new Set(['拾', '仟', '万', '萬', '亿']);
@@ -522,7 +566,12 @@ function decodeVerticalAmountTail(text) {
  * 标准拆分整列无金额时走 decodeVerticalAmountTail 救援（BB批）。
  */
 function parseVertical(frags, columns) {
-  const cols = [...columns].sort((a, b) => a.xMin - b.xMin);
+  /* BH批：列序按列中心排，不按 xMin——跨列宽框（如印刷「贺贺贺贺贺」
+   * 宽 403）会把所在列的 xMin 拖到左邻列之前，真机留痕里第 9 列被拖到
+   * 第 7 列之前、7/8/9 三列轮转出错。中心由聚类 cxMin/cxMax 取中点，
+   * 宽框只占一列中心、拖不动。 */
+  const centerOf = (c) => (c.cxMin != null && c.cxMax != null ? (c.cxMin + c.cxMax) / 2 : c.xMin);
+  const cols = [...columns].sort((a, b) => centerOf(a) - centerOf(b));
   const rows = [];
   for (const col of cols) {
     let text = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x))
@@ -659,9 +708,10 @@ function parseDetections(detections) {
   const columns = clusterColumns(frags);
   /* BB批：竖排走中心聚类（对横跨数列的宽框免疫）；横排沿用重叠聚类不变 */
   const centroidCols = clusterByCentroid(frags);
-  return detectVertical(frags, columns, centroidCols)
-    ? parseVertical(frags, centroidCols)
-    : parseHorizontal(frags, columns);
+  if (!detectVertical(frags, columns, centroidCols)) return parseHorizontal(frags, columns);
+  /* BH批：竖排先把跨列宽碎片按字拆回各自列带，再重新聚类成列 */
+  const split = splitWideFragments(frags, centroidCols);
+  return parseVertical(split, clusterByCentroid(split));
 }
 
 /* ---------------- 识别质量评估（AS批质量门，纯函数） ----------------
@@ -817,6 +867,7 @@ module.exports = {
   parseChineseAmount,
   findAllAmounts,
   clusterByCentroid,
+  splitWideFragments,
   decodeVerticalAmountTail,
   assessQuality,
   createAdapter,
