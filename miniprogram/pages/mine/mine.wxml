@@ -5,13 +5,13 @@
 </view>
 
 <!-- 「添加到我的小程序」引导条（顶部红幅，主红底白字单行）：点开三步教程；
-     AS批定版：每次进入我的页都显示，× 与「我知道了」只关本次进入，无持久标记；
-     BA批：红幅顶边同色小三角冲上指着胶囊（right 由胶囊实测中心算出） -->
+     AS批定版：每次进入我的页都显示，「我知道了」只关本次进入，无持久标记；
+     BA批：红幅顶边同色小三角冲上指着胶囊（right 由胶囊实测中心算出），
+     照竞品视频红幅无 ×（关闭走教程层「我知道了」） -->
 <view class="addmp-bar" wx:if="{{addMpGuideShow}}">
   <view class="addmp-tri" style="right:{{addMpTriRight}}px"></view>
   <text class="addmp-text" bindtap="onOpenAddMpTutorial">点击[添加到我的小程序]，下次打开更快捷</text>
   <text class="addmp-arrow" bindtap="onOpenAddMpTutorial">＞</text>
-  <text class="addmp-close" catchtap="onCloseAddMpGuide">×</text>
 </view>
 
 <!-- ① 个人资料条 -->

@@ -102,7 +102,6 @@
 }
 .addmp-text { flex: 1; white-space: nowrap; overflow: hidden; }
 .addmp-arrow { font-size: 16px; padding-left: 6px; }
-.addmp-close { font-size: 16px; line-height: 1; padding: 2px 0 2px 12px; }
 /* BA批教程层：顶部白片——三行带序号步骤＋深藏青「我的小程序」面板卡＋红胶囊按钮 */
 .addmp-mask {
   position: fixed;

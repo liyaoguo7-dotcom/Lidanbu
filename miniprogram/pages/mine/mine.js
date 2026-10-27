@@ -47,7 +47,8 @@ Page({
   async onLoad() {
     // AS批定版：引导条每次进入我的页都显示——不读任何 storage 标记
     // （旧版 addMpGuideDone 永久标记被用户点名删掉：点过就再也不出现、
-    // 删小程序才恢复）。× 与「我知道了」都只关本次进入（页面内状态）。
+    // 删小程序才恢复）。BA批照竞品视频去掉红幅上的 ×：点红幅开教程层，
+    // 教程层「我知道了」只关本次进入（页面内状态）。
     this.setData({ addMpGuideShow: true });
     this._measureAddMpTri();
     await dataService.init();
@@ -170,12 +171,6 @@ Page({
         this.setData({ addMpTriRight: right });
       }
     } catch (e) { /* 测不到用回退偏移，不拦显示 */ }
-  },
-
-  /** 引导条 ×：只关本次进入的显示（页面内状态，不写任何持久标记） */
-  onCloseAddMpGuide() {
-    this._mpGuideClosed = true;
-    this.setData({ addMpGuideShow: false });
   },
 
   /** 点引导条 → 打开三步图文教程层 */
