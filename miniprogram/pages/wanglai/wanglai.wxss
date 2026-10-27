@@ -1,4 +1,13 @@
 /* 往来页（v3.1 第五章） */
+/* BA批：整页 100vh 纵向 flex——上半部分（时间/搜索/汇总/差额）固定不滚，
+   下方联系人列表区（.wl-scroll）独立滚动 */
+.wl-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+}
+.wl-scroll { flex: 1; height: 0; }
 /* 任务AC 第 7 项（用户标"重点"）：本页全部文字字号整体大一号（+1px），只动本页、不动全局。
    姓名原名义 16px 与其他列表页同值，但用户观感明显偏小（疑与同行 13~15px 小字衬托有关），按用户原话整体 +1。 */
 .member-tip {

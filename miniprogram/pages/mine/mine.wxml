@@ -4,9 +4,11 @@
   你的账号已申请注销，将在 {{cancelPending.cancelAtText}} 执行（还剩 {{cancelPending.remainingDays}} 天）。点这里可以撤销 ›
 </view>
 
-<!-- 「添加到我的小程序」引导条（顶部红条，主红底白字单行）：点开三步教程；
-     AS批定版：每次进入我的页都显示，× 与「我知道了」只关本次进入，无持久标记 -->
+<!-- 「添加到我的小程序」引导条（顶部红幅，主红底白字单行）：点开三步教程；
+     AS批定版：每次进入我的页都显示，× 与「我知道了」只关本次进入，无持久标记；
+     BA批：红幅顶边同色小三角冲上指着胶囊（right 由胶囊实测中心算出） -->
 <view class="addmp-bar" wx:if="{{addMpGuideShow}}">
+  <view class="addmp-tri" style="right:{{addMpTriRight}}px"></view>
   <text class="addmp-text" bindtap="onOpenAddMpTutorial">点击[添加到我的小程序]，下次打开更快捷</text>
   <text class="addmp-arrow" bindtap="onOpenAddMpTutorial">＞</text>
   <text class="addmp-close" catchtap="onCloseAddMpGuide">×</text>
@@ -95,32 +97,22 @@
 </view>
 <view style="height:30px"></view>
 
-<!-- 「添加到我的小程序」三步图文教程层：示意小图为 CSS 画的迷你界面
-     （顶栏：红色圆头像白『礼』字＋人情礼单簿＋假胶囊；下方三行浅灰占位线
-     模拟列表），只出现我们自己的名称与头像 -->
+<!-- 「添加到我的小程序」教程层（BA批按竞品视频排版）：页面上方三行带序号
+     步骤（第 1 步后跟 ···、第 2 步文字前放橙色四点小图标）；步骤下深藏青
+     圆角卡模拟微信「我的小程序」面板（我们的 logo＋名称）；卡下居中红
+     色胶囊按钮「我知道了」，只关本次 -->
 <view class="addmp-mask" wx:if="{{addMpTutorialShow}}">
-  <view class="addmp-card">
-    <view class="addmp-title">添加到我的小程序</view>
-    <view class="addmp-mock">
-      <view class="addmp-mock-top">
-        <view class="addmp-mock-app">
-          <view class="addmp-mock-avatar">礼</view>
-          <text class="addmp-mock-name">人情礼单簿</text>
-        </view>
-        <view class="addmp-mock-capsule">
-          <text class="addmp-mock-dots">···</text>
-          <view class="addmp-mock-ring"></view>
-        </view>
-      </view>
-      <view class="addmp-mock-lines">
-        <view class="addmp-mock-line"></view>
-        <view class="addmp-mock-line w82"></view>
-        <view class="addmp-mock-line w64"></view>
+  <view class="addmp-sheet">
+    <view class="addmp-step"><text class="addmp-step-no">1.</text><text>点击屏幕右上角三个点</text><text class="addmp-dots">···</text></view>
+    <view class="addmp-step"><text class="addmp-step-no">2.</text><view class="addmp-grid-icon"><view class="addmp-gdot"></view><view class="addmp-gdot"></view><view class="addmp-gdot"></view><view class="addmp-gdot"></view></view><text>点击 「添加到我的小程序」</text></view>
+    <view class="addmp-step"><text class="addmp-step-no">3.</text><text>在微信首页往下拉，快速打开人情礼单簿</text></view>
+    <view class="addmp-panel">
+      <text class="addmp-panel-title">我的小程序</text>
+      <view class="addmp-panel-item">
+        <image class="addmp-panel-logo" src="/images/logo.png" mode="aspectFill" />
+        <text class="addmp-panel-name">人情礼单簿</text>
       </view>
     </view>
-    <view class="addmp-step"><text class="addmp-step-no">1.</text>点击屏幕右上角的三个点</view>
-    <view class="addmp-step"><text class="addmp-step-no">2.</text>点击『添加到我的小程序』</view>
-    <view class="addmp-step"><text class="addmp-step-no">3.</text>在微信首页往下拉，就能快速打开『人情礼单簿』</view>
     <view class="addmp-btn" bindtap="onAddMpKnow">我知道了</view>
   </view>
 </view>

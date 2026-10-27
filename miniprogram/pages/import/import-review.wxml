@@ -65,8 +65,11 @@
     <text class="add-plus">＋</text><text>补录一条</text>
   </view>
 
-  <view style="height:90px"></view>
-  <view class="btn-primary btn-bottom" bindtap="onConfirmWrite">全部确认导入</view>
+  <view style="height:110px"></view>
+  <!-- BA批：确认按钮放进不透明底栏（白底＋顶边发丝线），滚动内容不透出 -->
+  <view class="review-bar">
+    <view class="btn-primary review-confirm" bindtap="onConfirmWrite">全部确认导入</view>
+  </view>
 </block>
 
 <!-- 导入结果：显示成功条数 -->

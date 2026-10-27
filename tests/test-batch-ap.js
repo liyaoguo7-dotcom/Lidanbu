@@ -49,8 +49,8 @@ assert.ok(/a\.lastDate < b\.lastDate/.test(stats), 'AP-4 排序比较器应以 l
 ['js', 'json', 'wxml', 'wxss'].forEach((ext) => assert.ok(has(`miniprogram/components/top-banner/top-banner.${ext}`), `AP-5 top-banner 应有 .${ext}`));
 const tbJs = rd('miniprogram/components/top-banner/top-banner.js');
 assert.ok(tbJs.includes('topBannerShownTick'), 'AP-5 出现规则已由 AS批改版：App 前台化周期 tick（原模块级 shownThisLaunch 已废）');
-assert.ok(tbJs.includes('3500'), 'AP-5 停留时长暂定 3.5 秒');
-assert.ok(rd('miniprogram/components/top-banner/top-banner.wxml').includes('『人情礼单簿』小程序提供服务'), 'AP-5 胶囊文案应为我们的小程序名');
+assert.ok(tbJs.includes('4000'), 'AP-5 停留时长已由 BA批改版：约 4 秒');
+assert.ok(rd('miniprogram/components/top-banner/top-banner.wxml').includes('人情礼单簿 小程序提供服务'), 'AP-5 胶囊文案应为我们的小程序名（BA批改版：无书名号）');
 assert.ok(rd('miniprogram/pages/index/index.json').includes('top-banner'), 'AP-5 首页应注册 top-banner');
 assert.ok(idxWxml.includes('<top-banner'), 'AP-5 首页应挂 top-banner');
 
@@ -58,11 +58,11 @@ assert.ok(idxWxml.includes('<top-banner'), 'AP-5 首页应挂 top-banner');
 const mineWxml = rd('miniprogram/pages/mine/mine.wxml');
 const mineJs = rd('miniprogram/pages/mine/mine.js');
 assert.ok(mineWxml.includes('点击[添加到我的小程序]，下次打开更快捷'), 'AP-6 顶部红条文案');
-assert.ok(mineWxml.includes('点击屏幕右上角的三个点'), 'AP-6 教程第 1 步');
-assert.ok(mineWxml.includes('点击『添加到我的小程序』'), 'AP-6 教程第 2 步');
-assert.ok(mineWxml.includes('在微信首页往下拉，就能快速打开『人情礼单簿』'), 'AP-6 教程第 3 步（我们的名称）');
+assert.ok(mineWxml.includes('点击屏幕右上角三个点'), 'AP-6 教程第 1 步（BA批改版文案）');
+assert.ok(mineWxml.includes('点击 「添加到我的小程序」'), 'AP-6 教程第 2 步（BA批改版文案）');
+assert.ok(mineWxml.includes('在微信首页往下拉，快速打开人情礼单簿'), 'AP-6 教程第 3 步（我们的名称，BA批改版文案）');
 assert.ok(mineWxml.includes('我知道了'), 'AP-6 教程底部按钮');
-assert.ok(mineWxml.includes('addmp-mock-avatar') && mineWxml.includes('人情礼单簿'), 'AP-6 示意小图应为我们的头像与名称');
+assert.ok(mineWxml.includes('/images/logo.png') && mineWxml.includes('人情礼单簿'), 'AP-6 面板示意应为我们的 logo 与名称（BA批改版）');
 assert.ok(!mineJs.includes("setStorageSync('addMpGuideDone'") && !mineJs.includes("getStorageSync('addMpGuideDone'"), 'AP-6 永久标志已由 AS批定版删除：不得再读写 addMpGuideDone');
 assert.ok(mineJs.includes('addMpGuideShow: true'), 'AS批定版：进我的页即显示引导条（onLoad 置 true）');
 

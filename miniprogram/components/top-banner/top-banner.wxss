@@ -1,46 +1,38 @@
-/* 顶部条形弹窗（AS批）：贴导航胶囊行——纵向中心对齐胶囊（top 由 JS 实测
-   写入），右缘让开胶囊本体；宽度随内容收紧，max-width 78vw 不压满整行。
-   滑下/滑回走 transform+opacity 过渡。组件样式隔离，类名带 tb- 前缀。 */
+/* 顶部条形弹窗（BA批按竞品视频复刻）：白色胶囊条贴标题行。左缘距屏左
+   12px 固定，右缘与纵向位置由 JS 按胶囊实测写入（右缘在胶囊左缘外 8px
+   止步、纵向与胶囊同行居中）；高 32px 约等于胶囊高。动画：以右缘为原点
+   横向展开（scaleX 0→1＋淡入，约 300ms），收起同理。组件样式隔离。 */
 .top-banner {
   position: fixed;
-  transform: translateY(calc(-50% - 14px));
+  left: 12px;
+  height: 32px;
+  transform-origin: right center;
+  transform: scaleX(0);
   opacity: 0;
-  transition: transform .32s ease, opacity .32s ease;
+  transition: transform .3s ease, opacity .3s ease;
   display: flex;
   align-items: center;
   background: #FFFFFF;
   border-radius: 999px;
-  padding: 7px 14px 7px 8px;
+  padding: 0 12px 0 4px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, .16);
   z-index: 50;
-  max-width: 78vw;
   box-sizing: border-box;
 }
 .top-banner.in {
-  transform: translateY(-50%);
+  transform: scaleX(1);
   opacity: 1;
 }
-.tb-disc {
+.tb-logo {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  background: #F0575A;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 6px;
   flex: none;
 }
-.tb-icon { width: 15px; height: 15px; }
 .tb-text {
   font-size: 13px;
   color: #333;
-  margin-left: 8px;
+  margin-left: 7px;
   white-space: nowrap;
-}
-.tb-close {
-  flex: none;
-  color: #999;
-  font-size: 16px;
-  line-height: 1;
-  padding: 2px 0 2px 10px;
+  overflow: hidden;
 }

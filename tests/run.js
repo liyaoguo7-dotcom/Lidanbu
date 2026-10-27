@@ -29,6 +29,7 @@ require('./test-batch-au-behavior');
 require('./test-batch-av-behavior');
 require('./test-batch-ay-behavior');
 require('./test-batch-az-behavior');
+require('./test-batch-ba-behavior');
 require('./test-cloud-export');
 require('./test-db-cloud');
 require('./test-api-dispatch');

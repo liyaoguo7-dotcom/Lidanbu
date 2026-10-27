@@ -174,7 +174,11 @@ test('任务AE：我的页字体统一 16px（=亲友录联系人姓名 .nm 大�
   // AS批定版例外：「添加到我的小程序」红条文案缩短后在窄屏仍放不下，
   // 按用户任务书降到 15px 单行显示——仅此一处豁免，其余仍只许 16/22。
   assert(/\.addmp-bar \{[^}]*font-size: 15px/.test(wxss), 'AS批红条定版 15px（单行放下）');
-  const wxssNoBar = wxss.replace(/\.addmp-bar \{[^}]*\}/, '');
+  // BA批例外：教程层是按竞品视频复刻的微信界面模拟（步骤 15px、面板小字
+  // 12/13px），不是本页正文排版，不纳入 AE 的页面字号规则；该段自
+  // 「BA批教程层」注释起至文件尾，扫描前整段剔除（BA批自有断言把守）。
+  const wxssNoBar = wxss.replace(/\.addmp-bar \{[^}]*\}/, '')
+    .replace(/\/\* BA批教程层[\s\S]*$/, '');
   const sizes = [...wxssNoBar.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
   const bad = sizes.filter((s) => s !== 16 && s !== 22);
   assert(bad.length === 0, `我的页 font-size 只许 16（文字）与 22（头像首字图形），实际异常值：${bad.join(',')}`);

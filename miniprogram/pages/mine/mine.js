@@ -41,6 +41,7 @@ Page({
     version: AppConfig.version || '',
     addMpGuideShow: false, // 「添加到我的小程序」引导条（AS批定版：每次进我的页都显示，无任何持久标记）
     addMpTutorialShow: false, // AP批：三步图文教程层
+    addMpTriRight: 36, // BA批：红幅小三角的 right 偏移（px），按胶囊实测中心对准；测不到用此回退值
   },
 
   async onLoad() {
@@ -48,6 +49,7 @@ Page({
     // （旧版 addMpGuideDone 永久标记被用户点名删掉：点过就再也不出现、
     // 删小程序才恢复）。× 与「我知道了」都只关本次进入（页面内状态）。
     this.setData({ addMpGuideShow: true });
+    this._measureAddMpTri();
     await dataService.init();
     this._isAdmin = await dataService.isAdmin();
     this.setData({
@@ -151,7 +153,25 @@ Page({
     });
   },
 
-  // ---- 「添加到我的小程序」引导（AP批形态，AS批改出现规则） ----
+  // ---- 「添加到我的小程序」引导（AP批形态，AS批改出现规则，BA批按竞品视频复刻呈现） ----
+
+  /** BA批：红幅顶边小三角横向对准胶囊中心——按胶囊实测位置算 right 偏移
+   * （红幅右缘距屏右 12px、三角宽 10px，偏移以红幅右缘为基准） */
+  _measureAddMpTri() {
+    try {
+      const rect = typeof wx.getMenuButtonBoundingClientRect === 'function'
+        ? wx.getMenuButtonBoundingClientRect() : null;
+      const win = typeof wx.getWindowInfo === 'function'
+        ? wx.getWindowInfo()
+        : (typeof wx.getSystemInfoSync === 'function' ? wx.getSystemInfoSync() : null);
+      if (rect && win && rect.width && win.windowWidth) {
+        const centerFromRight = win.windowWidth - (rect.left + rect.width / 2);
+        const right = Math.max(8, Math.round(centerFromRight - 12 - 5));
+        this.setData({ addMpTriRight: right });
+      }
+    } catch (e) { /* 测不到用回退偏移，不拦显示 */ }
+  },
+
   /** 引导条 ×：只关本次进入的显示（页面内状态，不写任何持久标记） */
   onCloseAddMpGuide() {
     this._mpGuideClosed = true;

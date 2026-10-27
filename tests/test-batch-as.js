@@ -46,7 +46,7 @@ assert.ok(tbJs.includes('topBannerShownTick') && tbJs.includes('tryShow'), 'AS-6
 assert.ok(!tbJs.includes('StorageSync'), 'AS-6 顶条不得读写任何 storage 标记');
 assert.ok(!tbJs.includes('52px'), 'AS-6 不得再用 52px 估值定位');
 const tbWxss = rd('miniprogram/components/top-banner/top-banner.wxss');
-assert.ok(tbWxss.includes('max-width: 78vw'), 'AS-6 胶囊宽度上限 78vw');
+assert.ok(tbWxss.includes('left: 12px'), 'AS-6 宽度口径已由 BA批改版：左缘固定 12px＋右缘按胶囊实测让开');
 const appJs = rd('miniprogram/app.js');
 assert.ok(appJs.includes('appShowTick += 1'), 'AS-6 App.onShow 应递增前台化周期');
 assert.ok(appJs.includes('topBannerShownTick'), 'AS-6 周期已弹标记只存 globalData 内存');
@@ -61,8 +61,8 @@ assert.ok(!mineJs.includes("getStorageSync('addMpGuideDone'"), 'AS-7 不得再�
 assert.ok(mineJs.includes('addMpGuideShow: true'), 'AS-7 进我的页即显示红条');
 assert.ok(mineJs.includes('_mpGuideClosed'), 'AS-7 关闭只走页面内状态');
 const mineWxml = rd('miniprogram/pages/mine/mine.wxml');
-assert.ok(mineWxml.includes('addmp-mock-line'), 'AS-7 教程示意应有占位线模拟列表');
-assert.ok(mineWxml.includes('addmp-mock-top'), 'AS-7 教程示意顶栏结构');
+assert.ok(mineWxml.includes('addmp-panel'), 'AS-7 教程示意已由 BA批改版：深藏青「我的小程序」面板卡');
+assert.ok(mineWxml.includes('addmp-grid-icon'), 'AS-7 教程示意已由 BA批改版：第 2 步橙色四点图标');
 const mineWxss = rd('miniprogram/pages/mine/mine.wxss');
 assert.ok(/\.addmp-bar\s*\{[^}]*background: #F0575A/.test(mineWxss), 'AS-7 红条底色主红 #F0575A');
 assert.ok(/\.addmp-bar\s*\{[^}]*color: #fff/.test(mineWxss), 'AS-7 红条文字白色');

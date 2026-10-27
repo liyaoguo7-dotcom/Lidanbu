@@ -1,4 +1,6 @@
-<!-- 往来页（v3.1 第五章） -->
+<!-- 往来页（v3.1 第五章；BA批：整页 100vh 纵向 flex——上半部分固定不滚，
+     只有下方联系人列表在 scroll-view 里独立滚动） -->
+<view class="wl-page">
 <view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
 
 <!-- 时间标签 -->
@@ -26,19 +28,6 @@
   <text class="search-cancel" bindtap="onCancelSearch">取消</text>
 </view>
 
-<!-- 搜索结果 -->
-<view class="card" wx:if="{{searching}}">
-  <view class="contact-row" wx:for="{{searchResults}}" wx:key="contactId"
-    data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
-    <text class="nm">{{item.name}}</text>
-    <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
-    <text class="chev">›</text>
-  </view>
-  <view class="contact-row" wx:if="{{searchResults.length === 0}}">
-    <text class="ph">没有找到相关亲友</text>
-  </view>
-</view>
-
 <block wx:if="{{!searching}}">
   <!-- 左右对照：收礼（左）、送礼（右）；上总额、下笔数 -->
   <view class="compare">
@@ -62,21 +51,40 @@
     <text class="diff-label">差额</text>
     <text class="diff-amount num">{{diffText}}</text>
   </view>
+</block>
 
-  <!-- 亲友列表 -->
-  <view class="card" wx:if="{{rows.length > 0}}">
-    <view class="wl-row" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
+<!-- 联系人列表区：独立滚动（搜索结果也落在这一区） -->
+<scroll-view class="wl-scroll" scroll-y>
+  <!-- 搜索结果 -->
+  <view class="card" wx:if="{{searching}}">
+    <view class="contact-row" wx:for="{{searchResults}}" wx:key="contactId"
+      data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
       <text class="nm">{{item.name}}</text>
-      <view class="right">
-        <text class="count">{{item.countText}}</text>
-        <text class="sep">｜</text>
-        <text class="diff num">{{item.diffText}}</text>
-        <text class="chev">›</text>
-      </view>
+      <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
+      <text class="chev">›</text>
+    </view>
+    <view class="contact-row" wx:if="{{searchResults.length === 0}}">
+      <text class="ph">没有找到相关亲友</text>
     </view>
   </view>
 
-  <view class="empty" wx:if="{{rows.length === 0}}">
-    <text class="empty-text">该时间范围内暂无往来记录</text>
-  </view>
-</block>
+  <block wx:if="{{!searching}}">
+    <!-- 亲友列表 -->
+    <view class="card" wx:if="{{rows.length > 0}}">
+      <view class="wl-row" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
+        <text class="nm">{{item.name}}</text>
+        <view class="right">
+          <text class="count">{{item.countText}}</text>
+          <text class="sep">｜</text>
+          <text class="diff num">{{item.diffText}}</text>
+          <text class="chev">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{rows.length === 0}}">
+      <text class="empty-text">该时间范围内暂无往来记录</text>
+    </view>
+  </block>
+</scroll-view>
+</view>

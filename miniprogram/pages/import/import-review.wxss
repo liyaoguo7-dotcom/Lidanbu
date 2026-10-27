@@ -19,13 +19,18 @@
 .photo-title { font-size: 15px; }
 .photo-sub { font-size: 12px; color: #999; margin-top: 4px; }
 /* AS批 紧凑化：记录卡连成一片连续白底（卡间距取消、只留细分割线，
-   页面灰底在列表区不露面）；首/尾卡保留外侧圆角；表单行 58px→46px */
+   页面灰底在列表区不露面）；首/尾卡保留外侧圆角；表单行 58px→46px。
+   BA批：记录之间的分隔改口——线换成略明确的浅灰 #E8E8E8 1px，且线上下
+   各多留约 10px 空白（本卡底部 padding 10px＋下一条头部 padding 加高），
+   记录内部行线仍走全局发丝线不动 */
 .item-card {
   margin: 0 12px;
   border-radius: 0;
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid #E8E8E8;
+  padding-bottom: 10px;
 }
 .item-card.item-first { margin-top: 10px; border-radius: 12px 12px 0 0; }
+.item-card.item-first .item-head { padding-top: 8px; }
 .item-card.item-last { border-radius: 0 0 12px 12px; border-bottom: none; margin-bottom: 10px; }
 .item-card.item-first.item-last { border-radius: 12px; }
 .item-card .form-row { min-height: 46px; }
@@ -33,7 +38,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 16px 0;
+  padding: 18px 16px 0;
 }
 .item-no { font-size: 13px; color: #999; }
 .item-del { font-size: 13px; color: #F0575A; padding: 4px 0 4px 12px; }
@@ -92,6 +97,23 @@
 }
 .form-picker { flex: 1; }
 .form-picker .chev { color: #C2C2C2; }
+/* BA批：底部确认栏——容器白底不透明＋顶边发丝线，按钮本体纯主红实心，
+   滚动内容不得透出（只在本页覆盖，不动全局 .btn-primary） */
+.review-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #FFFFFF;
+  border-top: 1px solid #F0F0F0;
+  padding: 12px 0;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 30;
+}
+.review-bar .review-confirm {
+  background: #F0575A;
+  opacity: 1;
+}
 /* 结果页 */
 .result-card {
   margin-top: 60px;

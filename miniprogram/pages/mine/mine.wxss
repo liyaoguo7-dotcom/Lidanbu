@@ -80,87 +80,96 @@
 
 /* 「添加到我的小程序」引导条 + 教程层（AP批形态，AS批：主红底白字单行不折行） */
 .addmp-bar {
+  position: relative;
   margin: 10px 12px 0;
   background: #F0575A;
   color: #fff;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px 14px;
   display: flex;
   align-items: center;
   font-size: 15px;
 }
+/* BA批：红幅顶边同色小三角，冲上指着胶囊（right 由 JS 按胶囊实测写入） */
+.addmp-tri {
+  position: absolute;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  background: #F0575A;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
 .addmp-text { flex: 1; white-space: nowrap; overflow: hidden; }
 .addmp-arrow { font-size: 16px; padding-left: 6px; }
 .addmp-close { font-size: 16px; line-height: 1; padding: 2px 0 2px 12px; }
+/* BA批教程层：顶部白片——三行带序号步骤＋深藏青「我的小程序」面板卡＋红胶囊按钮 */
 .addmp-mask {
   position: fixed;
   left: 0; right: 0; top: 0; bottom: 0;
   background: rgba(0, 0, 0, .5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 60;
 }
-.addmp-card {
-  width: 300px;
+.addmp-sheet {
+  width: 100%;
   background: #fff;
-  border-radius: 14px;
-  padding: 22px 20px 20px;
+  padding: 18px 20px 22px;
+  padding-top: calc(env(safe-area-inset-top) + 52px);
   box-sizing: border-box;
 }
-.addmp-title { text-align: center; font-size: 16px; font-weight: 600; color: #333; }
-.addmp-mock {
-  margin: 16px 0 14px;
-  background: #F6F6F6;
-  border-radius: 10px;
-  padding: 10px 12px 12px;
-}
-.addmp-mock-top {
+.addmp-step {
   display: flex;
   align-items: center;
+  font-size: 15px;
+  color: #333;
+  line-height: 1.6;
+  padding: 3px 0;
+}
+.addmp-step-no { font-weight: 600; margin-right: 6px; }
+.addmp-dots { font-weight: 700; letter-spacing: 2px; margin-left: 4px; }
+/* 第 2 步文字前的橙色四点小图标（2×2 橙圆点） */
+.addmp-grid-icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  align-content: space-between;
+  margin-right: 6px;
 }
-.addmp-mock-app { display: flex; align-items: center; }
-.addmp-mock-lines { margin-top: 12px; }
-.addmp-mock-line {
-  height: 8px;
-  border-radius: 4px;
-  background: #E8E8E8;
-}
-.addmp-mock-line + .addmp-mock-line { margin-top: 8px; }
-.addmp-mock-line.w82 { width: 82%; }
-.addmp-mock-line.w64 { width: 64%; }
-.addmp-mock-avatar {
-  width: 34px; height: 34px;
+.addmp-gdot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #F0575A;
-  color: #fff;
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #FF8A00;
 }
-.addmp-mock-name { font-size: 16px; color: #333; margin-left: 8px; }
-.addmp-mock-capsule {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border: 1px solid #DDD;
-  border-radius: 999px;
-  padding: 4px 10px;
-}
-.addmp-mock-dots { font-size: 16px; color: #333; letter-spacing: 1px; line-height: 1; }
-.addmp-mock-ring {
-  width: 11px; height: 11px;
-  border-radius: 50%;
-  border: 2px solid #333;
-  box-sizing: border-box;
-  margin-left: 7px;
-}
-.addmp-step { font-size: 16px; color: #333; line-height: 1.6; padding: 2px 0; }
-.addmp-step-no { color: #F0575A; font-weight: 700; font-size: 16px; margin-right: 6px; }
-.addmp-btn {
+/* 深藏青面板卡：模拟微信「我的小程序」面板 */
+.addmp-panel {
   margin-top: 16px;
+  background: #2B2B3D;
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+}
+.addmp-panel-title { font-size: 12px; color: #9A9AA8; }
+.addmp-panel-item {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.addmp-panel-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+.addmp-panel-name { font-size: 13px; color: #fff; margin-top: 6px; }
+.addmp-btn {
+  margin: 18px auto 0;
+  width: 200px;
   background: #F0575A;
   color: #fff;
   text-align: center;

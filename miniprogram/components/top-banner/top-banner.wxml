@@ -1,6 +1,7 @@
-<!-- 顶部条形弹窗：白胶囊 + 红色礼单图标 + 服务文案 + ×（AP批形态，AS批贴胶囊行） -->
+<!-- 顶部条形弹窗（BA批按竞品视频复刻）：白色胶囊条贴标题行——左缘距屏左
+     12px、右缘让开胶囊本体 8px、高约等于胶囊；logo 小图＋单行文案，无 ×；
+     从胶囊一侧横向展开（scaleX）→停留约 4 秒→横向缩回收起卸载 -->
 <view class="top-banner {{animIn ? 'in' : ''}}" style="{{posStyle}}" wx:if="{{show}}">
-  <view class="tb-disc"><image class="tb-icon" src="/images/icons/hongbao.svg" mode="aspectFit" /></view>
-  <text class="tb-text">『人情礼单簿』小程序提供服务</text>
-  <text class="tb-close" catchtap="onClose">×</text>
+  <image class="tb-logo" src="/images/logo.png" mode="aspectFill" />
+  <text class="tb-text">人情礼单簿 小程序提供服务</text>
 </view>
