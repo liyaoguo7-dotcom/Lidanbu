@@ -53,14 +53,14 @@ test('BC列线铺满：minCols 决定总列数、空列补到铺满', () => {
   );
   assert.eq(many.totalGrid, 25, '记录多于 minCols 时以记录数为准（滚动查看）');
   const legacy = LC.buildColumns([], {});
-  assert.eq(legacy.totalGrid, 12, '不传 minCols 时保持旧口径 12 列下限');
+  assert.eq(legacy.totalGrid, 15, '不传 minCols 时下限为 BOOK_COLS（BD批用户定版 15 列）');
 });
 
 test('BC回退链：所选字体→补充 6 片→其余五款→楷体→宋体', () => {
   const stack = LC.selectedStack('mashanzheng');
   const parts = stack.split(',').map((s) => s.trim());
   assert.eq(parts[0], '"MaShanZheng"', '链首是所选字体');
-  for (let i = 1; i <= 6; i++) assert.eq(parts[i], `"LxgwWenKaiSupp${i}"`, `链第 ${i + 1} 位是补充片 ${i}`);
+  for (let i = 1; i <= 6; i++) assert.eq(parts[i], `"ZhiMangSupp${i}"`, `链第 ${i + 1} 位是补充片 ${i}`);
   const rest = parts.slice(7).join(',');
   for (const f of ['LxgwWenKai', 'LongCang', 'ZhiMangXing', 'CactusClassicalSerif', 'Bakudai']) {
     assert(rest.includes(`"${f}"`), `链含其余字体 ${f}`);
@@ -80,7 +80,7 @@ test('BC缺字定位：子集内字不需要补充、虎/总定位到正确片',
 
 test('BC服务端白名单：补充字库 6 片可代取', () => {
   const api = read('cloudfunctions/api/index.js');
-  for (let i = 1; i <= 6; i++) assert(api.includes(`'lxgw-supp${i}.ttf'`), `api 白名单含 lxgw-supp${i}.ttf`);
+  for (let i = 1; i <= 6; i++) assert(api.includes(`'zhimang-supp${i}.ttf'`), `api 白名单含 zhimang-supp${i}.ttf`);
 });
 
 test('BC就绪盖：book.wxml 在 ready 前盖住整帧（不闪默认样式帧）', () => {

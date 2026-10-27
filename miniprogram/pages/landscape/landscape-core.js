@@ -26,6 +26,7 @@ const SPEC = {
   SCROLL_W: 32,          // 左右卷轴位宽
   COL_W: 50,             // 固定列宽（2026-10-23 任务AC 第 9 项：56→50，用户反馈左右再窄一点；历程 64.5→56→50）
   COLS_PER_SCREEN: 12,   // 一屏列数（格子印满整幅纸面的列数下限）
+  BOOK_COLS: 15,         // 每本横置固定列数（2026-10-27 用户定版「暂定15」：卷轴两侧内收、书体居中，纸面宽恰好容纳 15 列，不再随屏宽拉满）
   INNER_PAD: 6,          // 列内上下各留
   NAME_H: 104, NAME_FONT: 22, NAME_PITCH: 26, NAME_SLOTS: 3, // 历程：AC 反推 116 → AE(GAP 3.5) 114.5 → AF 校准 114.5 → 2026-10-25 真机反馈「人名上下往中间缩小一点」收 10.5 至 104，区顶同步下移（NAME_TOP）保整段中心不动
   NAME_TOP: 11.25, // 姓名区顶距（= 原顶距 6 + 收缩量 10.5 的一半 5.25）：姓名整段中心与旧版一致，只是上下往中间收
@@ -158,7 +159,7 @@ const FONTS = [
   { id: 'lxgw', name: '霞鹜文楷', family: 'LxgwWenKai', calibration: 1.00, file: 'lxgw-wenkai.woff2', cloudFile: 'lxgw-wenkai.ttf' },
   { id: 'mashanzheng', name: '马善政毛笔体', family: 'MaShanZheng', calibration: 1.05, file: 'mashanzheng.woff2', cloudFile: 'mashanzheng.ttf' },
   { id: 'longcang', name: '龙藏体', family: 'LongCang', calibration: 1.20, file: 'longcang.woff2', cloudFile: 'longcang.ttf' },
-  { id: 'zhimang', name: '枝芒行书', family: 'ZhiMangXing', calibration: 1.16, file: 'zhimang.woff2', cloudFile: 'zhimang.ttf' },
+  { id: 'zhimang', name: '枝芒行书', family: 'ZhiMangXing', calibration: 1.24, file: 'zhimang.woff2', cloudFile: 'zhimang.ttf' }, // 校准 1.16→1.24：2026-10-27 用户真机反馈「枝芒有点小、大一号」
   { id: 'cactus', name: '古典宋体', family: 'CactusClassicalSerif', calibration: 1.00, file: 'cactus.woff2', cloudFile: 'cactus.ttf' },
   { id: 'bakudai', name: '莫大毛笔', family: 'Bakudai', calibration: 1.12, file: 'bakudai.woff2', cloudFile: 'bakudai.ttf', charMap: BAKUDAI_S2T },
 ];
@@ -196,16 +197,17 @@ function renderFontSize(nominalPx, fontId) {
  */
 /**
  * 补充字库（BC批）：六款字体的云端子集只含 721 字，虎、总等常用姓名
- * 字不在其中（用户 2026-10-27 真机点名）。补充库以霞鹜文楷补全
- * GB2312 常用汉字 6763 字（一级＋二级，用户亲定口径）；单文件 3.3MB
- * 超过云端取字体通道的单次上限，故按码位序等分 6 片（每片约
- * 450–630KB），平时不加载，页面文字出现子集外字时由 book-common 按
- * 字定位到所在片、只加载那一片（fontManager.ensureSupplements）。
+ * 字不在其中（用户 2026-10-27 真机点名）。补充库底本由用户选定为
+ * 枝芒行书（全字库 GB2312 零缺字），补全 6763 字（一级＋二级）；
+ * 单文件过大超过云端取字体通道的单次上限，故按码位序等分 6 片
+ * （每片约 560–715KB），且字形按主字体「大一号」同口径放大 7%
+ * （upem 1000→935）；平时不加载，页面文字出现子集外字时由
+ * book-common 按字定位到所在片、只加载那一片（ensureSupplements）。
  * 不进 FONTS 列表（面板里不出现），只作回退链第二位起。
  */
 const SUPP_FONTS = [1, 2, 3, 4, 5, 6].map((i) => ({
-  id: `supp${i}`, name: `补充字库${i}`, family: `LxgwWenKaiSupp${i}`,
-  file: `lxgw-supp${i}.ttf`, cloudFile: `lxgw-supp${i}.ttf`,
+  id: `supp${i}`, name: `补充字库${i}`, family: `ZhiMangSupp${i}`,
+  file: `zhimang-supp${i}.ttf`, cloudFile: `zhimang-supp${i}.ttf`,
 }));
 
 function selectedStack(fontId) {
@@ -426,9 +428,9 @@ function orderForBook(records) {
  */
 function buildColumns(records, opts = {}) {
   const list = Array.isArray(records) ? records : [];
-  /* BC批：总列数还要铺满实际纸面宽——页面按窗口宽算出 minCols 传入；
-   * 旧口径固定 12 列在宽屏上右侧留一大截无线纸面（用户真机点名）。 */
-  const totalGrid = Math.max(SPEC.COLS_PER_SCREEN, list.length, opts.minCols || 0);
+  /* BD批（用户定版，覆盖 BC 的按屏宽铺满）：每本固定 BOOK_COLS 列，
+   * 纸面宽随之定死、卷轴内收居中，右侧不再留无线空白。 */
+  const totalGrid = Math.max(SPEC.BOOK_COLS, list.length, opts.minCols || 0);
   const emptyCount = totalGrid - list.length;
   const fontId = opts.fontId || 'lxgw';
   const cols = [];

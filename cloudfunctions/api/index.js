@@ -121,7 +121,7 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile, ocrHtt
   }
 
   // —— 字体文件服务端代取（AH批）：白名单 TTF（AY批扩至六款）、容器内缓存 base64 ——
-  const FONT_FILE_WHITELIST = ['lxgw-wenkai.ttf', 'mashanzheng.ttf', 'longcang.ttf', 'zhimang.ttf', 'cactus.ttf', 'bakudai.ttf', 'lxgw-supp1.ttf', 'lxgw-supp2.ttf', 'lxgw-supp3.ttf', 'lxgw-supp4.ttf', 'lxgw-supp5.ttf', 'lxgw-supp6.ttf']; // AY批：新增三款字体（枝芒行书/古典宋体/莫大毛笔）；BC批：补充字库 6 片
+  const FONT_FILE_WHITELIST = ['lxgw-wenkai.ttf', 'mashanzheng.ttf', 'longcang.ttf', 'zhimang.ttf', 'cactus.ttf', 'bakudai.ttf', 'zhimang-supp1.ttf', 'zhimang-supp2.ttf', 'zhimang-supp3.ttf', 'zhimang-supp4.ttf', 'zhimang-supp5.ttf', 'zhimang-supp6.ttf']; // AY批：新增三款字体（枝芒行书/古典宋体/莫大毛笔）；BC批：补充字库 6 片
   const _fontBase64Cache = new Map();
   async function handleFontFile(event) {
     const fileID = String((event && event.fileID) || '');

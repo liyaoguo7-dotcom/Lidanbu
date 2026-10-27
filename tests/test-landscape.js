@@ -164,20 +164,20 @@ test('横置-金额一致性：大写与分值一致、半屏金额两位小数'
   assert.eq(LC.detailAmountText(100005), '1000.05', '带分不四舍五入');
 });
 
-test('横置-空列格子：格子印满整幅，空列数=12-记录数且只有线框', () => {
+test('横置-空列格子：格子印满整幅，空列数=15-记录数且只有线框（BD批定版15列，覆盖旧12）', () => {
   const recs = [1, 2, 3, 4].map((i) => ({ id: String(i), name: '张三', amountFen: 10000, tagId: 'jiehun' }));
   const built = LC.buildColumns(recs, {});
-  assert.eq(built.totalGrid, 12, '总列数 12');
-  assert.eq(built.emptyCount, 8, '空列 = 12 - 4');
-  assert.eq(built.columns.length, 12, '渲染列数 12');
+  assert.eq(built.totalGrid, 15, '总列数 15（BD批）');
+  assert.eq(built.emptyCount, 11, '空列 = 15 - 4');
+  assert.eq(built.columns.length, 15, '渲染列数 15');
   const empties = built.columns.filter((c) => c.empty);
-  assert.eq(empties.length, 8, '空列对象数');
+  assert.eq(empties.length, 11, '空列对象数');
   assert(empties.every((c) => !c.nameChars && !c.amountChars), '空列只有线框无内容');
   assert.eq(built.columns[0].empty, false, '最左是第一条记录（2026-10-22 定版：第一条最左）');
-  assert.eq(built.columns[11].empty, true, '空列补在最后一条记录右侧');
+  assert.eq(built.columns[14].empty, true, '空列补在最后一条记录右侧');
   assert.eq(built.columns.map((c) => c.recordId).slice(0, 4).join(','), '1,2,3,4', '记录按账本顺序从左到右排');
   const zero = LC.buildColumns([], {});
-  assert.eq(zero.emptyCount, 12, '零记录时 12 列全空');
+  assert.eq(zero.emptyCount, 15, '零记录时 15 列全空');
   const many = LC.buildColumns(Array.from({ length: 15 }, (_, i) => ({ id: String(i), name: '张三', amountFen: 1, tagId: 'jiehun' })), {});
   assert.eq(many.emptyCount, 0, '超 12 条无空列');
   assert.eq(many.totalGrid, 15, '超屏按记录数扩展');

@@ -43,7 +43,7 @@
 
     <!-- 中部：卷轴 + 纸面 + 卷轴（AT-6 贴合：槽位高＝纸高，整图绝对定位——
          杆身与纸面上下对齐、帽子探出纸外、杆身实绘缘与纸缘重合间隙 0） -->
-    <view class="midrow">
+    <view class="midrow" style="width:{{view.bookW}}px;align-self:center;">
       <view class="scroll-box" style="width:{{scrollBox.slotW}}px;">
         <image class="scroll-img" src="{{theme.scrollImg}}" mode="scaleToFill"
           style="width:{{scrollBox.imgW}}px;height:{{scrollBox.imgH}}px;top:{{scrollBox.top}}px;left:{{scrollBox.left}}px;" />
@@ -123,7 +123,6 @@
           <view wx:for="{{fonts}}" wx:key="id"
             class="opt {{fontId === item.id ? 'opt-sel' : ''}}"
             data-id="{{item.id}}" bindtap="onPickFont">
-            <view class="font-preview" style="font-family:{{item.stack}};">张三 壹仟元整</view>
             <view class="opt-name">{{item.name}}</view>
           </view>
         </view>

@@ -23,7 +23,7 @@ test('AY字体名单：六款齐全、id 与云端文件名定版', () => {
     const stack = LC.selectedStack(f.id);
     assert(stack.includes(f.family) && stack.includes('KaiTi'), `${f.id} 回退链完整`);
   }
-  assert.eq(LC.fontById('zhimang').calibration, 1.16, '枝芒校准（墨迹面积法）');
+  assert.eq(LC.fontById('zhimang').calibration, 1.24, '枝芒校准（墨迹面积法 1.16，用户真机「大一号」改定 1.24）');
   assert.eq(LC.fontById('cactus').calibration, 1.00, '古典宋体校准（与霞鹜同量级）');
   assert.eq(LC.fontById('bakudai').calibration, 1.12, '莫大校准（墨迹面积法）');
 });

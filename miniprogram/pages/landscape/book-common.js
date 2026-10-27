@@ -123,17 +123,9 @@ function createBookPage(kind) {
       this._handleResize(w, h);
     },
 
-    /**
-     * BC批：铺满纸面所需的总列数（基准单位）。纸面内宽＝844 基准宽扣
-     * 左右两根卷轴槽（槽宽为设备 px、除以 scale 换回基准单位），列距＝
-     * COL_W（border-box、边框含在列宽内），向上取整再多补 1 列保线到边。
-     */
+    /** BD批：每本固定列数（用户定版暂定 15），与纸面定宽配套 */
     _minCols() {
-      const spec = this.data.spec || {};
-      const s = spec.scale || 1;
-      const slotW = (this.data.scrollBox && this.data.scrollBox.slotW) || spec.scrollW || 0;
-      const innerBaseline = 844 - (2 * slotW) / s;
-      return Math.ceil(innerBaseline / LC.SPEC.COL_W) + 1;
+      return LC.SPEC.BOOK_COLS;
     },
 
     /** 用当前窗口尺寸重同步方向（onLoad/onShow 调用，与 onResize 共用一条路径） */
@@ -202,10 +194,15 @@ function createBookPage(kind) {
       const t = this.data.theme;
       const s = this.data.spec.scale;
       if (!t || !t.marginTile) return;
+      /* BD批书体定宽：纸面恰好容纳 BOOK_COLS 列＋左右两根卷轴槽，
+       * midrow 按此宽居中——卷轴两侧内收、离屏幕边缘留出留白纹。 */
+      const slotW = (this.data.scrollBox && this.data.scrollBox.slotW) || this.data.spec.scrollW || 0;
+      const bookW = Math.round(LC.SPEC.BOOK_COLS * this.data.spec.colW + 2 * slotW);
       this.setData({
         view: {
           marginTileW: Math.round(t.marginTile.w * s), marginTileH: Math.round(t.marginTile.h * s),
           paperTileW: Math.round(t.paperTile.w * s), paperTileH: Math.round(t.paperTile.h * s),
+          bookW,
         },
       });
     },
