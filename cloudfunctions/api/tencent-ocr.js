@@ -976,6 +976,56 @@ function assessQuality(detections) {
   return { bad: reasons.length > 0, score, reasons, rows, avgConf };
 }
 
+/* ---------------- 照片转正（BL批） ----------------
+ * 横置礼单被竖着拍时，整页字转了 90°：引擎碎片全是横向长条、混读成串，
+ * 解析层转坐标救不回（离线实证：行拆开了但金额几乎全丢）。正解是把
+ * 图片像素转正后重新过引擎，用户不用保证每次正着拍。
+ * 检测（纯几何＋质量分双条件，防误伤正常横排文档）：碎片 ≥6、中位宽
+ * >中位高、宽条（宽>高×1.2）占比 ≥50%，且首轮质量分 <55 才怀疑转置。
+ * 转正用纯 JS 的 jpeg-js（api 新增依赖）；解码失败/超大图/依赖缺失时
+ * 静默跳过，保持原结果——转正只是加分项，绝不让识别因此失败。 */
+const ROTATE_MAX_PIXELS = 8000000;
+const ROTATE_SUSPECT_SCORE = 55;
+
+function rotationSuspect(detections, score) {
+  if (typeof score === 'number' && score >= ROTATE_SUSPECT_SCORE) return false;
+  const frags = (Array.isArray(detections) ? detections : [])
+    .map((d) => bboxOf(d))
+    .filter((b) => b && b.w > 0 && b.h > 0);
+  if (frags.length < 6) return false;
+  const med = (arr) => { const a = [...arr].sort((x, y) => x - y); return a[Math.floor(a.length / 2)]; };
+  const medW = med(frags.map((f) => f.w));
+  const medH = med(frags.map((f) => f.h));
+  if (!(medW > medH)) return false;
+  const wide = frags.filter((f) => f.w > f.h * 1.2).length;
+  return wide >= frags.length * 0.5;
+}
+
+function rotateJpegBase64(imageBase64, dir) {
+  let jpeg;
+  try { jpeg = require('jpeg-js'); } catch (e) { return null; }
+  try {
+    const src = jpeg.decode(Buffer.from(imageBase64, 'base64'), { useTArray: true, maxMemoryUsageInMB: 256 });
+    if (!src || !src.width || !src.height || src.width * src.height > ROTATE_MAX_PIXELS) return null;
+    const W = src.width; const H = src.height; const data = src.data;
+    const out = Buffer.alloc(W * H * 4);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const si = (y * W + x) * 4;
+        /* cw：原图逆时针转置 → 顺时针转正；ccw 反之 */
+        const dx = dir === 'cw' ? H - 1 - y : y;
+        const dy = dir === 'cw' ? x : W - 1 - x;
+        const di = (dy * H + dx) * 4;
+        out[di] = data[si]; out[di + 1] = data[si + 1]; out[di + 2] = data[si + 2]; out[di + 3] = data[si + 3];
+      }
+    }
+    const enc = jpeg.encode({ data: out, width: H, height: W }, 85);
+    return Buffer.from(enc.data).toString('base64');
+  } catch (e) {
+    return null;
+  }
+}
+
 /* ---------------- 适配器工厂 ---------------- */
 
 /**
@@ -1027,45 +1077,63 @@ function createAdapter(deps = {}) {
         if (!buf) throw new Error('这张照片没认出来');
         imageBase64 = Buffer.from(buf).toString('base64');
       }
-      /* AS-8 留痕：每次真实调用都记一份原始要素（接口/质量分/碎片），
-       * 挂在返回 rows.ocrTrace 上随任务落库；抛错的调用不记。 */
-      const traceCalls = [];
-      const runCall = async (action) => {
-        const dets = await callOcr(action, imageBase64, cfg);
-        const q = assessQuality(dets);
-        traceCalls.push(buildTraceCall(action, dets, q));
-        return { dets, q };
-      };
-      const finish = (rows, chosen) => {
-        rows.ocrTrace = finalizeTrace(traceCalls, chosen);
-        return rows;
-      };
       const mode = opts.mode || opts.ocrMode || '';
-      if (mode === 'print') {
-        const { q } = await runCall('GeneralBasicOCR');
-        if (!q.rows.length) throw new Error('这张照片没认出来');
-        return finish(q.rows, 'print');
+      /* 一轮完整识别（指定的人像/给定图片字节）：返回行、采用引擎、
+       * 质量分、本轮留痕与首调碎片；无行不抛错（抛错语义留给外层，
+       * 以便转正重试接管）；服务级错误照常冒泡。 */
+      const attempt = async (b64) => {
+        const traceCalls = [];
+        let firstDets = null;
+        const runCall = async (action) => {
+          const dets = await callOcr(action, b64, cfg);
+          if (firstDets === null) firstDets = dets;
+          const q = assessQuality(dets);
+          traceCalls.push(buildTraceCall(action, dets, q));
+          return { dets, q };
+        };
+        if (mode === 'print') {
+          const { q } = await runCall('GeneralBasicOCR');
+          return { rows: q.rows, chosen: 'print', score: q.score, traceCalls, firstDets };
+        }
+        if (mode === 'handwriting') {
+          const { q } = await runCall('GeneralHandwritingOCR');
+          return { rows: q.rows, chosen: 'handwriting', score: q.score, traceCalls, firstDets };
+        }
+        /* 未指定模式：手写优先（纸质礼单多为手写）；质量过关直接用
+         * （常态 1 次/图）；没认出 或 质量门判差 → 补调印刷并按质量分取优 */
+        const hw = await runCall('GeneralHandwritingOCR');
+        if (hw.dets.length && !hw.q.bad) {
+          return { rows: hw.q.rows, chosen: 'handwriting', score: hw.q.score, traceCalls, firstDets };
+        }
+        let print = null;
+        try {
+          print = await runCall('GeneralBasicOCR');
+        } catch (e) {
+          if (!hw.q.rows.length) throw e; // 手写也无果才让印刷错误冒泡
+        }
+        let best = hw.q;
+        let chosen = 'handwriting';
+        if (print && print.q.score > hw.q.score) { best = print.q; chosen = 'print'; }
+        return { rows: best.rows, chosen, score: best.score, traceCalls, firstDets };
+      };
+      let result = await attempt(imageBase64);
+      let rotated = '';
+      /* BL批转正：首轮碎片呈转置特征（横长条为主）且质量分低 → 把图
+       * 转正后整轮重识，按质量分取优；先试顺时针，不行再试逆时针。
+       * 只对转置照片多花调用，正常照片不受影响；同 job 只扣一次分。 */
+      if (rotationSuspect(result.firstDets, result.score)) {
+        for (const dir of ['cw', 'ccw']) {
+          const rb64 = rotateJpegBase64(imageBase64, dir);
+          if (!rb64) break;
+          const r2 = await attempt(rb64);
+          if (r2.rows.length && r2.score > result.score) { result = r2; rotated = dir; break; }
+          if (!result.rows.length && r2.rows.length) { result = r2; rotated = dir; break; }
+        }
       }
-      if (mode === 'handwriting') {
-        const { q } = await runCall('GeneralHandwritingOCR');
-        if (!q.rows.length) throw new Error('这张照片没认出来');
-        return finish(q.rows, 'handwriting');
-      }
-      /* 未指定模式：手写优先（纸质礼单多为手写）；质量过关直接用
-       * （常态 1 次/图）；没认出 或 质量门判差 → 补调印刷并按质量分取优 */
-      const hw = await runCall('GeneralHandwritingOCR');
-      if (hw.dets.length && !hw.q.bad) return finish(hw.q.rows, 'handwriting');
-      let print = null;
-      try {
-        print = await runCall('GeneralBasicOCR');
-      } catch (e) {
-        if (!hw.q.rows.length) throw e; // 手写也无果才让印刷错误冒泡
-      }
-      let best = hw.q;
-      let chosen = 'handwriting';
-      if (print && print.q.score > hw.q.score) { best = print.q; chosen = 'print'; }
-      if (!best.rows.length) throw new Error('这张照片没认出来');
-      return finish(best.rows, chosen);
+      if (!result.rows.length) throw new Error('这张照片没认出来');
+      result.rows.ocrTrace = finalizeTrace(result.traceCalls, result.chosen);
+      if (rotated) result.rows.ocrTrace.rotated = rotated;
+      return result.rows;
     },
   };
 }
@@ -1082,6 +1150,8 @@ module.exports = {
   splitWideFragments,
   dropRepeatedPrintFrags,
   guardRowNames,
+  rotationSuspect,
+  rotateJpegBase64,
   decodeVerticalAmountTail,
   assessQuality,
   createAdapter,

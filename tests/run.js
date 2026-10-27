@@ -37,6 +37,7 @@ require('./test-batch-bg-behavior');
 require('./test-batch-bh-behavior');
 require('./test-batch-bj-behavior');
 require('./test-batch-bk-behavior');
+require('./test-batch-bl-behavior');
 require('./test-ocr-replay-real');
 require('./test-cloud-export');
 require('./test-db-cloud');

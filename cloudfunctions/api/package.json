@@ -1,1 +1,1 @@
-{"dependencies": {"wx-server-sdk": "latest", "exceljs": "^4.4.0"}, "description": "礼单簿云函数 api（待联调）", "main": "index.js", "name": "lidanbu-api", "version": "0.1.0"}
+{"dependencies":{"exceljs":"^4.4.0","jpeg-js":"^0.4.4","wx-server-sdk":"latest"},"description":"礼单簿云函数 api（待联调）","main":"index.js","name":"lidanbu-api","version":"0.1.0"}
