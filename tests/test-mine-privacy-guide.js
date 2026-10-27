@@ -72,13 +72,12 @@ test('引导重看模式：从关于我们进入恒为 review，与已看标记�
   assert(aboutWxml.includes('使用引导'), '关于页有「使用引导」行');
 });
 
-test('"我的"页行序：资料条→会员积分卡→共享/横置→邀请分享→通知组→底部', async () => {
+test('"我的"页行序：资料条→会员积分卡→横置→邀请分享→通知组→底部（BE批取消家庭共享行）', async () => {
   // 剥掉注释再断言（头注释里复述了顺序，会污染 indexOf）
   const wxml = read('miniprogram/pages/mine/mine.wxml').replace(/<!--[\s\S]*?-->/g, '');
   const markers = [
     'bindtap="onProfile"',   // ① 个人资料条
     '会员与积分',             // ② 会员与积分卡片
-    '家庭共享',               // ③
     '横置礼单本',             // ③
     '邀请分享',               // ④ 唯一入口
     '通知',                   // ⑤
@@ -98,7 +97,7 @@ test('"我的"页行序：资料条→会员积分卡→共享/横置→邀请�
   }
   assert(!wxml.includes('分享转发'), '不得再有独立"分享转发"行');
   const mineJs = read('miniprogram/pages/mine/mine.js');
-  assert(!/onShare\s*\(\s*\)/.test(mineJs) && !mineJs.includes('分享转发（待接入）'), 'mine.js 不得留分享转发处理函数（onShareHome 是家庭共享入口，不算）');
+  assert(!/onShare\s*\(\s*\)/.test(mineJs) && !mineJs.includes('分享转发（待接入）') && !mineJs.includes('onShareHome'), 'mine.js 不得留分享转发处理函数');
   assert(wxml.includes('open-type="contact"'), '联系客服是微信客服按钮（open-type=contact）');
   assert(wxml.includes('已邀请 {{inviteDone}}/{{inviteMax}}'), '邀请行显示已邀请 x/上限（x 读数据）');
   assert(wxml.includes('{{displayName}}') && !wxml.includes('>我<'), '资料条显示昵称且不再写死"我"');

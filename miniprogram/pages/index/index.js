@@ -76,11 +76,6 @@ Page({
   },
 
   async onShow() {
-    // AS批：顶部条形弹窗按 App 前台化周期弹一次（组件内比对 tick，同周期不重复）
-    if (typeof this.selectComponent === 'function') {
-      const tb = this.selectComponent('#topBanner');
-      if (tb && typeof tb.tryShow === 'function') tb.tryShow();
-    }
     // 会员状态与首页数据并发（原来串行排队，首页联系人/小结都跟着等）
     await Promise.all([this.refreshMember(), this.refreshHomeData()]);
     await this.checkPrivacyPopup();

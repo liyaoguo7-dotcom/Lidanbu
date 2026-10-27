@@ -74,7 +74,7 @@ const idxJs = fs.readFileSync(__dirname + '/../miniprogram/pages/index/index.js'
 assert.ok(idxJs.includes('flags0.eInvitation === false'), 'AL-11 首页请柬入口应受总开关控制');
 assert.ok(idxJs.includes('家庭共享敬请期待'), 'AL-11 首页共享入口应有总闸提示');
 const mineJs2 = fs.readFileSync(__dirname + '/../miniprogram/pages/mine/mine.js', 'utf8');
-assert.ok(mineJs2.includes('flags.familyShare === false'), 'AL-11 我的页共享行应有总闸');
+assert.ok(!mineJs2.includes('onShareHome'), 'AL-11 我的页共享行已由 BE批删除（入口只在首页、总闸在首页校验）');
 console.log('✓ AL批·总开关断言全过');
 
 /* AL-12 开关中心 —— AM批由用户改定为三组，本节断言随之更新：

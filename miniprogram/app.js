@@ -16,13 +16,6 @@ App({
     // 失败不拦启动、不弹登录框；首页读这个状态显示"网络不太顺，点这里重试"条，
     // 点条调 retryInit()。没有登录页、没有登录拦截，这是唯一状态来源。
     initState: { status: 'starting' },
-    // 顶部条形弹窗的"打开周期"计数（AS批）：App 每次前台化（冷启动的
-    // onShow、热启动回到前台）+1；top-banner 组件按周期弹一次，同周期
-    // 不重复。两者都只存内存（globalData），关掉小程序即清零——
-    // 绝不落 storage（旧版模块级标志在一进程内永不重置、storage 标志要
-    // 删小程序才清，都被用户点名改掉）。
-    appShowTick: 0,
-    topBannerShownTick: -1,
   },
 
   /** 静默初始化：成功置 ready 并绑定待处理邀请码；失败置 failed（reason=network） */
@@ -108,9 +101,6 @@ App({
   },
 
   onShow(options) {
-    // AS批：前台化周期 +1（冷启动 onLaunch 后也会走一次 onShow），
-    // 顶部条形弹窗据此每周期弹一次
-    this.globalData.appShowTick += 1;
     // 热启动经分享卡片进入时同样捕获 inviter 参数并尝试绑定
     this.captureInvite(options);
     if (dataService.bindPendingInvite) dataService.bindPendingInvite();

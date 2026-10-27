@@ -39,20 +39,8 @@ for (const label of ['姓名', '金额', '场合', '日期', '备注', '类型']
 }
 assert.ok(revWxml.includes('原图对照'), 'AS-5 顶部原图对照卡保留');
 
-/* AS-6 顶部条：胶囊实测定位＋App 周期 tick＋无 storage 标记 */
-const tbJs = rd('miniprogram/components/top-banner/top-banner.js');
-assert.ok(tbJs.includes('getMenuButtonBoundingClientRect'), 'AS-6 顶条定位应读胶囊实测位置');
-assert.ok(tbJs.includes('topBannerShownTick') && tbJs.includes('tryShow'), 'AS-6 应按 App 周期 tick 弹一次');
-assert.ok(!tbJs.includes('StorageSync'), 'AS-6 顶条不得读写任何 storage 标记');
-assert.ok(!tbJs.includes('52px'), 'AS-6 不得再用 52px 估值定位');
-const tbWxss = rd('miniprogram/components/top-banner/top-banner.wxss');
-assert.ok(tbWxss.includes('left: 12px'), 'AS-6 宽度口径已由 BA批改版：左缘固定 12px＋右缘按胶囊实测让开');
-const appJs = rd('miniprogram/app.js');
-assert.ok(appJs.includes('appShowTick += 1'), 'AS-6 App.onShow 应递增前台化周期');
-assert.ok(appJs.includes('topBannerShownTick'), 'AS-6 周期已弹标记只存 globalData 内存');
-const idxJs = rd('miniprogram/pages/index/index.js');
-assert.ok(idxJs.includes("selectComponent('#topBanner')"), 'AS-6 首页 onShow 应驱动顶条 tryShow');
-assert.ok(rd('miniprogram/pages/index/index.wxml').includes('id="topBanner"'), 'AS-6 首页顶条应带 id');
+/* AS-6 顶部条：BE批（2026-10-27）已整体删除（微信自带同款条，自制件重复）。
+ * 删除断言见 test-batch-be-behavior.js。 */
 
 /* AS-7 我的页引导：红条白字单行＋教程示意精修＋无持久标记、进页即显示 */
 const mineJs = rd('miniprogram/pages/mine/mine.js');

@@ -23,7 +23,7 @@ assert.ok(book.includes('resolveLandscapeGate'), 'AM 横置礼单本页应走两
 const index = rd('miniprogram/pages/index/index.js');
 assert.ok(index.includes("key = id === 'share' ? 'familyShareInvite' : 'photoImport'"), 'AM 首页入口会员提示应查名单');
 const mine = rd('miniprogram/pages/mine/mine.js');
-assert.ok(mine.includes("flags.memberOnly.includes('familyShareInvite')"), 'AM 我的页共享入口应查名单');
+assert.ok(!mine.includes('onShareHome'), 'AM 我的页共享入口已由 BE批删除（名单校验只在首页入口与服务端）');
 assert.ok(mine.includes("flags.landscape === false"), 'AM 我的页横置开关应先过总闸');
 
 const ds = rd('miniprogram/services/data-service.js');

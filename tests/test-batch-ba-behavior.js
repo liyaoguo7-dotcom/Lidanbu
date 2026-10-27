@@ -16,35 +16,12 @@ const { test, assert } = require('./fw');
 
 const rd = (rel) => fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
 
-test('BA-1 顶条按竞品视频复刻：贴胶囊行白胶囊条、logo+单行文案、无×、横向展开', () => {
-  const wxml = rd('miniprogram/components/top-banner/top-banner.wxml');
-  const wxss = rd('miniprogram/components/top-banner/top-banner.wxss');
-  const js = rd('miniprogram/components/top-banner/top-banner.js');
-  // 文案与 logo（无书名号、无红圆盘红包图标）
-  assert(wxml.includes('人情礼单簿 小程序提供服务'), '顶条文案应为「人情礼单簿 小程序提供服务」');
-  assert(!wxml.includes('『'), '顶条文案不得带书名号');
-  assert(wxml.includes('/images/logo.png'), '顶条应放 logo 图');
-  assert(!wxml.includes('hongbao.svg'), '顶条不得再用红圆盘红包图标');
-  // 无 × 关闭按钮及逻辑
-  assert(!wxml.includes('tb-close') && !wxml.includes('onClose'), '顶条 wxml 不得有 × 关闭');
-  assert(!js.includes('onClose'), '顶条 js 不得保留 onClose 关闭逻辑');
-  assert(!wxss.includes('.tb-close'), '顶条 wxss 不得保留关闭按钮样式');
-  // 贴标题行：左 12px、高 32px、圆角白底
-  assert(wxss.includes('left: 12px'), '顶条左缘距屏左 12px');
-  assert(/\.top-banner\s*\{[^}]*height: 32px/.test(wxss), '顶条高 32px 约等于胶囊高');
-  assert(/\.top-banner\s*\{[^}]*background: #FFFFFF/.test(wxss), '顶条白底');
-  assert(/\.top-banner\s*\{[^}]*border-radius: 999px/.test(wxss), '顶条全圆角');
-  // 横向展开动画：origin 右侧、scaleX、过渡 .3s；停留约 4 秒
-  assert(wxss.includes('transform-origin: right'), '展开动画应以右侧为原点（胶囊一侧）');
-  assert(wxss.includes('scaleX(0)') && wxss.includes('scaleX(1)'), '展开动画应走 scaleX 0→1');
-  assert(wxss.includes('transition: transform .3s'), '展开过渡约 300ms');
-  assert(js.includes('4000'), '展开后停留约 4 秒再收起');
-  // 定位仍走胶囊实测＋右缘让开胶囊 8px；出现规则（周期 tick）不变、无 storage
-  assert(js.includes('getMenuButtonBoundingClientRect'), '顶条定位应读胶囊实测位置');
-  assert(js.includes('topBannerShownTick'), '出现规则保持 App 前台化周期 tick');
-  assert(!js.includes('StorageSync'), '顶条不得读写任何 storage 标记');
-  // logo 资产在位
-  assert(fs.existsSync(path.join(__dirname, '..', 'miniprogram/images/logo.png')), 'logo 资产应存在');
+test('BA-1 顶条：BE批已整体删除（微信自带同款服务条，自制件重复）', () => {
+  assert(!fs.existsSync(path.join(__dirname, '..', 'miniprogram/components/top-banner/top-banner.wxml')), 'top-banner 组件应已删除');
+  const idxWxml = rd('miniprogram/pages/index/index.wxml');
+  assert(!idxWxml.includes('top-banner'), '首页不得再挂 top-banner');
+  const idxJson = rd('miniprogram/pages/index/index.json');
+  assert(!idxJson.includes('top-banner'), '首页不得再注册 top-banner');
 });
 
 test('BA-2 我的页引导按竞品视频复刻：红幅小三角+教程层步骤与面板卡', () => {

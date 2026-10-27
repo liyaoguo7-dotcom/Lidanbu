@@ -45,14 +45,9 @@ const stats = rd('core/stats.js');
 assert.ok(stats.includes('lastDate'), 'AP-4 stats 应跟踪 lastDate');
 assert.ok(/a\.lastDate < b\.lastDate/.test(stats), 'AP-4 排序比较器应以 lastDate 为第一键');
 
-/* AP-5 顶部条形弹窗组件 */
-['js', 'json', 'wxml', 'wxss'].forEach((ext) => assert.ok(has(`miniprogram/components/top-banner/top-banner.${ext}`), `AP-5 top-banner 应有 .${ext}`));
-const tbJs = rd('miniprogram/components/top-banner/top-banner.js');
-assert.ok(tbJs.includes('topBannerShownTick'), 'AP-5 出现规则已由 AS批改版：App 前台化周期 tick（原模块级 shownThisLaunch 已废）');
-assert.ok(tbJs.includes('4000'), 'AP-5 停留时长已由 BA批改版：约 4 秒');
-assert.ok(rd('miniprogram/components/top-banner/top-banner.wxml').includes('人情礼单簿 小程序提供服务'), 'AP-5 胶囊文案应为我们的小程序名（BA批改版：无书名号）');
-assert.ok(rd('miniprogram/pages/index/index.json').includes('top-banner'), 'AP-5 首页应注册 top-banner');
-assert.ok(idxWxml.includes('<top-banner'), 'AP-5 首页应挂 top-banner');
+/* AP-5 顶部条形弹窗组件：BE批（2026-10-27）已整体删除——微信自带同款
+ * 「小程序提供服务」条（右上角、自动收缩），自制件与之重复，用户点名取消。
+ * 删除断言见 test-batch-be-behavior.js。 */
 
 /* AP-6 我的页「添加到我的小程序」引导 */
 const mineWxml = rd('miniprogram/pages/mine/mine.wxml');

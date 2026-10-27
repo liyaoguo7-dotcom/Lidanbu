@@ -2,7 +2,7 @@
  * 礼单簿 · 我的页（任务Q2 重排）
  * 顺序：① 个人资料条（头像+昵称+会员状态，点进个人资料页）
  *      ② 会员与积分卡片（点去购买页；卡内「我的积分」去积分页）
- *      ③ 家庭共享 / 横置礼单本（开关） / 导出备份（行下淡字提示）
+ *      ③ 横置礼单本（开关） / 导出备份（行下淡字提示；家庭共享入口只在首页）
  *      ④ 邀请分享（唯一邀请入口，原两个入口已合并为这一个）
  *      ⑤ 通知 / 意见反馈 / 常见问题 / 关于我们 / 联系客服（微信客服按钮）
  *      ⑥ 底部淡字「隐私政策｜注销账号」+ 版本号
@@ -41,7 +41,7 @@ Page({
     version: AppConfig.version || '',
     addMpGuideShow: false, // 「添加到我的小程序」引导条（AS批定版：每次进我的页都显示，无任何持久标记）
     addMpTutorialShow: false, // AP批：三步图文教程层
-    addMpTriRight: 36, // BA批：红幅小三角的 right 偏移（px），按胶囊实测中心对准；测不到用此回退值
+    addMpTriRight: 36, // BA批：红幅小三角的 right 偏移（px），按胶囊实测位置对准三个点；测不到用此回退值
   },
 
   async onLoad() {
@@ -156,7 +156,9 @@ Page({
 
   // ---- 「添加到我的小程序」引导（AP批形态，AS批改出现规则，BA批按竞品视频复刻呈现） ----
 
-  /** BA批：红幅顶边小三角横向对准胶囊中心——按胶囊实测位置算 right 偏移
+  /** BE批：红幅顶边小三角横向对准胶囊里的三个点——按胶囊实测位置算
+   * right 偏移。2026-10-27 真机截图量测：三个点中心约在胶囊左缘起
+   * 24% 宽处，旧口径对准胶囊正中（分隔线）会偏右约 63/976 屏宽。
    * （红幅右缘距屏右 12px、三角宽 10px，偏移以红幅右缘为基准） */
   _measureAddMpTri() {
     try {
@@ -166,7 +168,7 @@ Page({
         ? wx.getWindowInfo()
         : (typeof wx.getSystemInfoSync === 'function' ? wx.getSystemInfoSync() : null);
       if (rect && win && rect.width && win.windowWidth) {
-        const centerFromRight = win.windowWidth - (rect.left + rect.width / 2);
+        const centerFromRight = win.windowWidth - (rect.left + rect.width * 0.24);
         const right = Math.max(8, Math.round(centerFromRight - 12 - 5));
         this.setData({ addMpTriRight: right });
       }
@@ -190,27 +192,6 @@ Page({
 
   onPurchase() {
     wx.navigateTo({ url: '/pages/member/purchase/purchase' });
-  },
-
-  async onShareHome() {
-    // 家庭共享总闸（2026-10-25）：关掉时只提示敬请期待，先于会员判断（与首页入口同口径）
-    const flags = await dataService.getFeatureFlags().catch(() => null);
-    if (flags && flags.familyShare === false) {
-      wx.showToast({ title: '家庭共享敬请期待', icon: 'none' });
-      return;
-    }
-    const shareOnly = !flags || !Array.isArray(flags.memberOnly) || flags.memberOnly.includes('familyShareInvite');
-    if (shareOnly && !this.data.isMember) {
-      wx.showModal({
-        title: '会员专属功能',
-        content: '「家庭共享邀请」是会员专属功能，开通会员后即可使用。',
-        confirmText: '去看看',
-        cancelText: '再想想',
-        success: (res) => { if (res.confirm) wx.navigateTo({ url: '/pages/member/member-home' }); },
-      });
-      return;
-    }
-    wx.navigateTo({ url: '/pages/share/share-home' });
   },
 
   async onLandscapeToggle() {

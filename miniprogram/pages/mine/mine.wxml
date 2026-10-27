@@ -1,4 +1,4 @@
-<!-- 我的（任务Q2 重排：资料条 → 会员与积分卡 → 共享/横置/导出 → 邀请分享 → 通知组 → 底部） -->
+<!-- 我的（任务Q2 重排：资料条 → 会员与积分卡 → 横置/导出 → 邀请分享 → 通知组 → 底部；BE批取消我的页家庭共享入口） -->
 <!-- 待注销提示：冷静期内显示，去注销页可撤销（账号级提醒，置顶） -->
 <view class="warn-banner" wx:if="{{cancelPending}}" bindtap="onLogout">
   你的账号已申请注销，将在 {{cancelPending.cancelAtText}} 执行（还剩 {{cancelPending.remainingDays}} 天）。点这里可以撤销 ›
@@ -37,12 +37,8 @@
   </view>
 </view>
 
-<!-- ③ 家庭共享 / 横置礼单本（导出备份入口只在首页，任务AE 用户决定：我的页不再重复） -->
+<!-- ③ 横置礼单本（家庭共享与导出备份入口只在首页，BE批用户决定：我的页不再重复） -->
 <view class="card">
-  <view class="form-row" bindtap="onShareHome">
-    <text class="form-val">家庭共享</text>
-    <text class="chev">›</text>
-  </view>
   <view class="form-row" bindtap="onLandscapeToggle">
     <text class="form-val">横置礼单本</text>
     <view class="switch {{landscapeOn ? 'on' : ''}}"><view class="dot"></view></view>
