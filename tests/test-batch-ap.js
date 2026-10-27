@@ -33,7 +33,7 @@ assert.ok(idxJs.includes('_stopSlogan') && idxJs.includes('onHide()') && idxJs.i
 assert.ok(idxJs.includes("url: '/pages/gift-add/gift-add'"), 'AP-3 标语块点击应跳添加送礼页');
 assert.ok(rd('miniprogram/pages/gifts/gifts.wxml').includes('今年你送出去了多少礼？'), 'AP-3 送礼空状态应加标语');
 assert.ok(rd('miniprogram/pages/contacts/contacts.wxml').includes('出门在外，想查往来却找不到礼簿？'), 'AP-3 亲友录空状态应加标语');
-assert.ok(invWxml.includes('纸质礼簿越记越厚，翻找一笔好费劲？'), 'AP-3 邀请页顶部应加标语小字');
+assert.ok(!invWxml.includes('纸质礼簿越记越厚，翻找一笔好费劲？'), 'AZ改定：邀请页顶部标语已撤（标语移至共享首页）');
 
 /* AP-4 往来页：版式数值 + 排序比较器 */
 const wlWxss = rd('miniprogram/pages/wanglai/wanglai.wxss');

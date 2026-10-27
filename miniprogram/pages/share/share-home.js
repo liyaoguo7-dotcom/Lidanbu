@@ -4,15 +4,26 @@
  */
 const dataService = require('../../services/data-service.js');
 const AppConfig = require('../../config/app-config.js');
+const SLOGANS_CLOSED_KEY = 'shareHomeSlogansClosed'; // AZ批：标语块关闭标记（本机）
 
 Page({
   data: {
     isMember: false,
     received: [],
+    showSlogans: true, // AZ批：标语块是否显示（关掉后本机不再显示）
   },
 
   async onLoad() {
+    let closed = false;
+    try { closed = !!wx.getStorageSync(SLOGANS_CLOSED_KEY); } catch (e) { /* 读不到按显示 */ }
+    this.setData({ showSlogans: !closed });
     await dataService.init();
+  },
+
+  /** AZ批：关掉标语块（本机持久，不再显示；页面恢复无标语样子） */
+  onCloseSlogans() {
+    try { wx.setStorageSync(SLOGANS_CLOSED_KEY, 1); } catch (e) { /* 存不下也先关本次 */ }
+    this.setData({ showSlogans: false });
   },
 
   async onShow() {

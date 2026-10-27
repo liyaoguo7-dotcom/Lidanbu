@@ -2,7 +2,17 @@
 <!-- AP批：黄色提醒条移到两行入口上方（页面顶部），文案不动 -->
 <view class="tip">邀请家人共记一本账：允许查看我标记的项目，权限由你定，随时可改、立即生效。</view>
 
-<view class="card">
+<!-- AZ批（用户 2026-10-27 定版）：三句标语从邀请页移到本页——黄条正下方、
+     邀请卡上方，全宽白底与上下贴合（黄条与邀请卡之间不留灰）；右上角低调小叉
+     可关，关掉后本机不再显示（storage 标记 shareHomeSlogansClosed） -->
+<view wx:if="{{showSlogans}}" style="position:relative;background:#FFFFFF;margin:0;padding:12px 44px 12px 12px">
+  <view style="font-size:14px;color:#B08D57;line-height:1.5">今年你送出去了多少礼？</view>
+  <view style="font-size:14px;color:#B08D57;line-height:1.5">出门在外，想查往来却找不到礼簿？</view>
+  <view style="font-size:14px;color:#B08D57;line-height:1.5">纸质礼簿越记越厚，翻找一笔好费劲？</view>
+  <view bindtap="onCloseSlogans" style="position:absolute;top:0;right:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#C2C2C2">×</view>
+</view>
+
+<view class="card" style="margin-top:0">
   <view class="form-row" bindtap="onInvite">
     <text class="form-label">邀请家人</text>
     <text class="form-val ph">先勾选权限和范围，再发出邀请</text>

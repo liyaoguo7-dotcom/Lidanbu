@@ -1,10 +1,8 @@
 <!-- 发起邀请（2026-10-22 任务AB 第 7 项：取消"先生成、再分享"两步——邀请在进入页面/勾选变化时
      已于后台静默备好，主按钮从一开始就是微信分享，点一次直接发给好友，对方点开即接受） -->
-<!-- AP批标语：顶部说明区一行小字 -->
-<view style="padding:2px 12px 0;font-size:13px;color:#B08D57">纸质礼簿越记越厚，翻找一笔好费劲？</view>
-
-<view class="section-title">被邀请人的操作权限</view>
-<view class="section-note">（勾上哪项，被邀请人就能对你共享的记录做哪项操作）</view>
+<!-- AZ批（用户 2026-10-27 真机反馈）：顶部标语撤掉（标语改放共享首页）；
+     权限说明跟在「权限」二字后同段连排，不再单独起一行 -->
+<view class="section-title">被邀请人的操作权限<text style="font-size:12px">（勾上哪项，被邀请人就能对你共享的记录做哪项操作）</text></view>
 <view class="card">
   <view class="form-row" wx:for="{{switches}}" wx:key="id" bindtap="onSwitchToggle" data-id="{{item.id}}">
     <text class="form-label">{{item.name}}</text>
