@@ -38,10 +38,13 @@
       <view class="style-btn" style="margin-right:{{styleRightPx}}px;" bindtap="onOpenPanel">样式</view>
     </view>
 
-    <!-- 中部：卷轴 + 纸面 + 卷轴 -->
+    <!-- 中部：卷轴 + 纸面 + 卷轴（AT-6 贴合：槽位高＝纸高，整图绝对定位——
+         杆身与纸面上下对齐、帽子探出纸外、杆身实绘缘与纸缘重合间隙 0） -->
     <view class="midrow">
-      <image class="scroll-img" src="{{theme.scrollImg}}" mode="aspectFill"
-        style="width:{{spec.scrollW}}px;" />
+      <view class="scroll-box" style="width:{{scrollBox.slotW}}px;">
+        <image class="scroll-img" src="{{theme.scrollImg}}" mode="scaleToFill"
+          style="width:{{scrollBox.imgW}}px;height:{{scrollBox.imgH}}px;top:{{scrollBox.top}}px;left:{{scrollBox.left}}px;" />
+      </view>
       <view class="paper"
         style="border-color:{{theme.frameColor}};background-color:{{theme.paperBg}};background-image:url({{theme.paperTile.uri}});background-size:{{view.paperTileW}}px {{view.paperTileH}}px;">
         <view class="corner tl" style="border-color:{{theme.frameColor}};"></view>
@@ -77,8 +80,10 @@
           </view>
         </scroll-view>
       </view>
-      <image class="scroll-img flip" src="{{theme.scrollImg}}" mode="aspectFill"
-        style="width:{{spec.scrollW}}px;" />
+      <view class="scroll-box" style="width:{{scrollBox.slotW}}px;">
+        <image class="scroll-img flip" src="{{theme.scrollImg}}" mode="scaleToFill"
+          style="width:{{scrollBox.imgW}}px;height:{{scrollBox.imgH}}px;top:{{scrollBox.top}}px;left:{{scrollBox.left}}px;" />
+      </view>
     </view>
 
     <!-- 下留白：滑动提示 / ＋（横置内跟随样式配色，白事深灰） -->

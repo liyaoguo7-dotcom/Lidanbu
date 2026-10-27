@@ -74,6 +74,40 @@ function scaledSpec(windowWidth) {
 }
 
 /** 字体表：校准系数使三款字体同格视觉等大（定版：文楷 1.00 / 马善政 1.05 / 龙藏 1.20） */
+/**
+ * 卷轴贴合几何（AT-6，用户 2026-10-27 定版：卷轴与纸面成一体）。
+ * 量测依据（2026-10-27 脚本逐行 alpha 扫描 assets/scrolls/scroll-*.png，
+ * 6 个主题数值完全一致，同模不同色）：
+ * - PNG 88×836；两端帽子组件各 23 行（行 0..22 / 813..835，圆头＋帽环，最宽 66）；
+ * - 中间等宽杆身行 23..812（790 行），实绘 x∈[15,72]（宽 58，两侧透明各 15）；
+ *   杆身上另有装饰环（行 41..52 / 783..794），在纸面跨度内、不算帽子。
+ * 贴合规则：杆身段与纸面上下边对齐（杆顶＝纸顶、杆底＝纸底），帽子探出纸外；
+ * 槽位宽＝杆身实绘宽，图按透明带左移，使杆身内侧实绘缘与纸面外缘重合（间隙 0）。
+ * 基准画布（纸高 294）下：整图高 311.11、上下帽各探出 8.56（＜上留白 48／下留白 30，
+ * 不顶屏幕边）、整图宽 32.75、槽位宽 21.58、图左移 −5.58。
+ */
+const SCROLL_GEOM = {
+  IMG_W: 88, IMG_H: 836,
+  CAP_TOP: 23, CAP_BOT: 23,
+  SHAFT_TOP: 23, SHAFT_H: 790,
+  SHAFT_X: 15, SHAFT_W: 58,
+};
+/** 由实际纸面高（设备 px）算卷轴定位：等比缩放（同 k），整图恰好映射、无变形 */
+function scrollLayout(paperHPx) {
+  const g = SCROLL_GEOM;
+  const h = Number(paperHPx) > 0 ? Number(paperHPx) : SPEC.PAPER_H;
+  const k = h / g.SHAFT_H;
+  return {
+    imgW: round2(g.IMG_W * k),            // 整图显示宽
+    imgH: round2(g.IMG_H * k),            // 整图显示高 = 纸高 + 上帽 + 下帽
+    top: round2(-g.CAP_TOP * k),          // 图顶偏移（负：上帽探出纸顶之上）
+    capTopPx: round2(g.CAP_TOP * k),      // 上帽探出量
+    capBotPx: round2(g.CAP_BOT * k),      // 下帽探出量
+    slotW: round2(g.SHAFT_W * k),         // 槽位宽 = 杆身实绘宽
+    left: round2(-g.SHAFT_X * k),         // 图左偏移：透明带移出槽外，杆身实绘缘贴纸缘
+  };
+}
+
 const FONTS = [
   { id: 'lxgw', name: '霞鹜文楷', family: 'LxgwWenKai', calibration: 1.00, file: 'lxgw-wenkai.woff2', cloudFile: 'lxgw-wenkai.ttf' },
   { id: 'mashanzheng', name: '马善政毛笔体', family: 'MaShanZheng', calibration: 1.05, file: 'mashanzheng.woff2', cloudFile: 'mashanzheng.ttf' },
@@ -120,6 +154,28 @@ const MID_BY_TAG = {
   baishi: '奠仪', yasui: '贺礼', tanwang: '贺礼', qita: '贺礼',
 };
 function midTextForTag(tagId) { return MID_BY_TAG[tagId] || '贺礼'; }
+
+/**
+ * 整本白事判定（AT批，用户 2026-10-27 亲报的严重问题定版）：
+ * 白事场合出现「贺礼」是礼仪大忌、零容忍——判定不能只认标签，
+ * 礼薄标题写了葬礼/殡葬/白事等词同样算白事（用户建薄时常只改名不改标签）。
+ * 关键词为标题子串匹配：宁可误判白事（用户改名即可），不可白事显贺礼。
+ */
+const FUNERAL_KEYWORDS = ['葬礼', '殡葬', '白事', '丧事', '丧礼', '追悼'];
+function isFuneralBook({ tagId, title } = {}) {
+  if (tagId === 'baishi') return true;
+  const t = String(title || '');
+  return FUNERAL_KEYWORDS.some((k) => t.includes(k));
+}
+
+/**
+ * 整本中段词（AT批）：标签、标题、所选样式任一指向白事 → 全列「奠仪」；
+ * 红线：isFuneralBook 为真时中段词不随样式切换离开奠仪（样式只能换皮不能换词）。
+ * 都不指向白事时整本「贺礼」（逐列记录级差异仍走 midTextForTag 缺省）。
+ */
+function resolveBookMidText({ tagId, title, styleId } = {}) {
+  return (isFuneralBook({ tagId, title }) || styleId === 'funeral') ? '奠仪' : '贺礼';
+}
 
 /**
  * 主题表（6 种样式定版；颜色取自定版图 33–38 实测值）。
@@ -186,6 +242,15 @@ function themeById(id) { return THEMES[id] || THEMES.classic; }
 /** 收礼页样式自动判定：礼薄标签是白事 → 强制白事样式；否则用用户所选样式 */
 function resolveReceiveTheme(eventTagId, selectedStyleId) {
   return eventTagId === 'baishi' ? 'funeral' : (THEMES[selectedStyleId] ? selectedStyleId : 'classic');
+}
+
+/**
+ * 收礼页样式判定（AT批扩展版）：整本白事判定（标签或标题命中）→ 默认白事样式；
+ * 否则同 resolveReceiveTheme。旧签名保留兼容（既有测试与调用不迁移）。
+ */
+function resolveReceiveTheme2({ tagId, title } = {}, selectedStyleId) {
+  return isFuneralBook({ tagId, title }) ? 'funeral'
+    : (THEMES[selectedStyleId] ? selectedStyleId : 'classic');
 }
 
 /** 姓名逐字布局（2026-10-22 晚用户定版，覆盖旧字位制）：
@@ -385,9 +450,11 @@ const ROTATE_COPY = {
 
 module.exports = {
   USE_ENV_SAFE_AREA, SPEC, COL_INNER_H, scaledSpec, round2,
+  SCROLL_GEOM, scrollLayout,
   FONTS, fontById, calibratedSize, renderFontSize, selectedStack, SONGTI_STACK, KAITI_STACK,
   fontRoleForMid, MID_BY_TAG, midTextForTag,
-  THEMES, THEME_LIST, themeById, resolveReceiveTheme,
+  FUNERAL_KEYWORDS, isFuneralBook, resolveBookMidText,
+  THEMES, THEME_LIST, themeById, resolveReceiveTheme, resolveReceiveTheme2,
   layoutName, layoutAmount, orderForBook, buildColumns, windowRange,
   createOrientationMachine, createSelectionStore, permissionsFor,
   detailAmountText, ROTATE_COPY,

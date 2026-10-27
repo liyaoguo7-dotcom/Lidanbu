@@ -32,6 +32,7 @@ function createBookPage(kind) {
       rotateCopy: LC.ROTATE_COPY,
       credit: LC.SPEC.FONT_CREDIT,
       spec: LC.scaledSpec(844),
+      scrollBox: LC.scrollLayout(LC.SPEC.PAPER_H), // 卷轴贴合定位（AT-6，_applyOrientation 按实际纸高重算）
       theme: LC.THEMES.classic,
       fontId: 'lxgw',
       styleId: 'classic',
@@ -161,7 +162,13 @@ function createBookPage(kind) {
         const mb = wx.getMenuButtonBoundingClientRect();
         if (mb && mb.left) styleRightPx = (w - mb.left) + 22; // 胶囊左缘外 12px 避让 + 任务Z 再左移 10px
       } catch (e) { /* 忽略，用兜底值 */ }
-      this.setData({ spec, safePadL: padL, safePadR: padR, styleRightPx });
+      // 卷轴贴合（AT-6）：纸面实际高 = 窗口高 − 上下留白（frame 纵向三段定高＋midrow 弹性），
+      // 取不到窗口高时回退基准纸高；杆身对齐纸面、帽子探出、杆缘贴纸缘全在 scrollLayout 里。
+      const winH = info && info.windowHeight;
+      const paperHPx = (winH && winH > spec.marginV + spec.marginB)
+        ? winH - spec.marginV - spec.marginB : spec.paperH;
+      const scrollBox = LC.scrollLayout(paperHPx);
+      this.setData({ spec, safePadL: padL, safePadR: padR, styleRightPx, scrollBox });
       this._syncTileView();
       this._convertCols();
     },
@@ -231,8 +238,13 @@ function createBookPage(kind) {
         this._recordsById[r._id] = { ...r, contactName: name };
         rows.push({ id: r._id, name, amountFen: r.amount || 0, tagId: ev.tagId });
       }
-      const themeId = LC.resolveReceiveTheme(ev.tagId, this.data.styleId);
-      const built = LC.buildColumns(rows, { fontId: this.data.fontId, midText: LC.midTextForTag(ev.tagId) });
+      // 整本白事判定（AT批）：标签或标题任一指向白事 → 白事样式＋全列奠仪，
+      // 绝不出现贺礼；用户手动选了白事样式时中段词同样跟随为奠仪。
+      const themeId = LC.resolveReceiveTheme2({ tagId: ev.tagId, title: ev.name }, this.data.styleId);
+      const built = LC.buildColumns(rows, {
+        fontId: this.data.fontId,
+        midText: LC.resolveBookMidText({ tagId: ev.tagId, title: ev.name, styleId: this.data.styleId }),
+      });
       const tag = dataService.getTagById(ev.tagId) || {};
       this.setData({
         emptyBook: false,
@@ -259,7 +271,12 @@ function createBookPage(kind) {
         this._recordsById[g._id] = { ...g, contactName: name };
         rows.push({ id: g._id, name, amountFen: g.amount || 0, tagId: g.tagId });
       }
-      const built = LC.buildColumns(rows, { fontId: this.data.fontId });
+      // 送礼无整本场合：仅当用户手动选了白事样式时整本中段词覆盖为奠仪（AT批）；
+      // 其余样式传 undefined → buildColumns 逐列按记录标签出词（baishi 记录仍是奠仪列，不回退）。
+      const built = LC.buildColumns(rows, {
+        fontId: this.data.fontId,
+        midText: LC.resolveBookMidText({ styleId: this.data.styleId }) === '奠仪' ? '奠仪' : undefined,
+      });
       this.setData({
         emptyBook: gifts.length === 0,
         theme: LC.themeById(this.data.styleId),
@@ -282,7 +299,9 @@ function createBookPage(kind) {
     _afterBuild() {
       this._syncTileView();
       const spec = this.data.spec;
-      const paperInnerW = Math.max(0, 844 * spec.scale - spec.scrollW * 2);
+      // 纸面内宽按卷轴槽位（AT-6 槽位＝杆身实绘宽）扣左右两根，未算出时回退旧 SCROLL_W
+      const slotW = (this.data.scrollBox && this.data.scrollBox.slotW) || spec.scrollW;
+      const paperInnerW = Math.max(0, 844 * spec.scale - slotW * 2);
       this.setData({ paperInnerW, scrollLeft: 0 });
       this._convertCols();
     },
@@ -422,11 +441,15 @@ function createBookPage(kind) {
 
     _refreshTheme() {
       if (isReceive && this._event) {
-        this.setData({ theme: LC.themeById(LC.resolveReceiveTheme(this._event.tagId, this.data.styleId)) });
+        this.setData({ theme: LC.themeById(LC.resolveReceiveTheme2({ tagId: this._event.tagId, title: this._event.name }, this.data.styleId)) });
       } else {
         this.setData({ theme: LC.themeById(this.data.styleId) });
       }
       this._syncTileView();
+      // 中段词跟随整本判定（AT批）：切样式后必须重建列，否则只是换了皮、
+      // 列里仍是旧中段字（白事样式下仍印贺礼正是此缺口）。reload 内部走
+      // _reloadReceive/_reloadGift 的整本判定重算 midText，失败有自身 toast。
+      this.reload();
     },
 
     // ---- 新增 / 导航 ----
