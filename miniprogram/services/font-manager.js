@@ -17,7 +17,8 @@
  * fallback，页面继续用回退链渲染（所选字体名仍在栈首，未加载时系统自动逐字
  * 回退到楷体/宋体，不出方框），恢复网络后下次进入页面自动重试。
  */
-const { FONTS, fontById } = require('../pages/landscape/landscape-core.js');
+const { FONTS, fontById, SUPP_FONTS } = require('../pages/landscape/landscape-core.js');
+const SUPP_BY_ID = Object.fromEntries(SUPP_FONTS.map((f) => [f.id, f]));
 const { createFontSource, SUBPACKAGE_ROOT } = require('./font-source.js');
 
 /** 本地字体路径前缀（现为分包路径；保留此导出兼容旧引用，来源细节以 font-source 为准） */
@@ -48,6 +49,7 @@ function createFontManager(deps = {}) {
   const state = {}; // fontId -> 'idle'|'loading'|'loaded'|'failed'
   const failures = {}; // fontId -> {stage:'temp-url'|'load-face', reason}（页面据此给用户看得懂的提示）
   FONTS.forEach((f) => { state[f.id] = storage.get(LOADED_KEY_PREFIX + f.id) ? 'loaded' : 'idle'; });
+  SUPP_FONTS.forEach((f) => { state[f.id] = storage.get(LOADED_KEY_PREFIX + f.id) ? 'loaded' : 'idle'; });
 
   function sourceFor(font) {
     return fontSource.subpackageSource(font);
@@ -77,7 +79,7 @@ function createFontManager(deps = {}) {
    * 全部失败记 'failed'（不粘滞到 storage，下次调用自动重试）。
    */
   function load(fontId) {
-    const font = fontById(fontId);
+    const font = SUPP_BY_ID[fontId] || fontById(fontId);
     if (state[font.id] === 'loaded') return Promise.resolve(true);
     if (!wxApi || typeof wxApi.loadFontFace !== 'function') {
       state[font.id] = 'failed';
@@ -140,6 +142,11 @@ function createFontManager(deps = {}) {
     load,
     /** 确保当前所选字体就绪（页面 onShow 调；其余字体不预下载，省流量/包体积） */
     ensureSelected(fontId) { return load(fontId); },
+    /** 确保补充字库指定片就绪（BC批：indexes 为 0 起片下标，页面按字定位后才调） */
+    ensureSupplements(indexes) {
+      const ids = (indexes || []).map((i) => `supp${i + 1}`).filter((id) => SUPP_BY_ID[id]);
+      return Promise.all(ids.map((id) => load(id))).then((rs) => rs.every(Boolean));
+    },
     getState(fontId) { return state[fontById(fontId).id]; },
     /** 最近一次加载失败的阶段与原始原因（成功后清除）；页面提示/排查用 */
     getLastFailure(fontId) { return failures[fontById(fontId).id] || null; },
@@ -164,6 +171,8 @@ module.exports = {
   LOADED_KEY_PREFIX,
   /** 页面便捷入口：确保所选字体就绪（永不抛错） */
   ensureSelected(fontId) { return defaultManager().ensureSelected(fontId); },
+  /** 确保补充字库指定片就绪（BC批；永不抛错） */
+  ensureSupplements(indexes) { return defaultManager().ensureSupplements(indexes); },
   isFallback(fontId) { return defaultManager().isFallback(fontId); },
   getState(fontId) { return defaultManager().getState(fontId); },
   /** 最近一次加载失败的阶段与原始原因（2026-10-25 补导出：此前实例方法未挂到

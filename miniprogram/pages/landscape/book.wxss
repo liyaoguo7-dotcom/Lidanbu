@@ -40,9 +40,10 @@
 
 /* ===== 横屏礼单本 ===== */
 .frame {
-  height: 100vh; width: 100vw; box-sizing: border-box;
+  height: 100vh; width: 100vw; box-sizing: border-box; position: relative;
   display: flex; flex-direction: column; background-repeat: repeat;
 }
+.boot-cover { position: absolute; inset: 0; background: #F9E9DC; z-index: 60; }
 .topbar { display: flex; align-items: center; position: relative; flex-shrink: 0; }
 .back { font-size: 30px; color: #333; padding: 0 10px; line-height: 1; z-index: 2; }
 .tgrp { position: absolute; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; }

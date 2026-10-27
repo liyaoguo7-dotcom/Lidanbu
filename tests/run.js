@@ -30,6 +30,7 @@ require('./test-batch-av-behavior');
 require('./test-batch-ay-behavior');
 require('./test-batch-az-behavior');
 require('./test-batch-ba-behavior');
+require('./test-batch-bc-behavior');
 require('./test-ocr-replay-real');
 require('./test-cloud-export');
 require('./test-db-cloud');

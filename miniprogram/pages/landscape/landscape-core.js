@@ -12,6 +12,7 @@
  */
 const { amountToChineseUpper, formatAmount } = require('../../core/format.js');
 const TILES = require('./landscape-tiles.js');
+const { CHARSET_SET, GB2312_SET, SUPP_BOUNDS } = require('./font-charset.js');
 
 /** 待联调开关：env() 安全区（未核实，保持 false，安全区走 JS 注入） */
 const USE_ENV_SAFE_AREA = false;
@@ -193,8 +194,49 @@ function renderFontSize(nominalPx, fontId) {
  * 所选字体的 font-family 栈：所选字体 → 系统楷体 → 宋体栈。
  * 缺字靠这条回退链逐字回退，保证不出方框（真机回退表现待联调验证）。
  */
+/**
+ * 补充字库（BC批）：六款字体的云端子集只含 721 字，虎、总等常用姓名
+ * 字不在其中（用户 2026-10-27 真机点名）。补充库以霞鹜文楷补全
+ * GB2312 常用汉字 6763 字（一级＋二级，用户亲定口径）；单文件 3.3MB
+ * 超过云端取字体通道的单次上限，故按码位序等分 6 片（每片约
+ * 450–630KB），平时不加载，页面文字出现子集外字时由 book-common 按
+ * 字定位到所在片、只加载那一片（fontManager.ensureSupplements）。
+ * 不进 FONTS 列表（面板里不出现），只作回退链第二位起。
+ */
+const SUPP_FONTS = [1, 2, 3, 4, 5, 6].map((i) => ({
+  id: `supp${i}`, name: `补充字库${i}`, family: `LxgwWenKaiSupp${i}`,
+  file: `lxgw-supp${i}.ttf`, cloudFile: `lxgw-supp${i}.ttf`,
+}));
+
 function selectedStack(fontId) {
-  return `"${fontById(fontId).family}",${KAITI_STACK},${SONGTI_STACK}`;
+  /* BC批回退链（用户定：缺字先用我们自己的其他字体、不要黑体）：
+   * 所选字体 → 补充字库 6 片 → 其余五款字体 → 系统楷体 → 系统宋体。
+   * 未加载的字体族会被渲染器自动跳过，链长不影响已加载时的观感。 */
+  const chosen = fontById(fontId).family;
+  const supp = SUPP_FONTS.map((f) => `"${f.family}"`);
+  const others = FONTS.filter((f) => f.family !== chosen).map((f) => `"${f.family}"`);
+  return [`"${chosen}"`, ...supp, ...others, KAITI_STACK, SONGTI_STACK].join(',');
+}
+
+/** 子集外字 → 所在补充片下标（0 起）；不在 GB2312 内的字返回 -1（补充库也救不了） */
+function suppChunkIndexOf(ch) {
+  if (!GB2312_SET.has(ch)) return -1;
+  let idx = 0;
+  for (let i = 0; i < SUPP_BOUNDS.length; i++) {
+    if (ch >= SUPP_BOUNDS[i]) idx = i;
+  }
+  return idx;
+}
+
+/** 页面文字需要的补充片下标集合（升序去重）：只统计 721 子集外、GB2312 内的字 */
+function suppChunksForText(text) {
+  const out = new Set();
+  for (const ch of String(text || '')) {
+    if (CHARSET_SET.has(ch)) continue;
+    const idx = suppChunkIndexOf(ch);
+    if (idx >= 0) out.add(idx);
+  }
+  return [...out].sort((a, b) => a - b);
 }
 
 /**
@@ -384,7 +426,9 @@ function orderForBook(records) {
  */
 function buildColumns(records, opts = {}) {
   const list = Array.isArray(records) ? records : [];
-  const totalGrid = Math.max(SPEC.COLS_PER_SCREEN, list.length);
+  /* BC批：总列数还要铺满实际纸面宽——页面按窗口宽算出 minCols 传入；
+   * 旧口径固定 12 列在宽屏上右侧留一大截无线纸面（用户真机点名）。 */
+  const totalGrid = Math.max(SPEC.COLS_PER_SCREEN, list.length, opts.minCols || 0);
   const emptyCount = totalGrid - list.length;
   const fontId = opts.fontId || 'lxgw';
   const cols = [];
@@ -520,6 +564,7 @@ module.exports = {
   USE_ENV_SAFE_AREA, SPEC, COL_INNER_H, scaledSpec, round2,
   SCROLL_GEOM, scrollLayout,
   FONTS, fontById, calibratedSize, renderFontSize, selectedStack, SONGTI_STACK, KAITI_STACK,
+  SUPP_FONTS, suppChunkIndexOf, suppChunksForText,
   BAKUDAI_S2T, mapDisplayText,
   fontRoleForMid, MID_BY_TAG, midTextForTag,
   FUNERAL_KEYWORDS, isFuneralBook, resolveBookMidText,

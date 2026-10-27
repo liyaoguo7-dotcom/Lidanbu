@@ -24,6 +24,9 @@
   <!-- ===== 横屏态：礼单本 ===== -->
   <view wx:else class="frame"
     style="background-color:{{theme.marginBg}};background-image:url({{theme.marginTile.uri}});background-size:{{view.marginTileW}}px {{view.marginTileH}}px;padding-left:{{safePadL}}px;padding-right:{{safePadR}}px;">
+    <!-- BC批就绪盖：数据/字体未齐前用一张素色盖盖住整帧，避免先进页时
+         先闪一帧默认样式（classic＋回退字体）再跳成用户样式（真机反馈） -->
+    <view wx:if="{{!ready}}" class="boot-cover"></view>
 
     <!-- 上留白：返回 / 标题组居中 / 样式入口 -->
     <view class="topbar" style="height:{{spec.marginV}}px;">

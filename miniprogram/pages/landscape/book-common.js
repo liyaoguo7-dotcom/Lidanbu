@@ -123,6 +123,19 @@ function createBookPage(kind) {
       this._handleResize(w, h);
     },
 
+    /**
+     * BC批：铺满纸面所需的总列数（基准单位）。纸面内宽＝844 基准宽扣
+     * 左右两根卷轴槽（槽宽为设备 px、除以 scale 换回基准单位），列距＝
+     * COL_W（border-box、边框含在列宽内），向上取整再多补 1 列保线到边。
+     */
+    _minCols() {
+      const spec = this.data.spec || {};
+      const s = spec.scale || 1;
+      const slotW = (this.data.scrollBox && this.data.scrollBox.slotW) || spec.scrollW || 0;
+      const innerBaseline = 844 - (2 * slotW) / s;
+      return Math.ceil(innerBaseline / LC.SPEC.COL_W) + 1;
+    },
+
     /** 用当前窗口尺寸重同步方向（onLoad/onShow 调用，与 onResize 共用一条路径） */
     _syncOrientation() {
       let info = null;
@@ -255,6 +268,7 @@ function createBookPage(kind) {
       const built = LC.buildColumns(rows, {
         fontId: this.data.fontId,
         midText: LC.resolveBookMidText({ tagId: ev.tagId, title: ev.name, styleId: this.data.styleId }),
+        minCols: this._minCols(),
       });
       const tag = dataService.getTagById(ev.tagId) || {};
       this.setData({
@@ -288,6 +302,7 @@ function createBookPage(kind) {
       const built = LC.buildColumns(rows, {
         fontId: this.data.fontId,
         midText: LC.resolveBookMidText({ styleId: this.data.styleId }) === '奠仪' ? '奠仪' : undefined,
+        minCols: this._minCols(),
       });
       this.setData({
         emptyBook: gifts.length === 0,
@@ -317,6 +332,14 @@ function createBookPage(kind) {
       const paperInnerW = Math.max(0, 844 * spec.scale - slotW * 2);
       this.setData({ paperInnerW, scrollLeft: 0 });
       this._convertCols();
+      /* BC批补充字库：本页姓名里有 721 子集外的字时，按字定位只加载
+       * 命中的补充片（霞鹜文楷补全 GB2312 6763 字），加载后重排一次
+       * 让缺字以补充字体显示，而不是落系统黑体。全程异步、不挡页面。 */
+      const names = (this.data.allColumns || []).map((c) => (c.empty ? '' : c.name || '')).join('');
+      const chunks = LC.suppChunksForText(names);
+      if (chunks.length && typeof fontManager.ensureSupplements === 'function') {
+        fontManager.ensureSupplements(chunks).then((ok) => { if (ok) this._convertCols(); });
+      }
     },
 
     /** 全量列渲染模型：基准 px × scale 换算成实际 px（字号已在 buildColumns 封顶中段字号，任务AB 第 1 项） */
@@ -416,10 +439,14 @@ function createBookPage(kind) {
     async onPickFont(e) {
       const id = e.currentTarget.dataset.id;
       if (id === this.data.fontId) return;
-      this._store.setFont(id); // 只写字体字段，样式字段不动
-      this.setData({ fontId: id, selStack: LC.selectedStack(id) });
+      /* BC批：先把新字体加载好再切换——旧顺序先换 fontId 会让文字先以
+       * 回退字体（系统楷/宋）闪一帧、新字体到位后再跳变（真机反馈
+       * 「切换有延迟」的主观来源）。加载失败则不切换、只提示。 */
       const ok = await fontManager.ensureSelected(id); // 选中才下载
-      this.setData({ fontLoaded: ok });
+      if (ok) {
+        this._store.setFont(id); // 只写字体字段，样式字段不动
+        this.setData({ fontId: id, selStack: LC.selectedStack(id), fontLoaded: true });
+      }
       if (!ok) {
         // 2026-10-24：字体真机一直显示不了却无任何提示——失败原因必须露出来，
         // 用户一眼能看到卡在哪一步，也方便截图回传定位
@@ -427,19 +454,20 @@ function createBookPage(kind) {
         const fname = LC.fontById(id).name;
         let content;
         if (f && f.stage === 'temp-url' && /NONEXIST|not exist|不存在|no such/i.test(f.reason || '')) {
-          content = `云端找不到「${fname}」的字体文件，先用默认字体显示。麻烦把这个提示截图发给我们，马上处理。`;
+          content = `云端找不到「${fname}」的字体文件，仍用现在的字体显示。麻烦把这个提示截图发给我们，马上处理。`;
         } else if (f && f.stage === 'temp-url') {
-          content = `向云端取「${fname}」字体链接失败：${f.reason}。先用默认字体显示，麻烦截图发给我们排查。`;
+          content = `向云端取「${fname}」字体链接失败：${f.reason}。仍用现在的字体显示，麻烦截图发给我们排查。`;
         } else if (f && f.stage === 'api-data') {
-          content = `「${fname}」字体文件从云端获取失败：${f.reason || '未知原因'}。先用默认字体显示，麻烦截图发给我们排查。`;
+          content = `「${fname}」字体文件从云端获取失败：${f.reason || '未知原因'}。仍用现在的字体显示，麻烦截图发给我们排查。`;
         } else if (f && f.stage === 'data-url') {
-          content = `「${fname}」字体文件下载失败：${f.reason || '未知原因'}。先用默认字体显示，麻烦截图发给我们排查。`;
+          content = `「${fname}」字体文件下载失败：${f.reason || '未知原因'}。仍用现在的字体显示，麻烦截图发给我们排查。`;
         } else if (f && f.reason) {
-          content = `「${fname}」字体文件加载失败：${f.reason}。先用默认字体显示，麻烦截图发给我们排查。`;
+          content = `「${fname}」字体文件加载失败：${f.reason}。仍用现在的字体显示，麻烦截图发给我们排查。`;
         } else {
-          content = `「${fname}」字体文件加载失败，先用默认字体显示。麻烦把这个提示截图发给我们排查。`;
+          content = `「${fname}」字体文件加载失败，仍用现在的字体显示。麻烦把这个提示截图发给我们排查。`;
         }
         wx.showModal({ title: '字体没加载上', content, showCancel: false });
+        return; // BC批：加载失败不切换、不重排
       }
       await this.reload(); // 字号校准系数变了，重排列模型
     },
