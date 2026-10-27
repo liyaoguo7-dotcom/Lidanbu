@@ -25,8 +25,8 @@ for (const p of ['core/import.js', 'miniprogram/core/import.js', 'cloudfunctions
 }
 
 /* 页面：识别结果带 photoFileIds 进核对页；确认写入成功后清理云端照片 */
-assert.ok(rd('miniprogram/pages/import/import-home.js').includes('photoFileIds'), 'AR import-home 应把 photoFileIds 存进待确认数据');
-assert.ok(rd('miniprogram/pages/import/import-event.js').includes('photoFileIds'), 'AR import-event 应把 photoFileIds 存进待确认数据');
+// BJ批后识别入口迁到攒照片页：photoFileIds 由 import-photos 组装进待确认数据（行为守恒、位置迁移）
+assert.ok(rd('miniprogram/pages/import/import-photos.js').includes('photoFileIds'), 'AR/BJ import-photos 应把 photoFileIds 存进待确认数据');
 const review = rd('miniprogram/pages/import/import-review.js');
 assert.ok(review.includes('photoFileIds'), 'AR 核对页应持有 photoFileIds');
 assert.ok(review.includes('cleanupImportPhotos'), 'AR 核对页确认成功后应清理云端照片');

@@ -284,7 +284,7 @@ async function _writeImportInner(db, actorId, ownerId, { kind, eventId, items, c
     const it = items[i];
     const label = `第${i + 1}条`;
     if (!it.contactId) {
-      return reject(_fail(`「${it.name || label}」还不是亲友，请先建亲友`, i));
+      return reject(_fail(`「${it.name || label}」还不是亲友，请先点「快速创建」加为亲友`, i));
     }
     const contact = await db.collection(COLLECTIONS.Contact)
       .findOne({ _id: it.contactId, ownerId });

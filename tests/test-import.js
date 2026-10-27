@@ -122,7 +122,7 @@ test('条目缺亲友：整批不写并定位到该条（原子性，原"逐条�
     ],
   });
   assert(r.written === 0 && r.total === 2, '整批不写');
-  assert(/先建亲友/.test(r.rawError.message), '提示先建亲友');
+  assert(/快速创建/.test(r.rawError.message), '提示快速创建');
   assert(r.rawError.itemIndex === 1, '定位到第 2 条');
   const list = await core.gifts.listGifts(db, owner, owner);
   assert(list.length === 0, '一条都没落库');

@@ -5,7 +5,6 @@
 const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
 const { hornMarquee } = require('../../services/horn-marquee.js');
-const { saveImport } = require('../../services/import-state.js');
 
 function today() {
   const d = new Date();
@@ -17,7 +16,7 @@ function today() {
 Page({
   data: {
     hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
-    tipText: '收礼要先选好礼薄再拍照，识别结果会记进这本礼薄',
+    tipText: '收礼要先选好礼薄，选完可以一次拍多张照片，识别结果会记进这本礼薄',
     events: [],
     newName: '',
     newTagId: '',
@@ -52,12 +51,16 @@ Page({
     this.setData({ newName: e.detail.value });
   },
 
-  /** 选已有礼薄 → 拍照 */
+  /** 选已有礼薄 → 攒照片页（BJ批） */
   pickEvent(e) {
     const id = e.currentTarget.dataset.id;
     const ev = this.data.events.find((x) => x._id === id);
     if (!ev) return;
-    this._takePhoto(ev._id, ev.name);
+    this._goPhotos(ev._id, ev.name);
+  },
+
+  _goPhotos(eventId, eventName) {
+    wx.navigateTo({ url: `/pages/import/import-photos?kind=receive&eventId=${eventId}&eventName=${encodeURIComponent(eventName || '')}` });
   },
 
   /** 新建礼薄 → 拍照 */
@@ -73,64 +76,10 @@ Page({
         tagId: this.data.newTagId,
         date: today(),
       });
-      this._takePhoto(ev._id, ev.name);
+      this._goPhotos(ev._id, ev.name);
     } catch (e) {
       wx.showToast({ title: e.message || '创建失败', icon: 'none' });
     }
   },
 
-  _takePhoto(eventId, eventName) {
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['camera', 'album'],
-      success: async (res) => {
-        const photoPath = res.tempFilePaths[0];
-        wx.showLoading({ title: '识别中...' });
-        try {
-          const r = await dataService.recognizePhoto(photoPath, 'receive', { eventId });
-          wx.hideLoading();
-          saveImport({ kind: 'receive', eventId, eventName, photoPath, photoFileIds: r.photoFileIds || [], items: r.items, jobId: r.jobId });
-          wx.navigateTo({ url: '/pages/import/import-review' });
-        } catch (e) {
-          wx.hideLoading();
-          if (e.code === 'insufficient-points') {
-            // 积分不足：识别前就被拦下，没扣积分；引导去购买页补充
-            wx.showModal({
-              title: '积分不够啦',
-              content: e.message || '积分不够啦，先去补充一点积分再来拍照吧。',
-              confirmText: '去补充积分',
-              cancelText: '算了',
-              success: (r) => {
-                if (r.confirm) wx.navigateTo({ url: '/pages/member/purchase/purchase' });
-              },
-            });
-            return;
-          }
-          if (e.code === 'member-required') {
-            wx.showModal({
-              title: '会员专属功能',
-              content: '「拍照导入」是会员专属功能，开通会员后即可使用。',
-              confirmText: '去看看',
-              cancelText: '再想想',
-              success: (r) => {
-                if (r.confirm) wx.switchTab({ url: '/pages/mine/mine' });
-              },
-            });
-            return;
-          }
-          // 识别失败不计费：本次识别不收取任何费用；可直接重新拍照重试
-          wx.showModal({
-            title: '没认出来',
-            content: '这张照片有点糊，没认出来，这次不收任何费用。把礼单放平、光线亮一点，再拍一张试试～',
-            confirmText: '重新拍照',
-            cancelText: '算了',
-            success: (r) => {
-              if (r.confirm) this._takePhoto(eventId, eventName);
-            },
-          });
-        }
-      },
-    });
-  },
 });

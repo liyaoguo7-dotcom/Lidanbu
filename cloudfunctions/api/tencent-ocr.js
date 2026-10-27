@@ -34,6 +34,7 @@
 const crypto = require('crypto');
 const https = require('https');
 const { toSimplified } = require('./zh-t2s');
+const NAME_DB = require('./name-db');
 
 const SERVICE = 'ocr';
 const HOST = 'ocr.tencentcloudapi.com';
@@ -565,6 +566,127 @@ function decodeVerticalAmountTail(text) {
  * 拼读后先滤除再拆姓名/金额（样例图 12 列每列都有）。
  * 标准拆分整列无金额时走 decodeVerticalAmountTail 救援（BB批）。
  */
+
+/* BI批：竖排姓名按字位构建＋姓名库纠错（用户 2026-10-27 定）。
+ * 标记行（贺礼/奠仪印刷行）在全页处于同一纵向带，先定带再逐列取标记，
+ * 免得姓名里的「礼」字被误当标记截断姓名。 */
+const MARKER_CHARS = new Set([...'贺賀礼禮奠儀']);
+function isMarkerFrag(f) {
+  const t = String(f.text || '').replace(/[^一-龥]/g, '');
+  return t.length > 0 && [...t].every((c) => MARKER_CHARS.has(c));
+}
+function estimateColumnPitch(cols) {
+  const diffs = [];
+  for (const col of cols) {
+    const items = [...col.list].sort((a, b) => a.y - b.y);
+    for (let i = 1; i < items.length; i++) {
+      const d = items[i].y - items[i - 1].y;
+      if (d >= 30 && d <= 220) diffs.push(d);
+    }
+  }
+  if (!diffs.length) return 80;
+  diffs.sort((a, b) => a - b);
+  return diffs[Math.floor(diffs.length / 2)];
+}
+function markerBandY(cols) {
+  const ys = [];
+  for (const col of cols) {
+    const items = [...col.list].sort((a, b) => a.y - b.y);
+    for (let i = 1; i < items.length; i++) if (isMarkerFrag(items[i])) ys.push(items[i].y);
+  }
+  if (!ys.length) return null;
+  ys.sort((a, b) => a - b);
+  return ys[Math.floor(ys.length / 2)];
+}
+function columnMarkerIdx(items, bandY, pitch) {
+  if (bandY == null) return -1;
+  for (let i = 1; i < items.length; i++) {
+    if (isMarkerFrag(items[i]) && Math.abs(items[i].y - bandY) <= pitch) return i;
+  }
+  return -1;
+}
+function expectedTrailingFree(cols, bandY, pitch) {
+  const frees = [];
+  for (const col of cols) {
+    const items = [...col.list].sort((a, b) => a.y - b.y);
+    const idx = columnMarkerIdx(items, bandY, pitch);
+    if (idx < 1) continue;
+    const lastBottom = Math.max(...items.slice(0, idx).map((f) => f.y + f.h));
+    frees.push(items[idx].y - lastBottom);
+  }
+  if (!frees.length) return 50;
+  frees.sort((a, b) => a - b);
+  return frees[Math.floor(frees.length / 2)];
+}
+/* 姓名纠错：姓位不在百家姓且形近表有真姓才换；名位字本身不是姓名用字
+ * 且形近表有名字字候选才换，候选按形近序位、与同名其他字的性别池契合、
+ * 常见搭配打分。已是常见姓名用字的永不改（把对的改错比认错更糟）。 */
+function snapName(name) {
+  const chars = [...String(name || '')];
+  if (!chars.length) return name;
+  const DB = NAME_DB;
+  if (chars[0] !== '□' && !DB.SURNAMES.has(chars[0]) && DB.CONFUSION[chars[0]]) {
+    const cand = DB.CONFUSION[chars[0]].find((c) => DB.SURNAMES.has(c));
+    if (cand) chars[0] = cand;
+  }
+  const gScore = chars.slice(1).reduce((sum, c) => sum + DB.genderOf(c), 0);
+  for (let i = 1; i < chars.length; i++) {
+    const ch = chars[i];
+    if (ch === '□' || DB.isNameChar(ch) || !DB.CONFUSION[ch]) continue;
+    const cands = DB.CONFUSION[ch].filter((c) => DB.MALE_CHARS.has(c) || DB.FEMALE_CHARS.has(c) || DB.NEUTRAL_CHARS.has(c));
+    if (!cands.length) continue;
+    let best = null;
+    let bestScore = -Infinity;
+    cands.forEach((c, idx) => {
+      let sc = -idx;
+      const g = DB.genderOf(c);
+      if (gScore > 0 && g === 1) sc += 2;
+      if (gScore < 0 && g === -1) sc += 2;
+      if (DB.COLLOCATIONS.has(chars[i - 1] + c)) sc += 2;
+      if (i + 1 < chars.length && DB.COLLOCATIONS.has(c + chars[i + 1])) sc += 2;
+      if (sc > bestScore) { bestScore = sc; best = c; }
+    });
+    if (best) chars[i] = best;
+  }
+  return chars.join('');
+}
+/* 按字位构建竖排姓名（保字数，只补占位、绝不少字）：
+ * 纯杂讯碎片（拉丁/符号）本身占一个字位，记「□」；
+ * 并框碎片按框高折算字位，少读的字在杂讯处补「□」；
+ * 名字末字到标记行的空隙比全场中位多出近一字位，尾巴少了字，末尾补「□」。 */
+function buildVerticalName(items, markerIdx, pitch, expFree) {
+  const nameFrags = items.slice(0, markerIdx);
+  if (!nameFrags.length) return '';
+  const pitchChar = pitch * 0.88;
+  let name = '';
+  for (const f of nameFrags) {
+    const raw = String(f.text || '');
+    const cleaned = raw.replace(/[^一-龥]/g, '');
+    if (!cleaned) { name += '□'; continue; }
+    let seg = cleaned;
+    if (f.h >= pitchChar * 1.4) {
+      const slots = Math.max(cleaned.length, Math.round(f.h / pitchChar));
+      const missing = slots - cleaned.length;
+      if (missing > 0) {
+        const junkAt = raw.search(/[^一-龥]/);
+        let pos = cleaned.length;
+        if (junkAt >= 0) {
+          pos = Math.min([...raw.slice(0, junkAt)].filter((c) => /[一-龥]/.test(c)).length, cleaned.length);
+        }
+        seg = cleaned.slice(0, pos) + '□'.repeat(missing) + cleaned.slice(pos);
+      }
+    }
+    name += seg;
+  }
+  const lastBottom = Math.max(...nameFrags.map((f) => f.y + f.h));
+  const free = items[markerIdx].y - lastBottom;
+  let missing = 0;
+  if (free - expFree >= pitch * 0.6) missing = Math.round((free - expFree) / pitch);
+  if (nameFrags.length === 1) missing = Math.min(missing, 1);
+  while (missing > 0 && name.length < 5) { name += '□'; missing -= 1; }
+  return snapName(name);
+}
+
 function parseVertical(frags, columns) {
   /* BH批：列序按列中心排，不按 xMin——跨列宽框（如印刷「贺贺贺贺贺」
    * 宽 403）会把所在列的 xMin 拖到左邻列之前，真机留痕里第 9 列被拖到
@@ -572,8 +694,14 @@ function parseVertical(frags, columns) {
    * 宽框只占一列中心、拖不动。 */
   const centerOf = (c) => (c.cxMin != null && c.cxMax != null ? (c.cxMin + c.cxMax) / 2 : c.xMin);
   const cols = [...columns].sort((a, b) => centerOf(a) - centerOf(b));
+  const pitch = estimateColumnPitch(cols);
+  const bandY = markerBandY(cols);
+  const expFree = expectedTrailingFree(cols, bandY, pitch);
   const rows = [];
   for (const col of cols) {
+    const sortedItems = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    const markerIdx = columnMarkerIdx(sortedItems, bandY, pitch);
+    const builtName = markerIdx > 0 ? buildVerticalName(sortedItems, markerIdx, pitch, expFree) : '';
     let text = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x))
       .map((f) => f.text).join('')
       .replace(/賀禮|贺礼|奠儀|奠仪/g, '');
@@ -590,13 +718,16 @@ function parseVertical(frags, columns) {
       const rescued = decodeVerticalAmountTail(text);
       if (rescued) {
         /* 姓名出口与标准路径一致：繁转简（zh-t2s） */
-        rows.push({ name: toSimplified(rescued.name), amountFen: rescued.amountFen, note: '', raw: text });
+        rows.push({ name: toSimplified(builtName || rescued.name), amountFen: rescued.amountFen, note: '', raw: text });
         continue;
       }
     }
-    for (const r of splitColumnText(text)) {
-      /* 竖排姓名净化：去掉拉丁碎字与标点（引擎杂讯，如「E峰」「刘,x以」） */
-      rows.push({ ...r, name: String(r.name || '').replace(/[A-Za-z0-9、，,。·\s]/g, '') });
+    const parts = splitColumnText(text);
+    for (const r of parts) {
+      /* 竖排姓名净化：去掉拉丁碎字与标点（引擎杂讯，如「E峰」「刘,x以」）；
+       * BI批：整列单笔时姓名改用按字位构建＋姓名库纠错的结果 */
+      const cleanedName = String(r.name || '').replace(/[A-Za-z0-9、，,。·\s]/g, '');
+      rows.push({ ...r, name: parts.length === 1 && builtName ? toSimplified(builtName) : cleanedName });
     }
   }
   return rows;

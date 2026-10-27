@@ -22,4 +22,20 @@ function peekImport() {
   return _pending;
 }
 
-module.exports = { saveImport, takeImport, peekImport };
+/* BJ批：多张照片逐张识别后，第一张走 saveImport 直接进核对页，
+ * 其余排队；核对页导入完成一张、从队列取下一张继续核对。 */
+let _queue = [];
+
+function setImportQueue(list) {
+  _queue = Array.isArray(list) ? list.slice() : [];
+}
+
+function takeNextImport() {
+  return _queue.length ? _queue.shift() : null;
+}
+
+function importQueueCount() {
+  return _queue.length;
+}
+
+module.exports = { saveImport, takeImport, peekImport, setImportQueue, takeNextImport, importQueueCount };

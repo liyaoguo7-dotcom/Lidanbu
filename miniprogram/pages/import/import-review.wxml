@@ -28,7 +28,7 @@
     </view>
     <view class="unknown-row" wx:if="{{item.unknown}}">
       <text class="unknown-hint">「{{item.name}}」不在亲友录</text>
-      <text class="unknown-btn" data-i="{{index}}" bindtap="onBuildContact">先建亲友</text>
+      <text class="unknown-btn" data-i="{{index}}" bindtap="onQuickCreate">快速创建</text>
     </view>
     <view class="form-row">
       <text class="form-label">金额</text>
@@ -77,6 +77,7 @@
   <text class="result-big">导入完成</text>
   <text class="result-count num">成功导入 {{doneCount}} 条{{kindLabel}}记录</text>
   <text class="result-sub">都已经记进账本啦，回到列表就能看到。</text>
+  <view class="btn-primary result-btn" wx:if="{{queueCount > 0}}" bindtap="goNextJob">核对下一张（还剩 {{queueCount}} 张）</view>
   <view class="btn-primary result-btn" bindtap="goViewRecords">看看记好的</view>
   <view class="btn-outline result-btn" bindtap="goAgain">再导入一份</view>
 </view>

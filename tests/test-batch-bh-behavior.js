@@ -22,17 +22,17 @@ test('BH真机留痕：12 条、金额 12/12 对真值、列序不轮转', () =>
   const rows = ocr.parseDetections(DETS);
   assert.eq(rows.length, 12, '恰 12 条');
   assert.eq(rows.map((r) => (r.amountFen == null ? null : r.amountFen / 100)).join(','), TRUTH_AMOUNTS.join(','), '金额逐条对真值');
-  assert.eq(rows[6].name, '里二毛', '第 7 条回位（二毛列；黑被引擎认成里属字形误读、结构已正）');
-  assert.eq(rows[7].name, '往雪琳', '第 8 条回位（雪琳列）');
-  assert.eq(rows[8].name, '很雪乖', '第 9 条回位（雪乖列）');
+  assert.eq(rows[6].name, '黑二毛', '第 7 条回位且姓位里→黑被姓名库救回（BI）');
+  assert.eq(rows[7].name, '徐雪琳', '第 8 条回位且往→徐救回（BI）');
+  assert.eq(rows[8].name, '张雪乖', '第 9 条回位且很→张救回（BI）');
 });
 
 test('BH分列不串字：第 3 条无侯、第 4 条侯回列首', () => {
   const rows = ocr.parseDetections(DETS);
   assert(!rows[2].name.includes('侯'), '第 3 条不得再串入侯');
   assert.eq(rows[2].name, '成鹏', '第 3 条只剩本列字');
-  assert(rows[3].name.startsWith('侯'), '第 4 条以侯开头（娜被引擎认成妇、核对页手改）');
-  assert.eq(rows[11].name, '峰', '第 12 条姓名只剩峰（他归金额、不残留在姓名）');
+  assert.eq(rows[3].name, '侯娜', '第 4 条妇→娜被女名常用字池救回（BI）');
+  assert.eq(rows[11].name, '□峰', '第 12 条首字引擎只给拉丁 E，字位补占位保 2 字（BI）');
   assert.eq(rows[11].amountFen, 50000, '第 12 条金额由 他→伍 救回 500');
 });
 
@@ -53,4 +53,13 @@ test('BH宽碎片拆分：按列带逐字拆、单列连读不动', () => {
 test('BH金额救援：他→伍仅限金额尾串语境', () => {
   const r = ocr.decodeVerticalAmountTail('峰他o元');
   assert(r && r.amountFen === 50000 && r.name === '峰', '峰他o元 → 峰 + 500 元');
+});
+
+test('BI保字数：12 条姓名长度与真值逐条相等', () => {
+  const rows = ocr.parseDetections(DETS);
+  const lens = rows.map((r) => [...r.name].length).join(',');
+  assert.eq(lens, '2,3,2,2,3,3,3,3,3,3,3,2', '字数逐条对真值，实际 ' + lens);
+  assert.eq(rows[1].name, '孔耀□', '第 2 条：祥引擎未给、尾部空位补占位；姓位子按形近真姓猜孔');
+  assert.eq(rows[10].name, '刘□以', '第 11 条：并框三字只读出两字，杂讯处补占位');
+  assert.eq(rows[5].name, '杨力□', '第 6 条：单框连读加尾部大空隙，补一位占位');
 });

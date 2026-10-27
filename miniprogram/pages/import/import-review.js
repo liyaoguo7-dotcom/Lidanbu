@@ -9,7 +9,7 @@ const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
 const { hornMarquee } = require('../../services/horn-marquee.js');
 const { formatAmount, parseAmountToFen } = require('../../core/format.js');
-const { takeImport } = require('../../services/import-state.js');
+const { takeImport, saveImport, takeNextImport, importQueueCount } = require('../../services/import-state.js');
 
 function today() {
   const d = new Date();
@@ -42,6 +42,7 @@ Page({
     writing: false,
     done: false,
     doneCount: 0,
+    queueCount: 0, // BJ批：多张识别时还没核对的张数
   },
 
   // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
@@ -255,6 +256,46 @@ Page({
   onAddCancel() {
     this.setData({ addSheetOpen: false, editingIndex: -1 });
   },
+
+  /* BJ批快速创建（用户 2026-10-27 定）：核对页原地建亲友、不跳页；
+   * 点之前先弹窗提醒确认这条的备注——备注填了会同步成亲友录里
+   * 这位亲友的备注。重复姓名按既有 createContact 口径选中已有亲友。 */
+  async onQuickCreate(e) {
+    if (this._quickCreating) return;
+    const i = e.currentTarget.dataset.i;
+    const it = this.data.items[i];
+    if (!it) return;
+    const name = (it.name || '').trim();
+    if (!name) {
+      wx.showToast({ title: '先把姓名填好', icon: 'none' });
+      return;
+    }
+    const note = (it.note || '').trim();
+    const ok = await new Promise((resolve) => {
+      wx.showModal({
+        title: '快速创建前，先确认备注',
+        content: `将把「${name}」建为亲友。这条的备注是「${note || '（还没填）'}」，创建后会同步到亲友录里他的备注；备注不对可以先改好再创建。`,
+        confirmText: '快速创建',
+        cancelText: '先改备注',
+        success: (r) => resolve(!!r.confirm),
+        fail: () => resolve(false),
+      });
+    });
+    if (!ok) return;
+    this._quickCreating = true;
+    try {
+      const r = await dataService.createContact({ name, remark: note });
+      const newId = r && r._id;
+      this.setData({
+        [`items[${i}].name`]: name,
+        [`items[${i}].contactId`]: newId || '',
+        [`items[${i}].unknown`]: newId ? false : true,
+      });
+      wx.showToast({ title: r && r.duplicateWarning ? '该姓名已在亲友录，已选中' : '已创建亲友', icon: 'none' });
+    } catch (err) {
+      wx.showToast({ title: err.message || '创建失败', icon: 'none' });
+    } finally { this._quickCreating = false; }
+  },
   async onAddConfirm(e) {
     if (this._saving) return; // 在途锁（任务AE补修）
     this._saving = true;
@@ -301,7 +342,7 @@ Page({
         return;
       }
       if (!it.contactId) {
-        this._locateError(i, `「${name}」还不在亲友录，点"选亲友"选一位，或者点"先建亲友"。`);
+        this._locateError(i, `「${name}」还不在亲友录，点"选亲友"选一位，或者点"快速创建"。`);
         return;
       }
       const fen = parseAmountToFen(it.amountText);
@@ -330,7 +371,7 @@ Page({
         jobId: this.data.jobId,
       });
       wx.hideLoading();
-      this.setData({ writing: false, done: true, doneCount: r.written });
+      this.setData({ writing: false, done: true, doneCount: r.written, queueCount: importQueueCount() });
       // AR批：任务确认完成 → 删掉云端那批照片原件（尽力而为、失败静默；
       // 本页对照看的是本地 photoPath，不受影响）
       dataService.cleanupImportPhotos(this.data.photoFileIds);
@@ -364,6 +405,13 @@ Page({
 
   /* ---------- 结果页动作 ---------- */
 
+  /* BJ批：多张识别时，导入完一张接着核对下一张 */
+  goNextJob() {
+    const nxt = takeNextImport();
+    if (!nxt) return;
+    saveImport(nxt);
+    wx.redirectTo({ url: '/pages/import/import-review' });
+  },
   goViewRecords() {
     if (this.data.kind === 'receive' && this.data.eventId) {
       wx.redirectTo({ url: `/pages/receive-detail/receive-detail?id=${this.data.eventId}` });

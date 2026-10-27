@@ -12,6 +12,7 @@
     "pages/demo/demo",
     "pages/import/import-home",
     "pages/import/import-event",
+    "pages/import/import-photos",
     "pages/import/import-review",
     "pages/example/receive-example",
     "pages/example/gift-example",

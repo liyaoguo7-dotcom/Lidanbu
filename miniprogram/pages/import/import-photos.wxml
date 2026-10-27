@@ -1,0 +1,26 @@
+<!-- 拍照导入：攒照片，点了开始识别才识别（BJ批） -->
+<view class="ph-head">
+  <text class="ph-title">{{kindLabel}}拍照导入{{eventName ? ' · ' + eventName : ''}}</text>
+  <text class="ph-sub">可以从相册一次选多张，也可以分几次拍，攒齐了再一起开始识别。</text>
+</view>
+
+<view class="ph-grid">
+  <view class="ph-cell" wx:for="{{photos}}" wx:key="index">
+    <image class="ph-img" src="{{item}}" mode="aspectFill" data-i="{{index}}" bindtap="onPreview" />
+    <text class="ph-del" data-i="{{index}}" catchtap="onRemovePhoto">×</text>
+    <text class="ph-no">{{index + 1}}</text>
+  </view>
+  <view class="ph-cell ph-add" wx:if="{{photos.length < maxPhotos}}" bindtap="onAddPhotos">
+    <text class="ph-plus">＋</text>
+    <text class="ph-add-txt">添加照片</text>
+  </view>
+</view>
+
+<view class="ph-fee">
+  <text>计费说明：点「开始识别」后逐张识别，每张识别成功扣 5 分，识别失败不扣费；识别成功后即使不导入也不退还积分。</text>
+</view>
+
+<view style="height:110px"></view>
+<view class="ph-bar">
+  <view class="ph-start {{photos.length && !working ? '' : 'ph-start-off'}}" bindtap="onStartRecognize">{{working ? progressText : '开始识别' + (photos.length ? '（' + photos.length + ' 张）' : '')}}</view>
+</view>

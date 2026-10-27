@@ -1,0 +1,16 @@
+/* 拍照导入攒照片页（BJ批）：照片网格 + 计费说明 + 底部开始识别按钮 */
+.ph-head { padding: 16px 16px 4px; }
+.ph-title { display: block; font-size: 18px; font-weight: 600; color: #33312C; }
+.ph-sub { display: block; margin-top: 6px; font-size: 13px; color: #8A8378; line-height: 1.5; }
+.ph-grid { display: flex; flex-wrap: wrap; gap: 10px; padding: 14px 16px; }
+.ph-cell { position: relative; width: calc((100% - 20px) / 3); aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #EFE9DD; }
+.ph-img { width: 100%; height: 100%; }
+.ph-del { position: absolute; top: 0; right: 0; width: 24px; height: 24px; line-height: 22px; text-align: center; color: #fff; background: rgba(0,0,0,.45); border-bottom-left-radius: 10px; font-size: 16px; }
+.ph-no { position: absolute; left: 6px; bottom: 4px; color: #fff; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.ph-add { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px dashed #C9BFA9; background: #FBF8F1; }
+.ph-plus { font-size: 30px; color: #B4A888; line-height: 1; }
+.ph-add-txt { margin-top: 6px; font-size: 12px; color: #8A8378; }
+.ph-fee { margin: 2px 16px; padding: 12px; background: #FFF6E8; border-radius: 10px; font-size: 12.5px; color: #8A6D3B; line-height: 1.6; }
+.ph-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #EFEAE0; }
+.ph-start { height: 48px; line-height: 48px; text-align: center; border-radius: 24px; background: #F0575A; color: #fff; font-size: 16.5px; font-weight: 600; }
+.ph-start-off { opacity: .55; }
