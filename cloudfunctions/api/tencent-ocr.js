@@ -406,7 +406,23 @@ function clusterByCentroid(frags) {
   if (!frags.length) return [];
   const heights = frags.map((f) => f.h).filter((h) => h > 0).sort((a, b) => a - b);
   const medH = heights.length ? heights[Math.floor(heights.length / 2)] : 40;
-  const thr = Math.max(20, medH * 0.8);
+  let thr = Math.max(20, medH * 0.8);
+  /* BK批：阈值不得逼近列距——手写引擎的竖条碎片又高又黏（中位高 73 →
+   * 阈值 58，而模板单真实列距仅 60），单链聚类必然把相邻列链成一列，
+   * 几个人的名字与金额就粘成一长串（真机留痕实证：12 列只分出 7 列）。
+   * 先由相邻中心距估列距（落在 25–300 的间距取中位，列内抖动多在
+   * 25 以下、跨列间距即列距本体），阈值封顶为列距一半。 */
+  const cxs = frags.map((f) => f.x + f.w / 2).sort((a, b) => a - b);
+  const gaps = [];
+  for (let i = 1; i < cxs.length; i++) {
+    const g = cxs[i] - cxs[i - 1];
+    if (g >= 25 && g <= 300) gaps.push(g);
+  }
+  if (gaps.length >= 1) {
+    gaps.sort((a, b) => a - b);
+    const pitchGuess = gaps[Math.floor(gaps.length / 2)];
+    if (pitchGuess > 0) thr = Math.min(thr, Math.max(20, pitchGuess * 0.5));
+  }
   const sorted = [...frags].sort((a, b) => (a.x + a.w / 2) - (b.x + b.w / 2));
   const cols = [];
   for (const f of sorted) {
@@ -465,7 +481,37 @@ function splitWideFragments(frags, centroidCols) {
 }
 
 /**
- * 竖排判定（AS批立、BB批改 ②）：① 多数文本框高大于宽（整列竖条）；或
+ * 模板印刷物剔除（BK批）：印刷模板礼单每列同一位置印着同样的装饰/纹样
+ * （真机留痕：心形花纹被手写引擎在 4 列同高处读成「望木」），会被当成
+ * 姓名的一部分粘进名字。判据：同一文本（≥2 字、不含数字与金额字）在
+ * ≥3 列出现且纵向位置相近（中心 Y 差 ≤45）——真姓名不可能三列同文同高。
+ * 只剔这种跨列重复的印刷物，列内独有内容一律不动。
+ */
+function dropRepeatedPrintFrags(frags, cols) {
+  const byText = new Map();
+  for (const col of cols) {
+    for (const f of col.list) {
+      const t = String(f.text || '').trim();
+      if (t.length < 2) continue;
+      if (/[0-9]/.test(t)) continue;
+      if (/[佰拾仟万亿两元角分整圓]/.test(t)) continue;
+      if (!byText.has(t)) byText.set(t, []);
+      byText.get(t).push({ f, col, cy: f.y + f.h / 2 });
+    }
+  }
+  const drop = new Set();
+  for (const [, items] of byText) {
+    const colSet = new Set(items.map((i) => i.col));
+    if (colSet.size < 3) continue;
+    const cys = items.map((i) => i.cy).sort((a, b) => a - b);
+    const med = cys[Math.floor(cys.length / 2)];
+    if (items.every((i) => Math.abs(i.cy - med) <= 45)) items.forEach((i) => drop.add(i.f));
+  }
+  if (!drop.size) return frags;
+  return frags.filter((f) => !drop.has(f));
+}
+
+/** 竖排判定（AS批立、BB批改 ②）：① 多数文本框高大于宽（整列竖条）；或
  * ② 按中心聚类后，多数列呈"高瘦"形：列内中心 X 跨度加中位字宽仍远小于
  * 列高（≥2.5×），且每列至少 3 个碎片（单字逐个成框竖排成列的情形）。
  * 横排文档中心聚类后多为少数宽列或矮列，不会误触 ②。
@@ -683,7 +729,9 @@ function buildVerticalName(items, markerIdx, pitch, expFree) {
   let missing = 0;
   if (free - expFree >= pitch * 0.6) missing = Math.round((free - expFree) / pitch);
   if (nameFrags.length === 1) missing = Math.min(missing, 1);
-  while (missing > 0 && name.length < 5) { name += '□'; missing -= 1; }
+  /* 姓名长度规律（用户 2026-10-27 定）：99% ≤3 字、极个别 4 字，
+   * 占位补字最多补到 4 字为止（BK批，原上限 5 改 4） */
+  while (missing > 0 && name.length < 4) { name += '□'; missing -= 1; }
   return snapName(name);
 }
 
@@ -723,11 +771,25 @@ function parseVertical(frags, columns) {
       }
     }
     const parts = splitColumnText(text);
+    const colRows = [];
     for (const r of parts) {
-      /* 竖排姓名净化：去掉拉丁碎字与标点（引擎杂讯，如「E峰」「刘,x以」）；
-       * BI批：整列单笔时姓名改用按字位构建＋姓名库纠错的结果 */
+      /* 竖排姓名净化：去掉拉丁碎字与标点（引擎杂讯，如「E峰」「刘,x以」） */
       const cleanedName = String(r.name || '').replace(/[A-Za-z0-9、，,。·\s]/g, '');
-      rows.push({ ...r, name: parts.length === 1 && builtName ? toSimplified(builtName) : cleanedName });
+      /* BK批：模板列一笔里常有两份金额证据（手写大写条＋底部阿拉伯数字），
+       * 标准切分会按金额个数把一笔拆成两行，第二行的"姓名"其实是金额条
+       * 残字（无/住/佰类，不含任何姓名用字）。这类残段并回上一行，金额以
+       * 后出现的为准（底部数字是最终证据）。真·一列多笔的姓名含姓名用字，
+       * 不会误并。 */
+      const nameLike = [...cleanedName].some((ch) => NAME_DB.isNameChar(ch) || NAME_DB.SURNAMES.has(ch));
+      if (colRows.length && (!cleanedName || !nameLike)) {
+        if (r.amountFen != null) colRows[colRows.length - 1].amountFen = r.amountFen;
+        continue;
+      }
+      colRows.push({ ...r, name: cleanedName });
+    }
+    for (const r of colRows) {
+      /* BI批：整列单笔时姓名改用按字位构建＋姓名库纠错的结果 */
+      rows.push(colRows.length === 1 && builtName ? { ...r, name: toSimplified(builtName) } : r);
     }
   }
   return rows;
@@ -839,10 +901,29 @@ function parseDetections(detections) {
   const columns = clusterColumns(frags);
   /* BB批：竖排走中心聚类（对横跨数列的宽框免疫）；横排沿用重叠聚类不变 */
   const centroidCols = clusterByCentroid(frags);
-  if (!detectVertical(frags, columns, centroidCols)) return parseHorizontal(frags, columns);
+  if (!detectVertical(frags, columns, centroidCols)) return guardRowNames(parseHorizontal(frags, columns));
   /* BH批：竖排先把跨列宽碎片按字拆回各自列带，再重新聚类成列 */
   const split = splitWideFragments(frags, centroidCols);
-  return parseVertical(split, clusterByCentroid(split));
+  /* BK批：剔除跨列重复的模板印刷物（花纹类），再聚类成列 */
+  const cleaned = dropRepeatedPrintFrags(split, clusterByCentroid(split));
+  return guardRowNames(parseVertical(cleaned, clusterByCentroid(cleaned)));
+}
+
+/* 姓名长度硬顶（BK批，用户定的规律：99% ≤3 字、极个别 4 字）：
+ * 任何路径拼出的名字超过 4 字必是拼装事故——按姓位锚点截回 ≤4 字
+ * （找得到的第一个真姓起算），绝不把一长串端给用户。 */
+function guardRowNames(rows) {
+  const DB = NAME_DB;
+  return (Array.isArray(rows) ? rows : []).map((r) => {
+    const name = String((r && r.name) || '');
+    if (name.length <= 4) return r;
+    let start = -1;
+    for (let i = 0; i < name.length; i++) {
+      if (DB.SURNAMES.has(name[i])) { start = i; break; }
+    }
+    const cut = start >= 0 ? name.slice(start, start + 4) : name.slice(0, 4);
+    return { ...r, name: cut };
+  });
 }
 
 /* ---------------- 识别质量评估（AS批质量门，纯函数） ----------------
@@ -999,6 +1080,8 @@ module.exports = {
   findAllAmounts,
   clusterByCentroid,
   splitWideFragments,
+  dropRepeatedPrintFrags,
+  guardRowNames,
   decodeVerticalAmountTail,
   assessQuality,
   createAdapter,
