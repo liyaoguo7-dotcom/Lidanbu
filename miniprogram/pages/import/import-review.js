@@ -35,6 +35,10 @@ Page({
     errorIndex: -1,  // 校验失败定位到的条目下标
     addSheetOpen: false,
     editingIndex: -1,
+    qcOpen: false,   // BN批：快速创建弹窗（姓名/备注弹窗内直接编辑创建）
+    qcIndex: -1,
+    qcName: '',
+    qcRemark: '',
     pickerOpen: false,
     pickerIndex: -1,
     pickerKeyword: '',
@@ -257,37 +261,44 @@ Page({
     this.setData({ addSheetOpen: false, editingIndex: -1 });
   },
 
-  /* BJ批快速创建（用户 2026-10-27 定）：核对页原地建亲友、不跳页；
-   * 点之前先弹窗提醒确认这条的备注——备注填了会同步成亲友录里
-   * 这位亲友的备注。重复姓名按既有 createContact 口径选中已有亲友。 */
-  async onQuickCreate(e) {
-    if (this._quickCreating) return;
-    const i = e.currentTarget.dataset.i;
+  /* BN批快速创建（用户 2026-10-27 晚定版，覆盖 BJ 两段式）：点「快速
+   * 创建」直接弹编辑弹窗——姓名框预填识别名（可改）、备注框预填本条
+   * 备注（可空），框下一行淡字提醒原话，左「取消」右「确认」；点确认
+   * 即以弹窗内的姓名＋备注建亲友并绑定本条，备注同步亲友录，姓名改了
+   * 本条随改。不再有"退回去改完再点一次"的两段式。重复姓名按既有
+   * createContact 口径选中已有亲友。 */
+  onQuickCreate(e) {
+    const i = Number(e.currentTarget.dataset.i);
     const it = this.data.items[i];
     if (!it) return;
-    const name = (it.name || '').trim();
+    this.setData({
+      qcOpen: true,
+      qcIndex: i,
+      qcName: (it.name || '').trim(),
+      qcRemark: (it.note || '').trim(),
+    });
+  },
+  onQcNameInput(e) { this.setData({ qcName: e.detail.value }); },
+  onQcRemarkInput(e) { this.setData({ qcRemark: e.detail.value }); },
+  onQcCancel() { this.setData({ qcOpen: false, qcIndex: -1 }); },
+  async onQcConfirm() {
+    if (this._quickCreating) return;
+    const i = this.data.qcIndex;
+    const name = (this.data.qcName || '').trim();
+    const remark = (this.data.qcRemark || '').trim();
     if (!name) {
       wx.showToast({ title: '先把姓名填好', icon: 'none' });
       return;
     }
-    const note = (it.note || '').trim();
-    const ok = await new Promise((resolve) => {
-      wx.showModal({
-        title: '快速创建前，先确认备注',
-        content: `将把「${name}」建为亲友。这条的备注是「${note || '（还没填）'}」，创建后会同步到亲友录里他的备注；备注不对可以先改好再创建。`,
-        confirmText: '快速创建',
-        cancelText: '先改备注',
-        success: (r) => resolve(!!r.confirm),
-        fail: () => resolve(false),
-      });
-    });
-    if (!ok) return;
     this._quickCreating = true;
     try {
-      const r = await dataService.createContact({ name, remark: note });
+      const r = await dataService.createContact({ name, remark });
       const newId = r && r._id;
       this.setData({
+        qcOpen: false,
+        qcIndex: -1,
         [`items[${i}].name`]: name,
+        [`items[${i}].note`]: remark,
         [`items[${i}].contactId`]: newId || '',
         [`items[${i}].unknown`]: newId ? false : true,
       });

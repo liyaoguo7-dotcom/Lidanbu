@@ -1,10 +1,11 @@
 /**
  * 礼单簿 · 拍照导入：攒照片页（BJ批，用户 2026-10-27 定）
  * 相册多选或连拍多张，先攒在本页，点了「开始识别」才逐张识别。
- * 按张计费：一张照片一个识别任务、一个任务扣一次分（识别成功扣 5 分，
- * 失败不扣；识别成功后不导入不退）——点按钮前的确认弹窗与页内计费
- * 说明都按此口径明示。识别成功的逐张排队进核对页；失败/未识别的
- * 照片留在本页可重试。
+ * 按张计费：一张照片一个识别任务、一个任务扣一次分（识别成功扣分，
+ * 失败不扣；识别成功后不导入不退）——单价读服务端积分规则（老板后台
+ * 可配，BN批），页内计费说明按生效单价动态生成；点「开始识别」直接
+ * 开始、不再弹确认窗（BN批，用户定：说明只留页面这一处）。
+ * 识别成功的逐张排队进核对页；失败/未识别的照片留在本页可重试。
  */
 const dataService = require('../../services/data-service.js');
 const { saveImport, setImportQueue } = require('../../services/import-state.js');
@@ -21,16 +22,27 @@ Page({
     working: false,
     progressText: '',
     maxPhotos: MAX_PHOTOS,
+    photoCost: 5, // 拍照单价（分）：先按静态默认渲染，进页后读生效配置刷新（BN批）
   },
 
   onLoad(q) {
     const kind = q && q.kind === 'receive' ? 'receive' : 'gift';
+    /* BN批：礼薄名经 navigateTo 传参是 URL 编码过的，进页必须解码——
+     * 否则标题与核对页原图对照都显示 %E5%A5… 乱码（真机实证）。
+     * 无 % 的原样字符串解码无副作用；解码异常保持原值。 */
+    let eventName = (q && q.eventName) || '';
+    try { eventName = decodeURIComponent(eventName); } catch (e) { /* 保持原值 */ }
     this.setData({
       kind,
       kindLabel: kind === 'receive' ? '收礼' : '送礼',
       eventId: (q && q.eventId) || '',
-      eventName: (q && q.eventName) || '',
+      eventName,
     });
+    dataService.getPointsSettings()
+      .then((s) => {
+        if (s && typeof s.photoImportCost === 'number') this.setData({ photoCost: s.photoImportCost });
+      })
+      .catch(() => {});
   },
 
   onAddPhotos() {
@@ -71,17 +83,7 @@ Page({
       return;
     }
     const { kind, eventId, eventName } = this.data;
-    const go = await new Promise((resolve) => {
-      wx.showModal({
-        title: '开始识别？',
-        content: `共 ${photos.length} 张，逐张识别。每张识别成功扣 5 分，识别失败不扣费；识别成功后，即使最后不导入也不退还积分。`,
-        confirmText: '开始识别',
-        cancelText: '再想想',
-        success: (r) => resolve(!!r.confirm),
-        fail: () => resolve(false),
-      });
-    });
-    if (!go) return;
+    /* BN批（用户定）：点「开始识别」直接开始，不再弹确认窗 */
     this.setData({ working: true });
     const doneJobs = [];
     const failedIdx = [];

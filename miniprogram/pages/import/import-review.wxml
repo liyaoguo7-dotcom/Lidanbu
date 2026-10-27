@@ -104,3 +104,24 @@
 </view>
 
 <contact-sheet show="{{addSheetOpen}}" bind:confirm="onAddConfirm" bind:cancel="onAddCancel" />
+
+<!-- BN批：快速创建弹窗（定版）——姓名/备注弹窗内直接编辑，淡字提醒，左取消右确认 -->
+<view class="qc-mask" wx:if="{{qcOpen}}" bindtap="onQcCancel" catchtouchmove="noop"></view>
+<view class="qc-modal" wx:if="{{qcOpen}}">
+  <view class="qc-title">快速创建亲友</view>
+  <view class="qc-row">
+    <text class="qc-label">姓名</text>
+    <input class="qc-input" placeholder="请输入姓名" placeholder-style="color:#C2C2C2"
+      value="{{qcName}}" bindinput="onQcNameInput" maxlength="20" />
+  </view>
+  <view class="qc-row qc-row-last">
+    <text class="qc-label">备注</text>
+    <input class="qc-input" placeholder="可不填" placeholder-style="color:#C2C2C2"
+      value="{{qcRemark}}" bindinput="onQcRemarkInput" maxlength="60" />
+  </view>
+  <view class="qc-hint">请先确认姓名和备注无误，快速创建将会同步亲友录</view>
+  <view class="qc-btns">
+    <view class="qc-btn qc-btn-cancel" bindtap="onQcCancel">取消</view>
+    <view class="qc-btn qc-btn-confirm" bindtap="onQcConfirm">确认</view>
+  </view>
+</view>
