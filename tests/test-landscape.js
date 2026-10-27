@@ -22,7 +22,8 @@ test('横置-定版数值：列宽50/姓名区104/中段区52/金额区118.5/墨
   assert.eq(LC.SPEC.GAP, 4, '姓名末字墨迹↔贺礼、贺礼↔金额首字墨迹 间距 4（任务AF真机定版；历程 2→3.5→4）');
   assert.eq(LC.SPEC.MID_FONT, 23, '中段字号 23（比姓名/金额 22 大一号，任务AF真机定版）');
   assert.eq(LC.SPEC.MID_SHIFT_UP, 3, '中段整体上移 3');
-  assert.eq(LC.SPEC.MARGIN_B, 30, '下留白 30（真机反馈收窄；上留白 48 与纸面高不变）');
+  assert.eq(LC.SPEC.MARGIN_B, 39, '下留白 39（BG批：与上留白同值）');
+  assert.eq(LC.SPEC.MARGIN_V, 39, '上留白 39（BG批：48→39，与下同值、两者之和 78 纸面高不变、整本略上移）');
   assert.eq(LC.COL_INNER_H, 290, '列内总高 = 纸面 294 − 边框 4（任务AC 纠正旧 258 名义值）');
   assert.eq(LC.SPEC.COLS_PER_SCREEN, 12, '一屏12列');
 });
@@ -164,20 +165,20 @@ test('横置-金额一致性：大写与分值一致、半屏金额两位小数'
   assert.eq(LC.detailAmountText(100005), '1000.05', '带分不四舍五入');
 });
 
-test('横置-空列格子：格子印满整幅，空列数=15-记录数且只有线框（BD批定版15列，覆盖旧12）', () => {
+test('横置-空列格子：格子印满整幅，空列数=14-记录数且只有线框（BG批定版14列）', () => {
   const recs = [1, 2, 3, 4].map((i) => ({ id: String(i), name: '张三', amountFen: 10000, tagId: 'jiehun' }));
   const built = LC.buildColumns(recs, {});
-  assert.eq(built.totalGrid, 15, '总列数 15（BD批）');
-  assert.eq(built.emptyCount, 11, '空列 = 15 - 4');
-  assert.eq(built.columns.length, 15, '渲染列数 15');
+  assert.eq(built.totalGrid, 14, '总列数 14（BG批）');
+  assert.eq(built.emptyCount, 10, '空列 = 14 - 4');
+  assert.eq(built.columns.length, 14, '渲染列数 14');
   const empties = built.columns.filter((c) => c.empty);
-  assert.eq(empties.length, 11, '空列对象数');
+  assert.eq(empties.length, 10, '空列对象数');
   assert(empties.every((c) => !c.nameChars && !c.amountChars), '空列只有线框无内容');
   assert.eq(built.columns[0].empty, false, '最左是第一条记录（2026-10-22 定版：第一条最左）');
-  assert.eq(built.columns[14].empty, true, '空列补在最后一条记录右侧');
+  assert.eq(built.columns[13].empty, true, '空列补在最后一条记录右侧');
   assert.eq(built.columns.map((c) => c.recordId).slice(0, 4).join(','), '1,2,3,4', '记录按账本顺序从左到右排');
   const zero = LC.buildColumns([], {});
-  assert.eq(zero.emptyCount, 15, '零记录时 15 列全空');
+  assert.eq(zero.emptyCount, 14, '零记录时 14 列全空');
   const many = LC.buildColumns(Array.from({ length: 15 }, (_, i) => ({ id: String(i), name: '张三', amountFen: 1, tagId: 'jiehun' })), {});
   assert.eq(many.emptyCount, 0, '超 12 条无空列');
   assert.eq(many.totalGrid, 15, '超屏按记录数扩展');

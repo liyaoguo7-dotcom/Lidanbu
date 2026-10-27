@@ -13,20 +13,20 @@ const LC = require('../miniprogram/pages/landscape/landscape-core.js');
 
 const rd = (rel) => fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
 
-test('BD书体定版：每本固定 15 列、空本也排满 15 列', () => {
-  assert.eq(LC.SPEC.BOOK_COLS, 15, 'BOOK_COLS 暂定 15');
-  assert.eq(LC.buildColumns([], {}).totalGrid, 15, '空本 15 列');
+test('BD/BG书体定版：每本固定 14 列、空本也排满 14 列（BD 定 15，BG 用户改定 14）', () => {
+  assert.eq(LC.SPEC.BOOK_COLS, 14, 'BOOK_COLS 定版 14（BG批）');
+  assert.eq(LC.buildColumns([], {}).totalGrid, 14, '空本 14 列');
   assert.eq(
     LC.buildColumns([{ id: 'a', name: '张三', amountFen: 100, tagId: 'jiehun' }], {}).emptyCount,
-    14, '1 条记录补 14 空列',
+    13, '1 条记录补 13 空列',
   );
 });
 
-test('BD纸面定宽居中：midrow 绑定 bookW（15 列宽＋双槽）', () => {
+test('BD纸面定宽居中：midrow 绑定 bookW（14 列宽＋双槽）', () => {
   const wxml = rd('miniprogram/pages/landscape/book.wxml');
-  assert(wxml.includes('class="midrow" style="width:{{view.bookW}}px;align-self:center;"'), 'midrow 定宽居中');
+  assert(wxml.includes('class="midrow" style="width:{{view.bookW}}px;align-self:center;transform:translateX({{view.bookShiftX}}px);"'), 'midrow 定宽居中＋BG 真居中平移');
   const common = rd('miniprogram/pages/landscape/book-common.js');
-  assert(common.includes('LC.SPEC.BOOK_COLS * this.data.spec.colW'), 'bookW 按 15 列×列宽＋双槽算');
+  assert(common.includes('LC.SPEC.BOOK_COLS * this.data.spec.colW'), 'bookW 按 BOOK_COLS 列×列宽＋双槽算');
 });
 
 test('BD字体面板只留名字：无预览字「张三 壹仟元整」', () => {

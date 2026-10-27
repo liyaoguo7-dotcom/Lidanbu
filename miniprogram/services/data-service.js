@@ -348,7 +348,7 @@ const service = {
   get localMode() { return !_isCloud(); },
 
   // —— 个人资料与隐私同意（任务Q1） ——
-  /** 我的资料：{ displayName(显示名,无昵称时"微信用户"), nickname(原始存值), avatarUrl } */
+  /** 我的资料：{ displayName(显示名,无昵称时按账号生成「礼友＋数字」), nickname(原始存值), avatarUrl } */
   async getProfile() {
     await ensureUser();
     return core.users.getProfile(_db, _userId);

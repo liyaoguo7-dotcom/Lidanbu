@@ -53,7 +53,7 @@ test('BC列线铺满：minCols 决定总列数、空列补到铺满', () => {
   );
   assert.eq(many.totalGrid, 25, '记录多于 minCols 时以记录数为准（滚动查看）');
   const legacy = LC.buildColumns([], {});
-  assert.eq(legacy.totalGrid, 15, '不传 minCols 时下限为 BOOK_COLS（BD批用户定版 15 列）');
+  assert.eq(legacy.totalGrid, 14, '不传 minCols 时下限为 BOOK_COLS（BG批用户定版 14 列）');
 });
 
 test('BC回退链：所选字体→补充 6 片→其余五款→楷体→宋体', () => {

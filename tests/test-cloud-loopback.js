@@ -64,7 +64,7 @@ test('回环：init 以服务端 openid 建号，注册赠分 15 经服务端到
     const bal = await dataService.getPointsBalance();
     assert.eq(bal, 15, '注册赠分 15 应经服务端发放到账');
     const profile = await dataService.getProfile();
-    assert.eq(profile.displayName, '微信用户', '新号无昵称显示"微信用户"');
+    assert(/^礼友\d{4}$/.test(profile.displayName), '新号无昵称显示按账号生成的昵称（BG批「礼友＋数字」）');
   } finally { dataService._resetForTest(); }
 });
 

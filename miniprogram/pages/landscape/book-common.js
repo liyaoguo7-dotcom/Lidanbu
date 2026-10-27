@@ -133,7 +133,7 @@ function createBookPage(kind) {
       this._handleResize(w, h);
     },
 
-    /** BD批：每本固定列数（用户定版暂定 15），与纸面定宽配套 */
+    /** 每本固定列数（BD批定 15、BG批改 14），与纸面定宽配套 */
     _minCols() {
       return LC.SPEC.BOOK_COLS;
     },
@@ -205,14 +205,19 @@ function createBookPage(kind) {
       const s = this.data.spec.scale;
       if (!t || !t.marginTile) return;
       /* BD批书体定宽：纸面恰好容纳 BOOK_COLS 列＋左右两根卷轴槽，
-       * midrow 按此宽居中——卷轴两侧内收、离屏幕边缘留出留白纹。 */
+       * midrow 按此宽居中——卷轴两侧内收、离屏幕边缘留出留白纹。
+       * BG批真居中：midrow 是在 frame 内容盒（已扣左右安全区）里居中，
+       * 挖孔屏左右安全区不等宽时整本会偏向一侧（真机右边距明显比左边窄）。
+       * bookShiftX = (右垫 − 左垫)/2，把整本平移回物理屏幕正中：
+       * 两根卷轴离屏幕左右边的距离由此相等，与机型/旋转方向无关。 */
       const slotW = (this.data.scrollBox && this.data.scrollBox.slotW) || this.data.spec.scrollW || 0;
       const bookW = Math.round(LC.SPEC.BOOK_COLS * this.data.spec.colW + 2 * slotW);
+      const bookShiftX = Math.round(((this.data.safePadR || 0) - (this.data.safePadL || 0)) / 2);
       this.setData({
         view: {
           marginTileW: Math.round(t.marginTile.w * s), marginTileH: Math.round(t.marginTile.h * s),
           paperTileW: Math.round(t.paperTile.w * s), paperTileH: Math.round(t.paperTile.h * s),
-          bookW,
+          bookW, bookShiftX,
         },
       });
     },

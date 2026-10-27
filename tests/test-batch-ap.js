@@ -38,8 +38,8 @@ assert.ok(!invWxml.includes('纸质礼簿越记越厚，翻找一笔好费劲？
 /* AP-4 往来页：版式数值 + 排序比较器 */
 const wlWxss = rd('miniprogram/pages/wanglai/wanglai.wxss');
 assert.ok(wlWxss.includes('padding: 6px 12px 2px'), 'AP-4 时间行顶部 padding 应 10px→6px（整体上移）');
-assert.ok(wlWxss.includes('.searchbar { padding: 4px 12px; }'), 'AP-4 搜索框行与全部时间距离应缩小（本页覆盖）');
-assert.ok(wlWxss.includes('margin: 10px 12px 0'), 'AP-4 对照卡与头部区应留独立灰隔（margin-top 4px→10px）');
+assert.ok(wlWxss.includes('.searchbar { padding: 4px 12px 0; }'), 'AP-4/BG 搜索框行下 padding 归 0、直接接白色方块列');
+assert.ok(wlWxss.includes('margin: 6px 0 0'), 'AP-4/BG 对照卡全宽贴合（BG批取消灰隔，覆盖 AP 的 margin: 10px 12px 0）');
 assert.ok(wlWxss.includes('padding: 13px 16px'), 'AP-4 联系人行上下 padding 应 9px→13px');
 const stats = rd('core/stats.js');
 assert.ok(stats.includes('lastDate'), 'AP-4 stats 应跟踪 lastDate');

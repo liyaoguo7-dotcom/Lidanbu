@@ -6,7 +6,7 @@
  *      ④ 邀请分享（唯一邀请入口，原两个入口已合并为这一个）
  *      ⑤ 通知 / 意见反馈 / 常见问题 / 关于我们 / 联系客服（微信客服按钮）
  *      ⑥ 底部淡字「隐私政策｜注销账号」+ 版本号
- * 昵称默认显示「微信用户」（data-service.displayName 口径），不再写死"我"。
+ * 昵称默认显示按账号自动生成的昵称（BG批「礼友＋数字」，core/users.displayName 口径），不再写死"我"。
  */
 const dataService = require('../../services/data-service.js');
 const landscapeRoute = require('../../services/landscape-route.js');
@@ -23,9 +23,8 @@ function fmtDate(ts) {
 
 Page({
   data: {
-    displayName: '微信用户',
+    displayName: '礼友',
     avatarUrl: '',
-    avatarInitial: '微',
     memberStateText: '免费用户',
     isMember: false,
     memberText: '',
@@ -84,7 +83,6 @@ Page({
       this.setData({
         displayName: p.displayName,
         avatarUrl: p.avatarUrl || '',
-        avatarInitial: (p.displayName || '微').slice(0, 1),
       });
     } catch (e) { /* 演示期忽略 */ } })());
     jobs.push((async () => { try {

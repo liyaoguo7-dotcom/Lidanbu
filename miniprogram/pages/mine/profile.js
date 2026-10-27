@@ -2,7 +2,7 @@
  * 礼单簿 · 个人资料（任务Q2）
  * 头像用微信现行 chooseAvatar 按钮（open-type="chooseAvatar"）、昵称用
  * type="nickname" 输入框；保存走 data-service.updateProfile（长度与敏感词
- * 校验在 core，错误是委婉文案直接 toast）。默认显示名「微信用户」。
+ * 校验在 core，错误是委婉文案直接 toast）。默认显示名按账号生成（「礼友＋数字」）。
  * 选头像属于隐私接口：进入选择前先过页面层隐私守卫（privacy-guard），
  * 未同意先弹 privacy-modal，同意后才露出真正的选头像按钮。
  */

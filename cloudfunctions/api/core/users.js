@@ -4,7 +4,9 @@
  * [显示名] 不设单独的"名字"字段。记录里只存记账人的 openid（createdBy），
  * 名字一律在**读取时**用 displayName(作者用户) 现解析——所以用户改了昵称，
  * 历史记录里"这笔是谁记的"会同步显示新昵称，不需要回写任何历史数据。
- * displayName 口径：profile.nickname 非空 → 昵称；否则 → '微信用户'。
+ * displayName 口径：profile.nickname 非空 → 昵称；否则 → 按账号自动生成的
+ * 昵称（BG批用户要求：generatedNickname，「礼友」＋4 位数字，由 openid
+ * 派生、同账号恒定；微信号微信不开放给小程序、拿不到，只能生成）。
  * （兼容：旧版本曾在用户顶层写死 nickname='我'，那是程序写的占位、
  * 不是用户自设的昵称，按未设置处理；顶层 nickname 若是其他非空值则沿用。）
  *
@@ -32,10 +34,24 @@ const audit = require('./audit');
 const contentSafety = require('./content-safety');
 const AppConfig = require('../miniprogram/config/app-config');
 
-const DEFAULT_DISPLAY_NAME = '微信用户';
+const DEFAULT_DISPLAY_NAME = '礼友'; // BG批：无昵称时的默认名（有账号编号时后面带 4 位数字）
 const LEGACY_PLACEHOLDER_NICKNAME = '我'; // 旧版本写死的自称占位，非用户自设
 
-/** 显示名解析（读取时调用）：昵称非空用昵称，否则 '微信用户' */
+/**
+ * 自动生成昵称（BG批）：由 openid 派生「礼友」＋4 位数字（1000–9999）。
+ * 纯函数、同输入同输出——同一账号每次解析都是同一个名字，不落库、不乱变；
+ * 不同账号绝大多数不同（四位空间 9000，撞号也只是名字像、不影响数据隔离，
+ * 数据一律按 openid 分）。无 openid（用户文档缺失等）时只返回「礼友」。
+ */
+function generatedNickname(openid) {
+  const seed = typeof openid === 'string' ? openid : '';
+  if (!seed) return DEFAULT_DISPLAY_NAME;
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return DEFAULT_DISPLAY_NAME + (1000 + (h % 9000));
+}
+
+/** 显示名解析（读取时调用）：昵称非空用昵称，否则按账号生成昵称 */
 function displayName(user) {
   if (user) {
     const nick = user.profile && user.profile.nickname;
@@ -44,6 +60,7 @@ function displayName(user) {
     if (typeof legacy === 'string' && legacy.trim() && legacy.trim() !== LEGACY_PLACEHOLDER_NICKNAME) {
       return legacy.trim();
     }
+    return generatedNickname(user._id);
   }
   return DEFAULT_DISPLAY_NAME;
 }
@@ -170,6 +187,7 @@ async function attachCreatorNames(db, records) {
 
 module.exports = {
   DEFAULT_DISPLAY_NAME,
+  generatedNickname,
   displayName,
   consentOf,
   getPrivacyConsent,

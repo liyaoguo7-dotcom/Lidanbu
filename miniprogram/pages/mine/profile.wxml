@@ -20,7 +20,7 @@
     <input class="form-val" type="nickname" placeholder="点这里填昵称" placeholder-style="color:#C2C2C2"
            value="{{nickname}}" maxlength="{{maxLen}}" bindinput="onNicknameInput" />
   </view>
-  <view class="count-hint">{{nickname.length}}/{{maxLen}}（不填就显示「微信用户」；家人看到你记的账时，显示的就是这个昵称）</view>
+  <view class="count-hint">{{nickname.length}}/{{maxLen}}（不填就显示系统按账号生成的昵称，如「礼友1234」；家人看到你记的账时，显示的就是这个昵称）</view>
   <view class="form-row">
     <text class="form-label">会员状态</text>
     <text class="form-val">{{memberText}}</text>

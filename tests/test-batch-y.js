@@ -31,7 +31,7 @@ test('任务Y-B列序：第一条放最左、记录正序向右、空列补在�
   assert.eq(built.columns[1].recordId, '2', '第二条紧随其右');
   assert.eq(built.columns[2].recordId, '3', '第三条再右');
   assert(built.columns.slice(3).every((c) => c.empty), '其余列全是空格子');
-  assert.eq(built.emptyCount, 12, '空列数 = 15 - 3（BD批定版15列）');
+  assert.eq(built.emptyCount, 11, '空列数 = 14 - 3（BG批定版14列）');
 });
 
 test('任务Y-B列序：超一屏按记录数扩展且顺序不乱（左右滑动查看）', () => {

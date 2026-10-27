@@ -17,7 +17,8 @@
 <!-- ① 个人资料条 -->
 <view class="card profile" bindtap="onProfile">
   <image wx:if="{{avatarUrl}}" class="avatar avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
-  <view wx:else class="avatar avatar-initial">{{avatarInitial}}</view>
+  <!-- BG批：没设头像时用空白人头默认头像，不再拿显示名首字（原「微」字）顶 -->
+  <image wx:else class="avatar avatar-img" src="/assets/avatar-default.png" mode="aspectFill" />
   <view>
     <text class="uname">{{displayName}}</text>
     <text class="usub">{{memberStateText}}</text>

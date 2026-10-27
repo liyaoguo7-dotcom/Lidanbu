@@ -7,7 +7,9 @@
   height: 100vh;
   box-sizing: border-box;
 }
-.wl-scroll { flex: 1; height: 0; }
+/* BG批：列表区整片白底——与上方对照卡/合计/差额连成一片，滚动区里也不露灰 */
+.wl-scroll { flex: 1; height: 0; background: #fff; }
+.wl-scroll .card { margin: 0; border-radius: 0; }
 /* 任务AC 第 7 项（用户标"重点"）：本页全部文字字号整体大一号（+1px），只动本页、不动全局。
    姓名原名义 16px 与其他列表页同值，但用户观感明显偏小（疑与同行 13~15px 小字衬托有关），按用户原话整体 +1。 */
 .member-tip {
@@ -50,14 +52,17 @@
   padding: 4px 0 2px;
 }
 /* AP批：搜索框行与"全部时间"行的距离缩小（全局 .searchbar 上下 10px →
-   本页 4px；与 .daterange 下边距合计 14px→6px）。只覆盖本页，不动全局。 */
-.searchbar { padding: 4px 12px; }
+   本页 4px；与 .daterange 下边距合计 14px→6px）。只覆盖本页，不动全局。
+   BG批：下 padding 归 0，搜索行直接接下方白色方块列、不留灰缝。 */
+.searchbar { padding: 4px 12px 0; }
 /* 左右对照：收礼（左）、送礼（右）；上总额、下笔数 */
+/* BG批（用户点名，覆盖 AP 的灰隔版式）：从对照卡起，合计行、差额条、
+   联系人名单连成一整片——全宽、无圆角、方块挨方块，之间不露一点灰，
+   整页随之变紧凑。 */
 .compare {
   display: flex;
-  margin: 10px 12px 0;
+  margin: 6px 0 0;
   background: #fff;
-  border-radius: 12px;
   overflow: hidden;
 }
 .side {
@@ -79,19 +84,19 @@
   margin-top: 6px;
 }
 .side-count { font-size: 13px; color: #999; margin-top: 4px; }
-/* 合计 */
+/* 合计（BG批：白底，与上下方块直接贴合，不再坐在灰底上） */
 .total-line {
   text-align: center;
   font-size: 14px;
   color: #666;
-  padding: 10px 0 2px;
+  background: #fff;
+  padding: 8px 0;
 }
 /* 差额区：淡黄底红字，绝对值无符号 */
 .diff-bar {
-  margin: 8px 12px 12px;
-  padding: 14px 16px;
+  margin: 0;
+  padding: 12px 16px;
   background: #FDF6E3;
-  border-radius: 12px;
   color: #E05353;
   text-align: center;
 }

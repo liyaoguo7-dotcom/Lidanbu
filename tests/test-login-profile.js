@@ -81,12 +81,16 @@ test('隐私同意记录：同意/撤回往返，版本号取配置', async () =
   assert(set2.agreed === false && set2.agreedAt === null, '撤回清时间');
 });
 
-test('显示名：默认"微信用户"，旧占位"我"也按未设置处理', async () => {
-  assert.eq(core.users.displayName(null), '微信用户', '无用户文档');
-  assert.eq(core.users.displayName({}), '微信用户', '无资料');
-  assert.eq(core.users.displayName({ nickname: '我' }), '微信用户', '旧写死占位不当真昵称');
-  assert.eq(core.users.displayName({ profile: { nickname: '  ' } }), '微信用户', '空白昵称');
+test('显示名：默认按账号生成「礼友＋数字」（BG批），旧占位"我"也按未设置处理', async () => {
+  assert.eq(core.users.displayName(null), '礼友', '无用户文档');
+  assert.eq(core.users.displayName({}), '礼友', '无资料无账号');
+  assert.eq(core.users.displayName({ nickname: '我' }), '礼友', '旧写死占位不当真昵称');
+  assert.eq(core.users.displayName({ profile: { nickname: '  ' } }), '礼友', '空白昵称');
   assert.eq(core.users.displayName({ profile: { nickname: '阿明' } }), '阿明', '已设昵称');
+  const gen = core.users.generatedNickname('some-openid-xyz');
+  assert(/^礼友\d{4}$/.test(gen), '生成昵称格式「礼友＋4位数字」');
+  assert.eq(core.users.generatedNickname('some-openid-xyz'), gen, '同账号生成结果恒定');
+  assert.eq(core.users.displayName({ _id: 'some-openid-xyz' }), gen, '有账号时显示名=生成昵称');
 });
 
 test('昵称修改后家庭共享显示同步：成员视角记账人名字随改名更新', async () => {
@@ -102,11 +106,11 @@ test('昵称修改后家庭共享显示同步：成员视角记账人名字随�
   let recs = await core.receive.listRecords(db, owner, owner, ev);
   const mine = recs.find((r) => r.createdBy === member);
   assert(mine, '成员记录在主人账本里');
-  assert.eq(mine.createdByName, '微信用户', '未设昵称时记账人显示"微信用户"');
+  assert.eq(mine.createdByName, core.users.generatedNickname(member), '未设昵称时记账人显示按其账号生成的昵称（BG批）');
   // 竖线树同样带记账人显示名
   let tl = await core.stats.timeline(db, owner, c1);
   const tItem = tl.items.find((i) => i.recordId === mine._id);
-  assert(tItem && tItem.createdByName === '微信用户', '竖线树记账人显示默认名');
+  assert(tItem && tItem.createdByName === core.users.generatedNickname(member), '竖线树记账人显示生成昵称');
 
   // 成员改昵称 → 历史记录显示同步更新（记录本身一个字不改）
   await core.users.updateProfile(db, member, { nickname: '阿明' });
@@ -173,6 +177,6 @@ test('资料：空昵称恢复默认，头像只存字符串', async () => {
   assert(p.displayName === '阿明' && p.avatarUrl === 'wxfile://tmp/avatar.png', '昵称头像落库');
   await core.users.updateProfile(db, u, { nickname: '   ' });
   p = await core.users.getProfile(db, u);
-  assert(p.nickname === '' && p.displayName === '微信用户', '空昵称恢复默认显示名');
+  assert(p.nickname === '' && p.displayName === core.users.generatedNickname(u), '空昵称恢复默认（按账号生成）显示名');
   assert.eq(p.avatarUrl, 'wxfile://tmp/avatar.png', '只改昵称不动头像');
 });
