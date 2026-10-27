@@ -6,6 +6,11 @@
  * 锚点逐张量测（alpha/均值色行扫描＋tools/draw-scrolls.py 参数互证）：
  * 五杆（classic/blue/pear/bamboo/cloud）环带行 41..52 / 783..794 → 线 41 / 795；
  * funeral 纹带行 34..103 / 732..801 → 线 34 / 802。本文件含零依赖 PNG 解码做像素互证。
+ * AW 再改锚（2026-10-27，用户看 AV 预览后亲定）：用户判定 AV 的环带外缘（41/795）
+ * 是"内侧横线"，改用外侧横线对齐——五杆锚点改为上环带下缘 52／下环带上缘 783
+ * （整条环带推到纸面跨度之外）；funeral 黑杆用户明说不动，保持 34/802。
+ * 故本文件锚点表与基准数字已按 AW 更新（逐条注明），像素互证（四条带缘都在）
+ * 不受影响、原样保留——AW 新锚用的 52/783 两条缘正在互证范围内。
  */
 const fs = require('fs');
 const path = require('path');
@@ -101,18 +106,21 @@ function rowExtent(img, y) {
 
 /* ---------- 锚点表：逐主题量测值 ---------- */
 
-test('AV 锚点表：六主题分界线行号（五杆 41/795、白事 34/802）', () => {
+test('AW 锚点表：六主题分界线行号（五杆外侧横线 52/783、白事保持 AV 锚 34/802）', () => {
   const L = LC.SCROLL_GEOM.LINES;
   for (const id of ['classic', 'blue', 'pear', 'bamboo', 'cloud']) {
-    assert.eq(L[id].top, 41, `${id} 上分界线 = 环带上沿 41`);
-    assert.eq(L[id].bottom, 795, `${id} 下分界线 = 环带下沿 795`);
+    // AW 改锚：41（上环带上沿）是用户判定的"内侧横线"，改取上环带下缘 52 为外侧横线
+    assert.eq(L[id].top, 52, `${id} 上分界线 = 上环带下缘 52（AW 外侧横线）`);
+    assert.eq(L[id].bottom, 783, `${id} 下分界线 = 下环带上缘 783（AW 外侧横线）`);
   }
-  assert.eq(L.funeral.top, 34, 'funeral 上分界线 = 纹带上沿亮线 34');
-  assert.eq(L.funeral.bottom, 802, 'funeral 下分界线 = 纹带下沿亮线 802');
-  // 镜像对称：线距图顶 = 图底距线（同一根杆上下同构）
+  assert.eq(L.funeral.top, 34, 'funeral 上分界线 = 纹带上沿亮线 34（AW 不动）');
+  assert.eq(L.funeral.bottom, 802, 'funeral 下分界线 = 纹带下沿亮线 802（AW 不动）');
+  // 镜像关系：funeral 严格对称；五杆 AW 锚差 1 行（52 的镜像 784 vs 下环带上缘 783，
+  // 环带为闭区间含端点的量测固有差），容差 1 行并以此断言锁住"至多差 1 行"
   for (const t of LC.THEME_LIST) {
     const a = L[t.id];
-    assert.eq(a.top, LC.SCROLL_GEOM.IMG_H - a.bottom, `${t.id} 分界线上下镜像对称`);
+    assert(Math.abs(a.top - (LC.SCROLL_GEOM.IMG_H - a.bottom)) <= 1,
+      `${t.id} 分界线上下近镜像（差 ${Math.abs(a.top - (LC.SCROLL_GEOM.IMG_H - a.bottom))} 行，应 ≤1）`);
     assert(a.bottom - a.top < LC.SCROLL_GEOM.SHAFT_H, `${t.id} 分界跨度小于杆身跨度（帽子探出比旧锚更多）`);
   }
 });
@@ -148,15 +156,15 @@ for (const t of LC.THEME_LIST) {
   });
 }
 
-test('AV 基准数字：五杆探出 15.99、白事探出 13.02（基准画布 294）', () => {
+test('AW 基准数字：五杆探出 20.91/21.32、白事探出 13.02 不变（基准画布 294）', () => {
   const c = LC.scrollLayout(LC.SPEC.PAPER_H, 'classic');
-  assert.eq(c.capTopPx, 15.99, 'classic 上探出 41×294/754 = 15.99');
-  assert.eq(c.capBotPx, 15.99, 'classic 下探出 15.99');
-  assert(near(c.slotW, 22.62, 0.001), 'classic 槽位宽 22.62');
-  assert(near(c.left, -5.85, 0.001), 'classic 图左移 −5.85');
+  assert.eq(c.capTopPx, 20.91, 'classic 上探出 52×294/731 = 20.91（AW 外侧横线锚）');
+  assert.eq(c.capBotPx, 21.32, 'classic 下探出 53×294/731 = 21.32（AW 外侧横线锚）');
+  assert(near(c.slotW, 23.33, 0.001), 'classic 槽位宽 23.33');
+  assert(near(c.left, -6.03, 0.001), 'classic 图左移 −6.03');
   const f = LC.scrollLayout(LC.SPEC.PAPER_H, 'funeral');
-  assert.eq(f.capTopPx, 13.02, 'funeral 上探出 34×294/768 = 13.02');
-  assert.eq(f.capBotPx, 13.02, 'funeral 下探出 13.02');
+  assert.eq(f.capTopPx, 13.02, 'funeral 上探出 34×294/768 = 13.02（AW 不动）');
+  assert.eq(f.capBotPx, 13.02, 'funeral 下探出 13.02（AW 不动）');
 });
 
 test('AV 缺省兼容：不带主题 = LINES_DEFAULT（与 classic 同锚）；未知主题回退缺省', () => {

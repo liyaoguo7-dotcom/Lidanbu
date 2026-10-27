@@ -78,3 +78,4 @@ require('./test-launch-gates');
   require('./test-batch-as.js');
   require('./test-batch-at.js');
   require('./test-batch-av.js');
+  require('./test-batch-aw.js');

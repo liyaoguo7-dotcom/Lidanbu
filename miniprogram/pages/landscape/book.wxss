@@ -71,14 +71,19 @@
 .scroll-img { position: absolute; pointer-events: none; }
 .scroll-img.flip { transform: scaleX(-1); }
 .paper {
-  flex: 1; position: relative; border: 2px solid; box-sizing: border-box;
+  flex: 1; position: relative; box-sizing: border-box;
+  /* AW（用户 2026-10-27 亲定）：纸面左右竖线去掉、直接以卷轴杆身为界（原 border
+     四边 2px 与杆身并排成双线）；只保留上下两条横线。六个样式、空本状态共用
+     这同一个 .paper 元素，一处改全生效。 */
+  border-top: 2px solid; border-bottom: 2px solid;
   background-repeat: repeat; overflow: hidden;
 }
+/* 角花同步 AW 口径：只留横段（贴上下横线），竖段去掉免得结合处再冒竖线 */
 .corner { position: absolute; width: 14px; height: 14px; border: 0 solid; z-index: 3; pointer-events: none; }
-.corner.tl { top: 3px; left: 3px; border-top-width: 2px; border-left-width: 2px; }
-.corner.tr { top: 3px; right: 3px; border-top-width: 2px; border-right-width: 2px; }
-.corner.bl { bottom: 3px; left: 3px; border-bottom-width: 2px; border-left-width: 2px; }
-.corner.br { bottom: 3px; right: 3px; border-bottom-width: 2px; border-right-width: 2px; }
+.corner.tl { top: 3px; left: 3px; border-top-width: 2px; }
+.corner.tr { top: 3px; right: 3px; border-top-width: 2px; }
+.corner.bl { bottom: 3px; left: 3px; border-bottom-width: 2px; }
+.corner.br { bottom: 3px; right: 3px; border-bottom-width: 2px; }
 .cols-scroll { width: 100%; height: 100%; }
 .cols-track { display: flex; flex-direction: row; height: 100%; }
 .col {
