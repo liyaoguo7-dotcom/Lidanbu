@@ -112,13 +112,13 @@ test('横置-字体加载失败：回退标记、不抛错、成功后写缓存�
   assert.eq(ok, false, '离线加载返回 false');
   assert.eq(fm.getState('lxgw'), 'failed', '失败状态');
   assert.eq(fm.isFallback('lxgw'), true, '回退标记');
-  assert.eq(st._map.get('landscape.fontLoaded.v8.lxgw'), undefined, '失败不写缓存标记（下次重试）');
+  assert.eq(st._map.get('landscape.fontLoaded.v9.lxgw'), undefined, '失败不写缓存标记（下次重试）');
 
   const okWx = { loadFontFace: (o) => o.success() };
   const fm2 = createFontManager({ wxApi: okWx, storage: st });
   assert.eq(await fm2.load('lxgw'), true, '加载成功');
   assert.eq(fm2.isFallback('lxgw'), false, '成功后非回退');
-  assert.eq(st._map.get('landscape.fontLoaded.v8.lxgw'), 1, '成功写缓存标记');
+  assert.eq(st._map.get('landscape.fontLoaded.v9.lxgw'), 1, '成功写缓存标记');
 
   const fm3 = createFontManager({ wxApi: {}, storage: memStorage() });
   assert.eq(await fm3.load('longcang'), false, '无 loadFontFace 时安全回退不抛错');
@@ -241,5 +241,5 @@ test('横置-请横屏文案：与定版图30逐字一致', () => {
   assert.eq(LC.ROTATE_COPY.sub, '横置礼单本仅支持横屏使用', '次提示');
   assert.eq(LC.ROTATE_COPY.lock, '没有反应？请先在手机控制中心关闭"竖屏锁定"', '锁屏提示');
   assert.eq(LC.ROTATE_COPY.backButton, '切换回竖置样式', '按钮'); // 定版图30原文（2026-10-22 曾改名「返回竖屏」，同日用户决定回退）
-  assert.eq(LC.SPEC.FONT_CREDIT, '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）', '字体署名');
+  assert.eq(LC.SPEC.FONT_CREDIT, '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体、枝芒行书、古典宋体、莫大毛笔（SIL OFL 1.1）', '字体署名');
 });

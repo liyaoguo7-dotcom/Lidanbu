@@ -27,7 +27,7 @@ const FONT_SRC_BASE = SUBPACKAGE_ROOT;
  * 若曾"加载成功"写下旧键，版本段一变旧键自然失效，强制用当前文件重载
  * （2026-10-22 任务AB 第 6 项：三款字体真机仍不可用的机制修复之一）。
  * 字体文件再重建时必须同步 bump 此版本号。 */
-const FONT_BUILD = 'v8'; // v8：AK批分包瘦身（马善政/龙藏删分包 woff2 兜底、只走云端；霞鹜文楷保留）；v7 为服务端代取 Data URL（AH批，已真机验通）；v6 为客户端下载转 Data URL、v5 为 TTF 临时链接优先、v4 为 woff2 临时链接
+const FONT_BUILD = 'v9'; // v9：AY批字体扩至六款（新增枝芒行书/古典宋体/莫大毛笔，云端 TTF 子集为新文件，强制重载） // v8：AK批分包瘦身（马善政/龙藏删分包 woff2 兜底、只走云端；霞鹜文楷保留）；v7 为服务端代取 Data URL（AH批，已真机验通）；v6 为客户端下载转 Data URL、v5 为 TTF 临时链接优先、v4 为 woff2 临时链接
 const LOADED_KEY_PREFIX = `landscape.fontLoaded.${FONT_BUILD}.`;
 
 function defaultStorage() {

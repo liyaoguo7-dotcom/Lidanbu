@@ -120,8 +120,8 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile, ocrHtt
     return tencentOcr.createAdapter({ httpPost: ocrHttpPost, fetchImage: downloadCloudFile });
   }
 
-  // —— 字体文件服务端代取（AH批）：白名单三款 TTF、容器内缓存 base64 ——
-  const FONT_FILE_WHITELIST = ['lxgw-wenkai.ttf', 'mashanzheng.ttf', 'longcang.ttf'];
+  // —— 字体文件服务端代取（AH批）：白名单 TTF（AY批扩至六款）、容器内缓存 base64 ——
+  const FONT_FILE_WHITELIST = ['lxgw-wenkai.ttf', 'mashanzheng.ttf', 'longcang.ttf', 'zhimang.ttf', 'cactus.ttf', 'bakudai.ttf']; // AY批：新增三款字体（枝芒行书/古典宋体/莫大毛笔）
   const _fontBase64Cache = new Map();
   async function handleFontFile(event) {
     const fileID = String((event && event.fileID) || '');

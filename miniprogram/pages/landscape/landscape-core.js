@@ -38,7 +38,7 @@ const SPEC = {
                          // 墨迹上轴承偏大属字形本身，不随版式变
   PLUS_VISUAL: 31,       // ＋视觉直径（约原来的 70%）
   PLUS_TOUCH: 44,        // ＋可点范围（不缩小）
-  FONT_CREDIT: '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）',
+  FONT_CREDIT: '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体、枝芒行书、古典宋体、莫大毛笔（SIL OFL 1.1）',
 };
 
 /** 列内总高（校验用）= 纸面高 PAPER_H 294 − 上下边框 4 = 290（基准画布实测几何，
@@ -143,11 +143,35 @@ function scrollLayout(paperHPx, themeId) {
   };
 }
 
+/**
+ * 莫大毛笔简→繁顶替表（AY批，用户 2026-10-27 定版方案）：莫大毛笔是台湾毛笔
+ * 字体，缺 133 个简体字（字表口径），其中 131 个可用它自带的繁体字形顶替
+ * （贺→賀、贰→貳），字仍是莫大自己的笔法；仅嵇、闫两字繁简皆无，走回退链。
+ * 本表只含字表（charset.txt 721 字）范围内的顶替对，与云端 bakudai.ttf
+ * 子集配套（子集已把被顶替的繁体字形一并收录）；表外字按既有回退链处理。
+ * 生成方法：OpenCC STCharacters 首选繁体 ∩ 莫大 cmap，脚本留痕见
+ * packages/fonts/README.md 的 AY 批说明。仅 bakudai 字体生效。
+ */
+const BAKUDAI_S2T = {'东':'東','严':'嚴','丧':'喪','为':'爲','丽':'麗','乌':'烏','乐':'樂','乔':'喬','习':'習','书':'書','仪':'儀','伟':'偉','传':'傳','储':'儲','养':'養','军':'軍','农':'農','冯':'馮','凤':'鳳','劳':'勞','单':'單','卢':'盧','卫':'衛','厍':'厙','发':'發','吕':'呂','圆':'圓','夹':'夾','实':'實','宫':'宮','帅':'帥','师':'師','库':'庫','应':'應','庞':'龐','张':'張','归':'歸','录':'錄','户':'戶','杨':'楊','汤':'湯','测':'測','润':'潤','满':'滿','爱':'愛','现':'現','窦':'竇','简':'簡','红':'紅','纪':'紀','组':'組','终':'終','经':'經','结':'結','统':'統','缑':'緱','缪':'繆','罗':'羅','聂':'聶','苏':'蘇','荣':'榮','萧':'蕭','蓝':'藍','蓟':'薊','蔺':'藺','计':'計','认':'認','记':'記','许':'許','试':'試','说':'說','诸':'諸','谈':'談','谢':'謝','谭':'譚','谯':'譙','贝':'貝','贡':'貢','贰':'貳','贲':'賁','费':'費','贺':'賀','贾':'賈','赏':'賞','赖':'賴','车':'車','轩':'軒','载':'載','辕':'轅','连':'連','邬':'鄔','郦':'酈','钟':'鍾','钦':'欽','钭':'鈄','钮':'鈕','钱':'錢','长':'長','门':'門','闵':'閔','闻':'聞','闾':'閭','阎':'閻','阙':'闕','阚':'闞','陆':'陸','陈':'陳','韦':'韋','韩':'韓','项':'項','须':'須','顾':'顧','预':'預','频':'頻','颛':'顓','颜':'顏','额':'額','风':'風','饶':'饒','马':'馬','驷':'駟','骆':'駱','鱼':'魚','鲁':'魯','鲍':'鮑','鲜':'鮮','鹏':'鵬','鹜':'鶩','齐':'齊','龙':'龍','龚':'龔'};
 const FONTS = [
   { id: 'lxgw', name: '霞鹜文楷', family: 'LxgwWenKai', calibration: 1.00, file: 'lxgw-wenkai.woff2', cloudFile: 'lxgw-wenkai.ttf' },
   { id: 'mashanzheng', name: '马善政毛笔体', family: 'MaShanZheng', calibration: 1.05, file: 'mashanzheng.woff2', cloudFile: 'mashanzheng.ttf' },
   { id: 'longcang', name: '龙藏体', family: 'LongCang', calibration: 1.20, file: 'longcang.woff2', cloudFile: 'longcang.ttf' },
+  { id: 'zhimang', name: '枝芒行书', family: 'ZhiMangXing', calibration: 1.16, file: 'zhimang.woff2', cloudFile: 'zhimang.ttf' },
+  { id: 'cactus', name: '古典宋体', family: 'CactusClassicalSerif', calibration: 1.00, file: 'cactus.woff2', cloudFile: 'cactus.ttf' },
+  { id: 'bakudai', name: '莫大毛笔', family: 'Bakudai', calibration: 1.12, file: 'bakudai.woff2', cloudFile: 'bakudai.ttf', charMap: BAKUDAI_S2T },
 ];
+
+/**
+ * 显示字替换（AY批）：字体自带 charMap 时把文本逐字换成顶替字（字数不变，
+ * 布局锚定/字距不受影响）；无 charMap 的字体原样返回。
+ */
+function mapDisplayText(fontId, text) {
+  const map = fontById(fontId).charMap;
+  const s = String(text == null ? '' : text);
+  if (!map) return s;
+  return Array.from(s).map((ch) => map[ch] || ch).join('');
+}
 const SONGTI_STACK = '"Songti SC","STSong","Noto Serif CJK SC",SimSun,serif';
 const KAITI_STACK = '"KaiTi","STKaiti","楷体"';
 
@@ -368,8 +392,12 @@ function buildColumns(records, opts = {}) {
     const r = list[i];
     const midText = opts.midText || midTextForTag(r.tagId);
     const cal = fontById(fontId).calibration;
-    const name = layoutName(r.name, cal);
+    const name = layoutName(mapDisplayText(fontId, r.name), cal);
     const amt = layoutAmount(r.amountFen, cal);
+    if (fontById(fontId).charMap) {
+      amt.text = mapDisplayText(fontId, amt.text);
+      amt.chars = amt.chars.map((c) => ({ ...c, ch: mapDisplayText(fontId, c.ch) }));
+    }
     cols.push({
       key: `rec-${r.id}`,
       empty: false,
@@ -492,6 +520,7 @@ module.exports = {
   USE_ENV_SAFE_AREA, SPEC, COL_INNER_H, scaledSpec, round2,
   SCROLL_GEOM, scrollLayout,
   FONTS, fontById, calibratedSize, renderFontSize, selectedStack, SONGTI_STACK, KAITI_STACK,
+  BAKUDAI_S2T, mapDisplayText,
   fontRoleForMid, MID_BY_TAG, midTextForTag,
   FUNERAL_KEYWORDS, isFuneralBook, resolveBookMidText,
   THEMES, THEME_LIST, themeById, resolveReceiveTheme, resolveReceiveTheme2,

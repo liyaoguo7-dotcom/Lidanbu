@@ -7,7 +7,7 @@ const AppConfig = require('../../config/app-config.js');
 Page({
   data: {
     version: AppConfig.version || '',
-    fontCredit: '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体（SIL OFL 1.1）',
+    fontCredit: '横置礼单本字体：霞鹜文楷、马善政毛笔体、龙藏体、枝芒行书、古典宋体、莫大毛笔（SIL OFL 1.1）',
   },
 
   onPrivacy() {

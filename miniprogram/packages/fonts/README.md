@@ -61,3 +61,27 @@ pyftsubset LongCang-Regular.ttf    --text-file=charset.txt --flavor=woff2 --outp
 字体来源的优先级、云存储开关（`CLOUD_FONT_BASE`）都在
 `miniprogram/services/font-source.js`，页面与横置代码只调
 `font-manager` 的接口，不直接引用本目录路径。
+
+## AY 批新增三款（2026-10-27，用户逐款亲选）
+
+云端代取专用 TTF（不进分包、候选不带分包兜底，与马善政/龙藏现行口径一致），
+文件名已登记进 `cloudfunctions/api/index.js` 的 FONT_FILE_WHITELIST：
+
+| 云端文件 | 字体 | 来源 | 子集口径 |
+|---|---|---|---|
+| `zhimang.ttf` | 枝芒行书 ZhiMangXing | Google Fonts（OFL） | 同 charset.txt 721 字（垚/郈/郤 原字体无字形，走回退链，同龙藏先例） |
+| `cactus.ttf` | 古典宋体 Cactus Classical Serif | Google Fonts（OFL） | 同 charset.txt 721 字，零缺字 |
+| `bakudai.ttf` | 莫大毛笔 Bakudai（Bold） | github.com/max32002/bakudaifont（OFL） | 721 字＋131 个繁体顶替字形 = 852 字（见下） |
+
+构建命令同上文（去掉 `--flavor=woff2` 即 TTF 输出）。
+
+**莫大毛笔简→繁顶替（用户定版方案）**：莫大是台湾毛笔字体，字表内缺 133 个
+简体字；其中 131 个的繁体字形它自带，运行时由 `landscape-core.js` 的
+`BAKUDAI_S2T` 在建列时逐字顶替（姓名与金额都走，只对 bakudai 生效，字数不变、
+原始数据不改）。子集必须把这 131 个繁体字形一并收录，故 bakudai 子集字表 =
+charset.txt ∪ 顶替目标集。顶替对生成法：OpenCC STCharacters 首选繁体 ∩ 莫大
+cmap。仅嵇、闫两字繁简皆无字形，走既有回退链（楷体→宋体），不出方框。
+
+**校准系数（landscape-core FONTS.calibration）**：构建期以探针字
+（李文博永国贺礼壹仟元整）墨迹面积几何均值对霞鹜文楷归一量测——同法复现
+马善政定版 1.05（量测 1.049）；新值：枝芒 1.16、古典宋体 1.00、莫大 1.12。
