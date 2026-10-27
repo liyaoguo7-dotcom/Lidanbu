@@ -69,7 +69,7 @@
                 </view>
                 <view class="zone zone-mid" style="height:{{spec.midH}}px;margin-top:{{spec.midShift}}px;">
                   <text wx:for="{{item.midChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
-                    style="top:{{ch.topPx}}px;font-size:{{item.midFontPx}}px;font-family:{{songtiStack}};color:{{item.midBlack ? '#15181B' : theme.midColor}};">{{ch.ch}}</text>
+                    style="top:{{ch.topPx}}px;font-size:{{item.midFontPx}}px;font-family:{{songtiStack}};color:{{item.midBlack ? '#15181B' : theme.midColor}};font-weight:{{item.midBlack ? 'bold' : 'normal'}};">{{ch.ch}}</text>
                 </view>
                 <view class="zone zone-amt" style="bottom:{{spec.amtBottomPad}}px;height:{{spec.amtH}}px;">
                   <text wx:for="{{item.amountChars}}" wx:for-item="ch" wx:key="ch" class="vchar"
