@@ -148,6 +148,11 @@ function buildTraceCall(action, detections, q) {
     fragments: (Array.isArray(detections) ? detections : []).map((d) => ({
       text: String((d && d.DetectedText) || ''),
       polygon: polygonPoints(d),
+      /* BB批：ItemPolygon 一并留痕——bboxOf 优先用它算框，只存 Polygon
+       * 会让离线重放与线上解析输入不一致（2026-10-27 真机 21 条定位教训） */
+      itemPolygon: d && d.ItemPolygon && typeof d.ItemPolygon.X === 'number'
+        ? { x: d.ItemPolygon.X, y: d.ItemPolygon.Y || 0, w: d.ItemPolygon.Width || 0, h: d.ItemPolygon.Height || 0 }
+        : null,
       confidence: d && typeof d.Confidence === 'number' ? d.Confidence : null,
     })),
   };
@@ -383,22 +388,68 @@ function clusterColumns(frags) {
 }
 
 /**
- * 竖排判定（AS批）：① 多数文本框高大于宽（整列竖条）；或
- * ② 按 X 分栏后多数栏呈"高瘦"形（栏高 ≥ 2.5×栏宽）且栏内碎片近方形/竖长
- * （单字逐个成框竖排成列的情形）。横排整行碎片（宽远大于高）不会误触 ②。
+ * 按碎片中心 X 聚类成列（BB批）：旧重叠聚类会被横跨数列的宽碎片（如纸面
+ * 印刷「贺礼」被引擎连读成「贺贺贺」的宽框）链式合并掉整列，真机样例
+ * 12 列被并成几大块、竖排判定随之失效（2026-10-27 留痕重放实证）。
+ * 中心聚类对宽框免疫：宽框只按其中心落入一列，文字内容另行滤除。
+ * 阈值随字号缩放（中位碎片高 ×0.8，下限 20px）：本例列内中心距 ≤20、
+ * 列间 ≥49，两侧留足余量。
  */
-function detectVertical(frags, columns) {
+function clusterByCentroid(frags) {
+  if (!frags.length) return [];
+  const heights = frags.map((f) => f.h).filter((h) => h > 0).sort((a, b) => a - b);
+  const medH = heights.length ? heights[Math.floor(heights.length / 2)] : 40;
+  const thr = Math.max(20, medH * 0.8);
+  const sorted = [...frags].sort((a, b) => (a.x + a.w / 2) - (b.x + b.w / 2));
+  const cols = [];
+  for (const f of sorted) {
+    const cx = f.x + f.w / 2;
+    const last = cols[cols.length - 1];
+    if (last && cx - last.cxMax <= thr) {
+      last.list.push(f);
+      last.cxMax = cx;
+    } else {
+      cols.push({ list: [f], cxMin: cx, cxMax: cx });
+    }
+  }
+  return cols.map((c) => ({
+    list: c.list,
+    xMin: Math.min(...c.list.map((f) => f.x)),
+    xMax: Math.max(...c.list.map((f) => f.x + f.w)),
+    yMin: Math.min(...c.list.map((f) => f.y)),
+    yMax: Math.max(...c.list.map((f) => f.y + f.h)),
+    cxMin: c.cxMin,
+    cxMax: c.cxMax,
+  }));
+}
+
+/**
+ * 竖排判定（AS批立、BB批改 ②）：① 多数文本框高大于宽（整列竖条）；或
+ * ② 按中心聚类后，多数列呈"高瘦"形：列内中心 X 跨度加中位字宽仍远小于
+ * 列高（≥2.5×），且每列至少 3 个碎片（单字逐个成框竖排成列的情形）。
+ * 横排文档中心聚类后多为少数宽列或矮列，不会误触 ②。
+ */
+function detectVertical(frags, columns, centroidCols) {
   const tall = frags.filter((f) => f.h > f.w).length;
   if (tall > frags.length / 2) return true;
-  if (columns.length < 2) return false;
-  const vertCols = columns.filter((c) => {
+  const cols = Array.isArray(centroidCols) && centroidCols.length ? centroidCols : columns;
+  if (!cols || cols.length < 2) return false;
+  const widths = frags.map((f) => f.w).filter((w) => w > 0).sort((a, b) => a - b);
+  const medW = widths.length ? widths[Math.floor(widths.length / 2)] : 40;
+  const vertCols = cols.filter((c) => {
+    if (c.list.length < 3) return false;
     const colH = c.yMax - c.yMin;
-    const colW = Math.max(1, c.xMax - c.xMin);
+    const colW = Math.max(1, (c.cxMax != null ? c.cxMax - c.cxMin : c.xMax - c.xMin) + medW);
     if (colH < 2.5 * colW) return false;
-    const squarish = c.list.filter((f) => f.w <= f.h * 1.3).length;
-    return squarish > c.list.length / 2;
+    /* 防横排表格误触：竖排列内碎片应近方形/竖长（字框），横排表格的
+     * 单元格是宽框——列内中位宽 > 1.3×中位高则不算竖排列（AS 旧守卫） */
+    const ws = c.list.map((f) => f.w).sort((a, b) => a - b);
+    const hs = c.list.map((f) => f.h).sort((a, b) => a - b);
+    const mW = ws[Math.floor(ws.length / 2)];
+    const mH = hs[Math.floor(hs.length / 2)];
+    return mW <= mH * 1.3;
   });
-  return vertCols.length > columns.length / 2;
+  return vertCols.length >= cols.length * 0.6;
 }
 
 /** 竖排整列拼读文本按金额切笔：每笔止于一个金额，金额后残余并入该笔备注 */
@@ -424,21 +475,80 @@ function splitColumnText(text) {
   return rows;
 }
 
+/* ---------------- 竖排金额误读救援（BB批） ----------------
+ * 真机留痕实证：竖排手写大写金额被两家引擎系统性误读——贰→式、佰→伯/们/
+ * 的/永/旧/日/修、整→单个拉丁字母，且佰、元常整字丢失（如「伍 m」实为
+ * 伍佰元整、「式伯元」实为贰佰元）。标准中文金额式认不出这类尾串，整列
+ * 金额全空。救援口径（仅竖排列、标准解析无金额时启用）：
+ * 从列尾回扫「金额字母表」字符（数字/佰位误读字/元/整与拉丁碎字），
+ * 尾串里第一个数字字定百位：礼单大写金额以佰为常态量级，尾串含佰位字、
+ * 或含元、或长度 ≥2 时按 ×100 解码；再把尾串头部的非数字字还给姓名
+ * （防姓名末字是永/的等被误吞）。尾串含拾/仟/万（高阶金额）不救，
+ * 交回标准路径/留空待用户在核对页补——宁缺毋滥。
+ * 姓名顺带清理：去掉标点（、，,。·）与拉丁碎字（引擎杂讯）。 */
+const VERT_NUM = { 壹: 1, 贰: 2, 叁: 3, 肆: 4, 伍: 5, 陆: 6, 柒: 7, 捌: 8, 玖: 9, 式: 2 };
+const VERT_BAI = new Set(['佰', '伯', '们', '的', '永', '旧', '日', '修', '花']);
+const VERT_YUAN = new Set(['元', '圆', '不']);
+const VERT_HIGH = new Set(['拾', '仟', '万', '萬', '亿']);
+function isVertAmountChar(ch) {
+  return VERT_NUM[ch] != null || VERT_BAI.has(ch) || VERT_YUAN.has(ch)
+    || ch === '整' || ch === '正' || /[A-Za-z0-9]/.test(ch);
+}
+function decodeVerticalAmountTail(text) {
+  let i = text.length - 1;
+  while (i >= 0 && isVertAmountChar(text[i])) i--;
+  let tail = text.slice(i + 1);
+  if (!tail) return null;
+  if ([...tail].some((ch) => VERT_HIGH.has(ch))) return null;
+  const firstNum = [...tail].findIndex((ch) => VERT_NUM[ch] != null);
+  if (firstNum < 0) return null;
+  tail = tail.slice(firstNum);
+  const name = text.slice(0, text.length - tail.length)
+    .replace(/[、，,。·\s]/g, '').replace(/[A-Za-z0-9]/g, '');
+  if (!name) return null;
+  const digit = VERT_NUM[tail[0]];
+  const hasBai = [...tail].some((ch) => VERT_BAI.has(ch));
+  const hasYuan = [...tail].some((ch) => VERT_YUAN.has(ch));
+  if (!hasBai && !hasYuan && tail.length < 2) return null;
+  return { name, amountFen: digit * 100 * 100 };
+}
+
 /**
- * 竖排解析：按 X 分列（跨列绝不串）、列序左到右（冻结契约：左列→右列，
+ * 竖排解析：按中心 X 分列（跨列绝不串）、列序左到右（冻结契约：左列→右列，
  * 与横排同向；真机样例第 1 条正是「張」即最左列首字）、列内 Y 自上
  * 而下拼读成笔。红纸礼单每列中段的纸面印刷字「贺礼/賀禮」、白事礼单的
  * 「奠仪/奠儀」都不是内容，
  * 拼读后先滤除再拆姓名/金额（样例图 12 列每列都有）。
+ * 标准拆分整列无金额时走 decodeVerticalAmountTail 救援（BB批）。
  */
 function parseVertical(frags, columns) {
   const cols = [...columns].sort((a, b) => a.xMin - b.xMin);
   const rows = [];
   for (const col of cols) {
-    const text = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x))
+    let text = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x))
       .map((f) => f.text).join('')
       .replace(/賀禮|贺礼|奠儀|奠仪/g, '');
-    if (text) rows.push(...splitColumnText(text));
+    /* BB批：成对标记滤除后仍会残留单字「贺/礼」——纸面印刷标记被引擎
+     * 跨列连读（如「贺贺贺」宽框）后按中心落进某一列、或同列的贺被分到
+     * 邻列，只剩单字。列首字保留（贺姓），其余位置的单字贺/礼按标记
+     * 残渣清除。 */
+    if (text.length > 1) text = text[0] + text.slice(1).replace(/[贺賀礼禮]/g, '');
+    if (!text) continue;
+    /* 金额：整列只有一个金额位时先走误读救援（标准式会把「伍元」认成
+     * 5 元、把「9 元」认成 9 元，反而挡住救援）；两个以上金额位（一列
+     * 多笔）仍走标准切分。救援不成再回标准路径。 */
+    if (findAllAmounts(text).length < 2) {
+      const rescued = decodeVerticalAmountTail(text);
+      if (rescued) {
+        /* 姓名出口与标准路径一致：繁转简（zh-t2s） */
+        rows.push({ name: toSimplified(rescued.name), amountFen: rescued.amountFen, note: '', raw: text });
+        continue;
+      }
+    }
+    for (const r of splitColumnText(text)) {
+      /* 竖排姓名净化：去掉拉丁碎字与标点（引擎杂讯，如「E峰」「刘,x以」） */
+      rows.push({ ...r, name: String(r.name || '').replace(/[A-Za-z0-9、，,。·\s]/g, '') });
+    }
   }
   return rows;
 }
@@ -547,7 +657,11 @@ function parseDetections(detections) {
     .filter(Boolean);
   if (!frags.length) return [];
   const columns = clusterColumns(frags);
-  return detectVertical(frags, columns) ? parseVertical(frags, columns) : parseHorizontal(frags, columns);
+  /* BB批：竖排走中心聚类（对横跨数列的宽框免疫）；横排沿用重叠聚类不变 */
+  const centroidCols = clusterByCentroid(frags);
+  return detectVertical(frags, columns, centroidCols)
+    ? parseVertical(frags, centroidCols)
+    : parseHorizontal(frags, columns);
 }
 
 /* ---------------- 识别质量评估（AS批质量门，纯函数） ----------------
@@ -702,6 +816,8 @@ module.exports = {
   splitNameAmount,
   parseChineseAmount,
   findAllAmounts,
+  clusterByCentroid,
+  decodeVerticalAmountTail,
   assessQuality,
   createAdapter,
   HOST,
