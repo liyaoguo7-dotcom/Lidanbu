@@ -25,6 +25,7 @@ require('./test-batch-aq-behavior');
 require('./test-batch-ar-behavior');
 require('./test-batch-as-behavior');
 require('./test-batch-at-behavior');
+require('./test-batch-au-behavior');
 require('./test-cloud-export');
 require('./test-db-cloud');
 require('./test-api-dispatch');
