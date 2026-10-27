@@ -101,7 +101,7 @@ test('BA-5 核对页：记录间分隔 #E8E8E8+留白、确认按钮进不透明
   // 分隔：记录间线 #E8E8E8 1px＋上下留白（卡底 padding＋非首条头部加高）
   assert(/\.item-card\s*\{[^}]*border-bottom: 1px solid #E8E8E8/.test(wxss), '记录间分隔线应为 #E8E8E8 1px');
   assert(/\.item-card\s*\{[^}]*padding-bottom: 10px/.test(wxss), '记录间线下侧（本卡底部）应多留约 10px 空白');
-  assert(/\.item-head\s*\{[^}]*padding: 18px/.test(wxss), '记录间线上侧（下一条头部）应多留空白');
+  assert(/\.item-head\s*\{[^}]*background: #FAF3E3/.test(wxss), '每条第一行应带浅米色带 #FAF3E3（用户追加）');
   // 按钮底栏：容器白底不透明＋顶边线；按钮本页覆盖纯主红、无 btn-bottom 悬空形态
   assert(wxml.includes('class="review-bar"'), '确认按钮应放进固定底栏容器');
   assert(wxml.includes('review-confirm'), '确认按钮应带本页覆盖类');

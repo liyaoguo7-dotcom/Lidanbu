@@ -30,7 +30,7 @@
   padding-bottom: 10px;
 }
 .item-card.item-first { margin-top: 10px; border-radius: 12px 12px 0 0; }
-.item-card.item-first .item-head { padding-top: 8px; }
+.item-card.item-first .item-head { border-radius: 12px 12px 0 0; }
 .item-card.item-last { border-radius: 0 0 12px 12px; border-bottom: none; margin-bottom: 10px; }
 .item-card.item-first.item-last { border-radius: 12px; }
 .item-card .form-row { min-height: 46px; }
@@ -38,7 +38,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 16px 0;
+  /* BA再补（用户 2026-10-27 追加）：每条第一行带一条浅米色带（与标题栏
+     #F0E6D4 同族的更浅一号 #FAF3E3，不违和），记录之间一眼可分；
+     配合卡底 #E8E8E8 分隔线＋留白（原 18px 顶距由色带 10px 上下距替代） */
+  background: #FAF3E3;
+  padding: 10px 16px;
 }
 .item-no { font-size: 13px; color: #999; }
 .item-del { font-size: 13px; color: #F0575A; padding: 4px 0 4px 12px; }
