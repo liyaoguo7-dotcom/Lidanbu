@@ -98,6 +98,16 @@ function createBookPage(kind) {
       // 字体在列渲染后才就绪的机型上，已排版文字可能不自动刷新（任务AB 第 6 项）：
       // 加载成功后用同内容再 setData 一次列模型，强制按新字体重排。
       if (ok) this._convertCols();
+      /* BF批（用户要求「不要有延迟」）：本页姓名有 721 子集外字时，
+       * 命中的补充片在就绪盖下先加载完再揭盖——打开第一眼缺字就是
+       * 枝芒行书，不出现先楷体顶着、过一会儿再换字的跳变。加载失败
+       * 不拦开页（回退链照常顶上）。 */
+      const suppNames = (this.data.allColumns || []).map((c) => (c.empty ? '' : c.name || '')).join('');
+      const suppChunks = LC.suppChunksForText(suppNames);
+      if (suppChunks.length && typeof fontManager.ensureSupplements === 'function') {
+        await fontManager.ensureSupplements(suppChunks);
+        this._convertCols();
+      }
       this.setData({ ready: true });
     },
 
