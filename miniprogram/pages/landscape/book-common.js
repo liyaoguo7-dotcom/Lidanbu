@@ -32,7 +32,7 @@ function createBookPage(kind) {
       rotateCopy: LC.ROTATE_COPY,
       credit: LC.SPEC.FONT_CREDIT,
       spec: LC.scaledSpec(844),
-      scrollBox: LC.scrollLayout(LC.SPEC.PAPER_H), // 卷轴贴合定位（AT-6，_applyOrientation 按实际纸高重算）
+      scrollBox: LC.scrollLayout(LC.SPEC.PAPER_H), // 卷轴贴合定位（AV 分界线锚，_applyOrientation 按实际纸高＋主题重算）
       theme: LC.THEMES.classic,
       fontId: 'lxgw',
       styleId: 'classic',
@@ -55,6 +55,7 @@ function createBookPage(kind) {
 
     // ---- 内部状态（不进 data） ----
     _machine: null,
+    _paperHPx: 0, // 最近一次 _applyOrientation 算出的实际纸高（主题切换时重算卷轴定位用）
     _store: null,
     _ownerId: '',
     _eventId: '',
@@ -162,15 +163,25 @@ function createBookPage(kind) {
         const mb = wx.getMenuButtonBoundingClientRect();
         if (mb && mb.left) styleRightPx = (w - mb.left) + 22; // 胶囊左缘外 12px 避让 + 任务Z 再左移 10px
       } catch (e) { /* 忽略，用兜底值 */ }
-      // 卷轴贴合（AT-6）：纸面实际高 = 窗口高 − 上下留白（frame 纵向三段定高＋midrow 弹性），
-      // 取不到窗口高时回退基准纸高；杆身对齐纸面、帽子探出、杆缘贴纸缘全在 scrollLayout 里。
+      // 卷轴贴合（AV 分界线锚）：纸面实际高 = 窗口高 − 上下留白（frame 纵向三段定高＋midrow 弹性），
+      // 取不到窗口高时回退基准纸高；分界线对齐纸面、帽子探出、杆缘贴纸缘全在 scrollLayout 里，
+      // 锚点逐主题不同，须带当前主题 id；主题随后变化时由 _syncScrollBox 按存下的纸高重算。
       const winH = info && info.windowHeight;
       const paperHPx = (winH && winH > spec.marginV + spec.marginB)
         ? winH - spec.marginV - spec.marginB : spec.paperH;
-      const scrollBox = LC.scrollLayout(paperHPx);
+      this._paperHPx = paperHPx;
+      const scrollBox = LC.scrollLayout(paperHPx, this.data.theme && this.data.theme.id);
       this.setData({ spec, safePadL: padL, safePadR: padR, styleRightPx, scrollBox });
       this._syncTileView();
       this._convertCols();
+    },
+
+    /** 主题变化后按新主题的分界线锚点重算卷轴定位（AV 批：锚点逐主题不同，
+     *  如白事纹带线 34/802 与其余五杆环带线 41/795；纸高沿用 _applyOrientation 存下的实际值） */
+    _syncScrollBox() {
+      this.setData({
+        scrollBox: LC.scrollLayout(this._paperHPx || LC.SPEC.PAPER_H, this.data.theme && this.data.theme.id),
+      });
     },
 
     /** 瓦片显示尺寸 = 瓦片原始尺寸 × 当前 scale（WXML 里不能做乘法，JS 先算好） */
@@ -254,6 +265,7 @@ function createBookPage(kind) {
         titleIcon: dataService.tagIcon(ev.tagId),
         allColumns: built.columns,
       });
+      this._syncScrollBox(); // 实际主题可能与所选样式不同（标题判白事），按实际主题锚点重算卷轴
       this._afterBuild(built);
     },
 
@@ -285,6 +297,7 @@ function createBookPage(kind) {
         titleIcon: '',
         allColumns: built.columns,
       });
+      this._syncScrollBox(); // 按（可能新换的）样式主题锚点重算卷轴定位
       this._afterBuild(built);
     },
 
@@ -445,6 +458,7 @@ function createBookPage(kind) {
       } else {
         this.setData({ theme: LC.themeById(this.data.styleId) });
       }
+      this._syncScrollBox(); // 分界线锚点随实际主题变，切样式后同步重算卷轴定位
       this._syncTileView();
       // 中段词跟随整本判定（AT批）：切样式后必须重建列，否则只是换了皮、
       // 列里仍是旧中段字（白事样式下仍印贺礼正是此缺口）。reload 内部走

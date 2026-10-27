@@ -43,7 +43,7 @@ assert.ok(!wxml.includes('spec.scrollW'), 'AT-6 卷轴不得再用 spec.scrollW 
 const wxss = rd('miniprogram/pages/landscape/book.wxss');
 assert.ok(/\.scroll-box\s*\{[^}]*position: relative/.test(wxss), 'AT-6 槽位应为定位容器');
 assert.ok(/\.scroll-img\s*\{[^}]*position: absolute/.test(wxss), 'AT-6 整图应在槽内绝对定位');
-assert.ok(bc.includes('LC.scrollLayout(paperHPx)'), 'AT-6 页面应按实际纸高算卷轴定位');
+assert.ok(bc.includes('LC.scrollLayout(paperHPx,'), 'AT-6 页面应按实际纸高算卷轴定位（AV 起带主题参数取分界线锚点）');
 assert.ok(bc.includes('scrollBox.slotW'), 'AT-6 paperInnerW 应按新槽位宽扣减');
 
 console.log('✓ AT批·接线静态断言全过');

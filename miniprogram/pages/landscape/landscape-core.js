@@ -75,36 +75,61 @@ function scaledSpec(windowWidth) {
 
 /** 字体表：校准系数使三款字体同格视觉等大（定版：文楷 1.00 / 马善政 1.05 / 龙藏 1.20） */
 /**
- * 卷轴贴合几何（AT-6，用户 2026-10-27 定版：卷轴与纸面成一体）。
- * 量测依据（2026-10-27 脚本逐行 alpha 扫描 assets/scrolls/scroll-*.png，
- * 6 个主题数值完全一致，同模不同色）：
- * - PNG 88×836；两端帽子组件各 23 行（行 0..22 / 813..835，圆头＋帽环，最宽 66）；
- * - 中间等宽杆身行 23..812（790 行），实绘 x∈[15,72]（宽 58，两侧透明各 15）；
- *   杆身上另有装饰环（行 41..52 / 783..794），在纸面跨度内、不算帽子。
- * 贴合规则：杆身段与纸面上下边对齐（杆顶＝纸顶、杆底＝纸底），帽子探出纸外；
- * 槽位宽＝杆身实绘宽，图按透明带左移，使杆身内侧实绘缘与纸面外缘重合（间隙 0）。
- * 基准画布（纸高 294）下：整图高 311.11、上下帽各探出 8.56（＜上留白 48／下留白 30，
- * 不顶屏幕边）、整图宽 32.75、槽位宽 21.58、图左移 −5.58。
+ * 卷轴贴合几何（AT-6 定版 → AV 批改锚，用户 2026-10-27）。
+ * 资产量测（脚本逐行 alpha 扫描 assets/scrolls/scroll-*.png，6 图同模不同色）：
+ * - PNG 88×836；两端帽子组件各 23 行（行 0..22 / 813..835）；
+ * - 中间等宽杆身行 23..812（790 行），实绘 x∈[15,72]（宽 58，两侧透明各 15）。
+ * AT-6 旧锚：杆身段 [23,813) 与纸面上下边对齐，帽子上下各探出 8.56（基准画布）。
+ * AV 改锚（用户看 AU 预览后亲定）：「棍杆上下那里有个横线，礼单和那个横线对齐」——
+ * 每根杆在帽下都有一条醒目的分界横线（杆身装饰环／纹带的外缘亮线），旧锚下这条线
+ * 落在纸面跨度以内（五杆约 6.7px、白事纹带上沿约 4.1px），纸边没压在线上。
+ * 新锚：上下两条分界横线分别与纸面上下边精确对齐，整图据此等比缩放/定位，
+ * 帽子探出量为派生值。分界线逐张量测（alpha/均值色行扫描＋tools/draw-scrolls.py
+ * 绘制参数互证，六张分别量、不假设一致）：
+ * - classic 红杆：杆身卷草纹环带行 41..52 / 783..794，带上沿线 y=41、带下沿线 y=795；
+ * - cloud 金杆：杆身环带（旧模环位）行 41..52 / 783..794，同 41 / 795
+ *   （注：宝塔帽底线 y=23 色差虽最强，但作锚帽子不升反降、与用户「帽子再往上提」矛盾，不取）；
+ * - blue/pear/bamboo 原三杆：杆身雕环行 41..52 / 783..794（轮廓外扩 [11,76]），同 41 / 795；
+ * - funeral 黑杆：祥云纹带行 34..103 / 732..801，带上沿亮线 y=34、带下沿亮线 y=802。
+ * 基准画布（纸高 294）派生值：五杆 k=294/754≈0.3899、上下各探出 41k≈15.99；
+ * funeral k=294/768≈0.3828、上下各探出 34k≈13.02。均 ＜上留白 48／下留白 30，不顶屏幕边。
+ * 杆缘贴纸缘零间隙不变：图按透明带左移 −SHAFT_X·k、槽位宽＝SHAFT_W·k；
+ * PAPER_H 与列几何一概不动。
  */
 const SCROLL_GEOM = {
   IMG_W: 88, IMG_H: 836,
   CAP_TOP: 23, CAP_BOT: 23,
   SHAFT_TOP: 23, SHAFT_H: 790,
   SHAFT_X: 15, SHAFT_W: 58,
+  /** AV 分界线锚点（图内 y 坐标：上分界线／下分界线，逐主题量测如上注释） */
+  LINES: {
+    classic: { top: 41, bottom: 795 },
+    blue: { top: 41, bottom: 795 },
+    pear: { top: 41, bottom: 795 },
+    bamboo: { top: 41, bottom: 795 },
+    cloud: { top: 41, bottom: 795 },
+    funeral: { top: 34, bottom: 802 },
+  },
+  LINES_DEFAULT: { top: 41, bottom: 795 },
 };
-/** 由实际纸面高（设备 px）算卷轴定位：等比缩放（同 k），整图恰好映射、无变形 */
-function scrollLayout(paperHPx) {
+/**
+ * 由实际纸面高（设备 px）与主题算卷轴定位：整图等比缩放（同 k），
+ * 该主题的上下分界横线恰对齐纸面上下边（AV 改锚）；themeId 缺省/未知走 LINES_DEFAULT。
+ */
+function scrollLayout(paperHPx, themeId) {
   const g = SCROLL_GEOM;
   const h = Number(paperHPx) > 0 ? Number(paperHPx) : SPEC.PAPER_H;
-  const k = h / g.SHAFT_H;
+  const lines = g.LINES[themeId] || g.LINES_DEFAULT;
+  const k = h / (lines.bottom - lines.top);
   return {
-    imgW: round2(g.IMG_W * k),            // 整图显示宽
-    imgH: round2(g.IMG_H * k),            // 整图显示高 = 纸高 + 上帽 + 下帽
-    top: round2(-g.CAP_TOP * k),          // 图顶偏移（负：上帽探出纸顶之上）
-    capTopPx: round2(g.CAP_TOP * k),      // 上帽探出量
-    capBotPx: round2(g.CAP_BOT * k),      // 下帽探出量
-    slotW: round2(g.SHAFT_W * k),         // 槽位宽 = 杆身实绘宽
-    left: round2(-g.SHAFT_X * k),         // 图左偏移：透明带移出槽外，杆身实绘缘贴纸缘
+    imgW: round2(g.IMG_W * k),                       // 整图显示宽
+    imgH: round2(g.IMG_H * k),                       // 整图显示高 = 纸高 + 上下探出
+    top: round2(-lines.top * k),                     // 图顶偏移（负：上分界线落纸顶）
+    capTopPx: round2(lines.top * k),                 // 纸顶之上探出量（帽＋分界线以上图段）
+    capBotPx: round2((g.IMG_H - lines.bottom) * k), // 纸底之下探出量
+    slotW: round2(g.SHAFT_W * k),                    // 槽位宽 = 杆身实绘宽
+    left: round2(-g.SHAFT_X * k),                    // 图左偏移：透明带移出槽外，杆身实绘缘贴纸缘
+    lineTop: lines.top, lineBottom: lines.bottom,    // 本次所用锚点（断言/调试用）
   };
 }
 

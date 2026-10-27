@@ -121,27 +121,31 @@ test('AT 卷轴几何：6 主题 PNG 量测一致（88×836／帽 23+23／杆身
   }
 });
 
-test('AT 卷轴定位：基准纸高 294 下杆身对齐纸面、帽子探出、杆缘贴纸缘（间隙 0）', () => {
+test('AT 卷轴定位（AV 改锚后）：基准纸高 294 下分界线对齐纸面、帽子探出、杆缘贴纸缘（间隙 0）', () => {
+  // AV 批（用户 2026-10-27）：锚点由「杆身 [23,813)」改为逐主题「分界横线」——
+  // 缺省（classic）锚 41/795：k = 294/754。本测试随改锚更新为分界线对齐断言，
+  // 六主题逐组断言见 test-batch-av-behavior；原 PNG 尺寸/覆盖断言在上一测试保留。
   const paperH = LC.SPEC.PAPER_H; // 294
   const L = LC.scrollLayout(paperH);
   const g = LC.SCROLL_GEOM;
-  const k = paperH / g.SHAFT_H;
-  // ① 整图高 = 纸高 + 两帽；顶偏移 = −上帽探出量
-  assert(near(L.imgH - paperH, L.capTopPx + L.capBotPx), '整图高超出纸高恰为两帽探出之和');
-  assert(near(L.top, -L.capTopPx), '图顶偏移 = −上帽探出量');
-  // ② 杆身上下边与纸面上下边对齐
-  assert(near(L.top + g.SHAFT_TOP * k, 0), '杆身顶 = 纸顶');
-  assert(near(L.top + (g.SHAFT_TOP + g.SHAFT_H) * k, paperH), '杆身底 = 纸底');
+  const lines = g.LINES_DEFAULT;
+  const k = paperH / (lines.bottom - lines.top);
+  // ① 整图高 = 纸高 + 上下探出；顶偏移 = −上探出量
+  assert(near(L.imgH - paperH, L.capTopPx + L.capBotPx), '整图高超出纸高恰为上下探出之和');
+  assert(near(L.top, -L.capTopPx), '图顶偏移 = −上探出量');
+  // ② 上下分界横线与纸面上下边对齐（误差 <1px）
+  assert(Math.abs(L.top + lines.top * k) < 1, '上分界线 = 纸顶');
+  assert(Math.abs(L.top + lines.bottom * k - paperH) < 1, '下分界线 = 纸底');
   // ③ 杆身实绘左右缘与槽位（纸缘）重合，间隙 0
   assert(near(L.left + g.SHAFT_X * k, 0), '杆身实绘左缘 = 槽位左缘');
   assert(near(L.left + (g.SHAFT_X + g.SHAFT_W) * k, L.slotW), '杆身实绘右缘 = 槽位右缘（纸缘）');
-  // 基准画布具体数字（量测表口径）
-  assert.eq(L.capTopPx, 8.56, '上帽探出 8.56');
-  assert.eq(L.capBotPx, 8.56, '下帽探出 8.56');
-  assert(near(L.slotW, 21.58, 0.001), '槽位宽 = 杆身实绘宽 21.58');
-  assert(near(L.left, -5.58, 0.001), '图左移 −5.58（透明带移出槽外）');
-  assert(L.capTopPx < LC.SPEC.MARGIN_V, '上帽探出小于上留白 48，不顶屏幕边');
-  assert(L.capBotPx < LC.SPEC.MARGIN_B, '下帽探出小于下留白 30，不顶屏幕边');
+  // 基准画布具体数字（AV 量测表口径：五杆同锚 41/795）
+  assert.eq(L.capTopPx, 15.99, '上探出 15.99（帽＋分界线以上图段）');
+  assert.eq(L.capBotPx, 15.99, '下探出 15.99');
+  assert(near(L.slotW, 22.62, 0.001), '槽位宽 = 杆身实绘宽 22.62');
+  assert(near(L.left, -5.85, 0.001), '图左移 −5.85（透明带移出槽外）');
+  assert(L.capTopPx < LC.SPEC.MARGIN_V, '上探出小于上留白 48，不顶屏幕边');
+  assert(L.capBotPx < LC.SPEC.MARGIN_B, '下探出小于下留白 30，不顶屏幕边');
   // 等比无变形：宽高同 k
   assert(near(L.imgW / g.IMG_W, L.imgH / g.IMG_H, 0.001), '整图宽高同比例缩放');
 });
