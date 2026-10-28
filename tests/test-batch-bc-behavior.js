@@ -72,15 +72,15 @@ test('BC回退链：所选字体→补充 6 片→其余五款→楷体→宋体
 test('BC缺字定位：子集内字不需要补充、虎/总定位到正确片', () => {
   assert.eq(LC.suppChunksForText('张三李四').length, 0, '子集内姓名不触发补充加载');
   assert.eq(LC.suppChunksForText('').length, 0, '空文本不触发');
-  assert.eq(LC.suppChunkIndexOf('总'), 1, '总（U+603B）落在第 2 片');
-  assert.eq(LC.suppChunkIndexOf('虎'), 4, '虎（U+864E）落在第 5 片');
+  assert.eq(LC.suppChunkIndexOf('总'), 3, '总（U+603B）落在第 4 片（BT批 12 片）');
+  assert.eq(LC.suppChunkIndexOf('虎'), 8, '虎（U+864E）落在第 9 片（BT批 12 片）');
   const chunks = LC.suppChunksForText('王总与李虎');
-  assert.eq(chunks.join(','), '0,1,4', '一页多字只取命中的片、去重升序（与也在 721 外→第 1 片）');
+  assert.eq(chunks.join(','), '0,3,8', '一页多字只取命中的片、去重升序（与也在 721 外→第 1 片）');
 });
 
-test('BC服务端白名单：补充字库 6 片可代取', () => {
+test('BC服务端白名单：补充字库 12 片可代取（BT批）', () => {
   const api = read('cloudfunctions/api/index.js');
-  for (let i = 1; i <= 6; i++) assert(api.includes(`'zhimang-supp${i}.ttf'`), `api 白名单含 zhimang-supp${i}.ttf`);
+  for (let i = 1; i <= 12; i++) assert(api.includes(`'zhimang-supp${i}.ttf'`), `api 白名单含 zhimang-supp${i}.ttf`);
 });
 
 test('BC就绪盖：book.wxml 在 ready 前盖住整帧（不闪默认样式帧）', () => {

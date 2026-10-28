@@ -196,23 +196,24 @@ function renderFontSize(nominalPx, fontId) {
  * 缺字靠这条回退链逐字回退，保证不出方框（真机回退表现待联调验证）。
  */
 /**
- * 补充字库（BC批）：六款字体的云端子集只含 721 字，虎、总等常用姓名
+ * 补充字库（BC批，BT批改 12 片）：六款字体的云端子集只含 721 字，虎、总等常用姓名
  * 字不在其中（用户 2026-10-27 真机点名）。补充库底本由用户选定为
  * 枝芒行书（全字库 GB2312 零缺字），补全 6763 字（一级＋二级）；
- * 单文件过大超过云端取字体通道的单次上限，故按码位序等分 6 片
- * （每片约 560–715KB），且字形按主字体「大一号」同口径放大 7%
- * （upem 1000→935）；平时不加载，页面文字出现子集外字时由
- * book-common 按字定位到所在片、只加载那一片（ensureSupplements）。
- * 不进 FONTS 列表（面板里不出现），只作回退链第二位起。
+ * 单文件过大超过云端取字体通道的单次上限，故按码位序等分 12 片
+ * （每片约 265–378KB，base64 约 354–504KB，低于已证实走通的莫大 634KB）；
+ * BT批另修旧片 name 表为空的硬伤（重打时写回族名 ZhiMangSuppN）。
+ * 平时不加载，页面文字出现子集外字时由 book-common 按字定位到所在片、
+ * 只加载那一片（ensureSupplements）。不进 FONTS 列表（面板里不出现），
+ * 只作回退链第二位起。
  */
-const SUPP_FONTS = [1, 2, 3, 4, 5, 6].map((i) => ({
+const SUPP_FONTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => ({
   id: `supp${i}`, name: `补充字库${i}`, family: `ZhiMangSupp${i}`,
   file: `zhimang-supp${i}.ttf`, cloudFile: `zhimang-supp${i}.ttf`,
 }));
 
 function selectedStack(fontId) {
   /* BC批回退链（用户定：缺字先用我们自己的其他字体、不要黑体）：
-   * 所选字体 → 补充字库 6 片 → 其余五款字体 → 系统楷体 → 系统宋体。
+   * 所选字体 → 补充字库 12 片（BT批） → 其余五款字体 → 系统楷体 → 系统宋体。
    * 未加载的字体族会被渲染器自动跳过，链长不影响已加载时的观感。 */
   const chosen = fontById(fontId).family;
   const supp = SUPP_FONTS.map((f) => `"${f.family}"`);

@@ -38,9 +38,9 @@ test('BD字体面板只留名字：无预览字「张三 壹仟元整」', () =>
 
 test('BD枝芒大一号＋补充底本枝芒：校准 1.24、补充族名/文件名一致', () => {
   assert.eq(LC.fontById('zhimang').calibration, 1.24, '枝芒校准 1.24');
-  assert.eq(LC.SUPP_FONTS.length, 6, '补充 6 片');
+  assert.eq(LC.SUPP_FONTS.length, 12, '补充 12 片（BT批）');
   assert.eq(LC.SUPP_FONTS[0].family, 'ZhiMangSupp1', '补充族名以枝芒为底');
   assert.eq(LC.SUPP_FONTS[5].cloudFile, 'zhimang-supp6.ttf', '补充云端文件名');
   const stack = LC.selectedStack('lxgw');
-  assert(stack.includes('"ZhiMangSupp1"') && stack.includes('"ZhiMangSupp6"'), '回退链含枝芒补充 6 片');
+  assert(stack.includes('"ZhiMangSupp1"') && stack.includes('"ZhiMangSupp12"'), '回退链含枝芒补充 12 片');
 });

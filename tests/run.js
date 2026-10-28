@@ -95,3 +95,4 @@ require('./test-launch-gates');
   require('./test-batch-aw.js');
   require('./test-batch-ax.js');
 require('./test-font-bs');
+require('./test-font-bt');
