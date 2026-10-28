@@ -51,9 +51,9 @@ test('任务AB-2/3/9横置：列宽（AC 改 50）、墨色加深、中段色逐
   assert.eq(LC.THEMES.blue.midColor, '#3D6A8F', '淡蓝中段深蓝');
   assert.eq(LC.THEMES.cloud.midColor, '#8A6520', '祥云金中段深金');
   assert.eq(LC.THEMES.bamboo.midColor, '#33684C', '竹青中段深绿');
-  assert.eq(LC.THEMES.funeral.midColor, '#15181B', '白事中段深灰');
+  assert.eq(LC.THEMES.funeral.midColor, '#000000', '白事中段纯黑（2026-10-28 用户定）');
   assert.eq(LC.THEMES.funeral.noRed, true, '白事仍守无红');
-  assert(readMp('pages/landscape/book.wxml').includes("item.midBlack ? '#15181B'"), '送礼页奠仪列中段色同步加深');
+  assert(readMp('pages/landscape/book.wxml').includes("item.midBlack ? '#000000'"), '送礼页奠仪列中段色同步纯黑');
 });
 
 // ---------- 4 Tab 图标重绘 ----------

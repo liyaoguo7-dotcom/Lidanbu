@@ -286,7 +286,7 @@ function resolveBookMidText({ tagId, title, styleId } = {}) {
  * 白事（funeral）：全页无红色——plus/高亮/中段/列线均为黑灰系，noRed=true 供测试与页面断言。
  * 2026-10-22 任务AB 第 3/9 项（用户真机反馈"字太淡"）：姓名/金额墨色加深一档
  * （贺礼类统一 #262019 深褐黑；白事 #2E3237），中段词颜色逐样式加深一档
- * （深红 #9E2A22 / 深蓝 #3D6A8F / 深金 #8A6520 / 深竹青 #33684C / 白事深灰 #15181B，仍无红）。
+ * （深红 #9E2A22 / 深蓝 #3D6A8F / 深金 #8A6520 / 深竹青 #33684C / 白事纯黑 #000000（2026-10-28 用户定，取代近黑），仍无红）。
  * AU批（2026-10-27，用户给参考图拍板搭配）：classic/cloud/funeral 三主题的卷轴杆图重绘——
  * 只取参考图的颜色/纹路/帽型（classic=深红小圆柱帽＋朱红卷草纹杆、cloud=金色一件式轴头＋米金淡祥云杆
  * （AW 批按金款参考图重绘：圆顶球头＋一层宽盘＋短收颈，删初版的多层盘与底环）、
@@ -338,7 +338,7 @@ const THEMES = {
   funeral: {
     id: 'funeral', name: '白事', kind: 'funeral',
     lineColor: '#3B4046', frameColor: '#3B4046', paperBg: '#FFFFFF', marginBg: '#F2F2F2',
-    midColor: '#15181B', inkColor: '#2E3237', plusBg: '#3B4046',
+    midColor: '#000000', inkColor: '#2E3237', plusBg: '#3B4046',
     highlightBorder: '#3B4046', highlightBg: 'rgba(59,64,70,0.08)',
     scrollImg: '/assets/scrolls/scroll-funeral.png',
     marginTile: TILES.FUNERAL.margin, paperTile: TILES.FUNERAL.paper, noRed: true,
