@@ -1,5 +1,9 @@
 /* 礼薄详情 */
-.pat-card { text-align: center; padding: 12px 0 0; position: relative; }
+.pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; }
+/* BV批：头部底色（喜事淡米，与斑马同一对颜色；白事淡灰，跟白事 palette 走），
+   与下面记录列表分开；卡片上 padding 挪到 pat-head 里，版式不变。 */
+.pat-head { background: #F7F3EA; padding: 12px 0 0; }
+.pat-head.baishi { background: #F2F2F2; }
 .pat-big {
   width: 64px; height: 64px; border-radius: 50%;
   background: #F1E6D3;

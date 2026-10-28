@@ -82,6 +82,18 @@ test('BV 收礼详情：搜索栏＋本地筛＋搜空态', () => {
   assert(js.includes('r.name.includes(kw)'), '本地按姓名筛');
 });
 
+test('BV 礼薄详情头部底色：头部单层底色、记录列表不动、白事淡灰', () => {
+  const wxml = readMp('pages/receive-detail/receive-detail.wxml');
+  assert(wxml.includes('class="pat-head {{isBaishi ? \'baishi\' : \'\'}}"'), '头部包一层 pat-head');
+  const headStart = wxml.indexOf('pat-head');
+  const recStart = wxml.indexOf('rec-row');
+  assert(headStart > 0 && headStart < recStart, '头部层在记录行之前');
+  assert(wxml.indexOf('total-line') > headStart && wxml.indexOf('total-line') < recStart, '共计在头部层内');
+  const wxss = readMp('pages/receive-detail/receive-detail.wxss');
+  assert(wxss.includes('.pat-head { background: #F7F3EA;'), '喜事头部淡米');
+  assert(wxss.includes('.pat-head.baishi { background: #F2F2F2; }'), '白事头部淡灰');
+});
+
 test('BV 往来搜索：同名两人只有有记录的出结果', async () => {
   const db = await h.newDB();
   const owner = await h.newUser(db, 'owner1', { status: 'member', expireAt: Date.now() + 30 * 86400e3, graceUntil: null });
