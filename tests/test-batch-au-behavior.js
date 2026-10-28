@@ -77,9 +77,9 @@ test('AU 主题仍 6 款：顺序、名称、卷轴映射不变（新杆是替�
   }
   // 色值抽查：本批不动任何主题色
   assert.eq(LC.THEMES.classic.paperBg, '#FFF8F2', 'classic 纸面色不变');
-  assert.eq(LC.THEMES.classic.midColor, '#9E2A22', 'classic 贺礼色不变');
+  assert.eq(LC.THEMES.classic.midColor, '#86241D', 'classic 贺礼色（2026-10-28 再加深一档）');
   assert.eq(LC.THEMES.cloud.paperBg, '#FDF8EC', 'cloud 纸面色不变');
-  assert.eq(LC.THEMES.cloud.midColor, '#8A6520', 'cloud 贺礼色不变');
+  assert.eq(LC.THEMES.cloud.midColor, '#75561B', 'cloud 贺礼色（2026-10-28 再加深一档）');
   assert.eq(LC.THEMES.funeral.paperBg, '#FFFFFF', 'funeral 纸面色不变');
   assert.eq(LC.THEMES.funeral.noRed, true, 'funeral 无红规则不变');
 });

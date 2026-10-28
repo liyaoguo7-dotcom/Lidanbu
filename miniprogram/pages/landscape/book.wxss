@@ -59,8 +59,10 @@
 .style-btn {
   margin-left: auto; z-index: 2; font-size: 17px; color: #F0575A; font-weight: 600;
   background: rgba(255,255,255,0.55); border-radius: 999px; padding: 4px 12px;
-  transform: translateY(6px);
+  transform: translateY(0px);
   /* 2026-10-22 任务Z 第 6 项：字号 13→17、改红字、整体下移 6px；
+     2026-10-28 用户真机反馈：上留白只剩 39，下移 6px 后按钮底缘贴到纸面，
+     故取消下移、恢复顶栏内垂直居中（等于往上移 6px），与纸面留出空隙；
      margin-right 由页面按微信胶囊实测位置内联注入（避让胶囊，WXML style 属性，
      任务Y 基础上再左移 10px 的量在 book-common 的偏移常量里） */
 }

@@ -286,7 +286,7 @@ function resolveBookMidText({ tagId, title, styleId } = {}) {
  * 白事（funeral）：全页无红色——plus/高亮/中段/列线均为黑灰系，noRed=true 供测试与页面断言。
  * 2026-10-22 任务AB 第 3/9 项（用户真机反馈"字太淡"）：姓名/金额墨色加深一档
  * （贺礼类统一 #262019 深褐黑；白事 #2E3237），中段词颜色逐样式加深一档
- * （深红 #9E2A22 / 深蓝 #3D6A8F / 深金 #8A6520 / 深竹青 #33684C / 白事纯黑 #000000（2026-10-28 用户定，取代近黑），仍无红）。
+ * （深红 #9E2A22 / 深蓝 #3D6A8F / 深金 #8A6520 / 深竹青 #33684C / 白事纯黑 #000000（2026-10-28 用户定，取代近黑），仍无红；2026-10-28 用户再定加深一档：贺礼类各 RGB×0.85→深红 #86241D / 深蓝 #345A7A / 深金 #75561B / 深竹青 #2B5841，白事纯黑已到顶不动）。
  * AU批（2026-10-27，用户给参考图拍板搭配）：classic/cloud/funeral 三主题的卷轴杆图重绘——
  * 只取参考图的颜色/纹路/帽型（classic=深红小圆柱帽＋朱红卷草纹杆、cloud=金色一件式轴头＋米金淡祥云杆
  * （AW 批按金款参考图重绘：圆顶球头＋一层宽盘＋短收颈，删初版的多层盘与底环）、
@@ -297,7 +297,7 @@ const THEMES = {
   classic: {
     id: 'classic', name: '传统经典', kind: 'festive',
     lineColor: '#B8322A', frameColor: '#B8322A', paperBg: '#FFF8F2', marginBg: '#F9E9DC',
-    midColor: '#9E2A22', inkColor: '#262019', plusBg: '#C0453C',
+    midColor: '#86241D', inkColor: '#262019', plusBg: '#C0453C',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-classic.png',
     marginTile: TILES.CLASSIC.margin, paperTile: TILES.CLASSIC.paper, noRed: false,
@@ -305,7 +305,7 @@ const THEMES = {
   blue: {
     id: 'blue', name: '淡蓝水波纹', kind: 'festive',
     lineColor: '#5B8DB0', frameColor: '#5B8DB0', paperBg: '#F4F9FC', marginBg: '#D9E7F1',
-    midColor: '#3D6A8F', inkColor: '#262019', plusBg: '#7FA8C9',
+    midColor: '#345A7A', inkColor: '#262019', plusBg: '#7FA8C9',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-blue.png',
     marginTile: TILES.BLUE.margin, paperTile: TILES.BLUE.paper, noRed: false,
@@ -314,7 +314,7 @@ const THEMES = {
     id: 'pear', name: '梨花白', kind: 'festive',
     // 定版图 35：纸面为红线纸（列线/中段红），留白与卷轴为淡金梨花
     lineColor: '#B8322A', frameColor: '#B8322A', paperBg: '#FFF8F2', marginBg: '#FBF6EC',
-    midColor: '#9E2A22', inkColor: '#262019', plusBg: '#C9A24B',
+    midColor: '#86241D', inkColor: '#262019', plusBg: '#C9A24B',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-pear.png',
     marginTile: TILES.PEAR.margin, paperTile: TILES.PEAR.paper, noRed: false,
@@ -322,7 +322,7 @@ const THEMES = {
   cloud: {
     id: 'cloud', name: '祥云金', kind: 'festive',
     lineColor: '#A67C2E', frameColor: '#A67C2E', paperBg: '#FDF8EC', marginBg: '#F5EAD0',
-    midColor: '#8A6520', inkColor: '#262019', plusBg: '#C39A3B',
+    midColor: '#75561B', inkColor: '#262019', plusBg: '#C39A3B',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-cloud.png',
     marginTile: TILES.CLOUD.margin, paperTile: TILES.CLOUD.paper, noRed: false,
@@ -330,7 +330,7 @@ const THEMES = {
   bamboo: {
     id: 'bamboo', name: '竹青', kind: 'festive',
     lineColor: '#3E7C5B', frameColor: '#3E7C5B', paperBg: '#F2F8F3', marginBg: '#DCEDE1',
-    midColor: '#33684C', inkColor: '#262019', plusBg: '#6FA585',
+    midColor: '#2B5841', inkColor: '#262019', plusBg: '#6FA585',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-bamboo.png',
     marginTile: TILES.BAMBOO.margin, paperTile: TILES.BAMBOO.paper, noRed: false,

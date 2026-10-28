@@ -46,11 +46,11 @@ test('任务AB-2/3/9横置：列宽（AC 改 50）、墨色加深、中段色逐
     assert.eq(LC.THEMES[id].inkColor, '#262019', `${id} 姓名/金额墨色深褐黑`);
   }
   assert.eq(LC.THEMES.funeral.inkColor, '#2E3237', '白事墨色深灰');
-  assert.eq(LC.THEMES.classic.midColor, '#9E2A22', '传统经典中段深红');
-  assert.eq(LC.THEMES.pear.midColor, '#9E2A22', '梨花白中段深红');
-  assert.eq(LC.THEMES.blue.midColor, '#3D6A8F', '淡蓝中段深蓝');
-  assert.eq(LC.THEMES.cloud.midColor, '#8A6520', '祥云金中段深金');
-  assert.eq(LC.THEMES.bamboo.midColor, '#33684C', '竹青中段深绿');
+  assert.eq(LC.THEMES.classic.midColor, '#86241D', '传统经典中段再加深（2026-10-28）');
+  assert.eq(LC.THEMES.pear.midColor, '#86241D', '梨花白中段再加深（2026-10-28）');
+  assert.eq(LC.THEMES.blue.midColor, '#345A7A', '淡蓝中段再加深（2026-10-28）');
+  assert.eq(LC.THEMES.cloud.midColor, '#75561B', '祥云金中段再加深（2026-10-28）');
+  assert.eq(LC.THEMES.bamboo.midColor, '#2B5841', '竹青中段再加深（2026-10-28）');
   assert.eq(LC.THEMES.funeral.midColor, '#000000', '白事中段纯黑（2026-10-28 用户定）');
   assert.eq(LC.THEMES.funeral.noRed, true, '白事仍守无红');
   assert(readMp('pages/landscape/book.wxml').includes("item.midBlack ? '#000000'"), '送礼页奠仪列中段色同步纯黑');
