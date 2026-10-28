@@ -135,7 +135,7 @@ test('任务AA-首页：最近往来取 10 条、竖向滚动 4 条可见、大�
   assert(wxss.includes('.recent-swiper { height: 232px; }'), '滚动区高 = 4×58');
   assert(wxss.includes('height: 58px;'), '行高固定 58px');
   assert(wxss.includes('.recent-title { font-size: 18px;'), '标题字号 15→18');
-  assert(wxss.includes('.recent-name { font-size: 16px;'), '姓名字号 15→16');
+  assert(wxss.includes('.recent-name { font-size: 17px;'), '姓名字号 15→17（BX 大一号）');
 });
 
 // ---------- 5 Tab 图标（任务AB 第 4 项重绘：无外圈、颜色与亲友录/我的对齐，细节断言在 test-batch-ab） ----------

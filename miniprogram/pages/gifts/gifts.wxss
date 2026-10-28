@@ -28,7 +28,7 @@
 }
 .pat-img { width: 30px; height: 30px; }
 .mid { flex: 1; margin-left: 12px; display: flex; flex-direction: column; }
-.nm { font-size: 16px; font-weight: 600; }
+.nm { font-size: 17px; font-weight: 600; }
 .subline { display: flex; flex-direction: row; align-items: baseline; margin-top: 3px; }
 .sub { font-size: 13px; color: #999; }
 .amt { font-size: 17px; font-weight: 700; color: #1A1A1A; }
@@ -46,6 +46,9 @@
 /* 顶部三行贴紧（2026-10-23 任务AC 第 3 项）：搜索行、横置礼单本入口行、共计行之间的
    纵向留白归零——搜索行下内边距 10→0、入口行上下外边距 10→0、共计行上外边距 10→0；
    三行本身高度与内部排版一律不动（.card 的全局 margin 只在本页用复合选择器覆盖，不动全局）。 */
-.searchbar { padding-bottom: 0; }
+/* BX批：搜索栏冻结（搜索行高 10+34+0=44px，页面灰底 #F6F6F6 盖住下方滚动内容） */
+.searchbar { padding-bottom: 0; position: sticky; top: 0; z-index: 10; background: #F6F6F6; }
+/* BX批：共计行冻结在搜索栏下方（top=搜索栏高 44px），白底盖住下方滚动行；卡片裁溢出防统一淡色行顶角外露（搜索时共计隐藏、首行贴卡顶） */
 .card.entry-row { margin-top: 0; margin-bottom: 0; }
-.card.list-card { margin-top: 0; }
+.card.list-card { margin-top: 0; overflow: hidden; }
+.total-line { position: sticky; top: 44px; z-index: 9; background: #fff; }

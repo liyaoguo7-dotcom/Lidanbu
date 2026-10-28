@@ -9,9 +9,10 @@
 .profile-chev { margin-left: auto; }
 .ph { color: #999; font-size: 16px; margin-right: 4px; }
 .m-actions { display: flex; align-items: center; gap: 10px; }
+/* BX批六色：卡内两按钮各一色（深字配淡底；非会员时的「开通会员」不在用户点的两处里，保持白底红字不动） */
 .m-btn.ghost {
-  background: transparent; color: #fff;
-  border: 1px solid rgba(255, 255, 255, .7);
+  background: #E0F3E4; color: #333;
+  border: none;
 }
 .contact-btn {
   background: #fff; border: none; border-radius: 0;
@@ -20,16 +21,18 @@
 }
 .contact-btn::after { border: none; }
 .profile { padding: 12px 16px; display: flex; align-items: center; }
+/* BX批六色：头像栏用家庭共享蓝 */
+.card.profile { background: #E2EEFB; }
 .avatar {
   width: 56px; height: 56px;
   flex: none; margin-right: 14px;
 }
-.uname { font-size: 16px; font-weight: 600; display: block; }
-.usub { font-size: 16px; color: #C2C2C2; margin-top: 4px; display: block; }
+.uname { font-size: 17px; font-weight: 600; display: block; }
+.usub { font-size: 16px; color: #999; margin-top: 4px; display: block; }
 .member-card {
   padding: 12px 16px;
-  /* BV批补：卡片红稍淡（用户定稍淡一档，原 #F0575A→#e04447 太艳）；卡内白按钮红字不动 */
-  background: linear-gradient(135deg, #F28084, #E95E62);
+  /* BX批六色：卡片用送礼大卡的粉红渐变（方向反过来，深色在上，顶部白标题才看得清；BX 那档粉色作废） */
+  background: linear-gradient(135deg, #F78C8F, #FFC7C3);
   border: none;
   display: flex; flex-direction: column;
 }
@@ -43,7 +46,7 @@
 }
 .m-badge {
   margin-top: 10px; align-self: flex-start;
-  border: 1px solid rgba(255,255,255,.7); color: #fff;
+  background: #FDEFCB; color: #333; border: none;
   font-size: 16px; padding: 6px 16px; border-radius: 16px;
 }
 .section-title { padding: 2px 12px 0; font-size: 16px; color: #999; }
@@ -79,8 +82,10 @@
    只作用本页，不动全局 .card（别处卡片可能有溢出元素）；与上条分开写，
    免得 AE 锚点断言（卡间距字符串）失效。 */
 .card { overflow: hidden; }
+/* BX批：联系客服按钮自带白底，统一淡色块需提权覆盖 */
+.contact-btn.rowbg { background: #FBF8F0; }
 .form-row { min-height: 50px; }
-.form-val { font-size: 16px; }
+.form-val { font-size: 17px; }
 .chev { font-size: 16px; }
 
 /* 「添加到我的小程序」引导条 + 教程层（AP批形态，AS批：主红底白字单行不折行） */

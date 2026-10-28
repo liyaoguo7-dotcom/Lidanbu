@@ -166,9 +166,9 @@ test('任务AE：我的页无导出备份入口（只留首页）；横置开关
   assert(nextPos >= 0 && gatePos > nextPos && memberPos > gatePos, '应先算 next，两道闸只在 next 为开时触发（关不验会员）');
 });
 
-test('任务AE：我的页字体统一 16px（=亲友录联系人姓名 .nm 大小）且上下紧凑', async () => {
+test('任务AE：我的页字体统一（=亲友录联系人姓名 .nm 大小，BX 起 17px）且上下紧凑', async () => {
   const contactsWxss = read('miniprogram/pages/contacts/contacts.wxss');
-  assert(/\.nm \{ font-size: 16px; \}/.test(contactsWxss), '基准：亲友录联系人姓名为 16px');
+  assert(/\.nm \{ font-size: 17px; \}/.test(contactsWxss), '基准：亲友录联系人姓名 BX 起为 17px');
   const wxss = read('miniprogram/pages/mine/mine.wxss');
   // AS批定版例外：「添加到我的小程序」红条文案缩短后在窄屏仍放不下，
   // 按用户任务书降到 15px 单行显示——仅此一处豁免，其余仍只许 16/22。
@@ -179,12 +179,13 @@ test('任务AE：我的页字体统一 16px（=亲友录联系人姓名 .nm 大�
   const wxssNoBar = wxss.replace(/\.addmp-bar \{[^}]*\}/, '')
     .replace(/\/\* BA批教程层[\s\S]*$/, '');
   const sizes = [...wxssNoBar.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
-  const bad = sizes.filter((s) => s !== 16 && s !== 22);
-  assert(bad.length === 0, `我的页 font-size 只许 16（文字）与 22（头像首字图形），实际异常值：${bad.join(',')}`);
+  // BX批：行文字／用户名随联系人字号到 17px，会员卡片内文字仍 16px，故允许 16／17／22 三档
+  const bad = sizes.filter((s) => s !== 16 && s !== 17 && s !== 22);
+  assert(bad.length === 0, `我的页 font-size 只许 16／17（文字）与 22（头像首字图形），实际异常值：${bad.join(',')}`);
   // 22 只许出现在头像首字
   const avatarBlock = wxss.slice(wxss.indexOf('.avatar-initial'), wxss.indexOf('.profile-chev'));
   assert(avatarBlock.includes('font-size: 22px'), '头像首字保留 22px（图形占位，非正文）');
-  assert(wxss.includes('.form-val { font-size: 16px; }'), '功能行文字页面级覆盖为 16px');
+  assert(wxss.includes('.form-val { font-size: 17px; }'), '功能行文字页面级覆盖 BX 起为 17px（随联系人字号）');
   // 紧凑锚点
   assert(wxss.includes('.profile { padding: 12px 16px;'), '资料条上下内边距收到 12px');
   assert(wxss.includes('.card { margin: 8px 12px; }'), '卡间距页面级收紧为上下 8px');

@@ -1,10 +1,18 @@
 /* 亲友录 */
+/* BX批六色：字母行按组顺序循环首页六色（字色由浅灰加深到 #666，淡色底上才看得清）；卡片裁溢出防首行圆角外露 */
+.card { overflow: hidden; }
 .group-title {
   padding: 6px 16px 2px;
   font-size: 12px;
-  color: #C2C2C2;
+  color: #666;
   background: #F6F6F6;
 }
+.group-title.c0 { background: #E2EEFB; }
+.group-title.c1 { background: #FDE8E8; }
+.group-title.c2 { background: #FDEFCB; }
+.group-title.c3 { background: #E0F3E4; }
+.group-title.c4 { background: #FFC7C3; }
+.group-title.c5 { background: #FFE4B8; }
 .contact-row {
   display: flex;
   align-items: center;
@@ -13,7 +21,7 @@
   border-bottom: 1px solid #F0F0F0;
 }
 .contact-row:last-child { border-bottom: none; }
-.nm { font-size: 16px; }
+.nm { font-size: 17px; }
 .rmk { font-size: 13px; color: #C2C2C2; margin-left: 8px; }
 .ph { color: #C2C2C2; font-size: 14px; }
 /* 半屏 */

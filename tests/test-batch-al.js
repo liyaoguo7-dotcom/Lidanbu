@@ -51,7 +51,7 @@ const common = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/admin-co
 assert.ok(/page \{ font-size: 16px; \}/.test(common), 'AL-9 后台页面基准字号应为16px');
 assert.ok(common.includes('.form-label, .form-val { font-size: 16px; }'), 'AL-9 后台表单主文字应为16px');
 const nmFront = fs.readFileSync(__dirname + '/../miniprogram/pages/gifts/gifts.wxss', 'utf8');
-assert.ok(/\.nm \{ font-size: 16px/.test(nmFront), 'AL-9 前台姓名基准应为16px（对照源）');
+assert.ok(/\.nm \{ font-size: 17px/.test(nmFront), 'AL-9 前台姓名基准 BX 起为17px（对照源；后台 16px 仍独立，不跟随前台走）');
 for (const f of ['account/account.wxss', 'admins/admins.wxss', 'app-config/app-config.wxss', 'feedback/feedback.wxss', 'abuse/abuse.wxss']) {
   const t = fs.readFileSync(__dirname + '/../miniprogram/pages/admin/' + f, 'utf8');
   const btns = [...t.matchAll(/\.(btn-primary|btn-danger|btn-ghost) \{[^}]*font-size: (\d+)px/g)].map((m) => m[2]);

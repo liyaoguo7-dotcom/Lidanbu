@@ -63,7 +63,7 @@
   padding: 6px 0;
   border-top: 1px solid #F0F0F0;
 }
-.recent-name { font-size: 16px; color: #333; line-height: 1.35; }
+.recent-name { font-size: 17px; color: #333; line-height: 1.35; }
 .recent-sub { font-size: 12px; color: #999; margin-top: 2px; line-height: 1.35; }
 .recent-amt { font-size: 16px; font-weight: 600; text-align: right; line-height: 1.35; }
 .recent-amt.plus { color: #E05353; }

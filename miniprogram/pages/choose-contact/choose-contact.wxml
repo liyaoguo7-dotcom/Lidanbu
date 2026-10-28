@@ -11,7 +11,7 @@
 
 <view class="card">
   <!-- BV批斑马：送礼／收礼共用本页，列表按单双号交替 -->
-  <view class="contact-row {{index % 2 === 1 ? 'zebra' : ''}}" wx:for="{{contacts}}" wx:key="_id"
+  <view class="contact-row rowbg" wx:for="{{contacts}}" wx:key="_id"
     data-id="{{item._id}}" data-name="{{item.name}}" bindtap="onPick">
     <text class="nm">{{item.name}}</text>
     <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>

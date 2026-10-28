@@ -1,8 +1,10 @@
 /* 礼薄详情 */
-.pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; }
+.pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; margin: 0 12px 10px; border-radius: 0 0 12px 12px; }
+/* BX批：搜索栏＋头像头冻结为一体（sticky 贴顶；与记录卡上下拼成一张卡：头卡上圆角、记录卡下圆角、中间零间距，搜索栏与头像之间不再露页面灰底） */
+.detail-head { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px 12px 0 0; }
 /* BV批：头部底色（喜事淡米，与斑马同一对颜色；白事淡灰，跟白事 palette 走），
    与下面记录列表分开；卡片上 padding 挪到 pat-head 里，版式不变。 */
-.pat-head { background: #F7F3EA; padding: 12px 0 0; }
+.pat-head { background: #F7F3EA; padding: 6px 0 0; }
 .pat-head.baishi { background: #F2F2F2; }
 .pat-big {
   width: 64px; height: 64px; border-radius: 50%;
@@ -36,7 +38,7 @@
 }
 .rec-row.last::after { display: none; }
 .mid { flex: 1; display: flex; flex-direction: column; }
-.nm { font-size: 16px; font-weight: 600; }
+.nm { font-size: 17px; font-weight: 600; }
 .subline { display: flex; flex-direction: row; align-items: baseline; margin-top: 3px; }
 .sub { font-size: 13px; color: #999; }
 .amt { font-size: 17px; font-weight: 700; color: #1A1A1A; }

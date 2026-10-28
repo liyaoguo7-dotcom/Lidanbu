@@ -18,8 +18,8 @@
   <view class="total-line" wx:if="{{!searching}}">
     <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
   </view>
-  <!-- BV批斑马：送礼记录列表按单双号交替（与收礼各列表同一对颜色；行本身无底色，全局 .zebra 直接生效；首尾行不贴卡片圆角，无需裁溢出） -->
-  <view class="gift-row {{index % 2 === 1 ? 'zebra' : ''}} {{index === shown.length - 1 ? 'last' : ''}}" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
+  <!-- BX批：斑马交替取消，送礼记录行统一淡色块（行本身无底色，全局 .rowbg 直接生效） -->
+  <view class="gift-row rowbg {{index === shown.length - 1 ? 'last' : ''}}" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
     <view class="pat"><image class="pat-img" src="{{item.icon}}" mode="aspectFit" /></view>
     <view class="mid">
       <text class="nm">{{item.name}}</text>

@@ -5,7 +5,7 @@
 
 <!-- 时间标签 -->
 <view class="timerow">
-  <text class="tchip {{item.id === rangeId ? 'on' : ''}}" wx:for="{{ranges}}" wx:key="id"
+  <text class="tchip chip-{{item.id}} {{item.id === rangeId ? 'on' : ''}}" wx:for="{{ranges}}" wx:key="id"
     data-id="{{item.id}}" bindtap="onRangeTap">{{item.name}}</text>
 </view>
 <view class="custom-range" wx:if="{{rangeId === 'custom'}}">
@@ -70,9 +70,9 @@
 
   <block wx:if="{{!searching}}">
     <!-- 亲友列表 -->
-    <view class="card" wx:if="{{rows.length > 0}}">
+    <view class="card wl-card" wx:if="{{rows.length > 0}}">
       <!-- BV批斑马：主列表按单双号交替（搜索结果不做，用户定） -->
-      <view class="wl-row {{index % 2 === 1 ? 'zebra' : ''}}" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
+      <view class="wl-row rowbg" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
         <text class="nm">{{item.name}}</text>
         <view class="right">
           <text class="count">{{item.countText}}</text>

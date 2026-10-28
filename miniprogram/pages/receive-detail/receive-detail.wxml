@@ -1,14 +1,15 @@
 <!-- 礼薄详情 -->
-<!-- BV批：搜索栏（照送礼记录页：搜索姓名＋取消，本地筛） -->
-<view class="searchbar">
-  <view class="searchbox">
-    <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
-      placeholder-style="color:#C2C2C2" style="flex:1;font-size:14px" />
+<!-- BX批：搜索栏＋头像头冻结为一体（搜索栏与头像之间不再露页面灰底，头像整体上移） -->
+<view class="card detail-head">
+  <!-- BV批：搜索栏（照送礼记录页：搜索姓名＋取消，本地筛） -->
+  <view class="searchbar">
+    <view class="searchbox">
+      <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
+        placeholder-style="color:#C2C2C2" style="flex:1;font-size:14px" />
+    </view>
+    <text class="search-cancel" bindtap="onCancelSearch">取消</text>
   </view>
-  <text class="search-cancel" bindtap="onCancelSearch">取消</text>
-</view>
 
-<view class="card pat-card">
   <!-- 礼薄级修改/删除入口已取消（2026-10-22 用户定：收礼列表左滑已有修改/删除，详情页不再放） -->
   <!-- BV批：头部单独一层底色（图案／标签／名字／日期／共计），记录列表不动 -->
   <view class="pat-head {{isBaishi ? 'baishi' : ''}}">
@@ -24,6 +25,9 @@
       <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
     </view>
   </view>
+</view>
+
+<view class="card pat-card">
   <view class="rec-row {{index === shown.length - 1 ? 'last' : ''}}" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRecordDetail">
     <view class="mid">
       <text class="nm">{{item.name}}</text>

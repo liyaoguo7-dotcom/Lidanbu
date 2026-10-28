@@ -37,6 +37,16 @@
   background: #fff;
 }
 .tchip.on { color: #E05353; border-color: #E05353; }
+/* BX批六色：6 个时间按钮按顺序配首页六色（选中态红字红边不变，压在淡色底上） */
+.tchip.chip-all { background: #E2EEFB; }
+.tchip.chip-today { background: #FDE8E8; }
+.tchip.chip-month { background: #FDEFCB; }
+.tchip.chip-year { background: #E0F3E4; }
+.tchip.chip-lastYear { background: #FFC7C3; }
+.tchip.chip-custom { background: #FFE4B8; }
+/* BX批六色：收礼块用收礼橙、送礼块用送礼粉（与首页两张大卡同色）；差额条用电子请柬黄 */
+.compare .side:first-child { background: #FFE4B8; }
+.compare .side:last-child { background: #FFC7C3; }
 .custom-range { display: flex; align-items: center; justify-content: center; margin-top: 10px; gap: 8px; }
 .date-box {
   padding: 8px 12px;
@@ -96,7 +106,7 @@
 .diff-bar {
   margin: 0;
   padding: 12px 16px;
-  background: #FDF6E3;
+  background: #FDEFCB;
   color: #E05353;
   text-align: center;
 }
@@ -113,8 +123,10 @@
   border-bottom: 1px solid #F0F0F0;
 }
 .wl-row:last-child { border-bottom: none; }
+/* BX批：往来主列表卡片裁溢出（统一淡色行贴合圆角） */
+.wl-card { overflow: hidden; }
 .wl-row .nm {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   flex: 1;
   /* 姓名与首页最近往来同字体（默认黑体）：2026-10-22 统一，原宋字体声明删除 */
@@ -131,7 +143,7 @@
   border-bottom: 1px solid #F0F0F0;
 }
 .contact-row:last-child { border-bottom: none; }
-.contact-row .nm { font-size: 17px; font-weight: 600; }
+.contact-row .nm { font-size: 18px; font-weight: 600; }
 .contact-row .rmk { font-size: 14px; color: #C2C2C2; margin-left: 8px; flex: 1; }
 .contact-row .ph { color: #C2C2C2; font-size: 15px; }
 .empty { text-align: center; padding: 60px 0; }

@@ -55,9 +55,9 @@ test('任务AC-2Tab栏：图标盒 30px、字号 13px、栏高 50px、底距安�
 // ---------- 3 送礼页三行贴紧 ----------
 test('任务AC-3送礼页：三行间距归零（页面级覆盖）、全局 .card 不动', () => {
   const g = readMp('pages/gifts/gifts.wxss');
-  assert(g.includes('.searchbar { padding-bottom: 0; }'), '搜索行下内边距 10→0');
+  assert(g.includes('.searchbar { padding-bottom: 0; position: sticky; top: 0; z-index: 10; background: #F6F6F6; }'), '搜索行下内边距 10→0（BX 加冻结 sticky，仍是页面级覆盖）');
   assert(g.includes('.card.entry-row { margin-top: 0; margin-bottom: 0; }'), '横置礼单本入口行上下外边距 10→0');
-  assert(g.includes('.card.list-card { margin-top: 0; }'), '共计与记录合并卡上外边距 10→0（任务AE 第 8 项后 .summary 改为 .list-card）');
+  assert(g.includes('.card.list-card { margin-top: 0; overflow: hidden; }'), '共计与记录合并卡上外边距 10→0（BX 加裁溢出，仍是页面级覆盖）');
   assert(readMp('app.wxss').includes('margin: 10px 12px;'), '全局 .card margin 保持 10px 12px（只动送礼页）');
 });
 
@@ -93,7 +93,7 @@ test('任务AC-6加号位置：全局 bottom 64px 不动、亲友录页面级 14
 });
 
 // ---------- 7 往来页字号 +1 ----------
-test('任务AC-7往来字号：全页逐项 +1（姓名 17、金额 23、其余逐项断言）', () => {
+test('任务AC-7往来字号：全页逐项 +1（姓名 18（BX 再大一号）、金额 23、其余逐项断言）', () => {
   const w = readMp('pages/wanglai/wanglai.wxss');
   const expect = [
     ['.member-tip', '13px'], ['.tchip', '14px'], ['.date-box', '15px'], ['.daterange', '13px'],
@@ -104,8 +104,8 @@ test('任务AC-7往来字号：全页逐项 +1（姓名 17、金额 23、其余�
     const block = (w.match(new RegExp(`\\${sel} \\{[^}]*\\}`)) || [''])[0];
     assert(block.includes(`font-size: ${size}`), `${sel} 字号应为 ${size}（+1 后）`);
   }
-  assert((w.match(/\.wl-row \.nm \{[^}]*\}/) || [''])[0].includes('font-size: 17px'), '往来行姓名 16→17px');
-  assert((w.match(/\.contact-row \.nm \{[^}]*\}/) || [''])[0].includes('font-size: 17px'), '联系人姓名 16→17px');
+  assert((w.match(/\.wl-row \.nm \{[^}]*\}/) || [''])[0].includes('font-size: 18px'), '往来行姓名 17→18px（BX 大一号）');
+  assert((w.match(/\.contact-row \.nm \{[^}]*\}/) || [''])[0].includes('font-size: 18px'), '联系人姓名 17→18px（BX 大一号）');
   assert((w.match(/\.wl-row \.count \{[^}]*\}/) || [''])[0].includes('font-size: 14px'), '笔数 13→14px');
   assert((w.match(/\.wl-row \.sep \{[^}]*\}/) || [''])[0].includes('font-size: 14px'), '分隔符 13→14px');
   assert((w.match(/\.wl-row \.diff \{[^}]*\}/) || [''])[0].includes('font-size: 16px'), '差额 15→16px');

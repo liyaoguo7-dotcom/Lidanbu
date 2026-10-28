@@ -40,7 +40,7 @@
 
 <!-- ③ 横置礼单本（家庭共享与导出备份入口只在首页，BE批用户决定：我的页不再重复） -->
 <view class="card">
-  <view class="form-row" bindtap="onLandscapeToggle">
+  <view class="form-row rowbg" bindtap="onLandscapeToggle">
     <text class="form-val">横置礼单本</text>
     <view class="switch {{landscapeOn ? 'on' : ''}}"><view class="dot"></view></view>
   </view>
@@ -48,8 +48,8 @@
 
 <!-- ④ 邀请分享（唯一入口） -->
 <view class="card">
-  <!-- BV批斑马：会员卡下连续交替（横置白、邀请米、通知白、意见反馈米、常见问题白、关于我们米、联系客服白） -->
-  <view class="form-row zebra" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
+  <!-- BX批：斑马交替取消，会员卡下各行统一淡色块 -->
+  <view class="form-row rowbg" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
     <text class="form-val">邀请分享</text>
     <text class="ph" wx:if="{{inviteRewardEnabled}}">已邀请 {{inviteDone}}/{{inviteMax}}</text>
     <text class="chev">›</text>
@@ -58,7 +58,7 @@
 
 <!-- 演示专用行：只有本地演示模式才有，正式版不显示 -->
 <view class="card" wx:if="{{demoMode}}">
-  <view class="form-row" bindtap="onDemoMembership">
+  <view class="form-row rowbg" bindtap="onDemoMembership">
     <text class="form-val">演示：切换会员状态</text>
     <text class="chev">{{demoStateText}} ›</text>
   </view>
@@ -66,21 +66,21 @@
 
 <!-- ⑤ 通知 / 意见反馈 / 常见问题 / 关于我们 / 联系客服 -->
 <view class="card">
-  <view class="form-row" bindtap="onNotifications">
+  <view class="form-row rowbg" bindtap="onNotifications">
     <text class="form-val">通知</text>
     <view class="badge" wx:if="{{unreadCount}}">{{unreadCount > 99 ? '99+' : unreadCount}}</view>
     <text class="chev">›</text>
   </view>
-  <view class="form-row zebra" bindtap="onFeedback">
+  <view class="form-row rowbg" bindtap="onFeedback">
     <text class="form-val">意见反馈</text><text class="chev">›</text>
   </view>
-  <view class="form-row" bindtap="onFaq">
+  <view class="form-row rowbg" bindtap="onFaq">
     <text class="form-val">常见问题</text><text class="chev">›</text>
   </view>
-  <view class="form-row zebra" bindtap="onAbout">
+  <view class="form-row rowbg" bindtap="onAbout">
     <text class="form-val">关于我们</text><text class="chev">›</text>
   </view>
-  <button class="form-row contact-btn" open-type="contact">
+  <button class="form-row contact-btn rowbg" open-type="contact">
     <text class="form-val">联系客服</text><text class="chev">›</text>
   </button>
 </view>

@@ -52,23 +52,19 @@ test('BV 进页：会员与开关并行取、揭盖不再等补充片', () => {
   assert(js.includes('BV批（用户定：速度优先）'), 'BV 揭盖注释在位');
 });
 
-test('BV 斑马纹：我的页 3 行 tinted、往来主列表交替、搜索结果不动、选联系人页交替', () => {
-  const mine = readMp('pages/mine/mine.wxml');
-  const zebraLines = mine.split('\n').filter((l) => l.includes('form-row zebra'));
-  assert.eq(zebraLines.length, 3, '我的页 tinted 行共 3 行');
-  assert(zebraLines.some((l) => l.includes('onInviteReward')), '邀请分享行 tinted');
-  assert(zebraLines.some((l) => l.includes('onFeedback')), '意见反馈行 tinted');
-  assert(zebraLines.some((l) => l.includes('onAbout')), '关于我们行 tinted');
+test('BV 斑马纹已由 BX 统一淡色块取代：任何页面不得残留 zebra 交替', () => {
+  const files = [
+    'pages/mine/mine.wxml',
+    'pages/wanglai/wanglai.wxml',
+    'pages/choose-contact/choose-contact.wxml',
+    'pages/receive/receive.wxml',
+    'pages/gifts/gifts.wxml',
+  ];
+  for (const f of files) assert(!readMp(f).includes('zebra'), `${f} 无 zebra 残留`);
+  assert(!readMp('app.wxss').includes('.zebra'), '全局无 .zebra 定义');
   const wl = readMp('pages/wanglai/wanglai.wxml');
-  assert(wl.includes(`class="wl-row {{index % 2 === 1 ? 'zebra' : ''}}"`), '往来主列表交替');
   const searchLine = wl.split('\n').find((l) => l.includes('contact-row') && l.includes('searchResults'));
-  assert(searchLine && !searchLine.includes('zebra'), '往来搜索结果不动');
-  const cc = readMp('pages/choose-contact/choose-contact.wxml');
-  assert(cc.includes(`class="contact-row {{index % 2 === 1 ? 'zebra' : ''}}"`), '选联系人页交替');
-  assert(readMp('app.wxss').includes('.zebra { background: #F7F3EA; }'), '全局斑马色定义');
-  const recv = readMp('pages/receive/receive.wxml');
-  assert(recv.includes(`class="event-row {{index % 2 === 1 ? 'zebra' : ''}}"`), '收礼礼簿列表交替');
-  assert(readMp('pages/receive/receive.wxss').includes('.event-row.zebra { background: #F7F3EA; }'), '收礼行 tinted 提权规则在位');
+  assert(searchLine && !searchLine.includes('rowbg'), '往来搜索结果仍不动（搜索结果从未交替，BX 也不铺色）');
 });
 
 test('BV 收礼详情：搜索栏＋本地筛＋搜空态', () => {
@@ -82,15 +78,15 @@ test('BV 收礼详情：搜索栏＋本地筛＋搜空态', () => {
   assert(js.includes('r.name.includes(kw)'), '本地按姓名筛');
 });
 
-test('BV 我的页会员卡片红稍淡：渐变改淡、卡内按钮红字不动', () => {
+test('BV 我的页会员卡片红稍淡已由 BX 六色取代：渐变改送礼粉红（深色在上）、开通会员白底红字不动', () => {
   const wxss = readMp('pages/mine/mine.wxss');
-  assert(wxss.includes('linear-gradient(135deg, #F28084, #E95E62)'), '会员卡片渐变已稍淡');
-  assert(wxss.includes('.m-btn') && /\.m-btn\s*\{[^}]*color: #F0575A/.test(wxss), '卡内白按钮红字不动');
+  assert(wxss.includes('linear-gradient(135deg, #F78C8F, #FFC7C3)'), '会员卡片渐变已改送礼粉红');
+  assert(wxss.includes('.m-btn') && /\.m-btn\s*\{[^}]*color: #F0575A/.test(wxss), '开通会员白底红字不动');
 });
 
-test('BV 送礼记录列表交替：单双号白／淡米', () => {
+test('BV 送礼记录列表交替已由 BX 统一淡色块取代：行统铺色且保留 last', () => {
   const wxml = readMp('pages/gifts/gifts.wxml');
-  assert(wxml.includes(`class="gift-row {{index % 2 === 1 ? 'zebra' : ''}} {{index === shown.length - 1 ? 'last' : ''}}"`), '送礼行交替且保留 last');
+  assert(wxml.includes(`class="gift-row rowbg {{index === shown.length - 1 ? 'last' : ''}}"`), '送礼行统铺色且保留 last');
   assert(readMp('pages/gifts/gifts.wxss').includes('.gift-row {'), '送礼行样式在位');
 });
 

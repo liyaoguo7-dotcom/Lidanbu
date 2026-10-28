@@ -34,6 +34,8 @@
 .item-card.item-last { border-radius: 0 0 12px 12px; border-bottom: none; margin-bottom: 10px; }
 .item-card.item-first.item-last { border-radius: 12px; }
 .item-card .form-row { min-height: 46px; }
+/* BX批：核对页姓名字段大一号（本页姓名输入无独立字号，继承页面 15px，单加一档到 16px；金额／类型共用 .form-val 不动） */
+.name-val { font-size: 16px; }
 .item-head {
   display: flex;
   justify-content: space-between;

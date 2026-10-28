@@ -22,7 +22,7 @@
     </view>
     <view class="form-row">
       <text class="form-label">姓名</text>
-      <input class="form-val" placeholder="请输入姓名" placeholder-style="color:#C2C2C2"
+      <input class="form-val name-val" placeholder="请输入姓名" placeholder-style="color:#C2C2C2"
         value="{{item.name}}" data-i="{{index}}" bindinput="onNameInput" bindblur="onNameBlur" />
       <text class="pick-btn" data-i="{{index}}" bindtap="openPicker">选亲友</text>
     </view>

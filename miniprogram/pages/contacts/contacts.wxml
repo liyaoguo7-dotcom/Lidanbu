@@ -10,8 +10,8 @@
 </view>
 
 <view class="card">
-  <block wx:for="{{groups}}" wx:key="key">
-    <view class="group-title" id="anchor-{{item.key === '#' ? 'hash' : item.key}}">{{item.key}}</view>
+  <block wx:for="{{groups}}" wx:key="key" wx:for-index="gi">
+    <view class="group-title c{{gi % 6}}" id="anchor-{{item.key === '#' ? 'hash' : item.key}}">{{item.key}}</view>
     <view class="contact-row" wx:for="{{item.items}}" wx:key="_id"
       data-id="{{item._id}}" data-name="{{item.name}}" bindtap="openSheet">
       <text class="nm">{{item.name}}</text>
