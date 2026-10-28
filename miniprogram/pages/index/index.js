@@ -32,6 +32,7 @@ Page({
     recent: [],            // 最近往来：取最近 10 条（任务AA）；空数组时整卡不渲染
     recentRolling: false,  // 任务AA：>4 条时竖向自动滚动（同时可见 4 条），不足则静态
     homeLoaded: false,     // AP批：首页数据已回来才判最近往来空/非空（防标语块闪现）
+    homeLoading: false,    // BW批：无缓存首次加载时显示「加载中…」，不留空白
     slogans: [             // AP批 痛点标语（用户 2026-10-26 定稿，一字不差）
       '今年你送出去了多少礼？',
       '出门在外，想查往来却找不到礼簿？',
@@ -100,28 +101,65 @@ Page({
     wx.navigateTo({ url: '/pages/gift-add/gift-add' });
   },
 
+  // ---- BW批：首页缓存秒显（小结＋最近往来） ----
+  // 根因：每次 onShow 都重查云端，查回来的 1-2 秒里 recent=[]、卡片不渲染，
+  // 看着就是姓名没了、然后又出来。修法：上次查回来的先存本地，进页先秒显，
+  // 后台再静默重查、拿到新的换上（与横置 BV2 快照同一思路）。
+  _readHomeCache() {
+    try {
+      const c = wx.getStorageSync('home.cache.v1');
+      if (!c || typeof c !== 'object') return null;
+      const uid = (dataService.getCurrentUserId && dataService.getCurrentUserId()) || '';
+      if (uid && c.uid !== uid) return null; // 换号不闪旧账
+      if (!c.monthSummary || !Array.isArray(c.recent)) return null;
+      return c;
+    } catch (e) { return null; }
+  },
+  _writeHomeCache(monthSummary, recent) {
+    try {
+      const uid = (dataService.getCurrentUserId && dataService.getCurrentUserId()) || '';
+      wx.setStorageSync('home.cache.v1', { uid, monthSummary, recent });
+    } catch (e) { /* 忽略 */ }
+  },
+  _applyHomeData(monthSummary, recent) {
+    const list = recent || [];
+    this.setData({
+      monthSummary,
+      recent: list,
+      recentRolling: list.length > 4,
+      homeLoaded: true,
+      homeLoading: false,
+    }, () => {
+      // 最近往来为空才轮播标语；一有数据立即停并撤块（wxml 条件控制）
+      if (list.length === 0) this._startSlogan(); else this._stopSlogan();
+    });
+  },
+
   /** 本月小结 + 最近往来（任务V）：只读本人账本真实数据（data-service 口径） */
   async refreshHomeData() {
+    const cached = this._readHomeCache();
+    if (cached) {
+      this._applyHomeData(cached.monthSummary, cached.recent);
+    } else {
+      this.setData({ homeLoading: true });
+    }
     try {
       const [s, recent] = await Promise.all([
         dataService.getHomeSummary(),
         dataService.getHomeRecent(10),
       ]);
+      const monthSummary = {
+        hasRecords: !!s.hasRecords,
+        receiveText: formatAmountInt(s.receiveFen),
+        giftText: formatAmountInt(s.giftFen),
+      };
       const list = recent || [];
-      this.setData({
-        monthSummary: {
-          hasRecords: !!s.hasRecords,
-          receiveText: formatAmountInt(s.receiveFen),
-          giftText: formatAmountInt(s.giftFen),
-        },
-        recent: list,
-        recentRolling: list.length > 4,
-        homeLoaded: true,
-      }, () => {
-        // 最近往来为空才轮播标语；一有数据立即停并撤块（wxml 条件控制）
-        if (list.length === 0) this._startSlogan(); else this._stopSlogan();
-      });
-    } catch (e) { this.setData({ homeLoaded: true }); /* 演示期忽略 */ }
+      this._writeHomeCache(monthSummary, list);
+      this._applyHomeData(monthSummary, list);
+    } catch (e) {
+      // 静默刷新失败：有缓存就留着旧的（不清空、不弹错）；没缓存才判加载完成走标语空态
+      this.setData({ homeLoaded: true, homeLoading: false });
+    }
   },
 
   /** 最近往来「查看全部」→ 往来 Tab */

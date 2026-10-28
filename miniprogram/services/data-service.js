@@ -1451,6 +1451,11 @@ const service = {
   getExternalInvitation() {
     return AppConfig.externalInvitation || { miniprogramName: '', appId: '' };
   },
+
+  // BW批：首页缓存归属校验用（换号不闪旧账；未初始化时返回 null）
+  getCurrentUserId() {
+    return _userId;
+  },
 };
 
 // 供测试与 app.js 网络提示复用（不属于页面接口）

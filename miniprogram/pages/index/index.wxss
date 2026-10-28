@@ -28,6 +28,8 @@
 .month-empty { color: #9A8B62; }
 /* 最近往来卡（任务V；任务AA 改版：字号放大、卡片增高、滚动区固定 4 行高） */
 .recent-card { padding: 2px 16px 4px; }
+/* BW批：无缓存首次加载提示 */
+.recent-loading { padding: 8px 0 14px; font-size: 14px; color: #C2C2C2; }
 .recent-head {
   display: flex;
   justify-content: space-between;

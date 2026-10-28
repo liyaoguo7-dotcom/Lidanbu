@@ -22,6 +22,14 @@
     <text wx:else class="month-empty">本月还没有记录</text>
   </view>
 
+  <!-- BW批：无缓存首次加载时显示加载中，不留一片空白让人以为名字没了 -->
+  <view class="card recent-card" wx:if="{{homeLoading}}">
+    <view class="recent-head">
+      <text class="recent-title">最近往来</text>
+    </view>
+    <view class="recent-loading">加载中…</view>
+  </view>
+
   <!-- AP批 痛点标语块：最近往来为空时占这块位置——三句慢速轮播（约 3 秒一句）
        + 固定一行行动引导，整块可点去记第一笔；有数据后自动撤、照常列表 -->
   <view class="card recent-card slogan-card" wx:if="{{homeLoaded && recent.length === 0}}" bindtap="onSloganTap">
