@@ -27,7 +27,12 @@ const FONT_SRC_BASE = SUBPACKAGE_ROOT;
 /** 已加载标记键（带字体构建版本段）：旧版坏字体文件（如 AA 前龙藏 TTF 套 woff2 名）
  * 若曾"加载成功"写下旧键，版本段一变旧键自然失效，强制用当前文件重载
  * （2026-10-22 任务AB 第 6 项：三款字体真机仍不可用的机制修复之一）。
- * 字体文件再重建时必须同步 bump 此版本号。 */
+ * 字体文件再重建时必须同步 bump 此版本号。
+ * BS批（2026-10-28）重要更正：该标记只作"曾经成功过"的记录，绝不能
+ * 当作本会话已注册的依据——loadFontFace 注册的字体面只活在本会话，
+ * 冷启动时若凭旧标记跳过真实加载，页面会按回退链渲染（例如莫大毛笔
+ * 看起来像别的字体），且不弹任何失败提示。因此本会话内 state 一律
+ * 从 idle 起步，load() 至少真实注册一次才算 loaded。 */
 const FONT_BUILD = 'v9'; // v9：AY批字体扩至六款（新增枝芒行书/古典宋体/莫大毛笔，云端 TTF 子集为新文件，强制重载） // v8：AK批分包瘦身（马善政/龙藏删分包 woff2 兜底、只走云端；霞鹜文楷保留）；v7 为服务端代取 Data URL（AH批，已真机验通）；v6 为客户端下载转 Data URL、v5 为 TTF 临时链接优先、v4 为 woff2 临时链接
 const LOADED_KEY_PREFIX = `landscape.fontLoaded.${FONT_BUILD}.`;
 
@@ -48,8 +53,11 @@ function createFontManager(deps = {}) {
   const fontSource = deps.fontSource || createFontSource({ wxApi, storage, cloudBase: deps.cloudBase, fileExists: deps.fileExists });
   const state = {}; // fontId -> 'idle'|'loading'|'loaded'|'failed'
   const failures = {}; // fontId -> {stage:'temp-url'|'load-face', reason}（页面据此给用户看得懂的提示）
-  FONTS.forEach((f) => { state[f.id] = storage.get(LOADED_KEY_PREFIX + f.id) ? 'loaded' : 'idle'; });
-  SUPP_FONTS.forEach((f) => { state[f.id] = storage.get(LOADED_KEY_PREFIX + f.id) ? 'loaded' : 'idle'; });
+  const pending = new Map(); // fontId -> 在途 load Promise（BS批去重：并发点两次只跑一路）
+  // BS批：state 不再从 storage 标记恢复 'loaded'（见上文更正）；storage 标记
+  // 仍在成功时写入（测试与排障用），但本会话是否已注册只看 state。
+  FONTS.forEach((f) => { state[f.id] = 'idle'; });
+  SUPP_FONTS.forEach((f) => { state[f.id] = 'idle'; });
 
   function sourceFor(font) {
     return fontSource.subpackageSource(font);
@@ -81,12 +89,13 @@ function createFontManager(deps = {}) {
   function load(fontId) {
     const font = SUPP_BY_ID[fontId] || fontById(fontId);
     if (state[font.id] === 'loaded') return Promise.resolve(true);
+    if (pending.has(font.id)) return pending.get(font.id); // BS批：在途复用同一路
     if (!wxApi || typeof wxApi.loadFontFace !== 'function') {
       state[font.id] = 'failed';
       return Promise.resolve(false);
     }
     state[font.id] = 'loading';
-    return (async () => {
+    const p = (async () => {
       const candidates = fontSource.resolveCandidates(font);
       let attemptFailure = null; // 本次尝试里最有信息量的失败（云端换链优先于分包兜底）
       for (const cand of candidates) {
@@ -127,7 +136,7 @@ function createFontManager(deps = {}) {
         if (ok) {
           state[font.id] = 'loaded';
           delete failures[font.id];
-          storage.set(LOADED_KEY_PREFIX + font.id, 1); // 缓存标记：下次免重复加载
+          storage.set(LOADED_KEY_PREFIX + font.id, 1); // 仅记"曾经成功过"（BS批：不作本会话已注册的依据）
           return true;
         }
         if (!attemptFailure) attemptFailure = { stage: 'load-face', reason: lastFaceError || '字体文件已取到，但手机未能加载' };
@@ -136,12 +145,24 @@ function createFontManager(deps = {}) {
       state[font.id] = 'failed';
       return false;
     })();
+    pending.set(font.id, p);
+    p.then(() => pending.delete(font.id), () => pending.delete(font.id));
+    return p;
   }
 
   return {
     load,
-    /** 确保当前所选字体就绪（页面 onShow 调；其余字体不预下载，省流量/包体积） */
+    /** 确保当前所选字体就绪（页面 onShow 调） */
     ensureSelected(fontId) { return load(fontId); },
+    /** BS批：一次性预载全部 6 款主字体（用户定：流量不贵、切换要秒切）。
+     * 在途去重保证重复调用不重复下载；补充片仍按需（只在生僻字时用，
+     * 当前本子的补充片进页时已在就绪盖下加载完）。永不 reject。 */
+    ensureAllFonts() {
+      return Promise.all(FONTS.map((f) => load(f.id))).then(
+        (rs) => rs.every(Boolean),
+        () => false,
+      );
+    },
     /** 确保补充字库指定片就绪（BC批：indexes 为 0 起片下标，页面按字定位后才调） */
     ensureSupplements(indexes) {
       const ids = (indexes || []).map((i) => `supp${i + 1}`).filter((id) => SUPP_BY_ID[id]);
@@ -173,6 +194,8 @@ module.exports = {
   ensureSelected(fontId) { return defaultManager().ensureSelected(fontId); },
   /** 确保补充字库指定片就绪（BC批；永不抛错） */
   ensureSupplements(indexes) { return defaultManager().ensureSupplements(indexes); },
+  /** 一次性预载全部 6 款主字体（BS批；永不抛错） */
+  ensureAllFonts() { return defaultManager().ensureAllFonts(); },
   isFallback(fontId) { return defaultManager().isFallback(fontId); },
   getState(fontId) { return defaultManager().getState(fontId); },
   /** 最近一次加载失败的阶段与原始原因（2026-10-25 补导出：此前实例方法未挂到

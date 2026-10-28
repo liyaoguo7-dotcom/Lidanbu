@@ -39,6 +39,7 @@ function createBookPage(kind) {
       selStack: LC.selectedStack('lxgw'),
       songtiStack: LC.SONGTI_STACK,
       fontLoaded: false,
+      fontSwitching: false, // BS批：字体切换进行中锁（面板锁＋防重复点）
       titleName: '', titleDate: '', titleIcon: '',
       allColumns: [], cols: [], scrollLeft: 0, paperInnerW: 0,
       styleRightPx: 120, // 「样式」按钮右偏移（避让微信胶囊，_applyOrientation 按胶囊实测位置刷新；任务Z 再左移 10px：110→120）
@@ -109,6 +110,12 @@ function createBookPage(kind) {
         this._convertCols();
       }
       this.setData({ ready: true });
+      /* BS批（用户定：一次性全部下载、切换秒切）：揭盖后在后台预载其余
+       * 5 款主字体，不挡开页；预载失败不影响当前页（切时再按提示加载）。
+       * 补充片仍按需（只在生僻字时用，当前本子的已在上面加载完）。 */
+      if (typeof fontManager.ensureAllFonts === 'function') {
+        fontManager.ensureAllFonts().catch(() => {});
+      }
     },
 
     async onShow() {
@@ -442,6 +449,10 @@ function createBookPage(kind) {
     onOpenPanel() {
       if (this._machine) this._machine.openPanel();
       this.setData({ panelOpen: true });
+      // BS批：打开面板＝用户马上要切字体，顺手把剩余主字体也预载上（去重，不重复下载）
+      if (typeof fontManager.ensureAllFonts === 'function') {
+        fontManager.ensureAllFonts().catch(() => {});
+      }
     },
     onClosePanel() {
       if (this._machine) this._machine.closePanel();
@@ -450,16 +461,23 @@ function createBookPage(kind) {
 
     async onPickFont(e) {
       const id = e.currentTarget.dataset.id;
-      if (id === this.data.fontId) return;
+      if (id === this.data.fontId || this.data.fontSwitching) return; // BS批：切换中再点直接挡住
       /* BC批：先把新字体加载好再切换——旧顺序先换 fontId 会让文字先以
        * 回退字体（系统楷/宋）闪一帧、新字体到位后再跳变（真机反馈
-       * 「切换有延迟」的主观来源）。加载失败则不切换、只提示。 */
-      const ok = await fontManager.ensureSelected(id); // 选中才下载
-      if (ok) {
-        this._store.setFont(id); // 只写字体字段，样式字段不动
-        this.setData({ fontId: id, selStack: LC.selectedStack(id), fontLoaded: true });
-      }
-      if (!ok) {
+       * 「切换有延迟」的主观来源）。加载失败则不切换、只提示。
+       * BS批：已加载的秒切（不弹提示）；未加载完的显示「正在加载字体…」
+       * 并锁住面板；主字体＋当前本子补充片等齐了一次性重排，不再第二跳。 */
+      this.setData({ fontSwitching: true });
+      const alreadyLoaded = typeof fontManager.getState === 'function'
+        && fontManager.getState(id) === 'loaded';
+      let showedLoading = false;
+      try {
+        if (!alreadyLoaded) {
+          wx.showLoading({ title: '正在加载字体…', mask: true });
+          showedLoading = true;
+        }
+        const ok = await fontManager.ensureSelected(id);
+        if (!ok) {
         // 2026-10-24：字体真机一直显示不了却无任何提示——失败原因必须露出来，
         // 用户一眼能看到卡在哪一步，也方便截图回传定位
         const f = typeof fontManager.getLastFailure === 'function' ? fontManager.getLastFailure(id) : null;
@@ -479,9 +497,49 @@ function createBookPage(kind) {
           content = `「${fname}」字体文件加载失败，仍用现在的字体显示。麻烦把这个提示截图发给我们排查。`;
         }
         wx.showModal({ title: '字体没加载上', content, showCancel: false });
-        return; // BC批：加载失败不切换、不重排
+        return; // BS批：失败不切换；finally 里关加载提示、解面板锁
       }
-      await this.reload(); // 字号校准系数变了，重排列模型
+      this._store.setFont(id); // 只写字体字段，样式字段不动
+      this.setData({ fontId: id, selStack: LC.selectedStack(id), fontLoaded: true });
+      // 补充片（当前本子姓名里的生僻字）先等齐，再一次性重排，免得切后又跳一次
+      const names = (this.data.allColumns || []).map((c) => (c.empty ? '' : c.name || '')).join('');
+      const chunks = LC.suppChunksForText(names);
+      if (chunks.length && typeof fontManager.ensureSupplements === 'function') {
+        await fontManager.ensureSupplements(chunks).catch(() => {});
+      }
+      // 字号校准系数变了，重排列模型；有缓存记录时直接用缓存重排，
+      // 不再每次重查云端数据（旧 reload 是每次切换都慢的一大来源）
+      if (!this._rebuildFromCache(id)) await this.reload();
+      } finally {
+        if (showedLoading) wx.hideLoading();
+        this.setData({ fontSwitching: false });
+      }
+    },
+
+    /** BS批：只换字体时的缓存重排（不查云端）：用 reload 时已取齐的记录
+     * （_recordsById，插入顺序即记账升序）按新字体重算列模型。无缓存时
+     * 返回 false，调用方回落到 reload() 全量重查。主题/标题与字体无关，不动。 */
+    _rebuildFromCache(fontId) {
+      const recs = Object.values(this._recordsById || {});
+      if (!recs.length) return false;
+      let rows;
+      let midTextOpt;
+      let themeId;
+      if (isReceive) {
+        if (!this._event) return false;
+        rows = recs.map((r) => ({ id: r._id, name: r.contactName || '', amountFen: r.amount || 0, tagId: this._event.tagId }));
+        midTextOpt = LC.resolveBookMidText({ tagId: this._event.tagId, title: this._event.name, styleId: this.data.styleId });
+        themeId = LC.resolveReceiveTheme2({ tagId: this._event.tagId, title: this._event.name }, this.data.styleId);
+      } else {
+        rows = recs.map((r) => ({ id: r._id, name: r.contactName || '', amountFen: r.amount || 0, tagId: r.tagId }));
+        midTextOpt = LC.resolveBookMidText({ styleId: this.data.styleId }) === '奠仪' ? '奠仪' : undefined;
+        themeId = this.data.styleId;
+      }
+      const built = LC.buildColumns(rows, { fontId, midText: midTextOpt, minCols: this._minCols() });
+      this.setData({ theme: LC.themeById(themeId), allColumns: built.columns, emptyBook: rows.length === 0 });
+      this._syncScrollBox();
+      this._afterBuild(built);
+      return true;
     },
 
     onPickStyle(e) {
