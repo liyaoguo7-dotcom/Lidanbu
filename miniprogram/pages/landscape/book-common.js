@@ -64,6 +64,69 @@ function createBookPage(kind) {
 
     noop() {},
 
+    /** BV2 快照缓存键：按书隔离（送礼整本／收礼按 eventId），换书、换号不串 */
+    _snapKey() {
+      const owner = this._ownerId || dataService.userId || '';
+      return isReceive
+        ? `landscape.snap.receive.${owner}.${this._eventId || ''}`
+        : `landscape.snap.gift.${owner}`;
+    },
+    /** BV2 读快照：任一校验不过即作废（字体／样式换过、书不对、结构不对都回落全量） */
+    _readSnapshot(prefs) {
+      try {
+        if (isReceive && !this._eventId) return null;
+        const raw = wxStorage.get(this._snapKey());
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s || s.v !== 1 || s.kind !== (isReceive ? 'receive' : 'gift')) return null;
+        if (s.fontId !== prefs.fontId || s.styleId !== prefs.styleId) return null;
+        if (isReceive && s.eventId !== this._eventId) return null;
+        if (!Array.isArray(s.allColumns) || !Array.isArray(s.records)) return null;
+        return s;
+      } catch (e) { return null; }
+    },
+    /** BV2 应用快照：直接渲染上次的列模型＋记录表（字体切换重排、点列详情都靠它） */
+    _applySnapshot(s) {
+      this._eventId = s.eventId || this._eventId;
+      this._event = s.event || null;
+      this._recordsById = {};
+      (s.records || []).forEach((r) => { this._recordsById[r._id] = r; });
+      this.setData({
+        emptyBook: !!s.emptyBook,
+        theme: LC.themeById(s.themeId),
+        titleName: s.titleName || '',
+        titleDate: s.titleDate || '',
+        titleIcon: s.titleIcon || '',
+        allColumns: s.allColumns,
+      });
+      this._syncScrollBox();
+      this._afterBuild();
+    },
+    /** BV2 写快照：只存渲染所需的最小集；超 200KB 不存（防 storage 膨胀）；
+     * 空本也存（只要 eventId 在，下次秒开空本、后台刷新再确认有没有新书） */
+    _writeSnapshot() {
+      try {
+        if (isReceive && !this._eventId) return;
+        if (!Array.isArray(this.data.allColumns)) return;
+        const s = {
+          v: 1, kind: isReceive ? 'receive' : 'gift',
+          eventId: this._eventId || '',
+          fontId: this.data.fontId, styleId: this.data.styleId,
+          themeId: this.data.theme && this.data.theme.id,
+          titleName: this.data.titleName, titleDate: this.data.titleDate, titleIcon: this.data.titleIcon,
+          emptyBook: !!this.data.emptyBook,
+          allColumns: this.data.allColumns,
+          records: Object.values(this._recordsById || {}),
+          event: this._event
+            ? { _id: this._event._id, name: this._event.name, tagId: this._event.tagId, date: this._event.date }
+            : null,
+        };
+        const raw = JSON.stringify(s);
+        if (raw.length > 200000) return;
+        wxStorage.set(this._snapKey(), raw);
+      } catch (e) { /* 缓存失败不拦页面 */ }
+    },
+
     async onLoad(options) {
       this._machine = LC.createOrientationMachine();
       this._store = LC.createSelectionStore(wxStorage);
@@ -96,6 +159,29 @@ function createBookPage(kind) {
       const fontP = fontManager.ensureSelected(prefs.fontId);
       const permP = this._loadPermissions(); // 权限与内容加载重叠，不再排队
       this._syncOrientation();
+      /* BV2 缓存秒开：有快照时先渲染快照、只等门禁＋字体（会话内字体已加载时不等），
+       * 数据后台静默刷新；无快照走原来全量流程（第一次打开等一会儿，用户接受）。
+       * 门禁仍在快照渲染之前（上面已查完），过期会员看不到快照内容。 */
+      const snap = this._readSnapshot(prefs);
+      if (snap) {
+        this._applySnapshot(snap);
+        const fontReady = typeof fontManager.getState === 'function'
+          && fontManager.getState(prefs.fontId) === 'loaded';
+        let ok = fontReady;
+        if (!fontReady) {
+          ok = await fontP;
+          if (ok) this._convertCols();
+        }
+        this.setData({ fontLoaded: ok });
+        await permP;
+        this.setData({ ready: true });
+        if (typeof fontManager.ensureAllFonts === 'function') {
+          fontManager.ensureAllFonts().catch(() => {});
+        }
+        // 后台刷新：静默（失败不弹 toast），成功后 _reload 内已更新快照
+        this.reload({ silent: true }).catch(() => {});
+        return;
+      }
       await this.reload();
       const ok = await fontP;
       this.setData({ fontLoaded: ok });
@@ -235,12 +321,12 @@ function createBookPage(kind) {
       this.setData({ perms: LC.permissionsFor({ isOwner: false, switches: grant ? grant.switches : {} }) });
     },
 
-    async reload() {
+    async reload(opts) {
       try {
         if (isReceive) await this._reloadReceive();
         else await this._reloadGift();
       } catch (e) {
-        wx.showToast({ title: (e && e.message) || '加载失败', icon: 'none' });
+        if (!opts || !opts.silent) wx.showToast({ title: (e && e.message) || '加载失败', icon: 'none' });
       }
     },
 
@@ -264,6 +350,7 @@ function createBookPage(kind) {
         const built = LC.buildColumns([], { fontId: this.data.fontId });
         this.setData({ emptyBook: true, allColumns: built.columns, titleName: '收礼礼簿' });
         this._afterBuild(built);
+        this._writeSnapshot(); // BV2：空本快照也存
         return;
       }
       const ev = events.find((e) => e._id === this._eventId) || events[0];
@@ -297,6 +384,7 @@ function createBookPage(kind) {
       });
       this._syncScrollBox(); // 实际主题可能与所选样式不同（标题判白事），按实际主题锚点重算卷轴
       this._afterBuild(built);
+      this._writeSnapshot(); // BV2：列模型新鲜出炉即更新快照
     },
 
     async _reloadGift() {
@@ -330,6 +418,7 @@ function createBookPage(kind) {
       });
       this._syncScrollBox(); // 按（可能新换的）样式主题锚点重算卷轴定位
       this._afterBuild(built);
+      this._writeSnapshot(); // BV2：列模型新鲜出炉即更新快照
     },
 
     /**
@@ -536,6 +625,7 @@ function createBookPage(kind) {
       this.setData({ theme: LC.themeById(themeId), allColumns: built.columns, emptyBook: rows.length === 0 });
       this._syncScrollBox();
       this._afterBuild(built);
+      this._writeSnapshot(); // BV2：换字体重排后快照同步新字体，下次秒开不回落全量
       return true;
     },
 

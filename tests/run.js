@@ -98,3 +98,4 @@ require('./test-font-bs');
 require('./test-font-bt');
 require('./test-font-bu');
 require('./test-batch-bv-behavior');
+require('./test-batch-bv2-behavior');
