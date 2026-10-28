@@ -17,7 +17,7 @@ test('BW 首页缓存秒显：先读缓存秒显、后台重查换新、失败�
   assert(js.includes('c.uid !== uid'), '缓存按 uid 校验、换号不用旧账');
   assert(js.includes('_applyHomeData(cached.monthSummary, cached.recent)'), '有缓存先秒显');
   assert(js.includes('_writeHomeCache(monthSummary, list)'), '查回新数据后更新缓存');
-  const refreshBlock = js.slice(js.indexOf('async refreshHomeData()'));
+  const refreshBlock = js.slice(js.indexOf('async refreshHomeData()'), js.indexOf('goWanglai()'));
   assert(!refreshBlock.includes('showToast'), '静默刷新失败不弹错');
   assert(refreshBlock.includes('homeLoading: false'), '刷新收尾关加载态');
 });
