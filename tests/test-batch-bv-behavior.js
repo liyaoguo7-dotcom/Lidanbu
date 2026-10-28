@@ -82,6 +82,12 @@ test('BV 收礼详情：搜索栏＋本地筛＋搜空态', () => {
   assert(js.includes('r.name.includes(kw)'), '本地按姓名筛');
 });
 
+test('BV 我的页会员卡片红稍淡：渐变改淡、卡内按钮红字不动', () => {
+  const wxss = readMp('pages/mine/mine.wxss');
+  assert(wxss.includes('linear-gradient(135deg, #F28084, #E95E62)'), '会员卡片渐变已稍淡');
+  assert(wxss.includes('.m-btn') && /\.m-btn\s*\{[^}]*color: #F0575A/.test(wxss), '卡内白按钮红字不动');
+});
+
 test('BV 送礼记录列表交替：单双号白／淡米', () => {
   const wxml = readMp('pages/gifts/gifts.wxml');
   assert(wxml.includes(`class="gift-row {{index % 2 === 1 ? 'zebra' : ''}} {{index === shown.length - 1 ? 'last' : ''}}"`), '送礼行交替且保留 last');

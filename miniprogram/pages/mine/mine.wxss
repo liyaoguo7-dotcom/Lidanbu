@@ -28,7 +28,8 @@
 .usub { font-size: 16px; color: #C2C2C2; margin-top: 4px; display: block; }
 .member-card {
   padding: 12px 16px;
-  background: linear-gradient(135deg, #F0575A, #e04447);
+  /* BV批补：卡片红稍淡（用户定稍淡一档，原 #F0575A→#e04447 太艳）；卡内白按钮红字不动 */
+  background: linear-gradient(135deg, #F28084, #E95E62);
   border: none;
   display: flex; flex-direction: column;
 }
