@@ -43,6 +43,9 @@
   display: flex; align-items: center;
   padding: 8px 16px; min-height: 58px;
 }
+/* BV批斑马：本页 .event-row 自带白底（全局 .zebra 同优先级会被页样式压住），
+   故用双类选择器提权；颜色与别处同一对白／淡米。 */
+.event-row.zebra { background: #F7F3EA; }
 .pat {
   width: 44px; height: 44px; border-radius: 50%;
   background: #F5F6F4;

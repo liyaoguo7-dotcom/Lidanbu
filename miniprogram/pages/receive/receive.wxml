@@ -22,7 +22,8 @@
       <view class="act act-edit" data-id="{{item._id}}" catchtap="onEditSwipe">修改</view>
       <view class="act act-del" data-id="{{item._id}}" catchtap="onDeleteSwipe">删除</view>
     </view>
-    <view class="event-row" style="transform: translateX({{item.offset}}px);" data-id="{{item._id}}" bindtap="onRowTap">
+    <!-- BV批斑马：礼簿列表按单双号交替（与我的页／往来／选联系人同一对颜色） -->
+    <view class="event-row {{index % 2 === 1 ? 'zebra' : ''}}" style="transform: translateX({{item.offset}}px);" data-id="{{item._id}}" bindtap="onRowTap">
       <view class="pat {{item.isBaishi ? 'baishi' : ''}}">
         <image class="pat-img" src="{{item.icon}}" mode="aspectFit" />
       </view>

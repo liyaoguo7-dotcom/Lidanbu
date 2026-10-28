@@ -66,6 +66,9 @@ test('BV 斑马纹：我的页 3 行 tinted、往来主列表交替、搜索结�
   const cc = readMp('pages/choose-contact/choose-contact.wxml');
   assert(cc.includes(`class="contact-row {{index % 2 === 1 ? 'zebra' : ''}}"`), '选联系人页交替');
   assert(readMp('app.wxss').includes('.zebra { background: #F7F3EA; }'), '全局斑马色定义');
+  const recv = readMp('pages/receive/receive.wxml');
+  assert(recv.includes(`class="event-row {{index % 2 === 1 ? 'zebra' : ''}}"`), '收礼礼簿列表交替');
+  assert(readMp('pages/receive/receive.wxss').includes('.event-row.zebra { background: #F7F3EA; }'), '收礼行 tinted 提权规则在位');
 });
 
 test('BV 收礼详情：搜索栏＋本地筛＋搜空态', () => {
