@@ -106,7 +106,7 @@ function createBookPage(kind) {
       const suppNames = (this.data.allColumns || []).map((c) => (c.empty ? '' : c.name || '')).join('');
       const suppChunks = LC.suppChunksForText(suppNames);
       if (suppChunks.length && typeof fontManager.ensureSupplements === 'function') {
-        await fontManager.ensureSupplements(suppChunks);
+        await fontManager.ensureSupplements(suppChunks, this.data.fontId);
         this._convertCols();
       }
       this.setData({ ready: true });
@@ -357,7 +357,7 @@ function createBookPage(kind) {
       const names = (this.data.allColumns || []).map((c) => (c.empty ? '' : c.name || '')).join('');
       const chunks = LC.suppChunksForText(names);
       if (chunks.length && typeof fontManager.ensureSupplements === 'function') {
-        fontManager.ensureSupplements(chunks).then((ok) => { if (ok) this._convertCols(); });
+        fontManager.ensureSupplements(chunks, this.data.fontId).then((ok) => { if (ok) this._convertCols(); });
       }
     },
 
@@ -505,7 +505,7 @@ function createBookPage(kind) {
       const names = (this.data.allColumns || []).map((c) => (c.empty ? '' : c.name || '')).join('');
       const chunks = LC.suppChunksForText(names);
       if (chunks.length && typeof fontManager.ensureSupplements === 'function') {
-        await fontManager.ensureSupplements(chunks).catch(() => {});
+        await fontManager.ensureSupplements(chunks, id).catch(() => {});
       }
       // 字号校准系数变了，重排列模型；有缓存记录时直接用缓存重排，
       // 不再每次重查云端数据（旧 reload 是每次切换都慢的一大来源）

@@ -43,7 +43,7 @@ test('BE红幅三角瞄三个点：按胶囊左缘起 24% 宽算、不再瞄正�
 
 test('BF补充字库无延迟：命中的补充片在就绪盖揭开前先加载完', () => {
   const js = rd('miniprogram/pages/landscape/book-common.js');
-  const awaitIdx = js.indexOf('await fontManager.ensureSupplements(suppChunks)');
+  const awaitIdx = js.indexOf('await fontManager.ensureSupplements(suppChunks, this.data.fontId)');
   const readyIdx = js.indexOf('this.setData({ ready: true })');
   assert(awaitIdx > 0, 'onLoad 应在就绪前等待补充片加载');
   assert(readyIdx > awaitIdx, '补充片加载必须排在 ready 之前（打开第一眼就是枝芒、不跳变）');

@@ -211,12 +211,30 @@ const SUPP_FONTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => ({
   file: `zhimang-supp${i}.ttf`, cloudFile: `zhimang-supp${i}.ttf`,
 }));
 
+/**
+ * 霞鹜补充字库（BU批）：用户指定两套补全——莫大毛笔／马善政／枝芒行书
+ * 三款用枝芒补全（SUPP_FONTS），霞鹜文楷／龙藏体／古典宋体三款用霞鹜补全。
+ * 两套同字表同切法，分界（SUPP_BOUNDS）完全相同，只换底本与族名／文件名，
+ * 故定位逻辑（suppChunkIndexOf）不用改两套，只按当前字体换集。
+ */
+const SUPP_LXGW_FONTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => ({
+  id: `lxsupp${i}`, name: `霞鹜补充字库${i}`, family: `LxgwSupp${i}`,
+  file: `lxgw-supp${i}.ttf`, cloudFile: `lxgw-supp${i}.ttf`,
+}));
+
+/** 当前字体对应的补全集（BU批指定映射；未知字体默认枝芒集）。 */
+function suppFontsFor(fontId) {
+  return (fontId === 'lxgw' || fontId === 'longcang' || fontId === 'cactus')
+    ? SUPP_LXGW_FONTS : SUPP_FONTS;
+}
+
 function selectedStack(fontId) {
   /* BC批回退链（用户定：缺字先用我们自己的其他字体、不要黑体）：
-   * 所选字体 → 补充字库 12 片（BT批） → 其余五款字体 → 系统楷体 → 系统宋体。
+   * 所选字体 → 对应的一套补充字库 12 片（BU批两套指定） → 其余五款字体
+   * → 系统楷体 → 系统宋体。同一时刻栈内只有一套补全，两套不会混用。
    * 未加载的字体族会被渲染器自动跳过，链长不影响已加载时的观感。 */
   const chosen = fontById(fontId).family;
-  const supp = SUPP_FONTS.map((f) => `"${f.family}"`);
+  const supp = suppFontsFor(fontId).map((f) => `"${f.family}"`);
   const others = FONTS.filter((f) => f.family !== chosen).map((f) => `"${f.family}"`);
   return [`"${chosen}"`, ...supp, ...others, KAITI_STACK, SONGTI_STACK].join(',');
 }
@@ -567,7 +585,7 @@ module.exports = {
   USE_ENV_SAFE_AREA, SPEC, COL_INNER_H, scaledSpec, round2,
   SCROLL_GEOM, scrollLayout,
   FONTS, fontById, calibratedSize, renderFontSize, selectedStack, SONGTI_STACK, KAITI_STACK,
-  SUPP_FONTS, suppChunkIndexOf, suppChunksForText,
+  SUPP_FONTS, SUPP_LXGW_FONTS, suppFontsFor, suppChunkIndexOf, suppChunksForText,
   BAKUDAI_S2T, mapDisplayText,
   fontRoleForMid, MID_BY_TAG, midTextForTag,
   FUNERAL_KEYWORDS, isFuneralBook, resolveBookMidText,

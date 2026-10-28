@@ -17,8 +17,8 @@
  * fallback，页面继续用回退链渲染（所选字体名仍在栈首，未加载时系统自动逐字
  * 回退到楷体/宋体，不出方框），恢复网络后下次进入页面自动重试。
  */
-const { FONTS, fontById, SUPP_FONTS } = require('../pages/landscape/landscape-core.js');
-const SUPP_BY_ID = Object.fromEntries(SUPP_FONTS.map((f) => [f.id, f]));
+const { FONTS, fontById, SUPP_FONTS, SUPP_LXGW_FONTS, suppFontsFor } = require('../pages/landscape/landscape-core.js');
+const SUPP_BY_ID = Object.fromEntries([...SUPP_FONTS, ...SUPP_LXGW_FONTS].map((f) => [f.id, f]));
 const { createFontSource, SUBPACKAGE_ROOT } = require('./font-source.js');
 
 /** 本地字体路径前缀（现为分包路径；保留此导出兼容旧引用，来源细节以 font-source 为准） */
@@ -58,6 +58,7 @@ function createFontManager(deps = {}) {
   // 仍在成功时写入（测试与排障用），但本会话是否已注册只看 state。
   FONTS.forEach((f) => { state[f.id] = 'idle'; });
   SUPP_FONTS.forEach((f) => { state[f.id] = 'idle'; });
+  SUPP_LXGW_FONTS.forEach((f) => { state[f.id] = 'idle'; });
 
   function sourceFor(font) {
     return fontSource.subpackageSource(font);
@@ -163,9 +164,12 @@ function createFontManager(deps = {}) {
         () => false,
       );
     },
-    /** 确保补充字库指定片就绪（BC批：indexes 为 0 起片下标，页面按字定位后才调） */
-    ensureSupplements(indexes) {
-      const ids = (indexes || []).map((i) => `supp${i + 1}`).filter((id) => SUPP_BY_ID[id]);
+    /** 确保补充字库指定片就绪（BC批：indexes 为 0 起片下标，页面按字定位后才调；
+     * BU批：按当前字体换集——霞鹜／龙藏／古典走霞鹜集，其余走枝芒集；
+     * fontId 缺省时默认枝芒集，与旧调用兼容）。 */
+    ensureSupplements(indexes, fontId) {
+      const fonts = (typeof suppFontsFor === 'function') ? suppFontsFor(fontId) : SUPP_FONTS;
+      const ids = (indexes || []).map((i) => fonts[i] && fonts[i].id).filter((id) => SUPP_BY_ID[id]);
       return Promise.all(ids.map((id) => load(id))).then((rs) => rs.every(Boolean));
     },
     getState(fontId) { return state[fontById(fontId).id]; },
@@ -193,7 +197,7 @@ module.exports = {
   /** 页面便捷入口：确保所选字体就绪（永不抛错） */
   ensureSelected(fontId) { return defaultManager().ensureSelected(fontId); },
   /** 确保补充字库指定片就绪（BC批；永不抛错） */
-  ensureSupplements(indexes) { return defaultManager().ensureSupplements(indexes); },
+  ensureSupplements(indexes, fontId) { return defaultManager().ensureSupplements(indexes, fontId); },
   /** 一次性预载全部 6 款主字体（BS批；永不抛错） */
   ensureAllFonts() { return defaultManager().ensureAllFonts(); },
   isFallback(fontId) { return defaultManager().isFallback(fontId); },

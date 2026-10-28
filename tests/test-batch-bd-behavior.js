@@ -41,6 +41,8 @@ test('BD枝芒大一号＋补充底本枝芒：校准 1.24、补充族名/文件
   assert.eq(LC.SUPP_FONTS.length, 12, '补充 12 片（BT批）');
   assert.eq(LC.SUPP_FONTS[0].family, 'ZhiMangSupp1', '补充族名以枝芒为底');
   assert.eq(LC.SUPP_FONTS[5].cloudFile, 'zhimang-supp6.ttf', '补充云端文件名');
-  const stack = LC.selectedStack('lxgw');
-  assert(stack.includes('"ZhiMangSupp1"') && stack.includes('"ZhiMangSupp12"'), '回退链含枝芒补充 12 片');
+  const stack = LC.selectedStack('bakudai');
+  assert(stack.includes('"ZhiMangSupp1"') && stack.includes('"ZhiMangSupp12"'), '莫大回退链含枝芒补充 12 片（BU批：毛笔组）');
+  const stackLx = LC.selectedStack('lxgw');
+  assert(stackLx.includes('"LxgwSupp1"') && stackLx.includes('"LxgwSupp12"'), '霞鹜回退链含霞鹜补充 12 片（BU批：印刷组）');
 });
