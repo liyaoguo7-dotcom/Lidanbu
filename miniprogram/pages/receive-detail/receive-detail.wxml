@@ -1,4 +1,13 @@
 <!-- 礼薄详情 -->
+<!-- BV批：搜索栏（照送礼记录页：搜索姓名＋取消，本地筛） -->
+<view class="searchbar">
+  <view class="searchbox">
+    <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
+      placeholder-style="color:#C2C2C2" style="flex:1;font-size:14px" />
+  </view>
+  <text class="search-cancel" bindtap="onCancelSearch">取消</text>
+</view>
+
 <view class="card pat-card">
   <!-- 礼薄级修改/删除入口已取消（2026-10-22 用户定：收礼列表左滑已有修改/删除，详情页不再放） -->
   <view class="pat-big {{isBaishi ? 'baishi' : ''}}">
@@ -9,23 +18,27 @@
   <text class="event-date num">{{date}}</text>
   <!-- 上下合成一块（2026-10-24 用户亲定）：共计直接接在日期下面，与头部同一张卡，
        去掉中间的灰色间隔；共计与记录之间仍是细线分隔（任务AE 第 8 项版式不变） -->
-  <view class="total-line">
+  <view class="total-line" wx:if="{{!searching}}">
     <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
   </view>
-  <view class="rec-row {{index === records.length - 1 ? 'last' : ''}}" wx:for="{{records}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRecordDetail">
+  <view class="rec-row {{index === shown.length - 1 ? 'last' : ''}}" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goRecordDetail">
     <view class="mid">
       <text class="nm">{{item.name}}</text>
       <view class="subline"><text class="sub">{{item.subType}}｜</text><text class="sub num">{{item.subDate}}</text></view>
     </view>
     <text class="amt red num"><text class="sign">+</text>{{item.amountText}}</text>
   </view>
-  <view class="list-end" wx:if="{{records.length > 0}}">
+  <view class="list-end" wx:if="{{shown.length > 0 && !searching}}">
     <view class="end-line"></view><text class="end-text">完</text><view class="end-line"></view>
   </view>
 </view>
 
-<view class="empty" wx:if="{{records.length === 0}}">
+<view class="empty" wx:if="{{shown.length === 0 && !searching}}">
   <text class="empty-text">还没有收礼记录，点击下方＋添加</text>
+</view>
+
+<view class="empty" wx:if="{{shown.length === 0 && searching}}">
+  <text class="empty-text">没有找到相关记录</text>
 </view>
 
 <view style="height:84px"></view>

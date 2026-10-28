@@ -71,7 +71,8 @@
   <block wx:if="{{!searching}}">
     <!-- 亲友列表 -->
     <view class="card" wx:if="{{rows.length > 0}}">
-      <view class="wl-row" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
+      <!-- BV批斑马：主列表按单双号交替（搜索结果不做，用户定） -->
+      <view class="wl-row {{index % 2 === 1 ? 'zebra' : ''}}" wx:for="{{rows}}" wx:key="contactId" data-id="{{item.contactId}}" data-name="{{item.name}}" bindtap="goTimeline">
         <text class="nm">{{item.name}}</text>
         <view class="right">
           <text class="count">{{item.countText}}</text>

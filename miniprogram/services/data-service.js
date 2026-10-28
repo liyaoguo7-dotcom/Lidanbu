@@ -1058,11 +1058,12 @@ const service = {
     try { return await core.contacts.listContacts(_db, _userId, ownerId); }
     catch (e) { throw new Error(friendly(e)); }
   },
-  /** 往来页搜索：输入姓名出联系人（成员视角自动只搜可见的） */
+  /** 往来页搜索：输入姓名出联系人（成员视角自动只搜可见的）；
+   * BV批：只出有往来记录的人（无记录的同名联系人不再冒出第二条空结果） */
   async searchWanglaiContacts({ ownerId, keyword } = {}) {
     const oid = ownerId || _userId;
     try {
-      return await core.contacts.searchContacts(_db, _userId, oid, keyword || '');
+      return await core.contacts.searchContactsWithRecords(_db, _userId, oid, keyword || '');
     } catch (e) { throw new Error(friendly(e)); }
   },
   /**

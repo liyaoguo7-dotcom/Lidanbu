@@ -102,6 +102,26 @@ async function searchContacts(db, actorId, ownerId, keyword) {
 }
 
 /**
+ * BV批：往来页搜索专用——只返回有往来记录的联系人。
+ * 背景：亲友录允许重名（只提醒不合并），无记录的同名联系人会让搜索出两条
+ * 一模一样的结果（一条有记录、一条空）。往来页语义就是往来记录，无记录的
+ * 联系人在此页点进去也是空竖线树，故直接滤掉；亲友录仍是全量入口。
+ * 成员视角：listContacts 已按授权过滤，可见联系人本就有授权记录，过滤不误伤。
+ * 逐人 count（不用全表拉取）：匹配集很小，count 不受云端分页条数限制。
+ */
+async function searchContactsWithRecords(db, actorId, ownerId, keyword) {
+  const all = await searchContacts(db, actorId, ownerId, keyword);
+  const out = [];
+  for (const c of all) {
+    const rc = await db.collection(COLLECTIONS.ReceiveRecord).count({ ownerId, contactId: c._id });
+    if (rc > 0) { out.push(c); continue; }
+    const gc = await db.collection(COLLECTIONS.GiftRecord).count({ ownerId, contactId: c._id });
+    if (gc > 0) out.push(c);
+  }
+  return out;
+}
+
+/**
  * 按 id 读单个亲友（任务AD 切云新增）：与 data-service 原直连读取同口径
  * （只按 {_id, ownerId} 查，不额外加权限判断），供本地/云端共用一条路径。
  */
@@ -109,4 +129,4 @@ async function getContact(db, actorId, ownerId, contactId) {
   return db.collection(COLLECTIONS.Contact).findOne({ _id: contactId, ownerId });
 }
 
-module.exports = { createContact, updateContact, countImpact, deleteContact, listContacts, searchContacts, getContact };
+module.exports = { createContact, updateContact, countImpact, deleteContact, listContacts, searchContacts, searchContactsWithRecords, getContact };

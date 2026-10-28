@@ -72,8 +72,11 @@ function createBookPage(kind) {
       await dataService.init();
 
       // 入口门禁：横置礼单本是会员专属，非会员跳会员介绍页
-      const m = await dataService.getMembership();
-      const flags = await dataService.getFeatureFlags().catch(() => null);
+      // BV批：会员与开关并行取（原来串行两趟云端往返，是进页 2-3 秒的一部分）
+      const [m, flags] = await Promise.all([
+        dataService.getMembership(),
+        dataService.getFeatureFlags().catch(() => null),
+      ]);
       const gate = landscapeRoute.resolveLandscapeGate({ membership: m, flags });
       if (gate === 'master-off') {
         wx.showToast({ title: '横置礼单本暂未开放', icon: 'none' });
@@ -89,30 +92,24 @@ function createBookPage(kind) {
       const prefs = this._store.getPrefs();
       this.setData({ fontId: prefs.fontId, styleId: prefs.styleId, selStack: LC.selectedStack(prefs.fontId) });
       // 选中才下载：只确保当前所选字体，其余两款等用户在面板里选中再加载
-      const ok = await fontManager.ensureSelected(prefs.fontId);
-      this.setData({ fontLoaded: ok });
-
+      // BV批：主字体加载与本子数据加载并行（原来串行），两边到齐才排版
+      const fontP = fontManager.ensureSelected(prefs.fontId);
       const permP = this._loadPermissions(); // 权限与内容加载重叠，不再排队
       this._syncOrientation();
       await this.reload();
+      const ok = await fontP;
+      this.setData({ fontLoaded: ok });
       await permP;
       // 字体在列渲染后才就绪的机型上，已排版文字可能不自动刷新（任务AB 第 6 项）：
       // 加载成功后用同内容再 setData 一次列模型，强制按新字体重排。
       if (ok) this._convertCols();
-      /* BF批（用户要求「不要有延迟」）：本页姓名有 721 子集外字时，
-       * 命中的补充片在就绪盖下先加载完再揭盖——打开第一眼缺字就是
-       * 枝芒行书，不出现先楷体顶着、过一会儿再换字的跳变。加载失败
-       * 不拦开页（回退链照常顶上）。 */
-      const suppNames = (this.data.allColumns || []).map((c) => (c.empty ? '' : c.name || '')).join('');
-      const suppChunks = LC.suppChunksForText(suppNames);
-      if (suppChunks.length && typeof fontManager.ensureSupplements === 'function') {
-        await fontManager.ensureSupplements(suppChunks, this.data.fontId);
-        this._convertCols();
-      }
+      /* BV批（用户定：速度优先）：揭盖不再等补充片——BF 批等盖是为了消灭缺字闪一下，
+       * 现在用户嫌进页 2-3 秒慢，改成先揭盖、补充片后台到了再重排一次（缺字会闪一次）。
+       * 补充片后台加载由 _afterBuild 负责（reload 里已触发），这里不再重复等。 */
       this.setData({ ready: true });
       /* BS批（用户定：一次性全部下载、切换秒切）：揭盖后在后台预载其余
        * 5 款主字体，不挡开页；预载失败不影响当前页（切时再按提示加载）。
-       * 补充片仍按需（只在生僻字时用，当前本子的已在上面加载完）。 */
+       * 补充片仍按需后台加载（_afterBuild 已触发，到了重排一次）。 */
       if (typeof fontManager.ensureAllFonts === 'function') {
         fontManager.ensureAllFonts().catch(() => {});
       }

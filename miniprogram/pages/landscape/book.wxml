@@ -38,7 +38,7 @@
           <text wx:if="{{titleDate}}" class="tdate">· {{titleDate}}</text>
         </view>
       </view>
-      <view class="style-btn" style="margin-right:{{styleRightPx}}px;" bindtap="onOpenPanel">样式</view>
+      <view class="style-btn" style="margin-right:{{styleRightPx}}px;background:{{theme.styleBtnBg}};color:{{theme.inkColor}};" bindtap="onOpenPanel">样式</view>
     </view>
 
     <!-- 中部：卷轴 + 纸面 + 卷轴（AT-6 贴合：槽位高＝纸高，整图绝对定位——

@@ -48,7 +48,8 @@
 
 <!-- ④ 邀请分享（唯一入口） -->
 <view class="card">
-  <view class="form-row" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
+  <!-- BV批斑马：会员卡下连续交替（横置白、邀请米、通知白、意见反馈米、常见问题白、关于我们米、联系客服白） -->
+  <view class="form-row zebra" bindtap="onInviteReward" style="{{inviteRewardEnabled ? '' : 'opacity:.45'}}">
     <text class="form-val">邀请分享</text>
     <text class="ph" wx:if="{{inviteRewardEnabled}}">已邀请 {{inviteDone}}/{{inviteMax}}</text>
     <text class="chev">›</text>
@@ -70,13 +71,13 @@
     <view class="badge" wx:if="{{unreadCount}}">{{unreadCount > 99 ? '99+' : unreadCount}}</view>
     <text class="chev">›</text>
   </view>
-  <view class="form-row" bindtap="onFeedback">
+  <view class="form-row zebra" bindtap="onFeedback">
     <text class="form-val">意见反馈</text><text class="chev">›</text>
   </view>
   <view class="form-row" bindtap="onFaq">
     <text class="form-val">常见问题</text><text class="chev">›</text>
   </view>
-  <view class="form-row" bindtap="onAbout">
+  <view class="form-row zebra" bindtap="onAbout">
     <text class="form-val">关于我们</text><text class="chev">›</text>
   </view>
   <button class="form-row contact-btn" open-type="contact">

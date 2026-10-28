@@ -10,6 +10,9 @@ page {
   border-radius: 12px;
   margin: 10px 12px;
 }
+/* BV批：斑马纹——相邻行交替的淡米色（与白行交替，淡、不扎眼）；
+   我的页／往来主列表／选联系人页共用；分隔细线保留。 */
+.zebra { background: #F7F3EA; }
 .form-row {
   display: flex;
   align-items: center;

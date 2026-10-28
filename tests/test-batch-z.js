@@ -90,15 +90,17 @@ test('任务Z-5：邀请页无可见邀请码/无填码入口，分享走 invite
 });
 
 // ---------- 第 6 项：样式按钮 ----------
-test('任务Z-6：样式按钮 17px 红字、不下移（2026-10-28 用户定：取消下移 6px，免得贴纸面）、左移再加 10px', () => {
+test('任务Z-6（BV修订：红字已由用户 2026-10-28 改定去掉）：样式按钮 17px、不下移、左移再加 10px、底色字色跟主题', () => {
   const wxss = readMp('pages/landscape/book.wxss');
   const btn = (wxss.match(/\.style-btn \{[^}]*\}/) || [''])[0];
   assert(btn.includes('font-size: 17px'), '字号 13→17px');
-  assert(btn.includes('color: #F0575A'), '红字');
+  assert(!btn.includes('#F0575A'), '红字已去掉（BV 用户定）');
   assert(btn.includes('translateY(0px)') && !btn.includes('translateY(6px)'), '不得再下移 6px（顶栏居中，与纸面留空隙）');
   const common = readMp('pages/landscape/book-common.js');
   assert(common.includes('+ 22'), '胶囊避让偏移 12→22（再左移 10px）');
   assert(common.includes('styleRightPx: 120'), '兜底偏移 110→120');
+  const wxml = readMp('pages/landscape/book.wxml');
+  assert(wxml.includes('{{theme.styleBtnBg}}') && wxml.includes('{{theme.inkColor}}'), '底色字色跟主题');
 });
 
 // ---------- 第 7 项：字体切换修复 ----------

@@ -97,3 +97,4 @@ require('./test-launch-gates');
 require('./test-font-bs');
 require('./test-font-bt');
 require('./test-font-bu');
+require('./test-batch-bv-behavior');

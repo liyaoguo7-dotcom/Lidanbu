@@ -316,6 +316,7 @@ const THEMES = {
   classic: {
     id: 'classic', name: '传统经典', kind: 'festive',
     lineColor: '#B8322A', frameColor: '#B8322A', paperBg: '#FFF8F2', marginBg: '#F9E9DC',
+    styleBtnBg: '#D4C6BB', // BV批：样式按钮底色＝上留白底色 marginBg ×0.85（与 BR 中段加深同一口径）
     midColor: '#86241D', inkColor: '#262019', plusBg: '#C0453C',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-classic.png',
@@ -324,6 +325,7 @@ const THEMES = {
   blue: {
     id: 'blue', name: '淡蓝水波纹', kind: 'festive',
     lineColor: '#5B8DB0', frameColor: '#5B8DB0', paperBg: '#F4F9FC', marginBg: '#D9E7F1',
+    styleBtnBg: '#B8C4CD', // BV批：同上
     midColor: '#345A7A', inkColor: '#262019', plusBg: '#7FA8C9',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-blue.png',
@@ -333,6 +335,7 @@ const THEMES = {
     id: 'pear', name: '梨花白', kind: 'festive',
     // 定版图 35：纸面为红线纸（列线/中段红），留白与卷轴为淡金梨花
     lineColor: '#B8322A', frameColor: '#B8322A', paperBg: '#FFF8F2', marginBg: '#FBF6EC',
+    styleBtnBg: '#D5D1C9', // BV批：同上
     midColor: '#86241D', inkColor: '#262019', plusBg: '#C9A24B',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-pear.png',
@@ -341,6 +344,7 @@ const THEMES = {
   cloud: {
     id: 'cloud', name: '祥云金', kind: 'festive',
     lineColor: '#A67C2E', frameColor: '#A67C2E', paperBg: '#FDF8EC', marginBg: '#F5EAD0',
+    styleBtnBg: '#D0C7B1', // BV批：同上
     midColor: '#75561B', inkColor: '#262019', plusBg: '#C39A3B',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-cloud.png',
@@ -349,6 +353,7 @@ const THEMES = {
   bamboo: {
     id: 'bamboo', name: '竹青', kind: 'festive',
     lineColor: '#3E7C5B', frameColor: '#3E7C5B', paperBg: '#F2F8F3', marginBg: '#DCEDE1',
+    styleBtnBg: '#BBC9BF', // BV批：同上
     midColor: '#2B5841', inkColor: '#262019', plusBg: '#6FA585',
     highlightBorder: '#C9A24B', highlightBg: 'rgba(201,162,75,0.10)',
     scrollImg: '/assets/scrolls/scroll-bamboo.png',
@@ -357,6 +362,7 @@ const THEMES = {
   funeral: {
     id: 'funeral', name: '白事', kind: 'funeral',
     lineColor: '#3B4046', frameColor: '#3B4046', paperBg: '#FFFFFF', marginBg: '#F2F2F2',
+    styleBtnBg: '#CECECE', // BV批：同上（白事同样加深，仍无红）
     midColor: '#000000', inkColor: '#2E3237', plusBg: '#3B4046',
     highlightBorder: '#3B4046', highlightBg: 'rgba(59,64,70,0.08)',
     scrollImg: '/assets/scrolls/scroll-funeral.png',

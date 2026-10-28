@@ -41,10 +41,11 @@ test('BE红幅三角瞄三个点：按胶囊左缘起 24% 宽算、不再瞄正�
   assert(!js.includes('rect.left + rect.width / 2'), '不得再按胶囊正中算三角位置');
 });
 
-test('BF补充字库无延迟：命中的补充片在就绪盖揭开前先加载完', () => {
+test('BV进页速度优先：揭盖不再等补充片（BF 等盖口径已由用户 2026-10-28 改定：速度优先、缺字闪一次）', () => {
   const js = rd('miniprogram/pages/landscape/book-common.js');
-  const awaitIdx = js.indexOf('await fontManager.ensureSupplements(suppChunks, this.data.fontId)');
-  const readyIdx = js.indexOf('this.setData({ ready: true })');
-  assert(awaitIdx > 0, 'onLoad 应在就绪前等待补充片加载');
-  assert(readyIdx > awaitIdx, '补充片加载必须排在 ready 之前（打开第一眼就是枝芒、不跳变）');
+  assert(!js.includes('await fontManager.ensureSupplements(suppChunks, this.data.fontId)'), 'onLoad 不再等补充片');
+  assert(js.indexOf('this.setData({ ready: true })') > 0, '揭盖仍在位');
+  assert(js.includes('BV批（用户定：速度优先）'), 'BV 注释在位');
+  // 补充片逻辑没删：仍由 _afterBuild 后台加载、到了重排一次
+  assert(js.includes('fontManager.ensureSupplements(chunks, this.data.fontId).then((ok) => { if (ok) this._convertCols(); })'), '_afterBuild 后台补片仍在');
 });

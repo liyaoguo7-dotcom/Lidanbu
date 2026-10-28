@@ -74,6 +74,10 @@
 }
 /* 页面级覆盖（只作用本页）：卡间距收紧、功能行高收紧、行文字统一 16px */
 .card { margin: 8px 12px; }
+/* BV批：overflow 让斑马行底色贴合卡片圆角（tinted 行在单行卡里会铺满整卡），
+   只作用本页，不动全局 .card（别处卡片可能有溢出元素）；与上条分开写，
+   免得 AE 锚点断言（卡间距字符串）失效。 */
+.card { overflow: hidden; }
 .form-row { min-height: 50px; }
 .form-val { font-size: 16px; }
 .chev { font-size: 16px; }

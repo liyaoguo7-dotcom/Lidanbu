@@ -18,6 +18,11 @@ Page({
     totalCount: 0,
     totalAmountText: '0',
     records: [],
+    // BV批：搜索栏（照送礼记录页）：本地按姓名筛，不改共计
+    all: [],
+    shown: [],
+    keyword: '',
+    searching: false,
   },
 
   async onLoad(options) {
@@ -57,7 +62,28 @@ Page({
       totalCount: d.count,
       totalAmountText: formatAmountInt(d.totalFen),
       records,
+      all: records,
     });
+    this.applyFilter();
+  },
+
+  // BV批：与送礼记录页同一筛法（姓名包含关键词；共计仍按全量算，只在非搜索时显示）
+  applyFilter() {
+    const kw = (this.data.keyword || '').trim();
+    const shown = kw
+      ? this.data.all.filter((r) => r.name.includes(kw))
+      : this.data.all;
+    this.setData({ shown, searching: !!kw });
+  },
+
+  onSearchInput(e) {
+    this.setData({ keyword: e.detail.value });
+    this.applyFilter();
+  },
+
+  onCancelSearch() {
+    this.setData({ keyword: '', searching: false });
+    this.applyFilter();
   },
 
   goAddRecord() {

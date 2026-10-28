@@ -1,4 +1,6 @@
 /* 选择亲友 */
+/* BV批：斑马行底色贴合卡片圆角（末行可能是 tinted 行），只作用本页。 */
+.card { overflow: hidden; }
 .contact-row {
   display: flex;
   align-items: center;
