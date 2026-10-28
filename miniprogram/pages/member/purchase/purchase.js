@@ -33,7 +33,9 @@ Page({
     packsLocked: true,
     buyEnabled: true,
     platformDisabledTip: '',
-    buyingId: '',
+    buyingId: '', // 下单互锁（套餐/礼包共用：处理中时另一边点按被挡住）
+    buyingPlan: false, // 仅套餐按钮的“处理中”显示
+    buyingPack: false, // 仅礼包按钮的“处理中”显示
     doneText: '',
     hydrated: false, // 真数据（服务端配置/会员状态）是否已到达
   },
@@ -159,7 +161,7 @@ Page({
   async onBuyPlan() {
     const planId = this.data.selectedPlanId;
     if (!planId || this.data.buyingId) return;
-    this.setData({ buyingId: planId, doneText: '' });
+    this.setData({ buyingId: planId, buyingPlan: true, doneText: '' });
     try {
       const r = await dataService.purchaseMembership(planId);
       if (r.delivered) {
@@ -172,7 +174,7 @@ Page({
     } catch (err) {
       wx.showToast({ title: err.message, icon: 'none' });
     }
-    this.setData({ buyingId: '' });
+    this.setData({ buyingId: '', buyingPlan: false });
   },
 
   async onBuyPack() {
@@ -184,7 +186,7 @@ Page({
     }
     const packId = this.data.selectedPackId;
     if (!packId || this.data.buyingId) return;
-    this.setData({ buyingId: packId, doneText: '' });
+    this.setData({ buyingId: packId, buyingPack: true, doneText: '' });
     try {
       const r = await dataService.purchasePointsPack(packId);
       if (r.delivered) {
@@ -197,7 +199,7 @@ Page({
     } catch (err) {
       wx.showToast({ title: err.message, icon: 'none' });
     }
-    this.setData({ buyingId: '' });
+    this.setData({ buyingId: '', buyingPack: false });
   },
 
   onPoints() {

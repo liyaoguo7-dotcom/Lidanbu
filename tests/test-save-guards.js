@@ -42,6 +42,16 @@ test('保存锁：购买页与导入确认页的既有状态锁不回退', () =>
   assert(review.includes('if (this.data.writing || this.data.done) return;'), '导入确认应有 writing 锁');
 });
 
+test('购买按钮显示分开、互锁保留（2026-10-28 用户定）：套餐与礼包各用自己的处理中状态，buyingId 仍共用挡并发', () => {
+  const purchase = fs.readFileSync(path.join(ROOT, 'member/purchase/purchase.js'), 'utf8');
+  const wxml = fs.readFileSync(path.join(ROOT, 'member/purchase/purchase.wxml'), 'utf8');
+  assert(purchase.includes('buyingPlan: true') && purchase.includes('buyingPack: true'), '两路下单应各置自己的显示状态');
+  assert(purchase.includes("buyingId: '', buyingPlan: false") && purchase.includes("buyingId: '', buyingPack: false"), '结束时应同时清互锁与各自显示状态');
+  assert(wxml.includes("{{buyingPlan ? '处理中…' : '购买所选套餐'}}"), '套餐按钮文字应只看 buyingPlan');
+  assert(wxml.includes("{{buyingPack ? '处理中…' : '购买所选礼包'}}"), '礼包按钮文字应只看 buyingPack');
+  assert(!wxml.includes("{{buyingId ? '处理中"), '按钮文字不得再共用 buyingId');
+});
+
 test('保存锁补修（任务AE补修）：亲友新增/编辑、选亲友新增、导入补建、共享设置、删除确认、导出入口', () => {
   const cases = [
     ['contacts/contacts.js', 'onAddConfirm', '_saving'],

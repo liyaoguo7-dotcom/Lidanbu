@@ -25,7 +25,7 @@
   </view>
 </view>
 <view class="tip" wx:if="{{!plans.length}}">会员套餐即将公布，敬请期待。</view>
-<view class="btn-primary buy-btn" wx:if="{{hydrated && buyEnabled && plans.length}}" bindtap="onBuyPlan">{{buyingId ? '处理中…' : '购买所选套餐'}}</view>
+<view class="btn-primary buy-btn" wx:if="{{hydrated && buyEnabled && plans.length}}" bindtap="onBuyPlan">{{buyingPlan ? '处理中…' : '购买所选套餐'}}</view>
 <view class="tip">会员权益：横置礼单本（6 种样式 · 3 种字体）· 拍照录入 · 家庭共享邀请 · 记账额度不限量</view>
 
 <view class="section-title">积分礼包</view>
@@ -43,7 +43,7 @@
   <view class="tip" wx:if="{{packsLocked}}">先开通会员才能买积分包哦</view>
   <view class="tip" wx:if="{{!packsLocked}}">拍照录入每次用 {{photoImportCost}} 积分，积分不过期</view>
 </view>
-<view class="btn-primary buy-btn gold" wx:if="{{hydrated && buyEnabled && !packsLocked && packs.length}}" bindtap="onBuyPack">{{buyingId ? '处理中…' : '购买所选礼包'}}</view>
+<view class="btn-primary buy-btn gold" wx:if="{{hydrated && buyEnabled && !packsLocked && packs.length}}" bindtap="onBuyPack">{{buyingPack ? '处理中…' : '购买所选礼包'}}</view>
 
 <view class="card">
   <view class="form-row" bindtap="onOrders">
