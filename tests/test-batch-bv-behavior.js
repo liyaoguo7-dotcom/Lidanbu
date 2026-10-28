@@ -82,6 +82,12 @@ test('BV 收礼详情：搜索栏＋本地筛＋搜空态', () => {
   assert(js.includes('r.name.includes(kw)'), '本地按姓名筛');
 });
 
+test('BV 送礼记录列表交替：单双号白／淡米', () => {
+  const wxml = readMp('pages/gifts/gifts.wxml');
+  assert(wxml.includes(`class="gift-row {{index % 2 === 1 ? 'zebra' : ''}} {{index === shown.length - 1 ? 'last' : ''}}"`), '送礼行交替且保留 last');
+  assert(readMp('pages/gifts/gifts.wxss').includes('.gift-row {'), '送礼行样式在位');
+});
+
 test('BV 礼薄详情头部底色：头部单层底色、记录列表不动、白事淡灰', () => {
   const wxml = readMp('pages/receive-detail/receive-detail.wxml');
   assert(wxml.includes('class="pat-head {{isBaishi ? \'baishi\' : \'\'}}"'), '头部包一层 pat-head');
