@@ -116,3 +116,4 @@ require('./test-batch-cj-behavior');
 require('./test-batch-ck-behavior');
 require('./test-batch-cl-behavior');
 require('./test-batch-cm-behavior');
+require('./test-batch-cn-behavior');

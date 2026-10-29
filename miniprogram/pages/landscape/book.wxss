@@ -83,12 +83,8 @@
   border-top: 2px solid; border-bottom: 2px solid;
   background-repeat: repeat; overflow: hidden;
 }
-/* 角花同步 AW 口径：只留横段（贴上下横线），竖段去掉免得结合处再冒竖线 */
-.corner { position: absolute; width: 14px; height: 14px; border: 0 solid; z-index: 3; pointer-events: none; }
-.corner.tl { top: 3px; left: 3px; border-top-width: 2px; }
-.corner.tr { top: 3px; right: 3px; border-top-width: 2px; }
-.corner.bl { bottom: 3px; left: 3px; border-bottom-width: 2px; }
-.corner.br { bottom: 3px; right: 3px; border-bottom-width: 2px; }
+/* CN批（用户 2026-10-29 定）：四角角花全部去掉（六个样式共用 book 模板，
+   一处删全生效；AW 的角花口径随之作废）。 */
 .cols-scroll { width: 100%; height: 100%; }
 /* CM批（用户 2026-10-29 定）：纸面纹路跟着联系人一起滚——纹路背景从
    固定层 .paper 移到滚动内容 .cols-track 上；min-width:100% 保证联系人

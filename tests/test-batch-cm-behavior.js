@@ -20,7 +20,7 @@ test('CM 横置纸面纹路随联系人滚动', () => {
   assert(trackCss.includes('min-width: 100%;'), '滚动内容至少铺满纸面宽');
   assert(trackCss.includes('background-repeat: repeat;'), '纹路平铺');
   assert(wxml.includes('<image class="scroll-img"') && wxml.includes('class="scroll-img flip"'), '两头卷轴杆子不动');
-  assert(wxml.includes('class="corner tl"'), '角花不动');
+  assert(!wxml.includes('class="corner'), '角花全部去掉（CN批，取代 CM 的角花不动）');
   assert(readMp('pages/landscape/gift/gift.wxml').includes('<import src="../book.wxml" />'), '送礼页同引 book 模板');
   assert(readMp('pages/landscape/receive/receive.wxml').includes('<import src="../book.wxml" />'), '收礼页同引 book 模板');
 });

@@ -40,10 +40,10 @@ assert.ok(/border-bottom:\s*2px solid/.test(paper), 'AW .paper 应保留下边�
 assert.ok(!/border-left/.test(paper) && !/border-right/.test(paper),
   'AW .paper 不得再有左右边线（以杆身为界）');
 assert.ok(!/border:\s*2px solid/.test(paper), 'AW .paper 不得再用四边 border 简写');
+// CN批（用户 2026-10-29 定）：角花全部去掉，AW 的角花口径作废
 for (const c of ['tl', 'tr', 'bl', 'br']) {
-  const corner = cssBlock(new RegExp(`\\.corner\\.${c} \\{([^}]*)\\}`));
-  assert.ok(!/border-left-width/.test(corner) && !/border-right-width/.test(corner),
-    `AW .corner.${c} 不得再有竖段（结合处不再冒竖线）`);
+  assert.ok(!new RegExp(`\\.corner\\.${c} \\{`).test(wxss),
+    `CN .corner.${c} 已删除（角花全部去掉）`);
 }
 const col = cssBlock(/\.col \{([^}]*)\}/);
 assert.ok(/border-left:\s*2px solid/.test(col), 'AW .col 列间分隔线应保留（不在去线范围）');
