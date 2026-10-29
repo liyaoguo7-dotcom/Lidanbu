@@ -44,9 +44,9 @@
 .tchip.chip-year { background: #E0F3E4; }
 .tchip.chip-lastYear { background: #FFC7C3; }
 .tchip.chip-custom { background: #FFE4B8; }
-/* CD批（用户定）：收送两块改用同一种颜色（今年绿），不再一橙一粉 */
-.compare .side:first-child { background: #E0F3E4; }
-.compare .side:last-child { background: #E0F3E4; }
+/* CE批（用户 2026-10-29 定）：收送两块仍各自独立并排（不是一张卡内分栏），两块都改今日粉 #FDE8E8（取代 CD 的今年绿） */
+.compare .side:first-child { background: #FDE8E8; }
+.compare .side:last-child { background: #FDE8E8; }
 .custom-range { display: flex; align-items: center; justify-content: center; margin-top: 10px; gap: 8px; }
 .date-box {
   padding: 8px 12px;

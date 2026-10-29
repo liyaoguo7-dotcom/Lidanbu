@@ -60,8 +60,8 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   for (const [cls, bg] of chips) assert(wl.includes(`.tchip.${cls} { background: ${bg}; }`), `时间按钮 ${cls} 配 ${bg}`);
   assert(readMp('pages/wanglai/wanglai.wxml').includes('chip-{{item.id}}'), '时间按钮按 id 挂色');
   assert(wl.includes('.tchip.on { color: #E05353; border-color: #E05353; }'), '选中态红字红边不变');
-  assert(wl.includes('.compare .side:first-child { background: #E0F3E4; }'), '收礼块今年绿（CD批：收送同色）');
-  assert(wl.includes('.compare .side:last-child { background: #E0F3E4; }'), '送礼块今年绿（CD批：收送同色）');
+  assert(wl.includes('.compare .side:first-child { background: #FDE8E8; }'), '收礼块今日粉（CE批：收送同色）');
+  assert(wl.includes('.compare .side:last-child { background: #FDE8E8; }'), '送礼块今日粉（CE批：收送同色）');
   assert(wl.includes('.summary-card {') && wl.includes('background: #FBF3D9;'), '合计＋差额合并卡本月淡黄（CD批）');
   const ct = readMp('pages/contacts/contacts.wxss');
   for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: #E2EEFB; }`), `字母行 c${i} 统一浅蓝（CD批）`);
