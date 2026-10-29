@@ -40,17 +40,23 @@ Page({
     unreadCount: 0,
     cancelPending: null, // { cancelAtText, remainingDays } 待注销提示（冷静期内）
     version: AppConfig.version || '',
-    addMpGuideShow: false, // 「添加到我的小程序」引导条（AS批定版：每次进我的页都显示，无任何持久标记）
+    addMpGuideShow: false, // 「添加到我的小程序」引导条（CU批定版：只在第一次打开显示，标记 addMpGuideShown）
     addMpTutorialShow: false, // AP批：三步图文教程层
     addMpTriRight: 36, // BA批：红幅小三角的 right 偏移（px），按胶囊实测位置对准三个点；测不到用此回退值
   },
 
   async onLoad() {
-    // AS批定版：引导条每次进入我的页都显示——不读任何 storage 标记
-    // （旧版 addMpGuideDone 永久标记被用户点名删掉：点过就再也不出现、
-    // 删小程序才恢复）。BA批照竞品视频去掉红幅上的 ×：点红幅开教程层，
-    // 教程层「我知道了」只关本次进入（页面内状态）。
-    this.setData({ addMpGuideShow: true });
+    // CU批（用户 2026-10-29 定）：红幅只在第一次打开显示——本地记标记
+    // addMpGuideShown，之后不再显示；整个删除重进会清标记、自然再提醒。
+    // 微信不提供查常用接口，从常用/我的小程序里删无法检出，故只做第一次
+    // 显示（取代 AS批“每次进入都显示”；旧 addMpGuideDone 仍不得读写）。
+    // BA批照竞品视频去掉红幅上的 ×：点红幅开教程层。
+    let shown = false;
+    try { shown = !!wx.getStorageSync('addMpGuideShown'); } catch (e) { /* 读不到当没显示过 */ }
+    if (!shown) {
+      this.setData({ addMpGuideShow: true });
+      try { wx.setStorageSync('addMpGuideShown', true); } catch (e) { /* 忽略 */ }
+    }
     this._measureAddMpTri();
     await dataService.init();
     this._isAdmin = await dataService.isAdmin();
@@ -63,8 +69,9 @@ Page({
   },
 
   async onShow() {
-    // AS批：引导条每次进入都显示（本次进入内关掉的，离开再回来重新显示）
-    this.setData({ addMpGuideShow: !this._mpGuideClosed });
+    // CU批：红幅显示与否只由 onLoad 的首次标记定，onShow 不再改它——
+    // 避免首进 onLoad 显示后被 onShow 覆盖；「我知道了」关掉后本会话内
+    // 保持关闭，下次启动 onLoad 读标记仍关闭。
     // 开关显示与 storage 同步（横置页「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）会在那边写回 false）
     this.setData({ landscapeOn: landscapeRoute.readLandscapeOn() });
     await this.refresh();
@@ -180,7 +187,7 @@ Page({
     this.setData({ addMpTutorialShow: true });
   },
 
-  /** 教程层「我知道了」：只关教程层与本次进入的红条，下次进入再显示 */
+  /** 教程层「我知道了」：关教程层与红条；CU批后红条只在第一次打开显示（标记已在首次显示时记下），之后不再出现 */
   onAddMpKnow() {
     this._mpGuideClosed = true;
     this.setData({ addMpTutorialShow: false, addMpGuideShow: false });

@@ -46,7 +46,7 @@ assert.ok(revWxml.includes('原图对照'), 'AS-5 顶部原图对照卡保留');
 const mineJs = rd('miniprogram/pages/mine/mine.js');
 assert.ok(!mineJs.includes("setStorageSync('addMpGuideDone'"), 'AS-7 不得再写 addMpGuideDone');
 assert.ok(!mineJs.includes("getStorageSync('addMpGuideDone'"), 'AS-7 不得再读 addMpGuideDone');
-assert.ok(mineJs.includes('addMpGuideShow: true'), 'AS-7 进我的页即显示红条');
+assert.ok(mineJs.includes("getStorageSync('addMpGuideShown')") && mineJs.includes("setStorageSync('addMpGuideShown'"), 'CU批定版：红幅只在第一次打开显示（标记 addMpGuideShown，取代 AS 每次显示）');
 assert.ok(mineJs.includes('_mpGuideClosed'), 'AS-7 关闭只走页面内状态');
 const mineWxml = rd('miniprogram/pages/mine/mine.wxml');
 assert.ok(mineWxml.includes('addmp-panel'), 'AS-7 教程示意已由 BA批改版：深藏青「我的小程序」面板卡');

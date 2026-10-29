@@ -59,6 +59,6 @@ assert.ok(mineWxml.includes('在微信首页往下拉，快速打开人情礼单
 assert.ok(mineWxml.includes('我知道了'), 'AP-6 教程底部按钮');
 assert.ok(mineWxml.includes('/images/logo.png') && mineWxml.includes('人情礼单簿'), 'AP-6 面板示意应为我们的 logo 与名称（BA批改版）');
 assert.ok(!mineJs.includes("setStorageSync('addMpGuideDone'") && !mineJs.includes("getStorageSync('addMpGuideDone'"), 'AP-6 永久标志已由 AS批定版删除：不得再读写 addMpGuideDone');
-assert.ok(mineJs.includes('addMpGuideShow: true'), 'AS批定版：进我的页即显示引导条（onLoad 置 true）');
+assert.ok(mineJs.includes("getStorageSync('addMpGuideShown')") && mineJs.includes('addMpGuideShow: true'), 'CU批定版：红幅只在第一次打开显示（onLoad 读标记、无标记才置 true 并记标记）');
 
 console.log('✓ AP批·接线静态断言全过');
