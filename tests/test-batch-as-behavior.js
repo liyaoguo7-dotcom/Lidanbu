@@ -219,8 +219,8 @@ test('AS 质量门：手写质量差 → 补印刷取优；印刷更差时仍用
   const rows2 = await worse.recognize('cloud://fake/x.jpg', { imageBase64: 'aA==' });
   assert.eq(rows2.length, 1, '两份都差时取分高者（手写）');
   /* BK批姓名硬顶：用户定的规律（99% ≤3 字、极个别 4 字）——超 4 字
-   * 的"名字"必是拼装事故，出口截回 4 字，本例乱码名 mnhmhmm → mnhm */
-  assert.eq(rows2[0].name, 'mnhm', '印刷更差则仍用手写结果（姓名经 BK 硬顶截断）');
+   * 的"名字"必是拼装事故，出口截回 3 字，本例乱码名 mnhmhmm → mnh（CB批 4→3） */
+  assert.eq(rows2[0].name, 'mnh', '印刷更差则仍用手写结果（姓名经 CB 硬顶截断）');
 });
 
 /* ---------- ⑥ AS-8 识别留痕 ---------- */

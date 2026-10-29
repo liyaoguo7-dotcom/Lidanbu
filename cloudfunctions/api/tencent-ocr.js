@@ -232,6 +232,49 @@ const CH_GUESS_DIGIT = { 吾: '伍', 午: '伍', 他: '伍', 式: '贰', 弍: '�
 const CH_GUESS_UNIT = { 伯: '佰' };
 const CH_RUN_RE = /[零一二三四五六七八九两兩壹贰貳叁肆伍陆陸柒捌玖十拾百佰千仟万萬亿億吾午他式弍叄睦漆桼伯]+/g;
 
+/* CB批（用户 2026-10-29 定）：大写数字不会出现在人名中——人名遇大写
+ * 数字即断（金额的开始），且人名上限由 4 字改 3 字。姓例外：陆/万既
+ * 是姓又是大写数字，首位且后跟的不是单位/元/整时视为姓氏不断（陆小
+ * 凤、万明不动）；后跟单位/元/整（如陆仟）或不在首位时仍断。 */
+const CAP_UNIT_CHARS = new Set(['拾', '佰', '仟', '万', '萬']);
+const CAP_DIGIT_CHARS = new Set(['壹', '贰', '貳', '叁', '肆', '伍', '陆', '陸', '柒', '捌', '玖', '参']);
+/* CA批猜读形近字：只在金额语境（后跟单位/元/整）才断；无金额佐证时
+ * 不断（睦等偶可作名，宁缺毋滥）。金额已落袋时见下 stripGuessResidue。 */
+const GUESS_CHARS = new Set(['吾', '午', '他', '式', '弍', '叄', '睦', '漆', '桼']);
+function stripCapitalFromName(name) {
+  const chars = [...String(name || '')];
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    if (CAP_UNIT_CHARS.has(ch)) {
+      // 万姓例外：万/萬在首位且后跟的不是单位/元/整时视为姓氏不断
+      const next = chars[i + 1];
+      if (i === 0 && (ch === '万' || ch === '萬')
+        && next && !CAP_UNIT_CHARS.has(next) && next !== '元' && next !== '圆' && next !== '整') continue;
+      return chars.slice(0, i).join('');
+    }
+    if (CAP_DIGIT_CHARS.has(ch)) {
+      const next = chars[i + 1];
+      if (i === 0 && (ch === '陆' || ch === '陸' || ch === '万' || ch === '萬')
+        && next && !CAP_UNIT_CHARS.has(next) && next !== '元' && next !== '圆' && next !== '整') continue;
+      return chars.slice(0, i).join('');
+    }
+    if (GUESS_CHARS.has(ch)) {
+      const next = chars[i + 1];
+      if (next && (CAP_UNIT_CHARS.has(next) || next === '元' || next === '圆' || next === '整')) return chars.slice(0, i).join('');
+    }
+  }
+  return chars.join('');
+}
+/* 金额已落袋时，姓名里残留的形近字必是金额残段（如“刘增瑞他”金额 500
+ * 已认出），一律断掉；无金额时不调用（见上）。 */
+function stripGuessResidue(name) {
+  const chars = [...String(name || '')];
+  for (let i = 0; i < chars.length; i++) {
+    if (GUESS_CHARS.has(chars[i])) return chars.slice(0, i).join('');
+  }
+  return chars.join('');
+}
+
 /**
  * 一段纯中文数字串 → 元数值；形态不合法/无单位/无值返回 null。
  * 合法形态：数字与单位交替（两个数字不得相邻，零作占位除外，如
@@ -745,10 +788,10 @@ function buildVerticalName(items, markerIdx, pitch, expFree) {
   let missing = 0;
   if (free - expFree >= pitch * 0.6) missing = Math.round((free - expFree) / pitch);
   if (nameFrags.length === 1) missing = Math.min(missing, 1);
-  /* 姓名长度规律（用户 2026-10-27 定）：99% ≤3 字、极个别 4 字，
-   * 占位补字最多补到 4 字为止（BK批，原上限 5 改 4） */
-  while (missing > 0 && name.length < 4) { name += '□'; missing -= 1; }
-  return snapName(name);
+  /* 姓名长度规律（用户 2026-10-29 定，CB批改 4→3）：人名不超过 3 字，
+   * 占位补字最多补到 3 字为止；大写数字即断（金额的开始，见 stripCapitalFromName） */
+  while (missing > 0 && name.length < 3) { name += '□'; missing -= 1; }
+  return snapName(stripCapitalFromName(name));
 }
 
 function parseVertical(frags, columns) {
@@ -790,7 +833,7 @@ function parseVertical(frags, columns) {
     const colRows = [];
     for (const r of parts) {
       /* 竖排姓名净化：去掉拉丁碎字与标点（引擎杂讯，如「E峰」「刘,x以」） */
-      const cleanedName = String(r.name || '').replace(/[A-Za-z0-9、，,。·\s]/g, '');
+      const cleanedName = stripCapitalFromName(String(r.name || '').replace(/[A-Za-z0-9、，,。·\s]/g, ''));
       /* BK批：模板列一笔里常有两份金额证据（手写大写条＋底部阿拉伯数字），
        * 标准切分会按金额个数把一笔拆成两行，第二行的"姓名"其实是金额条
        * 残字（无/住/佰类，不含任何姓名用字）。这类残段并回上一行，金额以
@@ -931,13 +974,15 @@ function parseDetections(detections) {
 function guardRowNames(rows) {
   const DB = NAME_DB;
   return (Array.isArray(rows) ? rows : []).map((r) => {
-    const name = String((r && r.name) || '');
-    if (name.length <= 4) return r;
+    const raw = String((r && r.name) || '');
+    let name = stripCapitalFromName(raw);
+    if (r && r.amountFen != null) name = stripGuessResidue(name);
+    if (name.length <= 3) return name === raw ? r : { ...r, name };
     let start = -1;
     for (let i = 0; i < name.length; i++) {
       if (DB.SURNAMES.has(name[i])) { start = i; break; }
     }
-    const cut = start >= 0 ? name.slice(start, start + 4) : name.slice(0, 4);
+    const cut = start >= 0 ? name.slice(start, start + 3) : name.slice(0, 3);
     return { ...r, name: cut };
   });
 }
@@ -1053,7 +1098,7 @@ function parseWithGrid(detections, grid) {
     }
     let nm = nameText;
     if (nm.length > 1) nm = nm[0] + nm.slice(1).replace(/[贺賀礼禮]/g, '');
-    nm = nm.replace(/[A-Za-z0-9、，,。·\s]/g, '');
+    nm = stripCapitalFromName(nm.replace(/[A-Za-z0-9、，,。·\s]/g, ''));
     if (nm) names.push(nm);
   }
   if (names.length && names.length === amounts.length) {
@@ -1341,6 +1386,7 @@ module.exports = {
   splitWideFragments,
   dropRepeatedPrintFrags,
   guardRowNames,
+  stripCapitalFromName,
   rotationSuspect,
   rotateJpegBase64,
   pickRotationDirs,

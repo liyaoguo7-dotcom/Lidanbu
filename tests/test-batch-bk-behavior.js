@@ -52,14 +52,14 @@ test('BK 印刷物剔除：望木在 3 列同高出现 → 剔除；仅 2 列出
   assert.eq(out2.length, 4, '仅两列重复不动');
 });
 
-test('BK 姓名硬顶：超 4 字按姓位锚点截断；正常名不动', async () => {
+test('BK 姓名硬顶：超 3 字按姓位锚点截断；正常名不动（CB批 4→3）', async () => {
   const rows = tencentOcr.guardRowNames([
     { name: '杂讯张三丰多', amountFen: 100 },
     { name: '天持盼望木住', amountFen: 200 },
     { name: '陈志艳', amountFen: 300 },
   ]);
-  assert.eq(rows[0].name, '张三丰多', '从第一个真姓起截 4 字');
-  assert(rows[1].name.length <= 4, '无姓位锚点时截前 4 字');
+  assert.eq(rows[0].name, '张三丰', '从第一个真姓起截 3 字');
+  assert(rows[1].name.length <= 3, '无姓位锚点时截前 3 字');
   assert.eq(rows[2].name, '陈志艳', '3 字名不动');
 });
 
