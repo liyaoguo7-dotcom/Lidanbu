@@ -126,3 +126,4 @@ require('./test-batch-ct-behavior');
 require('./test-batch-cu-behavior');
 require('./test-batch-cv-behavior');
 require('./test-batch-cw-behavior');
+require('./test-batch-cx-behavior');
