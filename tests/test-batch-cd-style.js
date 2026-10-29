@@ -21,7 +21,7 @@ test('CD 颜色：亲友录统一浅蓝、我的页深蓝＋以下纯白', () =>
 test('CD 颜色：往来收送卡片化＋合计差额合并卡靠紧＋联系人行纯白', () => {
   const wl = readMp('pages/wanglai/wanglai.wxss');
   const wxml = readMp('pages/wanglai/wanglai.wxml');
-  assert(wl.includes('.compare {') && wl.includes('margin: 6px 12px 0;') && wl.includes('border-radius: 12px;'), '对照卡左右留边＋圆角');
+  assert(wl.includes('.compare {') && wl.includes('margin: 6px 12px 0;'), '对照区左右留边（CJ批：容器不再是卡，圆角移到两块各自身上）');
   assert(wl.includes('.summary-card {') && wl.includes('background: #FBF3D9;'), '合并卡本月淡黄');
   assert(wl.includes('.summary-card .total-line { background: transparent; padding: 8px 0 2px; }'), '合计行贴紧（下间距 2px）');
   assert(wl.includes('.summary-card .diff-bar { background: transparent; margin: 0; padding: 2px 16px 8px; }'), '差额行贴紧（上间距 2px）');

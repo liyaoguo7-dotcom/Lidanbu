@@ -44,9 +44,7 @@
 .tchip.chip-year { background: #E0F3E4; }
 .tchip.chip-lastYear { background: #FFC7C3; }
 .tchip.chip-custom { background: #FFE4B8; }
-/* CE批（用户 2026-10-29 定）：收送两块仍各自独立并排（不是一张卡内分栏），两块都改今日粉 #FDE8E8（取代 CD 的今年绿） */
-.compare .side:first-child { background: #FDE8E8; }
-.compare .side:last-child { background: #FDE8E8; }
+/* CE批（用户 2026-10-29 定）：收送两块仍各自独立并排（不是一张卡内分栏），两块都改今日粉 #FDE8E8（取代 CD 的今年绿）；CJ批：底色与圆角收进 .side，见下 */
 .custom-range { display: flex; align-items: center; justify-content: center; margin-top: 10px; gap: 8px; }
 .date-box {
   padding: 8px 12px;
@@ -69,12 +67,13 @@
 /* BG批（用户点名，覆盖 AP 的灰隔版式）：从对照卡起，合计行、差额条、
    联系人名单连成一整片——全宽、无圆角、方块挨方块，之间不露一点灰，
    整页随之变紧凑。 */
+/* CJ批（用户 2026-10-29 定，预览图确认）：收送两块彻底独立——容器不再是
+   一张卡（去底色、去圆角、去裁剪），两块之间留 12px 空隙，各自全圆角，
+   中间分隔线取消。颜色不动：收送仍今日粉，合计卡仍本月淡黄。 */
 .compare {
   display: flex;
+  gap: 12px;
   margin: 6px 12px 0;
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
 }
 /* CD批（用户定）：合计与差额合并进一个方块，用本月人情往来长条淡黄；两行上下靠紧 */
 .summary-card {
@@ -93,8 +92,9 @@
   flex-direction: column;
   align-items: center;
   padding: 16px 0;
+  background: #FDE8E8;
+  border-radius: 12px;
 }
-.side + .side { border-left: 1px solid #F0F0F0; }
 .side-label {
   font-size: 15px;
   color: #333;
