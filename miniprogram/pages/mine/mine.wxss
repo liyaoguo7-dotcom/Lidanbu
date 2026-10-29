@@ -28,7 +28,7 @@
   flex: none; margin-right: 14px;
 }
 .uname { font-size: 17px; font-weight: 600; display: block; }
-.usub { font-size: 16px; color: #999; margin-top: 4px; display: block; }
+.usub { font-size: 16px; color: #666; margin-top: 4px; display: block; } /* DI批（用户 2026-10-30 定）：头像栏“会员”二字加深 #999→#666 */
 .member-card {
   padding: 12px 16px;
   /* DG批（用户 2026-10-30 定）：卡片改识别送礼方块色（红色渐变；BX 的送礼粉红作废） */
