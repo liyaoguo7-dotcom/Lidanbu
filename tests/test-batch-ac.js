@@ -179,9 +179,9 @@ test('任务AE-8共计列表复刻：居中大字分段红字、合并一卡、�
     const w = readMp(wxmlP);
     const x = readMp(wxssP);
     if (wxmlP.includes('receive-detail')) {
-      // CR批（2026-10-29 用户定）取代 2026-10-24 口径：共计从头部层移入搜索框下冻结区，头像头只剩图案／标签／名字／日期
+      // DE批（2026-10-30 用户定）取代 CR 口径：共计在头像头之后、日期行之下的吸顶块内，头像头只剩图案／标签
       assert(w.includes('card pat-card') && !w.includes('card list-card'), `${wxmlP}：头部与共计/记录应合成一张卡`);
-      assert(w.indexOf('total-line') < w.indexOf('pat-head'), `${wxmlP}：共计应在冻结区（头像头之前），不再接在日期下面`);
+      assert(w.indexOf('total-line') > w.indexOf('pat-head') && w.indexOf('total-line') > w.indexOf('event-date'), `${wxmlP}：共计应在吸顶块内（头像头之后、日期行之下，DE批）`);
     } else {
       assert(w.includes('card list-card'), `${wxmlP}：共计与记录应合并为一张卡`);
     }

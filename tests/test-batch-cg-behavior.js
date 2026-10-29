@@ -1,30 +1,25 @@
-/** CG批（用户 2026-10-29 定）：
- * 1. 礼薄名偏左原因：BX冻结重构时头部脱离带 text-align:center 的 .pat-card，
- *    新容器没有居中规则，标签／礼薄名／日期全部偏左（共计因自身居中未受影响）；
- *    与导入联系人无关（导入只写记录，改不了样式）。修复：.pat-head 恢复居中。
- * 2. 头像头不再固定，随联系人一起滚上去；只在搜索框下固定一行显示礼薄名
- *    （搜索框＋礼薄名同一 sticky 容器）；记录卡独立全圆角。 */
+/** DE批（用户 2026-10-30 定）同步：CG 的冻结区结构已被 DE 取代——
+ * 搜索框单独吸顶，头像头（图案＋标签）滚动，礼薄名＋日期＋共计一块吸顶；
+ * 名字只出现一次，用原来 20px 加粗。本文件保留 CG 的居中／圆角断言，结构断言以 DE 为准。 */
 const { test, assert } = require('./fw');
 const fs = require('fs');
 const path = require('path');
 const readMp = (p) => fs.readFileSync(path.join(__dirname, '..', 'miniprogram', p), 'utf8');
 
-test('CG 礼薄详情：礼薄名居中＋搜索框下固定一行礼薄名＋头像头滚动', () => {
+test('CG 礼薄详情：礼薄名居中＋头像头滚动（结构以 DE 为准）', () => {
   const wxml = readMp('pages/receive-detail/receive-detail.wxml');
   const wxss = readMp('pages/receive-detail/receive-detail.wxss');
   assert(wxss.includes('.pat-head { background: #F7F3EA; padding: 6px 0 0; text-align: center; }'), '头像头恢复居中（礼薄名不再偏左）');
-  const headIdx = wxml.indexOf('class="card detail-head"');
-  const searchIdx = wxml.indexOf('class="searchbar"', headIdx);
-  const stickIdx = wxml.indexOf('class="event-stick"', headIdx);
+  const searchIdx = wxml.indexOf('class="card search-stick"');
+  const searchbarIdx = wxml.indexOf('class="searchbar"', searchIdx);
   const headCardIdx = wxml.indexOf('class="card head-card"');
   const patHeadIdx = wxml.indexOf('class="pat-head', headCardIdx);
+  const infoIdx = wxml.indexOf('class="card info-stick"');
   const patCardIdx = wxml.indexOf('class="card pat-card"');
-  assert(headIdx >= 0 && searchIdx > headIdx && stickIdx > searchIdx, '搜索框＋礼薄名行在同一固定容器内');
-  assert(wxml.includes('<view class="event-stick" wx:if="{{event.name}}"><text>{{event.name}}</text></view>'), '固定行显示礼薄名');
-  assert(headCardIdx > stickIdx && patHeadIdx > headCardIdx && patCardIdx > patHeadIdx, '头像头在固定容器之外、随滚动上去，记录卡在其后');
-  assert(wxss.includes('.detail-head { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px; }'), '固定容器 sticky 贴顶＋全圆角');
-  assert(wxss.includes('.event-stick { text-align: center;'), '固定行礼薄名居中');
-  assert(wxss.includes('text-overflow: ellipsis;'), '固定行单行超出省略');
+  assert(searchIdx >= 0 && searchbarIdx > searchIdx, '搜索框在单独的吸顶容器内（DE 取代 CG 的 detail-head）');
+  assert(headCardIdx > searchIdx && patHeadIdx > headCardIdx && infoIdx > headCardIdx && patCardIdx > infoIdx, '头像头在搜索框之后、随滚动上去，吸顶块与记录卡在其后');
+  assert(wxss.includes('.search-stick { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px; }'), '搜索吸顶贴顶＋全圆角');
+  assert(wxss.includes('.info-stick { position: sticky; top: 54px;'), '名日期共计块吸顶在搜索框下');
   assert(wxss.includes('.head-card { overflow: hidden; }'), '头像头独立成卡圆角裁剪');
   assert(wxss.includes('border-radius: 12px; }') && wxss.includes('.pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; margin: 0 12px 10px; border-radius: 12px; }'), '记录卡独立全圆角');
 });

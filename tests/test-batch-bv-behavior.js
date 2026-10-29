@@ -96,7 +96,7 @@ test('BV 礼薄详情头部底色：头部单层底色、记录列表不动、�
   const headStart = wxml.indexOf('pat-head');
   const recStart = wxml.indexOf('rec-row');
   assert(headStart > 0 && headStart < recStart, '头部层在记录行之前');
-  assert(wxml.indexOf('total-line') > 0 && wxml.indexOf('total-line') < headStart, '共计在冻结区内（CR批：从头部层移入搜索框下冻结区，不再头部层内）');
+  assert(wxml.indexOf('total-line') > headStart && wxml.indexOf('total-line') < wxml.indexOf('card pat-card'), '共计在头像头之后、记录卡之前（DE批：名日期共计一块吸顶，不在头部层内）');
   const wxss = readMp('pages/receive-detail/receive-detail.wxss');
   assert(wxss.includes('.pat-head { background: #F7F3EA;'), '喜事头部淡米');
   assert(wxss.includes('.pat-head.baishi { background: #F2F2F2; }'), '白事头部淡灰');

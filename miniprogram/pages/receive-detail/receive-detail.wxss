@@ -1,11 +1,11 @@
 /* 礼薄详情 */
 /* CG批：记录卡不再与头卡拼成一张卡，独立全圆角 */
 .pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; margin: 0 12px 10px; border-radius: 12px; }
-/* CR批（用户 2026-10-29 定）：冻结区＝搜索框＋礼薄名（不加黑）＋共计条；头像头滚上去，联系人继续滚动 */
-.detail-head { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px; }
-/* CR批：搜索框下一行固定显示礼薄名（单行，超出省略；用户定：不要加黑） */
-.event-stick { text-align: center; font-size: 16px; font-weight: 400; color: #333; padding: 0 16px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* CR批：冻结区共计条（复用 .total-line 字号/居中；底色同头部：喜事淡米，白事淡灰；与名行留 6px 白隙、自身全圆角） */
+/* DE批（用户 2026-10-30 定）：搜索框单独吸顶；头像头（图案＋标签）滚动；礼薄名＋日期＋共计一块吸顶在搜索框下
+   （top＝搜索栏高 54px：上下 padding 各 10px＋搜索框 34px，见 app.wxss .searchbar/.searchbox）；名字只出现一次，用原来 20px 加粗 */
+.search-stick { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px; }
+.info-stick { position: sticky; top: 54px; z-index: 10; padding: 0; margin: 0 12px 10px; border-radius: 12px; text-align: center; }
+/* DE批：共计条（复用 .total-line 字号/居中；底色同头部：喜事淡米，白事淡灰；与日期行留 6px 白隙、自身全圆角；搜索时隐藏） */
 .event-total { background: #F7F3EA; border-radius: 12px; margin: 6px 0 0; }
 .event-total.baishi { background: #F2F2F2; }
 /* CG批：头像头独立成卡（圆角裁剪底色） */
