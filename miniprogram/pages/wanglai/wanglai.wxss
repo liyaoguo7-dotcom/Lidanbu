@@ -4,6 +4,7 @@
    联系人滑动。sticky 底色取整页底色 #F6F6F6，联系人滑过时缝隙不露白 */
 .wl-page {
   box-sizing: border-box;
+  background: #fff; /* DM批（用户 2026-10-30 定）：搜索框上面整片（时间标签＋日期）改首页金刚区共用白底；sticky 与列表底色不动 */
 }
 .wl-sticky {
   position: sticky;
