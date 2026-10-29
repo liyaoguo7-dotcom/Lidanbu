@@ -1,5 +1,5 @@
 <!-- 礼薄详情 -->
-<!-- BX批：搜索栏＋头像头冻结为一体（搜索栏与头像之间不再露页面灰底，头像整体上移） -->
+<!-- CG批（用户 2026-10-29 定）：搜索框＋礼薄名一行固定贴顶（同一 sticky 容器）；头像头不再固定，随联系人一起滚上去 -->
 <view class="card detail-head">
   <!-- BV批：搜索栏（照送礼记录页：搜索姓名＋取消，本地筛） -->
   <view class="searchbar">
@@ -9,8 +9,12 @@
     </view>
     <text class="search-cancel" bindtap="onCancelSearch">取消</text>
   </view>
+  <!-- CG批：搜索框下一行固定显示礼薄名（单行，超出省略） -->
+  <view class="event-stick" wx:if="{{event.name}}"><text>{{event.name}}</text></view>
+</view>
 
-  <!-- 礼薄级修改/删除入口已取消（2026-10-22 用户定：收礼列表左滑已有修改/删除，详情页不再放） -->
+<!-- CG批：头像头滚动（不再固定）；礼薄级修改/删除入口已取消（2026-10-22 用户定：收礼列表左滑已有修改/删除，详情页不再放） -->
+<view class="card head-card">
   <!-- BV批：头部单独一层底色（图案／标签／名字／日期／共计），记录列表不动 -->
   <view class="pat-head {{isBaishi ? 'baishi' : ''}}">
     <view class="pat-big {{isBaishi ? 'baishi' : ''}}">

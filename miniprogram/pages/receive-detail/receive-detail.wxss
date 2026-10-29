@@ -1,10 +1,16 @@
 /* 礼薄详情 */
-.pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; margin: 0 12px 10px; border-radius: 0 0 12px 12px; }
-/* BX批：搜索栏＋头像头冻结为一体（sticky 贴顶；与记录卡上下拼成一张卡：头卡上圆角、记录卡下圆角、中间零间距，搜索栏与头像之间不再露页面灰底） */
-.detail-head { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px 12px 0 0; }
+/* CG批：记录卡不再与头卡拼成一张卡，独立全圆角 */
+.pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; margin: 0 12px 10px; border-radius: 12px; }
+/* CG批（用户 2026-10-29 定）：搜索框＋礼薄名一行固定贴顶（同一 sticky 容器）；头像头不再固定，随联系人一起滚上去 */
+.detail-head { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px; }
+/* CG批：搜索框下一行固定显示礼薄名（单行，超出省略） */
+.event-stick { text-align: center; font-size: 16px; font-weight: 700; color: #333; padding: 0 16px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* CG批：头像头独立成卡（圆角裁剪底色） */
+.head-card { overflow: hidden; }
 /* BV批：头部底色（喜事淡米，与斑马同一对颜色；白事淡灰，跟白事 palette 走），
    与下面记录列表分开；卡片上 padding 挪到 pat-head 里，版式不变。 */
-.pat-head { background: #F7F3EA; padding: 6px 0 0; }
+/* CG批：恢复居中——BX冻结重构时头部脱离带 text-align:center 的 .pat-card，新容器没有居中规则，导致标签／礼薄名／日期全部偏左（共计因自身居中未受影响）；与导入联系人无关 */
+.pat-head { background: #F7F3EA; padding: 6px 0 0; text-align: center; }
 .pat-head.baishi { background: #F2F2F2; }
 .pat-big {
   width: 64px; height: 64px; border-radius: 50%;

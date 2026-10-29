@@ -79,15 +79,4 @@ test('BX 送礼页冻结：搜索栏贴顶、共计贴在搜索栏下方、白�
   assert(wxss.includes('.total-line { position: sticky; top: 44px; z-index: 9; background: #fff; }'), '共计行 sticky 在搜索栏下方（搜索栏高 44px）＋白底');
 });
 
-test('BX 礼薄详情冻结：搜索栏＋头像头一体贴顶、无灰底、头像上移、记录卡拼合', () => {
-  const wxml = readMp('pages/receive-detail/receive-detail.wxml');
-  const headIdx = wxml.indexOf('class="card detail-head"');
-  const searchIdx = wxml.indexOf('class="searchbar"', headIdx);
-  const patHeadIdx = wxml.indexOf('class="pat-head', headIdx);
-  const patCardIdx = wxml.indexOf('class="card pat-card"');
-  assert(headIdx >= 0 && searchIdx > headIdx && patHeadIdx > searchIdx && patCardIdx > patHeadIdx, '搜索栏＋头像头在同一头卡内、记录卡在其后');
-  const wxss = readMp('pages/receive-detail/receive-detail.wxss');
-  assert(wxss.includes('.detail-head { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px 12px 0 0; }'), '头卡 sticky 贴顶＋上圆角');
-  assert(wxss.includes('.pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; margin: 0 12px 10px; border-radius: 0 0 12px 12px; }'), '记录卡零顶距＋下圆角（与头卡拼成一张卡）');
-  assert(wxss.includes('.pat-head { background: #F7F3EA; padding: 6px 0 0; }'), '头像头上 padding 12→6（头像上移）');
-});
+/* CG批（用户 2026-10-29 定）取代 BX 一体冻结：搜索框＋礼薄名一行固定贴顶，头像头滚动；断言见 test-batch-cg-behavior.js，本块删除。 */
