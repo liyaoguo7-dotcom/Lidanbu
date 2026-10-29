@@ -1,5 +1,5 @@
 /* 亲友录 */
-/* BX批六色：字母行按组顺序循环首页六色（字色由浅灰加深到 #666，淡色底上才看得清）；卡片裁溢出防首行圆角外露 */
+/* CD批（用户定：颜色太多看着不舒服）：字母行六色循环取消，全换成图中浅蓝（L 组那个蓝）；卡片裁溢出防首行圆角外露 */
 .card { overflow: hidden; }
 .group-title {
   padding: 6px 16px 2px;
@@ -8,11 +8,11 @@
   background: #F6F6F6;
 }
 .group-title.c0 { background: #E2EEFB; }
-.group-title.c1 { background: #FDE8E8; }
-.group-title.c2 { background: #FDEFCB; }
-.group-title.c3 { background: #E0F3E4; }
-.group-title.c4 { background: #FFC7C3; }
-.group-title.c5 { background: #FFE4B8; }
+.group-title.c1 { background: #E2EEFB; }
+.group-title.c2 { background: #E2EEFB; }
+.group-title.c3 { background: #E2EEFB; }
+.group-title.c4 { background: #E2EEFB; }
+.group-title.c5 { background: #E2EEFB; }
 .contact-row {
   display: flex;
   align-items: center;

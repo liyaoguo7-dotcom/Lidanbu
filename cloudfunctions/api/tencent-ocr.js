@@ -364,6 +364,15 @@ function findAllAmounts(text) {
   const reA = /(?:¥|￥)?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*(?:元|圆|整)?/g;
   let m = null;
   while ((m = reA.exec(text)) !== null) {
+    /* CD批水印 guard：字母粘连的数字串不是金额（如抖音号 xie25381 里
+     * 的 25381，曾被当成金额 25381.00）。数字串前后紧贴拉丁字母（中
+     * 间可隔空白，如 xie 25381）即判定为字母数字混合标记，跳过。 */
+    const digitStart = m.index + m[0].indexOf(m[1]);
+    const digitEnd = digitStart + m[1].length;
+    if (/[A-Za-z]\s*$/.test(text.slice(0, digitStart)) || /^\s*[A-Za-z]/.test(text.slice(digitEnd))) {
+      if (m[0] === '') reA.lastIndex += 1;
+      continue;
+    }
     const yuan = parseFloat(m[1].replace(/,/g, ''));
     if (yuan > 0) out.push({ yuan, index: m.index, end: m.index + m[0].length });
     if (m[0] === '') reA.lastIndex += 1;
@@ -1213,6 +1222,36 @@ function rotationSuspect(detections, score) {
   return wide >= frags.length * 0.5;
 }
 
+/* CD批（用户定：顺序从左开始第一）：结构方向校验——分数无法区分正向
+ * 与倒置时，结构说了算。正向本子每列自上而下是姓名、贺礼/奠仪标记带、
+ * 金额；倒置时姓名跑到标记带之下、金额跑到之上。全局中位比较：标记带
+ * 须在姓名区与金额区之间，且两区纵向拉开（横排本同带、差值小，直接
+ * 跳过不判断）；姓名中位在金额中位之下即倒置。中位对少量误分类碎片
+ * （如小写金额字）不敏感。 */
+function isUpsideDown(dets) {
+  const frags = (Array.isArray(dets) ? dets : []).map((d) => {
+    const b = bboxOf(d);
+    return { text: String((d && d.DetectedText) || ''), cy: b.y + b.h / 2, y: b.y, h: b.h };
+  }).filter((f) => f.h > 0);
+  if (frags.length < 6) return false;
+  const med = (arr) => { const a = [...arr].sort((x, y) => x - y); return a[Math.floor(a.length / 2)]; };
+  const isAmountLike = (t) => /[0-9]/.test(t) || /[壹贰貳叁肆伍陆陸柒捌玖拾佰仟万萬亿億元圆整]/.test(t);
+  const markers = []; const names = []; const amounts = [];
+  for (const f of frags) {
+    if (isMarkerFrag(f)) { markers.push(f.cy); continue; }
+    if (isAmountLike(f.text)) amounts.push(f.cy);
+    else if (f.text.replace(/[^一-龥]/g, '')) names.push(f.cy);
+  }
+  if (markers.length < 2 || names.length < 2 || amounts.length < 2) return false;
+  const mY = med(markers); const nY = med(names); const aY = med(amounts);
+  const top = Math.min(...frags.map((f) => f.y));
+  const bottom = Math.max(...frags.map((f) => f.y + f.h));
+  const span = bottom - top;
+  if (span <= 0 || Math.abs(nY - aY) < span * 0.15) return false;
+  if (!(Math.min(nY, aY) < mY && mY < Math.max(nY, aY))) return false;
+  return nY > aY;
+}
+
 function rotateJpegBase64(imageBase64, dir) {
   let jpeg;
   try { jpeg = require('jpeg-js'); } catch (e) { return null; }
@@ -1343,13 +1382,29 @@ function createAdapter(deps = {}) {
         score: result.score,
         rowsEmpty: !result.rows.length,
       });
+      /* CD批方案 A：全部方向试完取最优，不再首个高分即 break——旧逻辑
+       * 先试顺时针、比分高就采纳，顺时针转竖拍图等于本子倒置（左右互
+       * 换），倒置读分高于侧拍原图即被采纳，正向根本没试，列序全反。 */
       for (const dir of dirs) {
         const rb64 = rotateJpegBase64(imageBase64, dir);
-        if (!rb64) break;
+        if (!rb64) continue;
         const r2 = await attempt(rb64);
-        if (r2.rows.length && r2.score > result.score) { result = r2; resultB64 = rb64; rotated = dir; break; }
-        if (!result.rows.length && r2.rows.length) { result = r2; resultB64 = rb64; rotated = dir; break; }
+        if (r2.rows.length && r2.score > result.score) { result = r2; resultB64 = rb64; rotated = dir; }
+        else if (!result.rows.length && r2.rows.length) { result = r2; resultB64 = rb64; rotated = dir; }
       }
+      /* CD批方案 B：结构方向校验——分数选出的方向仍可能是倒置（倒置读
+       * 分也可能高于侧拍原图），姓名跑到标记带之下即倒置，把已选图再
+       * 转 180° 重识一次（仅一次）；重识无果则保留原结果。仅倒置时多
+       * 一次双调调用，好照片不受影响。 */
+      try {
+        if (result.chosenDets && isUpsideDown(result.chosenDets)) {
+          const fb64 = rotateJpegBase64(resultB64, 'r180');
+          if (fb64) {
+            const r3 = await attempt(fb64);
+            if (r3.rows.length) { result = r3; resultB64 = fb64; rotated = rotated ? rotated + '+r180' : 'r180'; }
+          }
+        }
+      } catch (e) { /* 校验失败保留原结果 */ }
       /* BY批列模式：已转正图上检红线网格，自信时按数数配对重排；网格失败
        * 或配对无果一律回落现有结果，不抛错、不影响计费（只换行，不换调用）。 */
       let gridInfo = null;
@@ -1388,6 +1443,7 @@ module.exports = {
   guardRowNames,
   stripCapitalFromName,
   rotationSuspect,
+  isUpsideDown,
   rotateJpegBase64,
   pickRotationDirs,
   detectGridFromJpeg,

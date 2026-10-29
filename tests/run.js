@@ -105,3 +105,5 @@ require('./test-batch-by-behavior');
 require('./test-batch-bz-behavior');
 require('./test-batch-ca-behavior');
 require('./test-batch-cb-behavior');
+require('./test-batch-cd-behavior');
+require('./test-batch-cd-style');

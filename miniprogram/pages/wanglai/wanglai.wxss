@@ -44,9 +44,9 @@
 .tchip.chip-year { background: #E0F3E4; }
 .tchip.chip-lastYear { background: #FFC7C3; }
 .tchip.chip-custom { background: #FFE4B8; }
-/* BX批六色：收礼块用收礼橙、送礼块用送礼粉（与首页两张大卡同色）；差额条用电子请柬黄 */
-.compare .side:first-child { background: #FFE4B8; }
-.compare .side:last-child { background: #FFC7C3; }
+/* CD批（用户定）：收送两块改用同一种颜色（今年绿），不再一橙一粉 */
+.compare .side:first-child { background: #E0F3E4; }
+.compare .side:last-child { background: #E0F3E4; }
 .custom-range { display: flex; align-items: center; justify-content: center; margin-top: 10px; gap: 8px; }
 .date-box {
   padding: 8px 12px;
@@ -71,10 +71,22 @@
    整页随之变紧凑。 */
 .compare {
   display: flex;
-  margin: 6px 0 0;
+  margin: 6px 12px 0;
   background: #fff;
+  border-radius: 12px;
   overflow: hidden;
 }
+/* CD批（用户定）：合计与差额合并进一个方块，用本月人情往来长条淡黄；两行上下靠紧 */
+.summary-card {
+  margin: 8px 12px 0;
+  background: #FBF3D9;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.summary-card .total-line { background: transparent; padding: 8px 0 2px; }
+.summary-card .diff-bar { background: transparent; margin: 0; padding: 2px 16px 8px; }
+/* CD批（用户定）：联系人行背景恢复纯白 */
+.wl-row.rowbg { background: #FFFFFF; }
 .side {
   flex: 1;
   display: flex;

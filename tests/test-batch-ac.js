@@ -101,7 +101,7 @@ test('任务AC-7往来字号：全页逐项 +1（姓名 18（BX 再大一号）�
     ['.diff-label', '16px'], ['.diff-amount', '16px'],
   ];
   for (const [sel, size] of expect) {
-    const block = (w.match(new RegExp(`\\${sel} \\{[^}]*\\}`)) || [''])[0];
+    const block = (w.match(new RegExp(`\\n\\${sel} \\{[^}]*\\}`)) || [''])[0]; // CD批：行首锚定，免得命中 .summary-card .total-line 这类后代规则
     assert(block.includes(`font-size: ${size}`), `${sel} 字号应为 ${size}（+1 后）`);
   }
   assert((w.match(/\.wl-row \.nm \{[^}]*\}/) || [''])[0].includes('font-size: 18px'), '往来行姓名 17→18px（BX 大一号）');

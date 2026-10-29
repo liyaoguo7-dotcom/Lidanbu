@@ -20,7 +20,7 @@ test('BX 统一淡色块：全局色更淡、各处行统铺色、无交替绑�
     assert(line && line.includes('rowbg'), `我的页 ${h} 行铺色`);
   }
   assert(mine.includes('contact-btn rowbg'), '联系客服行铺色');
-  assert(readMp('pages/mine/mine.wxss').includes('.contact-btn.rowbg { background: #FBF8F0; }'), '联系客服白底提权覆盖');
+  assert(readMp('pages/mine/mine.wxss').includes('.contact-btn.rowbg { background: #FFFFFF; }'), '联系客服白底提权覆盖（CD批：我的页以下各行纯白）');
   assert(readMp('pages/wanglai/wanglai.wxml').includes('class="wl-row rowbg"'), '往来主列表行统铺色');
   assert(readMp('pages/choose-contact/choose-contact.wxml').includes('class="contact-row rowbg"'), '选联系人行统铺色');
   assert(readMp('pages/receive/receive.wxml').includes('class="event-row rowbg"'), '收礼礼簿行统铺色');
@@ -60,16 +60,15 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   for (const [cls, bg] of chips) assert(wl.includes(`.tchip.${cls} { background: ${bg}; }`), `时间按钮 ${cls} 配 ${bg}`);
   assert(readMp('pages/wanglai/wanglai.wxml').includes('chip-{{item.id}}'), '时间按钮按 id 挂色');
   assert(wl.includes('.tchip.on { color: #E05353; border-color: #E05353; }'), '选中态红字红边不变');
-  assert(wl.includes('.compare .side:first-child { background: #FFE4B8; }'), '收礼块收礼橙');
-  assert(wl.includes('.compare .side:last-child { background: #FFC7C3; }'), '送礼块送礼粉');
-  assert((wl.match(/\.diff-bar \{[^}]*\}/) || [''])[0].includes('background: #FDEFCB'), '差额条电子请柬黄');
+  assert(wl.includes('.compare .side:first-child { background: #E0F3E4; }'), '收礼块今年绿（CD批：收送同色）');
+  assert(wl.includes('.compare .side:last-child { background: #E0F3E4; }'), '送礼块今年绿（CD批：收送同色）');
+  assert(wl.includes('.summary-card {') && wl.includes('background: #FBF3D9;'), '合计＋差额合并卡本月淡黄（CD批）');
   const ct = readMp('pages/contacts/contacts.wxss');
-  const cycle = ['#E2EEFB', '#FDE8E8', '#FDEFCB', '#E0F3E4', '#FFC7C3', '#FFE4B8'];
-  cycle.forEach((bg, i) => assert(ct.includes(`.group-title.c${i} { background: ${bg}; }`), `字母行 c${i} 配 ${bg}`));
-  assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行按组顺序循环六色');
+  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: #E2EEFB; }`), `字母行 c${i} 统一浅蓝（CD批）`);
+  assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动，只改色值');
   assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出贴合圆角');
   const mine = readMp('pages/mine/mine.wxss');
-  assert(mine.includes('.card.profile { background: #E2EEFB; }'), '头像栏家庭共享蓝');
+  assert(mine.includes('.card.profile { background: #D0E2F6; }'), '头像栏蓝色深一档（CD批）');
   assert(mine.includes('.m-badge {') && mine.includes('background: #FDEFCB; color: #333;'), '会员有效电子请柬黄＋深字');
   assert(mine.includes('.m-btn.ghost {') && mine.includes('background: #E0F3E4; color: #333;'), '我的积分导出备份绿＋深字');
 });

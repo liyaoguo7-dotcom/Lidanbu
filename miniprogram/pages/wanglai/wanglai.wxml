@@ -43,13 +43,13 @@
     </view>
   </view>
 
-  <!-- 合计 -->
-  <view class="total-line">{{totalText}}</view>
-
-  <!-- 差额区：淡黄底红字，绝对值无符号 -->
-  <view class="diff-bar">
-    <text class="diff-label">差额</text>
-    <text class="diff-amount num">{{diffText}}</text>
+  <!-- 合计＋差额合并卡（CD批：两行靠紧，淡黄本月长条色） -->
+  <view class="summary-card">
+    <view class="total-line">{{totalText}}</view>
+    <view class="diff-bar">
+      <text class="diff-label">差额</text>
+      <text class="diff-amount num">{{diffText}}</text>
+    </view>
   </view>
 </block>
 
