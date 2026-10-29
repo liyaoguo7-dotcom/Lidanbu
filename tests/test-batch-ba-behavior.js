@@ -52,7 +52,7 @@ test('BA-2 我的页引导按竞品视频复刻：红幅小三角+教程层步�
 test('BA-3 往来页：整页 100vh flex、联系人列表进 scroll-view 独立滚动', () => {
   const wxml = rd('miniprogram/pages/wanglai/wanglai.wxml');
   const wxss = rd('miniprogram/pages/wanglai/wanglai.wxss');
-  assert(wxml.includes('class="wl-page"'), '往来页应有整页 flex 容器');
+  assert(wxml.includes('class="wl-page {{swipeAnim ? \'swipe-back\' : \'\'}}"'), '往来页应有整页 flex 容器（DA批加弹回类）');
   assert(/\.wl-page\s*\{[^}]*height: 100vh/.test(wxss), '整页容器应为 100vh');
   assert(/\.wl-page\s*\{[^}]*flex-direction: column/.test(wxss), '整页容器应纵向 flex');
   // 汇总/差额在 scroll-view 之上（固定区），列表行在 scroll-view 之内
