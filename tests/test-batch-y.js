@@ -71,13 +71,13 @@ test('任务Y-D样式按钮：按胶囊实测位置动态右偏移（≥12px 间
   assert(book.includes('margin-right:{{styleRightPx}}px'), '样式按钮右距应由 styleRightPx 内联注入');
 });
 
-// ---------- E：请横屏页返回按钮 ----------
-test('任务Y-E返回按钮：箭头 60rpx、可点区 88rpx、标题行加高', () => {
+// ---------- E：请横屏页返回按钮（DH批：改与系统箭头一致） ----------
+test('任务Y-E返回按钮：箭头 44rpx、可点区 88rpx、顶栏顶垫状态栏', () => {
   const wxss = readMp('pages/landscape/book.wxss');
   const back = (wxss.match(/\.rotate-back \{[^}]*\}/) || [''])[0];
-  assert(back.includes('font-size: 60rpx'), '返回箭头约 30px（60rpx）');
+  assert(back.includes('font-size: 44rpx'), '返回箭头约 22px（44rpx，贴近系统箭头）');
   assert(back.includes('width: 88rpx') && back.includes('height: 88rpx'), '可点区域 ≥44px（88rpx）');
-  assert(wxss.includes('height: 132rpx'), '顶部标题行加高，箭头不再贴角');
+  assert(wxss.includes('env(safe-area-inset-top)'), '顶部标题行顶垫状态栏，箭头不再贴角');
 });
 
 // ---------- F：小喇叭新规格 ----------
