@@ -21,8 +21,8 @@
 }
 .contact-btn::after { border: none; }
 .profile { padding: 12px 16px; display: flex; align-items: center; }
-/* CF批（用户 2026-10-29 定）：礼友栏改会员有效黄（与下方会员有效对换） */
-.card.profile { background: #FDEFCB; }
+/* DG批（用户 2026-10-30 定）：头像栏改识别收礼方块色（橙黄渐变，与首页大卡色不同） */
+.card.profile { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }
 .avatar {
   width: 56px; height: 56px;
   flex: none; margin-right: 14px;
@@ -31,8 +31,8 @@
 .usub { font-size: 16px; color: #999; margin-top: 4px; display: block; }
 .member-card {
   padding: 12px 16px;
-  /* BX批六色：卡片用送礼大卡的粉红渐变（方向反过来，深色在上，顶部白标题才看得清；BX 那档粉色作废） */
-  background: linear-gradient(135deg, #F78C8F, #FFC7C3);
+  /* DG批（用户 2026-10-30 定）：卡片改识别送礼方块色（红色渐变；BX 的送礼粉红作废） */
+  background: linear-gradient(135deg, #F67070, #F0575A);
   border: none;
   display: flex; flex-direction: column;
 }
@@ -87,7 +87,7 @@
 .form-row.rowbg { background: #FFFFFF; }
 .form-row { min-height: 50px; }
 .form-val { font-size: 17px; }
-.chev { font-size: 16px; }
+.chev { font-size: 18px; } /* DG批（用户 2026-10-30 定）：本页所有行右边箭头统一 16→18px，保持一致 */
 
 /* 「添加到我的小程序」引导条 + 教程层（AP批形态，AS批：主红底白字单行不折行） */
 .addmp-bar {

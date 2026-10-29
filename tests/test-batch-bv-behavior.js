@@ -80,7 +80,7 @@ test('BV 收礼详情：搜索栏＋本地筛＋搜空态', () => {
 
 test('BV 我的页会员卡片红稍淡已由 BX 六色取代：渐变改送礼粉红（深色在上）、开通会员白底红字不动', () => {
   const wxss = readMp('pages/mine/mine.wxss');
-  assert(wxss.includes('linear-gradient(135deg, #F78C8F, #FFC7C3)'), '会员卡片渐变已改送礼粉红');
+  assert(wxss.includes('linear-gradient(135deg, #F67070, #F0575A)'), '会员卡片渐变已改识别送礼红（DG批）');
   assert(wxss.includes('.m-btn') && /\.m-btn\s*\{[^}]*color: #F0575A/.test(wxss), '开通会员白底红字不动');
 });
 

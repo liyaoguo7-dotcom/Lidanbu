@@ -133,3 +133,4 @@ require('./test-batch-db-behavior');
 require('./test-batch-dc-behavior');
 require('./test-batch-dd-behavior');
 require('./test-batch-de-behavior');
+require('./test-batch-dg-behavior');

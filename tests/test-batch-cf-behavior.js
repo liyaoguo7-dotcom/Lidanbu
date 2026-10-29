@@ -8,10 +8,10 @@ const readMp = (p) => fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 
 
 test('CF 我的页礼友栏与会员有效对换颜色', () => {
   const mine = readMp('pages/mine/mine.wxss');
-  assert(mine.includes('.card.profile { background: #FDEFCB; }'), '礼友栏会员有效黄');
+  assert(mine.includes('.card.profile { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }'), '头像栏改识别收礼橙黄渐变（DG批）');
   assert(mine.includes('.m-badge {') && mine.includes('background: #E2EEFB; color: #333;'), '会员有效家庭共享蓝');
   assert(!mine.includes('.card.profile { background: #D0E2F6; }'), '礼友栏不再是深一档蓝');
-  assert(mine.includes('linear-gradient(135deg, #F78C8F, #FFC7C3)'), '会员卡渐变不动');
+  assert(mine.includes('linear-gradient(135deg, #F67070, #F0575A)'), '会员卡改识别送礼红渐变（DG批）');
   assert(mine.includes('.m-btn.ghost {') && mine.includes('background: #E0F3E4; color: #333;'), '我的积分绿不动');
   assert(mine.includes('.form-row.rowbg { background: #FFFFFF; }'), '横置行往下纯白不动');
 });
