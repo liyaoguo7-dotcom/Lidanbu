@@ -37,15 +37,11 @@
     </view>
     <view class="form-row" wx:if="{{kind === 'receive'}}">
       <text class="form-label">类型</text>
-      <picker class="form-picker" mode="selector" range="{{recordTypes}}" data-i="{{index}}" bindchange="onTypeChange">
-        <view class="form-val">{{item.type}}<text class="chev"> ›</text></view>
-      </picker>
+      <view class="form-val" data-i="{{index}}" bindtap="onOpenTypeSheet">{{item.type}}<text class="chev"> ›</text></view>
     </view>
     <view class="form-row" wx:else>
       <text class="form-label">场合</text>
-      <picker class="form-picker" mode="selector" range="{{tags}}" range-key="name" data-i="{{index}}" bindchange="onTagChange">
-        <view class="form-val">{{item.tagName}}<text class="chev"> ›</text></view>
-      </picker>
+      <view class="form-val" data-i="{{index}}" bindtap="onOpenTagSheet">{{item.tagName}}<text class="chev"> ›</text></view>
     </view>
     <!-- AS批：收礼核对页去掉日期行（记录日期由导入日兜底）；送礼保留 -->
     <view class="form-row" wx:if="{{kind !== 'receive'}}">
@@ -104,6 +100,23 @@
 </view>
 
 <contact-sheet show="{{addSheetOpen}}" bind:confirm="onAddConfirm" bind:cancel="onAddCancel" />
+
+<!-- DF批：场合／类型平铺面板（点格子选中、点确定生效、点取消不变；选亲友面板不动） -->
+<view class="picker-mask" wx:if="{{tileSheet.show}}" bindtap="onTileCancel">
+  <view class="picker-sheet" catchtap="noop">
+    <view class="picker-head">
+      <text class="picker-title">{{tileSheet.title}}</text>
+      <text class="picker-close" bindtap="onTileCancel">×</text>
+    </view>
+    <view class="tile-grid">
+      <view class="tile-cell {{tileSheet.selected === item.value ? 'on' : ''}}" wx:for="{{tileSheet.options}}" wx:key="value" data-v="{{item.value}}" bindtap="onTilePick">{{item.label}}</view>
+    </view>
+    <view class="tile-btns">
+      <view class="tile-btn tile-cancel" bindtap="onTileCancel">取消</view>
+      <view class="tile-btn tile-confirm" bindtap="onTileConfirm">确定</view>
+    </view>
+  </view>
+</view>
 
 <!-- BN批：快速创建弹窗（定版）——姓名/备注弹窗内直接编辑，淡字提醒，左取消右确认 -->
 <view class="qc-mask" wx:if="{{qcOpen}}" bindtap="onQcCancel" catchtouchmove="noop"></view>

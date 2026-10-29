@@ -176,6 +176,15 @@
 .picker-empty { text-align: center; color: #C2C2C2; font-size: 13px; padding: 18px 0; }
 .picker-new { margin-top: 14px; text-align: center; }
 
+/* DF批：场合／类型平铺格子（每排 5 个；选中红框红字＋淡粉底；确定红字取消灰字） */
+.tile-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tile-cell { width: calc(20% - 7px); box-sizing: border-box; text-align: center; font-size: 15px; color: #333; border: 1px solid #E8E8E8; border-radius: 8px; padding: 11px 0; }
+.tile-cell.on { border-color: #F0575A; color: #F0575A; background: #FDE8E8; }
+.tile-btns { display: flex; margin-top: 16px; border-top: 1px solid #F0F0F0; }
+.tile-btn { flex: 1; text-align: center; padding: 13px 0; font-size: 16px; }
+.tile-cancel { color: #999; }
+.tile-confirm { color: #F0575A; font-weight: 600; }
+
 /* BN批：快速创建弹窗（居中卡片，仿原生弹窗的底部双按钮） */
 .qc-mask {
   position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 60;

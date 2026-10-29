@@ -43,6 +43,7 @@ Page({
     pickerIndex: -1,
     pickerKeyword: '',
     pickerList: [],
+    tileSheet: { show: false, mode: '', index: -1, title: '', options: [], selected: '' }, // DF批：场合／类型平铺面板
     writing: false,
     done: false,
     doneCount: 0,
@@ -161,17 +162,34 @@ Page({
     this.setData({ [`items[${i}].amountText`]: formatAmount(fen) });
   },
 
-  /** 收礼类型 */
-  onTypeChange(e) {
+  /** DF批：收礼类型平铺面板 */
+  onOpenTypeSheet(e) {
     const i = e.currentTarget.dataset.i;
-    this.setData({ [`items[${i}].type`]: this.data.recordTypes[Number(e.detail.value)] });
+    const options = (this.data.recordTypes || []).map((t) => ({ label: t, value: t }));
+    this.setData({ tileSheet: { show: true, mode: 'type', index: i, title: '选择类型', options, selected: this.data.items[i].type } });
   },
-  /** 送礼场合 */
-  onTagChange(e) {
+  /** DF批：送礼场合平铺面板 */
+  onOpenTagSheet(e) {
     const i = e.currentTarget.dataset.i;
-    const tag = this.data.tags[Number(e.detail.value)];
-    if (!tag) return;
-    this.setData({ [`items[${i}].tagId`]: tag.id, [`items[${i}].tagName`]: tag.name });
+    const options = (this.data.tags || []).map((t) => ({ label: t.name, value: t.id }));
+    this.setData({ tileSheet: { show: true, mode: 'tag', index: i, title: '选择场合', options, selected: this.data.items[i].tagId } });
+  },
+  onTilePick(e) {
+    this.setData({ 'tileSheet.selected': e.currentTarget.dataset.v });
+  },
+  onTileCancel() {
+    this.setData({ 'tileSheet.show': false });
+  },
+  onTileConfirm() {
+    const s = this.data.tileSheet;
+    if (!s.show || s.index < 0) return;
+    if (s.mode === 'tag') {
+      const tag = (this.data.tags || []).find((t) => t.id === s.selected);
+      if (tag) this.setData({ [`items[${s.index}].tagId`]: tag.id, [`items[${s.index}].tagName`]: tag.name });
+    } else if (s.mode === 'type') {
+      this.setData({ [`items[${s.index}].type`]: s.selected });
+    }
+    this.setData({ 'tileSheet.show': false });
   },
   /** 日期 */
   onDateChange(e) {

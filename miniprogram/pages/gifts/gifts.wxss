@@ -6,9 +6,9 @@
 .entry-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
 .entry-title { font-size: 15px; font-weight: 600; }
 .entry-arrow { color: #C2C2C2; font-size: 16px; }
-/* CT批：共计块独立成块——米黄底（用户定，与礼薄详情共计条同色）、居中、上下收短（14/12→8/6）、全圆角、与横置块留 10px 隙、不再 sticky */
-.total-line { text-align: center; font-size: 20px; padding: 8px 16px 6px; color: #333; background: #F7F3EA; border-radius: 12px; margin: 10px 12px 0; }
-.total-line .red { color: #F0575A; font-weight: 600; }
+/* DF批：共计块改首页送礼粉红渐变（CT批米黄作废）；数字改白字，标签字仍深色 */
+.total-line { text-align: center; font-size: 20px; padding: 8px 16px 6px; color: #333; background: linear-gradient(135deg, #FFC7C3, #F78C8F); border-radius: 12px; margin: 10px 12px 0; }
+.total-line .red { color: #fff; font-weight: 600; }
 .list-end { display: flex; align-items: center; gap: 10px; padding: 17px 60px 19px; }
 .end-line { flex: 1; height: 1px; background: #F0F0F0; }
 .end-text { font-size: 12px; color: #C2C2C2; }
