@@ -2,6 +2,7 @@
 <view class="ph-head">
   <text class="ph-title">{{kindLabel}}拍照导入{{eventName ? ' · ' + eventName : ''}}</text>
   <text class="ph-sub">可以从相册一次选多张，也可以分几次拍，攒齐了再一起开始识别。</text>
+  <text class="ph-tip">温馨提示：为了识别更准确，请使用字迹清晰、页面平展的礼单薄拍照。</text>
 </view>
 
 <view class="ph-grid">

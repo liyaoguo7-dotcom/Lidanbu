@@ -111,3 +111,4 @@ require('./test-batch-ce-behavior');
 require('./test-batch-cf-behavior');
 require('./test-batch-cg-behavior');
 require('./test-batch-ch-behavior');
+require('./test-batch-ci-behavior');
