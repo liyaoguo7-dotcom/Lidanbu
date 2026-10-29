@@ -118,3 +118,4 @@ require('./test-batch-cl-behavior');
 require('./test-batch-cm-behavior');
 require('./test-batch-cn-behavior');
 require('./test-batch-co-behavior');
+require('./test-batch-cp-behavior');

@@ -10,7 +10,8 @@ const readMp = (p) => fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 
 test('CE 往来收送两块并排、都用今日粉', () => {
   const wl = readMp('pages/wanglai/wanglai.wxss');
   const wxml = readMp('pages/wanglai/wanglai.wxml');
-  assert(wl.includes('background: #FDE8E8;'), '收送块今日粉');
+  assert(wl.includes('.side:first-child { background: linear-gradient(135deg, #FFE4B8, #FDBE68); }'), '收礼块底色（CP批：首页收礼渐变，取代今日粉）');
+  assert(wl.includes('.side:last-child { background: linear-gradient(135deg, #FFC7C3, #F78C8F); }'), '送礼块底色（CP批：首页送礼渐变，取代今日粉）');
   assert(!wl.includes('.compare .side:first-child { background: #E0F3E4; }'), '收礼块不再是今年绿');
   assert(!wl.includes('.side + .side { border-left:'), '两块中间分隔线取消（CJ批）');
   const sides = (wxml.match(/<view class="side">/g) || []).length;
