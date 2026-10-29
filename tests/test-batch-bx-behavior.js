@@ -68,8 +68,8 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动，只改色值');
   assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出贴合圆角');
   const mine = readMp('pages/mine/mine.wxss');
-  assert(mine.includes('.card.profile { background: #D0E2F6; }'), '头像栏蓝色深一档（CD批）');
-  assert(mine.includes('.m-badge {') && mine.includes('background: #FDEFCB; color: #333;'), '会员有效电子请柬黄＋深字');
+  assert(mine.includes('.card.profile { background: #FDEFCB; }'), '头像栏会员有效黄（CF批：与会员有效对换）');
+  assert(mine.includes('.m-badge {') && mine.includes('background: #E2EEFB; color: #333;'), '会员有效家庭共享蓝＋深字（CF批）');
   assert(mine.includes('.m-btn.ghost {') && mine.includes('background: #E0F3E4; color: #333;'), '我的积分导出备份绿＋深字');
 });
 

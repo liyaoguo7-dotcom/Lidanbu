@@ -13,7 +13,7 @@ test('CD 颜色：亲友录统一浅蓝、我的页深蓝＋以下纯白', () =>
   for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: #E2EEFB; }`), `字母行 c${i} 浅蓝`);
   assert(!ct.includes('#FDE8E8') && !ct.includes('#FFC7C3') && !ct.includes('#FFE4B8'), '亲友录不再有粉/橙六色');
   const mine = readMp('pages/mine/mine.wxss');
-  assert(mine.includes('.card.profile { background: #D0E2F6; }'), '礼友栏深一档');
+  assert(mine.includes('.card.profile { background: #FDEFCB; }'), '礼友栏会员有效黄（CF批）');
   assert(mine.includes('.form-row.rowbg { background: #FFFFFF; }'), '横置行往下纯白');
   assert(mine.includes('.contact-btn.rowbg { background: #FFFFFF; }'), '联系客服纯白');
 });
