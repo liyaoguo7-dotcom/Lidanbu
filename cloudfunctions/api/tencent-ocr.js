@@ -228,14 +228,19 @@ const CH_BIG = { 万: 10000, 萬: 10000, 亿: 100000000, 億: 100000000 };
  * 数字形近字恒映射（单字无单位仍不成金额，不会把姓名变金额）；单位
  * 形近字伯→佰只在串里已有真数字时才映射（防“刘伯”这类姓名被当成
  * 佰位）。映射是一一换字、长度不变，金额下标不受影响。 */
-const CH_GUESS_DIGIT = { 吾: '伍', 午: '伍', 他: '伍', 式: '贰', 弍: '贰', 叄: '叁', 睦: '陆', 漆: '柒', 桼: '柒' };
+/* CH批：手写叁常被引擎认成参（同一人笔迹错得一样，真机实证参佰元全变
+ * 100 元——参不在金额解析里，参佰只剩佰）。参→叁走猜读映射；eval 的左
+ * 裁剪保证参后跟数字时不误吞（参伍佰→伍佰，名李参不受影响）。 */
+const CH_GUESS_DIGIT = { 吾: '伍', 午: '伍', 他: '伍', 式: '贰', 弍: '贰', 叄: '叁', 睦: '陆', 漆: '柒', 桼: '柒', 参: '叁' };
 const CH_GUESS_UNIT = { 伯: '佰' };
-const CH_RUN_RE = /[零一二三四五六七八九两兩壹贰貳叁肆伍陆陸柒捌玖十拾百佰千仟万萬亿億吾午他式弍叄睦漆桼伯]+/g;
+const CH_RUN_RE = /[零一二三四五六七八九两兩壹贰貳叁肆伍陆陸柒捌玖十拾百佰千仟万萬亿億吾午他式弍叄睦漆桼伯参]+/g;
 
 /* CB批（用户 2026-10-29 定）：大写数字不会出现在人名中——人名遇大写
- * 数字即断（金额的开始），且人名上限由 4 字改 3 字。姓例外：陆/万既
- * 是姓又是大写数字，首位且后跟的不是单位/元/整时视为姓氏不断（陆小
- * 凤、万明不动）；后跟单位/元/整（如陆仟）或不在首位时仍断。 */
+ * 数字即断（金额的开始），且人名上限由 4 字改 3 字。姓例外：陆既是姓
+ * 又是大写数字，首位且后跟的不是单位/元/整时视为姓氏不断（陆小凤不
+ * 动）；后跟单位/元/整（如陆仟）仍断。CH批：万除作姓外还常作给定名
+ * （万军、万里），故万/萬在任何位置、后跟的不是单位/元/整时都视为
+ * 名字不断（赵万军不动）；万后跟元/圆/整仍切，保住万元类金额。 */
 const CAP_UNIT_CHARS = new Set(['拾', '佰', '仟', '万', '萬']);
 const CAP_DIGIT_CHARS = new Set(['壹', '贰', '貳', '叁', '肆', '伍', '陆', '陸', '柒', '捌', '玖', '参']);
 /* CA批猜读形近字：只在金额语境（后跟单位/元/整）才断；无金额佐证时
@@ -246,9 +251,10 @@ function stripCapitalFromName(name) {
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
     if (CAP_UNIT_CHARS.has(ch)) {
-      // 万姓例外：万/萬在首位且后跟的不是单位/元/整时视为姓氏不断
+      // CH批：万/萬在任何位置、后跟的不是单位/元/整时都视为名字不断
+      // （赵万军类给定名；万后跟元/圆/整仍切，保住万元类金额）
       const next = chars[i + 1];
-      if (i === 0 && (ch === '万' || ch === '萬')
+      if ((ch === '万' || ch === '萬')
         && next && !CAP_UNIT_CHARS.has(next) && next !== '元' && next !== '圆' && next !== '整') continue;
       return chars.slice(0, i).join('');
     }
@@ -402,8 +408,9 @@ const cleanText = (s) => String(s || '').replace(/^[\s:：,，、]+|[\s:：,，�
  * 把一行文本拆成 { name, amountFen, note }：
  * 取行内最后一个金额 token 作金额——阿拉伯数字（元→分，容忍千分位
  * 逗号/小数/¥/元/圆/整）与中文数字（AS批，壹仟元整→1000）两者取
- * 位置靠后者；金额之前是姓名、之后残余文本是备注（如"同学"）；
- * 没金额则整行是姓名。姓名出口前繁体转简体（zh-t2s），金额/备注不动。
+ * 位置靠后者；金额之前是姓名、之后残余文本直接丢弃（CH批：备注默认
+ * 空，用户定：备注只给用户自己填）；没金额则整行是姓名。姓名出口前
+ * 繁体转简体（zh-t2s）。
  */
 function splitNameAmount(text) {
   const re = /(?:¥|￥)?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*(?:元|圆|整)?/g;
@@ -430,8 +437,7 @@ function splitNameAmount(text) {
   if (/^[\d\s.,，¥￥元圆整]+$/.test(name) || parseChineseAmount(name) === pick.amountFen / 100) {
     name = ''; // 姓名位整段就是金额 → 金额占位行，不得把金额当姓名
   }
-  const note = cleanText(text.slice(pick.end));
-  return { name: toSimplified(name), amountFen: pick.amountFen > 0 ? pick.amountFen : null, note };
+  return { name: toSimplified(name), amountFen: pick.amountFen > 0 ? pick.amountFen : null, note: '' };
 }
 
 /* ---------------- 版式解析（纯函数） ---------------- */
@@ -607,7 +613,8 @@ function detectVertical(frags, columns, centroidCols) {
   return vertCols.length >= cols.length * 0.6;
 }
 
-/** 竖排整列拼读文本按金额切笔：每笔止于一个金额，金额后残余并入该笔备注 */
+/** 竖排整列拼读文本按金额切笔：每笔止于一个金额，金额后残余直接丢弃
+ * （CH批：备注默认空，不并入备注） */
 function splitColumnText(text) {
   const amounts = findAllAmounts(text);
   if (!amounts.length) {
@@ -621,11 +628,7 @@ function splitColumnText(text) {
     const r = splitNameAmount(seg);
     rows.push({ name: r.name, amountFen: r.amountFen, note: r.note, raw: seg });
     prev = a.end;
-    if (i === amounts.length - 1) {
-      const tail = cleanText(text.slice(prev));
-      if (tail) rows[rows.length - 1].note = rows[rows.length - 1].note
-        ? `${rows[rows.length - 1].note} ${tail}` : tail;
-    }
+    /* CH批：末笔后的尾残余直接丢弃，不进备注。 */
   });
   return rows;
 }
@@ -815,10 +818,13 @@ function parseVertical(frags, columns) {
   const expFree = expectedTrailingFree(cols, bandY, pitch);
   const rows = [];
   for (const col of cols) {
-    const sortedItems = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    /* CH批：合计/小计/总计/共计碎片是本子底部的总数行，不是某笔金额——
+     * 不进列拼读（曾漏进末列金额，如合计15被当成15.00元）。 */
+    const colItems = col.list.filter((f) => !/合计|总计|共计|小计/.test(String(f.text || '')));
+    const sortedItems = [...colItems].sort((a, b) => (a.y - b.y) || (a.x - b.x));
     const markerIdx = columnMarkerIdx(sortedItems, bandY, pitch);
     const builtName = markerIdx > 0 ? buildVerticalName(sortedItems, markerIdx, pitch, expFree) : '';
-    let text = [...col.list].sort((a, b) => (a.y - b.y) || (a.x - b.x))
+    let text = [...colItems].sort((a, b) => (a.y - b.y) || (a.x - b.x))
       .map((f) => f.text).join('')
       .replace(/賀禮|贺礼|奠儀|奠仪/g, '');
     /* BB批：成对标记滤除后仍会残留单字「贺/礼」——纸面印刷标记被引擎
@@ -1089,7 +1095,8 @@ function parseWithGrid(detections, grid) {
   const names = [];
   const amounts = [];
   for (const c of cols) {
-    const sorted = [...c.list].sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    /* CH批：合计类碎片不进列拼读（同竖排路径，防总数行漏进末笔金额）。 */
+    const sorted = [...c.list].filter((f) => !/合计|总计|共计|小计/.test(String(f.text || ''))).sort((a, b) => (a.y - b.y) || (a.x - b.x));
     // 拼读：碎片直接拼接（中文大写金额不断字），但数字-数字边界须空格隔开，
     // 否则漂移到同列的两个金额会粘成一个数（如 800＋1000 → 8001000）
     let joined = '';
@@ -1332,6 +1339,9 @@ function createAdapter(deps = {}) {
         if (!buf) throw new Error('这张照片没认出来');
         imageBase64 = Buffer.from(buf).toString('base64');
       }
+      /* CH批：自动裁黑边（视频截图上下纯黑边＋边上标题/水印会带偏转正与列统计；
+       * 用户实测裁掉即全对）。只裁边缘近黑行/列，异常回落原图，不增加调用。 */
+      imageBase64 = trimBlackBorders(imageBase64);
       const mode = opts.mode || opts.ocrMode || '';
       /* 一轮完整识别（指定的人像/给定图片字节）：返回行、采用引擎、
        * 质量分、本轮留痕与首调碎片；无行不抛错（抛错语义留给外层，
@@ -1429,14 +1439,68 @@ function createAdapter(deps = {}) {
   };
 }
 
+/* CH批：自动裁掉照片边缘的纯黑边（视频截图上下黑边＋边上标题/水印）。
+ * 判定：行/列中 ≥80% 像素最亮通道 <64 即为黑边行/列；从四边向内裁，
+ * 每边最多裁 40%、裁后宽高均须 ≥ 原图 50% 且 ≥200px，否则回落原图；
+ * 无黑边时原样返回（不重编码）。解码失败/依赖缺失一律回落原图。 */
+function trimBlackBorders(b64) {
+  try {
+    if (!b64) return b64;
+    let jpeg = null;
+    try { jpeg = require('jpeg-js'); } catch (e) { return b64; }
+    const raw = jpeg.decode(Buffer.from(b64, 'base64'));
+    const { width: W, height: H, data } = raw;
+    if (!W || !H || W < 50 || H < 50) return b64;
+    const darkRow = (y) => {
+      let dark = 0;
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        if (Math.max(data[i], data[i + 1], data[i + 2]) < 64) dark++;
+      }
+      return dark >= W * 0.8;
+    };
+    const darkCol = (x) => {
+      let dark = 0;
+      for (let y = 0; y < H; y++) {
+        const i = (y * W + x) * 4;
+        if (Math.max(data[i], data[i + 1], data[i + 2]) < 64) dark++;
+      }
+      return dark >= H * 0.8;
+    };
+    let top = 0;
+    while (top < Math.floor(H * 0.4) && darkRow(top)) top++;
+    let bottom = H - 1;
+    while (bottom > top && bottom > Math.floor(H * 0.6) && darkRow(bottom)) bottom--;
+    let left = 0;
+    while (left < Math.floor(W * 0.4) && darkCol(left)) left++;
+    let right = W - 1;
+    while (right > left && right > Math.floor(W * 0.6) && darkCol(right)) right--;
+    if (top === 0 && bottom === H - 1 && left === 0 && right === W - 1) return b64;
+    const w = right - left + 1;
+    const h = bottom - top + 1;
+    if (w < 200 || h < 200 || w < W * 0.5 || h < H * 0.5) return b64;
+    const out = Buffer.alloc(w * h * 4);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const si = ((top + y) * W + (left + x)) * 4;
+        const di = (y * w + x) * 4;
+        out[di] = data[si]; out[di + 1] = data[si + 1]; out[di + 2] = data[si + 2]; out[di + 3] = data[si + 3];
+      }
+    }
+    return jpeg.encode({ width: w, height: h, data: out }, 90).data.toString('base64');
+  } catch (e) { return b64; }
+}
+
 module.exports = {
   getConfig,
   isConfigured,
   buildAuthorization,
   parseDetections,
   splitNameAmount,
+  splitColumnText,
   parseChineseAmount,
   findAllAmounts,
+  trimBlackBorders,
   clusterByCentroid,
   splitWideFragments,
   dropRepeatedPrintFrags,

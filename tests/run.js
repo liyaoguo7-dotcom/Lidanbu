@@ -110,3 +110,4 @@ require('./test-batch-cd-style');
 require('./test-batch-ce-behavior');
 require('./test-batch-cf-behavior');
 require('./test-batch-cg-behavior');
+require('./test-batch-ch-behavior');
