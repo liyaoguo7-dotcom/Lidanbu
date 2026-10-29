@@ -134,3 +134,7 @@ require('./test-batch-dc-behavior');
 require('./test-batch-dd-behavior');
 require('./test-batch-de-behavior');
 require('./test-batch-dg-behavior');
+require('./test-batch-df-behavior');
+require('./test-batch-dh-behavior');
+require('./test-batch-di-behavior');
+require('./test-batch-dj-behavior');

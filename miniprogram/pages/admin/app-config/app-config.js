@@ -62,6 +62,8 @@ Page({
         const q = p.quota || sq;
         return {
           id: p.id, name: p.name, yuan: formatAmount(p.priceFen), days: String(p.days),
+          androidYuan: formatAmount(p.androidPriceFen !== undefined ? p.androidPriceFen : p.priceFen),
+          iosYuan: formatAmount(p.iosPriceFen !== undefined ? p.iosPriceFen : p.priceFen),
           grantPoints: String(p.grantPoints || 0), recommended: !!p.recommended, onShelf: p.onShelf !== false,
           qEvents: String(q.receiveEvents !== undefined ? q.receiveEvents : ''),
           qPerEvent: String(q.recordsPerEvent !== undefined ? q.recordsPerEvent : ''),
@@ -122,6 +124,7 @@ Page({
   onAddPlan() {
     const plans = [...this.data.plans, {
       id: `plan${Date.now().toString(36)}`, name: '新档位', yuan: '1.00', days: '30',
+      androidYuan: '1.00', iosYuan: '1.00',
       grantPoints: '0', recommended: false, onShelf: true,
       qEvents: '30', qPerEvent: '500', qGifts: '500', qContacts: '500',
     }];
@@ -181,6 +184,11 @@ Page({
         const priceFen = yuanToFen(p.yuan);
         if (!p.name.trim()) throw new Error(`第 ${i + 1} 个档位名称不能为空`);
         if (priceFen === null) throw new Error(`第 ${i + 1} 个档位价格不正确`);
+        // DJ批：分平台价（留空=跟现价；填了必须合法，购买仍走现价、换真适配器时再按渠道选价）
+        const androidPriceFen = p.androidYuan ? yuanToFen(p.androidYuan) : priceFen;
+        if (androidPriceFen === null) throw new Error(`第 ${i + 1} 个档位安卓价不正确`);
+        const iosPriceFen = p.iosYuan ? yuanToFen(p.iosYuan) : priceFen;
+        if (iosPriceFen === null) throw new Error(`第 ${i + 1} 个档位苹果价不正确`);
         const days = Number(p.days);
         if (!Number.isInteger(days) || days < 1) throw new Error(`第 ${i + 1} 个档位天数不正确`);
         const grantPoints = Number(p.grantPoints);
@@ -192,6 +200,7 @@ Page({
         };
         return {
           id: p.id, name: p.name.trim(), priceFen, days, grantPoints,
+          androidPriceFen, iosPriceFen,
           recommended: !!p.recommended, onShelf: p.onShelf !== false,
           quota: {
             receiveEvents: qn(p.qEvents, '额度·礼薄数'),

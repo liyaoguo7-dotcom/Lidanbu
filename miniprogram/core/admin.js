@@ -341,7 +341,8 @@ return updatedAt;
 
 /**
 * 修改会员价格档位（仅管理员）
-* plans: [{id, name, priceFen(分), days, grantPoints?, recommended?, onShelf?}]，
+* plans: [{id, name, priceFen(分), days, grantPoints?, recommended?, onShelf?,
+*   androidPriceFen?(分), iosPriceFen?(分)}]，
 * 最多10个，id 唯一；grantPoints=购买赠送积分（缺省0），recommended=标"推荐"
 * （缺省false），onShelf=上架开关（缺省true，false 即一键下架）。
 * 空数组表示清空（回到"价格待定"占位）。价格数字本身待用户定价，
@@ -361,6 +362,20 @@ const name = String(p.name || '').trim();
 if (!name || name.length > 20) throw badConfig('档位名称不能为空且不超过20字');
 if (!Number.isInteger(p.priceFen) || p.priceFen < 0 || p.priceFen > 100000000) {
 throw badConfig('价格（分）必须为0~100000000的整数');
+}
+// DJ批：分平台价（可选；给了必须为0~100000000的整数，不给则不落库、购买仍走 priceFen）
+let androidPriceFen; let iosPriceFen;
+if (p.androidPriceFen!== undefined) {
+if (!Number.isInteger(p.androidPriceFen) || p.androidPriceFen < 0 || p.androidPriceFen > 100000000) {
+throw badConfig('安卓价（分）必须为0~100000000的整数');
+}
+androidPriceFen = p.androidPriceFen;
+}
+if (p.iosPriceFen!== undefined) {
+if (!Number.isInteger(p.iosPriceFen) || p.iosPriceFen < 0 || p.iosPriceFen > 100000000) {
+throw badConfig('苹果价（分）必须为0~100000000的整数');
+}
+iosPriceFen = p.iosPriceFen;
 }
 if (!Number.isInteger(p.days) || p.days < 1 || p.days > 3650) {
 throw badConfig('天数必须为1~3650的整数');
@@ -383,6 +398,8 @@ if (typeof p.onShelf!== 'boolean') throw badConfig('上架开关必须为开/关
 onShelf = p.onShelf;
 }
 const out = { id, name, priceFen: p.priceFen, days: p.days, grantPoints, recommended, onShelf};
+if (androidPriceFen!== undefined) out.androidPriceFen = androidPriceFen;
+if (iosPriceFen!== undefined) out.iosPriceFen = iosPriceFen;
 // 档位额度（2026-10-25 会员额度按档位分）：给了就必须四项齐全合法
 // （与 quota.sanitizePlanQuota 的全有全无口径一致，避免半份配置静默兜底）
 if (p.quota!== undefined) {
