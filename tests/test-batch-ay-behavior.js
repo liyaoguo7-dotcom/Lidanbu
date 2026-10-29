@@ -19,13 +19,13 @@ test('AY字体名单：六款齐全、id 与云端文件名定版', () => {
   assert.eq(LC.FONTS.map((f) => f.name).join(','), '霞鹜文楷,马善政毛笔体,龙藏体,枝芒行书,古典宋体,莫大毛笔', '六款中文名定版');
   assert.eq(LC.FONTS.map((f) => f.cloudFile).join(','), 'lxgw-wenkai.ttf,mashanzheng.ttf,longcang.ttf,zhimang.ttf,cactus.ttf,bakudai.ttf', '云端 TTF 文件名定版');
   for (const f of LC.FONTS) {
-    assert(f.calibration >= 1 && f.calibration <= 1.3, `${f.id} 校准系数在合理区间`);
+    assert(f.calibration >= 1 && f.calibration <= 1.4, `${f.id} 校准系数在合理区间`); // CQ批：上限 1.3→1.4（枝芒已到 1.32）
     const stack = LC.selectedStack(f.id);
     assert(stack.includes(f.family) && stack.includes('KaiTi'), `${f.id} 回退链完整`);
   }
-  assert.eq(LC.fontById('zhimang').calibration, 1.24, '枝芒校准（墨迹面积法 1.16，用户真机「大一号」改定 1.24）');
+  assert.eq(LC.fontById('zhimang').calibration, 1.32, '枝芒校准（墨迹面积法 1.16，2026-10-27「大一号」改定 1.24，CQ批再大一点改定 1.32）');
   assert.eq(LC.fontById('cactus').calibration, 1.00, '古典宋体校准（与霞鹜同量级）');
-  assert.eq(LC.fontById('bakudai').calibration, 1.12, '莫大校准（墨迹面积法）');
+  assert.eq(LC.fontById('bakudai').calibration, 1.20, '莫大校准（墨迹面积法 1.12，CQ批再大一点改定 1.20）');
 });
 
 test('AY莫大顶替：姓名与金额逐字换繁体、字数与布局不变、别家字体不沾', () => {
