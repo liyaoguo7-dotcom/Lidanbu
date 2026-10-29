@@ -9,8 +9,10 @@ const { hornMarquee } = require('../../services/horn-marquee.js');
 
 // 分组口径在 services/pinyin-initial.js（300+ 姓氏含复姓，2026-10-24 改准）
 const { pinyinInitial, compareGroupKey } = require('../../services/pinyin-initial.js');
+const { tabSwipeHandlers } = require('../../services/tab-swipe.js');
 
 Page({
+  ...tabSwipeHandlers, // CO批：左右滑动切换 tab
   data: {
     hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
     groups: [],

@@ -10,10 +10,12 @@ const dataService = require('../../services/data-service.js');
 const hornState = require('../../services/horn-state.js');
 const { hornMarquee } = require('../../services/horn-marquee.js');
 const privacyGuard = require('../../services/privacy-guard.js');
+const { tabSwipeHandlers } = require('../../services/tab-swipe.js');
 const guideState = require('../../services/guide-state.js');
 const { formatAmountInt } = require('../../core/format.js');
 
 Page({
+  ...tabSwipeHandlers, // CO批：左右滑动切换 tab
   data: {
     hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
     tipText: '点击拍照导入，可一键识别纸质礼单',

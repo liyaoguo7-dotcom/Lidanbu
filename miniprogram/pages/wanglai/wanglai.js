@@ -8,6 +8,7 @@
  */
 const dataService = require('../../services/data-service.js');
 const { formatAmountInt } = require('../../core/format.js');
+const { tabSwipeHandlers } = require('../../services/tab-swipe.js');
 
 const RANGES = [
   { id: 'all', name: '全部' },
@@ -31,6 +32,7 @@ function dotDate(s) {
 }
 
 Page({
+  ...tabSwipeHandlers, // CO批：左右滑动切换 tab
   data: {
     ranges: RANGES,
     rangeId: 'lastYear',

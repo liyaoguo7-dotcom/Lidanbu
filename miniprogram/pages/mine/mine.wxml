@@ -1,5 +1,7 @@
 <!-- 我的（任务Q2 重排：资料条 → 会员与积分卡 → 横置/导出 → 邀请分享 → 通知组 → 底部；BE批取消我的页家庭共享入口） -->
 <!-- 待注销提示：冷静期内显示，去注销页可撤销（账号级提醒，置顶） -->
+<!-- CO批：整页包一层，左右滑动切换 tab（我的页无单根容器，包层不带样式、不改布局；fixed 元素不受影响） -->
+<view bindtouchstart="onTabSwipeStart" bindtouchend="onTabSwipeEnd">
 <view class="warn-banner" wx:if="{{cancelPending}}" bindtap="onLogout">
   你的账号已申请注销，将在 {{cancelPending.cancelAtText}} 执行（还剩 {{cancelPending.remainingDays}} 天）。点这里可以撤销 ›
 </view>
@@ -113,4 +115,5 @@
     </view>
     <view class="addmp-btn" bindtap="onAddMpKnow">我知道了</view>
   </view>
+</view>
 </view>

@@ -10,6 +10,7 @@
  */
 const dataService = require('../../services/data-service.js');
 const landscapeRoute = require('../../services/landscape-route.js');
+const { tabSwipeHandlers } = require('../../services/tab-swipe.js');
 const AppConfig = require('../../config/app-config.js');
 
 /** 会员状态 → 资料条小字 / 演示切换行文字 */
@@ -22,6 +23,7 @@ function fmtDate(ts) {
 }
 
 Page({
+  ...tabSwipeHandlers, // CO批：左右滑动切换 tab
   data: {
     displayName: '礼友',
     avatarUrl: '',

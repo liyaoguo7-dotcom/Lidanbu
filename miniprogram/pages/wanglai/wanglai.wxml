@@ -1,6 +1,6 @@
 <!-- 往来页（v3.1 第五章；BA批：整页 100vh 纵向 flex——上半部分固定不滚，
      只有下方联系人列表在 scroll-view 里独立滚动） -->
-<view class="wl-page">
+<view class="wl-page" bindtouchstart="onTabSwipeStart" bindtouchend="onTabSwipeEnd">
 <view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
 
 <!-- 时间标签 -->
