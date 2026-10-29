@@ -10,7 +10,7 @@ const readMp = (p) => fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 
 
 test('CD 颜色：亲友录统一浅蓝、我的页深蓝＋以下纯白', () => {
   const ct = readMp('pages/contacts/contacts.wxss');
-  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: #FDEFCB; }`), `字母行 c${i} 淡黄（CK批，取代 CD 浅蓝）`);
+  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 透明淡黄（CK修正，取代 CK 实色淡黄）`);
   assert(!ct.includes('#FDE8E8') && !ct.includes('#FFC7C3') && !ct.includes('#FFE4B8'), '亲友录不再有粉/橙六色');
   const mine = readMp('pages/mine/mine.wxss');
   assert(mine.includes('.card.profile { background: #FDEFCB; }'), '礼友栏会员有效黄（CF批）');

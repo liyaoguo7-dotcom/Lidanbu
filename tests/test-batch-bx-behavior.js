@@ -63,7 +63,7 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   assert(wl.includes('.side {') && wl.includes('background: #FDE8E8;'), '收送块今日粉（CE批：收送同色；CJ批底色收进 .side）');
   assert(wl.includes('.summary-card {') && wl.includes('background: #FBF3D9;'), '合计＋差额合并卡本月淡黄（CD批）');
   const ct = readMp('pages/contacts/contacts.wxss');
-  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: #FDEFCB; }`), `字母行 c${i} 统一淡黄（CK批，取代 CD 浅蓝）`);
+  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 统一透明淡黄（CK修正，取代 CK 实色淡黄）`);
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动，只改色值');
   assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出贴合圆角');
   const mine = readMp('pages/mine/mine.wxss');
