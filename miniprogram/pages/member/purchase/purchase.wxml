@@ -26,7 +26,7 @@
 </view>
 <view class="tip" wx:if="{{!plans.length}}">会员套餐即将公布，敬请期待。</view>
 <view class="btn-primary buy-btn" wx:if="{{hydrated && buyEnabled && plans.length}}" bindtap="onBuyPlan">{{buyingPlan ? '处理中…' : '购买所选套餐'}}</view>
-<!-- CX批（用户 2026-10-29 定）：会员权益文案去掉「记账额度不限量」 -->
+<!-- CX批（用户 2026-10-29 定）：会员权益文案删去末尾一句 -->
 <view class="tip">会员权益：横置礼单本（6 种样式 · 6 种字体）· 拍照录入 · 家庭共享邀请</view>
 
 <view class="section-title">积分礼包</view>
