@@ -9,10 +9,10 @@ const readMp = (p) => fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 
 test('CL 亲友录联系人整体左移、左边只留 2px', () => {
   const ct = readMp('pages/contacts/contacts.wxss');
   const gt = ct.slice(ct.indexOf('.group-title {'), ct.indexOf('.contact-row {'));
-  assert(gt.includes('padding: 2px 0 1px 0;'), '字母行左右内边距归零（CY批通铺）');
+  assert(gt.includes('padding: 2px 16px 1px 2px;'), '字母行左右留边回 CK 版（DD批）');
   const row = ct.slice(ct.indexOf('.contact-row {'), ct.indexOf('.contact-row:last-child {'));
-  assert(row.includes('padding: 0;'), '联系人行左右内边距归零（CY批通铺）');
+  assert(row.includes('padding: 0 16px 0 2px;'), '联系人行左右留边回 CL 版（DD批）');
   assert(row.includes('min-height: 50px;'), '联系人行高度不动');
-  assert(gt.includes('border-radius: 0;'), '字母行通铺改直角');
-  assert(gt.includes('background: #666666;'), '字母行暗灰（CY批）');
+  assert(gt.includes('border-radius: 8px;'), '字母行圆角回 8px（DD批）');
+  assert(gt.includes('background: rgba(253, 239, 203, 0.6);'), '字母行米色（DD批）');
 });

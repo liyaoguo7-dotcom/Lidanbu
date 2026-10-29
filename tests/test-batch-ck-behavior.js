@@ -9,13 +9,13 @@ const readMp = (p) => fs.readFileSync(path.join(__dirname, '..', 'miniprogram', 
 
 test('CK 亲友录字母行透明淡黄＋上下收窄＋全圆角', () => {
   const ct = readMp('pages/contacts/contacts.wxss');
-  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: #666666; }`), `字母行 c${i} 暗灰（CY批：米色改暗灰）`);
+  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 米色（DD批：暗灰改回）`);
   assert(!ct.includes('#E2EEFB'), '字母行不再有浅蓝');
   assert(!ct.includes('#FDEFCB'), '字母行不再是实色淡黄');
   const gt = ct.slice(ct.indexOf('.group-title {'), ct.indexOf('.contact-row {'));
-  assert(gt.includes('padding: 2px 0 1px 0;'), '字母行上下内边距收窄、左右归零（CY批通铺）');
+  assert(gt.includes('padding: 2px 16px 1px 2px;'), '字母行上下 2px/1px、左右留边回 CK 版（DD批）');
   assert(!gt.includes('margin-right'), 'CV批收短一半已作废：字母行恢复通长');
-  assert(gt.includes('border-radius: 0;'), '字母行通铺改直角');
+  assert(gt.includes('border-radius: 8px;'), '字母行圆角 8px（DD批）');
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动');
-  assert(ct.includes('.card { overflow: hidden; margin: 10px 0; border-radius: 0; }'), '亲友录卡裁溢出不动、通铺（CY批）');
+  assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出不动、通铺撤销（DD批）');
 });

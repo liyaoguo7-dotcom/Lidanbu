@@ -1,6 +1,6 @@
 /* 亲友录 */
 /* CD批（用户定：颜色太多看着不舒服）：字母行六色循环取消，全换成图中浅蓝（L 组那个蓝）；卡片裁溢出防首行圆角外露 */
-.card { overflow: hidden; margin: 10px 0; border-radius: 0; } /* CY批：通铺，卡片左右边距归零、圆角改直角（上下 10px 不动） */
+.card { overflow: hidden; } /* DD批：通铺撤销，恢复全局卡边距圆角（app.wxss：10px 12px、12px） */
 /* CK批（用户 2026-10-29 定）＋CK修正（用户同日纠正：是上下太宽不是
    左右宽）：字母行浅蓝改淡黄再透明一点（rgba 0.6）；上下收窄（内边距
    6px/2px 改 2px/1px）；左右长度不动，全部换圆角。
@@ -9,24 +9,27 @@
 /* CY批（用户 2026-10-29 定）：CV 的收短一半是错的——恢复通长（去 margin-right），
    米色改暗灰 #666666、字母改白色；亲友录通铺（卡片与行左右边距归零、圆角改直角）；
    提示条＋搜索框置顶固定（sticky 包层，不改两者本身的内外边距；搜索框与提示条不贴边） */
+/* DD批（用户 2026-10-29 定）：暗灰字母条太难看，颜色圆角边距一起回 CK 版：
+   字母条回淡黄半透明米色、字母回深灰、圆角回 8px、字母行与联系人行左右留边；
+   通长、上下 2px/1px、字号 12px、行高 50px、置顶层、索引位置不动 */
 .fixed-head { position: sticky; top: 0; z-index: 10; background: #F6F6F6; }
 .group-title {
-  border-radius: 0;
-  padding: 2px 0 1px 0;
+  border-radius: 8px;
+  padding: 2px 16px 1px 2px;
   font-size: 12px;
-  color: #fff;
-  background: #666666;
+  color: #666;
+  background: rgba(253, 239, 203, 0.6);
 }
-.group-title.c0 { background: #666666; }
-.group-title.c1 { background: #666666; }
-.group-title.c2 { background: #666666; }
-.group-title.c3 { background: #666666; }
-.group-title.c4 { background: #666666; }
-.group-title.c5 { background: #666666; }
+.group-title.c0 { background: rgba(253, 239, 203, 0.6); }
+.group-title.c1 { background: rgba(253, 239, 203, 0.6); }
+.group-title.c2 { background: rgba(253, 239, 203, 0.6); }
+.group-title.c3 { background: rgba(253, 239, 203, 0.6); }
+.group-title.c4 { background: rgba(253, 239, 203, 0.6); }
+.group-title.c5 { background: rgba(253, 239, 203, 0.6); }
 .contact-row {
   display: flex;
   align-items: center;
-  padding: 0; /* CY批：通铺，左右内边距归零 */
+  padding: 0 16px 0 2px; /* DD批：通铺撤销，左右留边回 CL 版 */
   min-height: 50px;
   border-bottom: 1px solid #F0F0F0;
 }

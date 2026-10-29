@@ -63,9 +63,9 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   assert(wl.includes('.side:first-child { background: linear-gradient(135deg, #FFC7C3, #F78C8F); }') && wl.includes('.side:last-child { background: linear-gradient(135deg, #FFE4B8, #FDBE68); }'), '收送块底色（CP批首页两渐变＋CS批左送礼右收礼）');
   assert(wl.includes('.summary-card {') && wl.includes('background: #FBF3D9;'), '合计＋差额合并卡本月淡黄（CD批）');
   const ct = readMp('pages/contacts/contacts.wxss');
-  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: #666666; }`), `字母行 c${i} 统一透明淡黄（CV批更透明 0.4，取代 CK修正 0.6）`);
+  for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 米色（DD批：暗灰改回）`);
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动，只改色值');
-  assert(ct.includes('.card { overflow: hidden; margin: 10px 0; border-radius: 0; }'), '亲友录卡裁溢出、通铺改直角（CY批）');
+  assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出、通铺撤销（DD批）');
   const mine = readMp('pages/mine/mine.wxss');
   assert(mine.includes('.card.profile { background: #FDEFCB; }'), '头像栏会员有效黄（CF批：与会员有效对换）');
   assert(mine.includes('.m-badge {') && mine.includes('background: #E2EEFB; color: #333;'), '会员有效家庭共享蓝＋深字（CF批）');
