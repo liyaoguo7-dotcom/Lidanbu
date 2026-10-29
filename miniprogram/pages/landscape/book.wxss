@@ -90,7 +90,10 @@
 .corner.bl { bottom: 3px; left: 3px; border-bottom-width: 2px; }
 .corner.br { bottom: 3px; right: 3px; border-bottom-width: 2px; }
 .cols-scroll { width: 100%; height: 100%; }
-.cols-track { display: flex; flex-direction: row; height: 100%; }
+/* CM批（用户 2026-10-29 定）：纸面纹路跟着联系人一起滚——纹路背景从
+   固定层 .paper 移到滚动内容 .cols-track 上；min-width:100% 保证联系人
+   少、不用滚时整幅纸面仍有纹路；两头卷轴杆子与角花不动（框）。 */
+.cols-track { display: flex; flex-direction: row; height: 100%; min-width: 100%; background-repeat: repeat; }
 .col {
   flex-shrink: 0; height: 100%; box-sizing: border-box;
   border-left: 2px solid; position: relative; /* 列竖线 2px（任务AF真机反馈：竖线加粗一点，与纸面边框同重） */

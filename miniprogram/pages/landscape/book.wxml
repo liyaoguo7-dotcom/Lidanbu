@@ -49,14 +49,15 @@
           style="width:{{scrollBox.imgW}}px;height:{{scrollBox.imgH}}px;top:{{scrollBox.top}}px;left:{{scrollBox.left}}px;" />
       </view>
       <view class="paper"
-        style="border-color:{{theme.frameColor}};background-color:{{theme.paperBg}};background-image:url({{theme.paperTile.uri}});background-size:{{view.paperTileW}}px {{view.paperTileH}}px;">
+        style="border-color:{{theme.frameColor}};background-color:{{theme.paperBg}};">
         <view class="corner tl" style="border-color:{{theme.frameColor}};"></view>
         <view class="corner tr" style="border-color:{{theme.frameColor}};"></view>
         <view class="corner bl" style="border-color:{{theme.frameColor}};"></view>
         <view class="corner br" style="border-color:{{theme.frameColor}};"></view>
         <scroll-view class="cols-scroll" scroll-x="true" scroll-left="{{scrollLeft}}"
           enhanced="true" show-scrollbar="false">
-          <view class="cols-track">
+          <view class="cols-track"
+            style="background-image:url({{theme.paperTile.uri}});background-size:{{view.paperTileW}}px {{view.paperTileH}}px;">
             <view wx:for="{{cols}}" wx:key="key"
               class="col {{selectedKey === item.key ? 'col-sel' : ''}}"
               data-key="{{item.key}}" bindtap="onColTap"
