@@ -159,9 +159,9 @@ const FONTS = [
   { id: 'lxgw', name: '霞鹜文楷', family: 'LxgwWenKai', calibration: 1.00, file: 'lxgw-wenkai.woff2', cloudFile: 'lxgw-wenkai.ttf' },
   { id: 'mashanzheng', name: '马善政毛笔体', family: 'MaShanZheng', calibration: 1.05, file: 'mashanzheng.woff2', cloudFile: 'mashanzheng.ttf' },
   { id: 'longcang', name: '龙藏体', family: 'LongCang', calibration: 1.20, file: 'longcang.woff2', cloudFile: 'longcang.ttf' },
-  { id: 'zhimang', name: '枝芒行书', family: 'ZhiMangXing', calibration: 1.24, file: 'zhimang.woff2', cloudFile: 'zhimang.ttf' }, // 校准 1.16→1.24：2026-10-27 用户真机反馈「枝芒有点小、大一号」
+  { id: 'zhimang', name: '枝芒行书', family: 'ZhiMangXing', calibration: 1.32, file: 'zhimang.woff2', cloudFile: 'zhimang.ttf' }, // 校准 1.16→1.24（2026-10-27 用户真机反馈「枝芒有点小、大一号」）→1.32（CQ批：用户 2026-10-29 再令大一点）
   { id: 'cactus', name: '古典宋体', family: 'CactusClassicalSerif', calibration: 1.00, file: 'cactus.woff2', cloudFile: 'cactus.ttf' },
-  { id: 'bakudai', name: '莫大毛笔', family: 'Bakudai', calibration: 1.12, file: 'bakudai.woff2', cloudFile: 'bakudai.ttf', charMap: BAKUDAI_S2T },
+  { id: 'bakudai', name: '莫大毛笔', family: 'Bakudai', calibration: 1.20, file: 'bakudai.woff2', cloudFile: 'bakudai.ttf', charMap: BAKUDAI_S2T }, // 校准 1.12→1.20（CQ批：用户 2026-10-29 令莫大再大一点，与枝芒同步 +0.08）
 ];
 
 /**
