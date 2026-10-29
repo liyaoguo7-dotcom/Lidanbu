@@ -6,23 +6,25 @@
    6px/2px 改 2px/1px）；左右长度不动，全部换圆角。
    CL批（用户同日定）：联系人整体向左移、左边只留 2px（字母行与联系人
    行左内边距 16px 改 2px），右边给 A-Z 字母索引行腾位置；索引行不动 */
+/* CV批（用户 2026-10-29 定）：左边再收到 0.5px；黄条再透明一点（0.6→0.4）；黄条长度收短二分之一（左边不动、右边收，margin-right: 50%） */
 .group-title {
   border-radius: 8px;
-  padding: 2px 16px 1px 2px;
+  padding: 2px 16px 1px 0.5px;
+  margin-right: 50%;
   font-size: 12px;
   color: #666;
-  background: rgba(253, 239, 203, 0.6);
+  background: rgba(253, 239, 203, 0.4);
 }
-.group-title.c0 { background: rgba(253, 239, 203, 0.6); }
-.group-title.c1 { background: rgba(253, 239, 203, 0.6); }
-.group-title.c2 { background: rgba(253, 239, 203, 0.6); }
-.group-title.c3 { background: rgba(253, 239, 203, 0.6); }
-.group-title.c4 { background: rgba(253, 239, 203, 0.6); }
-.group-title.c5 { background: rgba(253, 239, 203, 0.6); }
+.group-title.c0 { background: rgba(253, 239, 203, 0.4); }
+.group-title.c1 { background: rgba(253, 239, 203, 0.4); }
+.group-title.c2 { background: rgba(253, 239, 203, 0.4); }
+.group-title.c3 { background: rgba(253, 239, 203, 0.4); }
+.group-title.c4 { background: rgba(253, 239, 203, 0.4); }
+.group-title.c5 { background: rgba(253, 239, 203, 0.4); }
 .contact-row {
   display: flex;
   align-items: center;
-  padding: 0 16px 0 2px;
+  padding: 0 16px 0 0.5px; /* CV批：左边再收到 0.5px */
   min-height: 50px;
   border-bottom: 1px solid #F0F0F0;
 }
