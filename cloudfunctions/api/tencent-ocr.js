@@ -222,7 +222,15 @@ const CH_DIGITS = {
 };
 const CH_SMALL = { 十: 10, 拾: 10, 百: 100, 佰: 100, 千: 1000, 仟: 1000 };
 const CH_BIG = { 万: 10000, 萬: 10000, 亿: 100000000, 億: 100000000 };
-const CH_RUN_RE = /[零一二三四五六七八九两兩壹贰貳叁肆伍陆陸柒捌玖十拾百佰千仟万萬亿億]+/g;
+/* CA批（用户定：大写数字就那几个，可以猜）：手写大写金额常被引擎误读
+ * 成形近字（如伍→吾/午/他、贰→式/弍、陆→睦、柒→漆），标准解析只认真
+ * 数字字，误读串直接丢金额、核对页留空。猜读表只在金额串语境用：
+ * 数字形近字恒映射（单字无单位仍不成金额，不会把姓名变金额）；单位
+ * 形近字伯→佰只在串里已有真数字时才映射（防“刘伯”这类姓名被当成
+ * 佰位）。映射是一一换字、长度不变，金额下标不受影响。 */
+const CH_GUESS_DIGIT = { 吾: '伍', 午: '伍', 他: '伍', 式: '贰', 弍: '贰', 叄: '叁', 睦: '陆', 漆: '柒', 桼: '柒' };
+const CH_GUESS_UNIT = { 伯: '佰' };
+const CH_RUN_RE = /[零一二三四五六七八九两兩壹贰貳叁肆伍陆陸柒捌玖十拾百佰千仟万萬亿億吾午他式弍叄睦漆桼伯]+/g;
 
 /**
  * 一段纯中文数字串 → 元数值；形态不合法/无单位/无值返回 null。
@@ -265,6 +273,14 @@ function parseChineseAmount(run) {
  * 返回 { yuan, start } 或 null（start 为金额在原串中的起始偏移）。
  */
 function evalChineseRun(run, hasYuanSuffix) {
+  // CA批猜读：先把形近字映射回真数字字（长度不变，下标不受影响）
+  const hasTrueDigit = [...run].some((ch) => ch in CH_DIGITS);
+  const mapped = [...run].map((ch) => {
+    if (CH_GUESS_DIGIT[ch]) return CH_GUESS_DIGIT[ch];
+    if (CH_GUESS_UNIT[ch] && hasTrueDigit) return CH_GUESS_UNIT[ch];
+    return ch;
+  }).join('');
+  run = mapped;
   for (let start = 0; start < run.length; start++) {
     const sub = run.slice(start);
     const yuan = parseChineseAmount(sub);
