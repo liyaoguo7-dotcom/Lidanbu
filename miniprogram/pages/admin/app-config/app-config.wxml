@@ -6,27 +6,48 @@
 <block wx:if="{{!loading && !error && section === 'pricing'}}">
   <view class="card">
     <view class="form-row"><text class="form-val" style="font-weight:bold">免费额度</text></view>
-    <view class="form-row" wx:for="{{quotaFields}}" wx:key="key"><text class="form-label" style="width:170px">{{item.label}}</text><input class="form-val" type="number" value="{{freeQuota[item.key]}}" data-group="freeQuota" data-key="{{item.key}}" bindinput="onQuotaInput" /></view>
+    <!-- DL批：额度 4 数并成一行（短标签；绑定与字段不动） -->
+    <view class="mini-row">
+      <view class="mini-field" wx:for="{{quotaFields}}" wx:key="key">
+        <text class="mini-label">{{item.short}}</text>
+        <input class="mini-input" type="number" value="{{freeQuota[item.key]}}" data-group="freeQuota" data-key="{{item.key}}" bindinput="onQuotaInput" />
+      </view>
+    </view>
     <view class="form-row"><text class="form-val" style="font-weight:bold">会员额度</text></view>
-    <view class="form-row" wx:for="{{quotaFields}}" wx:key="key"><text class="form-label" style="width:170px">{{item.label}}</text><input class="form-val" type="number" value="{{memberQuota[item.key]}}" data-group="memberQuota" data-key="{{item.key}}" bindinput="onQuotaInput" /></view>
+    <view class="mini-row">
+      <view class="mini-field" wx:for="{{quotaFields}}" wx:key="key">
+        <text class="mini-label">{{item.short}}</text>
+        <input class="mini-input" type="number" value="{{memberQuota[item.key]}}" data-group="memberQuota" data-key="{{item.key}}" bindinput="onQuotaInput" />
+      </view>
+    </view>
     <view class="note">买套餐的会员按下面各自档位卡片里的额度走；这组「会员额度」只给后台手动开通、没有档位的会员兜底。</view>
   </view>
   <view class="card">
     <view class="form-row"><text class="form-val" style="font-weight:bold">会员价格档位（价格单位：元）</text></view>
     <view wx:if="{{pricingFromStatic}}" class="note">当前显示的是占位档位（待定价），保存后以这里为准。</view>
+    <!-- DL批：每档一张卡、行内并排（13 行压成 6 行；字段、绑定、开关、删除全不动） -->
     <view class="plan" wx:for="{{plans}}" wx:key="id">
       <view class="form-row"><text class="form-label">名称</text><input class="form-val" value="{{item.name}}" data-idx="{{index}}" data-field="name" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">价格（元）</text><input class="form-val" type="digit" value="{{item.yuan}}" data-idx="{{index}}" data-field="yuan" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">安卓价（元）</text><input class="form-val" type="digit" value="{{item.androidYuan}}" data-idx="{{index}}" data-field="androidYuan" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">苹果价（元）</text><input class="form-val" type="digit" value="{{item.iosYuan}}" data-idx="{{index}}" data-field="iosYuan" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">天数</text><input class="form-val" type="number" value="{{item.days}}" data-idx="{{index}}" data-field="days" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">赠送积分</text><input class="form-val" type="number" value="{{item.grantPoints}}" data-idx="{{index}}" data-field="grantPoints" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">额度·礼薄数</text><input class="form-val" type="number" value="{{item.qEvents}}" data-idx="{{index}}" data-field="qEvents" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">额度·每礼薄条数</text><input class="form-val" type="number" value="{{item.qPerEvent}}" data-idx="{{index}}" data-field="qPerEvent" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">额度·送礼条数</text><input class="form-val" type="number" value="{{item.qGifts}}" data-idx="{{index}}" data-field="qGifts" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">额度·联系人数</text><input class="form-val" type="number" value="{{item.qContacts}}" data-idx="{{index}}" data-field="qContacts" bindinput="onPlanInput" /></view>
-      <view class="form-row"><text class="form-label">标推荐</text><switch checked="{{item.recommended}}" data-idx="{{index}}" data-field="recommended" bindchange="onPlanToggle" /></view>
-      <view class="form-row"><text class="form-label">上架</text><switch checked="{{item.onShelf}}" data-idx="{{index}}" data-field="onShelf" bindchange="onPlanToggle" /><text class="ph">关掉即一键下架，购买页不显示</text></view>
+      <view class="mini-row">
+        <view class="mini-field"><text class="mini-label">现价（元）</text><input class="mini-input" type="digit" value="{{item.yuan}}" data-idx="{{index}}" data-field="yuan" bindinput="onPlanInput" /></view>
+        <view class="mini-field"><text class="mini-label">安卓价（元）</text><input class="mini-input" type="digit" value="{{item.androidYuan}}" data-idx="{{index}}" data-field="androidYuan" bindinput="onPlanInput" /></view>
+        <view class="mini-field"><text class="mini-label">苹果价（元）</text><input class="mini-input" type="digit" value="{{item.iosYuan}}" data-idx="{{index}}" data-field="iosYuan" bindinput="onPlanInput" /></view>
+      </view>
+      <view class="mini-row">
+        <view class="mini-field"><text class="mini-label">天数</text><input class="mini-input" type="number" value="{{item.days}}" data-idx="{{index}}" data-field="days" bindinput="onPlanInput" /></view>
+        <view class="mini-field"><text class="mini-label">赠送积分</text><input class="mini-input" type="number" value="{{item.grantPoints}}" data-idx="{{index}}" data-field="grantPoints" bindinput="onPlanInput" /></view>
+      </view>
+      <view class="mini-row">
+        <view class="mini-field"><text class="mini-label">礼薄（个）</text><input class="mini-input" type="number" value="{{item.qEvents}}" data-idx="{{index}}" data-field="qEvents" bindinput="onPlanInput" /></view>
+        <view class="mini-field"><text class="mini-label">每礼薄（条）</text><input class="mini-input" type="number" value="{{item.qPerEvent}}" data-idx="{{index}}" data-field="qPerEvent" bindinput="onPlanInput" /></view>
+        <view class="mini-field"><text class="mini-label">送礼（条）</text><input class="mini-input" type="number" value="{{item.qGifts}}" data-idx="{{index}}" data-field="qGifts" bindinput="onPlanInput" /></view>
+        <view class="mini-field"><text class="mini-label">联系人（人）</text><input class="mini-input" type="number" value="{{item.qContacts}}" data-idx="{{index}}" data-field="qContacts" bindinput="onPlanInput" /></view>
+      </view>
+      <view class="mini-row">
+        <view class="mini-field"><text class="mini-label">标推荐</text><switch checked="{{item.recommended}}" data-idx="{{index}}" data-field="recommended" bindchange="onPlanToggle" /></view>
+        <view class="mini-field"><text class="mini-label">上架</text><switch checked="{{item.onShelf}}" data-idx="{{index}}" data-field="onShelf" bindchange="onPlanToggle" /></view>
+      </view>
+      <view class="plan-note">上架关掉即一键下架，购买页不显示</view>
       <view class="del" bindtap="onDelPlan" data-idx="{{index}}">删除这个档位</view>
     </view>
     <view class="add" bindtap="onAddPlan">＋ 添加档位</view>

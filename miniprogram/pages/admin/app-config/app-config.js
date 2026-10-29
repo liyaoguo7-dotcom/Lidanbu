@@ -25,10 +25,10 @@ const SECTIONS = {
   points: { title: '会员与积分配置' },
 };
 const QUOTA_FIELDS = [
-  { key: 'receiveEvents', label: '收礼礼薄（个）' },
-  { key: 'recordsPerEvent', label: '每礼薄收礼记录（条）' },
-  { key: 'giftRecords', label: '送礼记录（条）' },
-  { key: 'contacts', label: '亲友录联系人（人）' },
+  { key: 'receiveEvents', label: '收礼礼薄（个）', short: '礼薄（个）' },
+  { key: 'recordsPerEvent', label: '每礼薄收礼记录（条）', short: '每礼薄（条）' },
+  { key: 'giftRecords', label: '送礼记录（条）', short: '送礼（条）' },
+  { key: 'contacts', label: '亲友录联系人（人）', short: '联系人（人）' },
 ];
 const FEATURE_FIELDS = [
   { key: 'familyShareInvite', label: '家庭共享邀请' },

@@ -1,6 +1,12 @@
 @import "/pages/admin/admin-common.wxss";
 .btn-primary { background: #F0575A; color: #fff; border-radius: 28px; margin: 16px 12px; font-size: 16px; }
-.plan { border-top: 1px solid #F0F0F0; padding: 6px 0; }
-.del { color: #C0392B; font-size: 14px; padding: 8px 0 2px; }
-.add { color: #F0575A; font-size: 15px; padding: 10px 0 2px; }
+/* DL批：价格页紧凑排版——每档一张灰底卡、行内并排小框（只改布局，字段与绑定不动） */
+.plan { background: #F8F8F8; border-radius: 10px; padding: 8px 0; margin: 10px 0; }
+.mini-row { display: flex; gap: 8px; padding: 6px 16px; }
+.mini-field { flex: 1; min-width: 0; }
+.mini-label { display: block; font-size: 13px; color: #999; margin-bottom: 2px; }
+.mini-input { width: 100%; box-sizing: border-box; font-size: 16px; background: #fff; border-radius: 8px; padding: 8px 6px; }
+.plan-note { font-size: 13px; color: #999; padding: 0 16px 4px; }
+.del { color: #C0392B; font-size: 14px; padding: 8px 16px 2px; }
+.add { color: #F0575A; font-size: 15px; padding: 10px 16px 2px; }
 .group-h { margin: 18px 14px 6px; font-size: 14px; color: #999; }
