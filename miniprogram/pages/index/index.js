@@ -79,6 +79,7 @@ Page({
   },
 
   async onShow() {
+    this.setData({ swipeX: 0, swipeAnim: false }); // DA批：回 tab 时清掉上次滑动的位移
     // 会员状态与首页数据并发（原来串行排队，首页联系人/小结都跟着等）
     await Promise.all([this.refreshMember(), this.refreshHomeData()]);
     await this.checkPrivacyPopup();

@@ -1,6 +1,6 @@
 <!-- 亲友录 -->
 <!-- CO批：整页包一层，左右滑动切换 tab（亲友录无单根容器，包层不带样式、不改布局；fixed 元素不受影响） -->
-<view bindtouchstart="onTabSwipeStart" bindtouchend="onTabSwipeEnd">
+<view class="{{swipeAnim ? 'swipe-back' : ''}}" style="position: relative; left: {{swipeX}}px" bindtouchstart="onTabSwipeStart" bindtouchmove="onTabSwipeMove" bindtouchend="onTabSwipeEnd">
 <!-- CY批：提示条＋搜索框包一层 sticky 置顶固定（上滑时固定不动）；包层本身无样式，只定 sticky 与底色，不改提示条与搜索框本身的内外边距 -->
 <view class="fixed-head">
 <view class="tip" wx:if="{{!hornOff}}"><image class="tip-icon" src="/images/icons/speaker.svg" mode="aspectFit" /><view class="horn-marquee"><view wx:if="{{hornRun}}" class="horn-track run" style="animation-duration:{{hornDur}}s"><text class="tip-txt-nowrap horn-cell">{{tipText}}</text><text class="tip-txt-nowrap horn-cell">{{tipText}}</text></view><text wx:else class="tip-txt-ellipsis">{{tipText}}</text></view><text class="tip-close" catchtap="onHornClose">×</text></view>

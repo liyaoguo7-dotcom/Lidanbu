@@ -128,3 +128,4 @@ require('./test-batch-cw-behavior');
 require('./test-batch-cx-behavior');
 require('./test-batch-cy-behavior');
 require('./test-batch-cz-behavior');
+require('./test-batch-da-behavior');

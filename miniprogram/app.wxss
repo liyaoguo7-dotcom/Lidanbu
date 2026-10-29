@@ -177,3 +177,6 @@ page {
   border: 1px solid rgba(255,255,255,.7); color: #fff;
   font-size: 12px; padding: 6px 16px; border-radius: 16px;
 }
+
+/* DA批（用户 2026-10-29 选方案 1）：tab 滑动推出动画的弹回过渡（跟手拖动时无过渡、松手不够远时弹回原位） */
+.swipe-back { transition: left .25s ease-out; }

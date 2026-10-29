@@ -73,6 +73,7 @@ Page({
     // 避免首进 onLoad 显示后被 onShow 覆盖；「我知道了」关掉后本会话内
     // 保持关闭，下次启动 onLoad 读标记仍关闭。
     // 开关显示与 storage 同步（横置页「返回竖屏」（原「切换回竖置样式」，2026-10-22 改名）会在那边写回 false）
+    this.setData({ swipeX: 0, swipeAnim: false }); // DA批：回 tab 时清掉上次滑动的位移
     this.setData({ landscapeOn: landscapeRoute.readLandscapeOn() });
     await this.refresh();
   },

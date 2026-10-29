@@ -61,6 +61,7 @@ Page({
   },
 
   async onShow() {
+    this.setData({ swipeX: 0, swipeAnim: false }); // DA批：回 tab 时清掉上次滑动的位移
     await this.reload();
   },
 
