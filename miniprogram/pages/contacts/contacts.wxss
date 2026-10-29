@@ -1,18 +1,22 @@
 /* 亲友录 */
 /* CD批（用户定：颜色太多看着不舒服）：字母行六色循环取消，全换成图中浅蓝（L 组那个蓝）；卡片裁溢出防首行圆角外露 */
 .card { overflow: hidden; }
+/* CK批（用户 2026-10-29 定）：字母行浅蓝改淡黄 #FDEFCB（与本月按钮、
+   会员有效同色）；行带太宽，左右各收 12px、加圆角，成 inset 小条 */
 .group-title {
+  margin: 8px 12px 0;
+  border-radius: 8px;
   padding: 6px 16px 2px;
   font-size: 12px;
   color: #666;
   background: #F6F6F6;
 }
-.group-title.c0 { background: #E2EEFB; }
-.group-title.c1 { background: #E2EEFB; }
-.group-title.c2 { background: #E2EEFB; }
-.group-title.c3 { background: #E2EEFB; }
-.group-title.c4 { background: #E2EEFB; }
-.group-title.c5 { background: #E2EEFB; }
+.group-title.c0 { background: #FDEFCB; }
+.group-title.c1 { background: #FDEFCB; }
+.group-title.c2 { background: #FDEFCB; }
+.group-title.c3 { background: #FDEFCB; }
+.group-title.c4 { background: #FDEFCB; }
+.group-title.c5 { background: #FDEFCB; }
 .contact-row {
   display: flex;
   align-items: center;
