@@ -2,7 +2,6 @@
 <view class="ph-head">
   <text class="ph-title">{{kindLabel}}拍照导入{{eventName ? ' · ' + eventName : ''}}</text>
   <text class="ph-sub">可以从相册一次选多张，也可以分几次拍，攒齐了再一起开始识别。</text>
-  <text class="ph-tip">温馨提示：为了识别更准确，请使用字迹清晰、页面平展的礼单薄拍照。</text>
 </view>
 
 <view class="ph-grid">
@@ -16,6 +15,9 @@
     <text class="ph-add-txt">添加照片</text>
   </view>
 </view>
+
+<!-- DK批：温馨提示与添加照片框对调——提示块移到照片区下方、计费说明上面（送礼收礼共用此页，两边同生效） -->
+<text class="ph-tip">温馨提示：为了识别更准确，请使用字迹清晰、页面平展的礼单薄拍照。</text>
 
 <view class="ph-fee">
   <text>计费说明：点「开始识别」后逐张识别，每张识别成功扣 {{photoCost}} 分，识别失败不扣费；识别成功后即使不导入也不退还积分。</text>
