@@ -60,7 +60,7 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   for (const [cls, bg] of chips) assert(wl.includes(`.tchip.${cls} { background: ${bg}; }`), `时间按钮 ${cls} 配 ${bg}`);
   assert(readMp('pages/wanglai/wanglai.wxml').includes('chip-{{item.id}}'), '时间按钮按 id 挂色');
   assert(wl.includes('.tchip.on { color: #E05353; border-color: #E05353; }'), '选中态红字红边不变');
-  assert(wl.includes('.side:first-child { background: linear-gradient(135deg, #FFE4B8, #FDBE68); }') && wl.includes('.side:last-child { background: linear-gradient(135deg, #FFC7C3, #F78C8F); }'), '收送块底色（CP批：首页两渐变，取代 CE 今日粉）');
+  assert(wl.includes('.side:first-child { background: linear-gradient(135deg, #FFC7C3, #F78C8F); }') && wl.includes('.side:last-child { background: linear-gradient(135deg, #FFE4B8, #FDBE68); }'), '收送块底色（CP批首页两渐变＋CS批左送礼右收礼）');
   assert(wl.includes('.summary-card {') && wl.includes('background: #FBF3D9;'), '合计＋差额合并卡本月淡黄（CD批）');
   const ct = readMp('pages/contacts/contacts.wxss');
   for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 统一透明淡黄（CK修正，取代 CK 实色淡黄）`);

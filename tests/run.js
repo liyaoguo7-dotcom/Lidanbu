@@ -121,3 +121,4 @@ require('./test-batch-co-behavior');
 require('./test-batch-cp-behavior');
 require('./test-batch-cq-behavior');
 require('./test-batch-cr-behavior');
+require('./test-batch-cs-behavior');
