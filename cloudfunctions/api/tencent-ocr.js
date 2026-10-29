@@ -1112,16 +1112,31 @@ function assessQuality(detections) {
   return { bad: reasons.length > 0, score, reasons, rows, avgConf };
 }
 
-/* ---------------- 照片转正（BL批） ----------------
+/* ---------------- 照片转正（BL批＋BZ批四方向） ----------------
  * 横置礼单被竖着拍时，整页字转了 90°：引擎碎片全是横向长条、混读成串，
  * 解析层转坐标救不回（离线实证：行拆开了但金额几乎全丢）。正解是把
  * 图片像素转正后重新过引擎，用户不用保证每次正着拍。
  * 检测（纯几何＋质量分双条件，防误伤正常横排文档）：碎片 ≥6、中位宽
  * >中位高、宽条（宽>高×1.2）占比 ≥50%，且首轮质量分 <55 才怀疑转置。
+ * BZ批四方向：转置怀疑 → 顺时针 90°、逆时针 90°；首轮差（分 <55 或
+ * 没认出）→ 再加 180°。横排本倒过来时旧触发器会误判为转置（横条特征），
+ * 但旧代码只试 90° 所以救不回；竖排本倒过来时触发器完全不认——新逻辑
+ * 是“首轮差就试 180°”，两种倒置都覆盖。好照片（分 ≥55 且有行）不试
+ * 任何方向，开销与原来相同；最差一张多试 3 个方向（各双调 2 次）。
  * 转正用纯 JS 的 jpeg-js（api 新增依赖）；解码失败/超大图/依赖缺失时
  * 静默跳过，保持原结果——转正只是加分项，绝不让识别因此失败。 */
 const ROTATE_MAX_PIXELS = 8000000;
 const ROTATE_SUSPECT_SCORE = 55;
+
+/* BZ批：根据首轮结果定试转方向（纯函数，便于测试）。
+ * suspect＝转置怀疑（横长条＋低分）；score＝首轮质量分；rowsEmpty＝首轮无行。 */
+function pickRotationDirs({ suspect, score, rowsEmpty }) {
+  const dirs = [];
+  if (suspect) dirs.push('cw', 'ccw');
+  if (typeof score === 'number' && score < ROTATE_SUSPECT_SCORE) dirs.push('r180');
+  else if (rowsEmpty) dirs.push('r180');
+  return dirs;
+}
 
 function rotationSuspect(detections, score) {
   if (typeof score === 'number' && score >= ROTATE_SUSPECT_SCORE) return false;
@@ -1145,17 +1160,21 @@ function rotateJpegBase64(imageBase64, dir) {
     if (!src || !src.width || !src.height || src.width * src.height > ROTATE_MAX_PIXELS) return null;
     const W = src.width; const H = src.height; const data = src.data;
     const out = Buffer.alloc(W * H * 4);
+    // BZ批：r180 宽高不变（180° 对调）；cw/ccw 宽高互换
+    const outW = dir === 'r180' ? W : H;
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const si = (y * W + x) * 4;
-        /* cw：原图逆时针转置 → 顺时针转正；ccw 反之 */
-        const dx = dir === 'cw' ? H - 1 - y : y;
-        const dy = dir === 'cw' ? x : W - 1 - x;
-        const di = (dy * H + dx) * 4;
+        /* cw：原图逆时针转置 → 顺时针转正；ccw 反之；r180：整张倒置 */
+        let dx; let dy;
+        if (dir === 'cw') { dx = H - 1 - y; dy = x; }
+        else if (dir === 'ccw') { dx = y; dy = W - 1 - x; }
+        else { dx = W - 1 - x; dy = H - 1 - y; }
+        const di = (dy * outW + dx) * 4;
         out[di] = data[si]; out[di + 1] = data[si + 1]; out[di + 2] = data[si + 2]; out[di + 3] = data[si + 3];
       }
     }
-    const enc = jpeg.encode({ data: out, width: H, height: W }, 85);
+    const enc = jpeg.encode({ data: out, width: outW, height: dir === 'r180' ? H : W }, 85);
     return Buffer.from(enc.data).toString('base64');
   } catch (e) {
     return null;
@@ -1255,17 +1274,20 @@ function createAdapter(deps = {}) {
       let result = await attempt(imageBase64);
       let resultB64 = imageBase64;
       let rotated = '';
-      /* BL批转正：首轮碎片呈转置特征（横长条为主）且质量分低 → 把图
-       * 转正后整轮重识，按质量分取优；先试顺时针，不行再试逆时针。
-       * 只对转置照片多花调用，正常照片不受影响；同 job 只扣一次分。 */
-      if (rotationSuspect(result.firstDets, result.score)) {
-        for (const dir of ['cw', 'ccw']) {
-          const rb64 = rotateJpegBase64(imageBase64, dir);
-          if (!rb64) break;
-          const r2 = await attempt(rb64);
-          if (r2.rows.length && r2.score > result.score) { result = r2; resultB64 = rb64; rotated = dir; break; }
-          if (!result.rows.length && r2.rows.length) { result = r2; resultB64 = rb64; rotated = dir; break; }
-        }
+      /* BL批转正＋BZ批四方向：首轮差时把图转正后整轮重识，按质量分取优；
+       * 方向按 pickRotationDirs 定（转置怀疑 → 顺/逆 90°；首轮差 → 再加 180°）。
+       * 只对认得差的照片多花调用，正常照片不受影响；同 job 只扣一次分。 */
+      const dirs = pickRotationDirs({
+        suspect: rotationSuspect(result.firstDets, result.score),
+        score: result.score,
+        rowsEmpty: !result.rows.length,
+      });
+      for (const dir of dirs) {
+        const rb64 = rotateJpegBase64(imageBase64, dir);
+        if (!rb64) break;
+        const r2 = await attempt(rb64);
+        if (r2.rows.length && r2.score > result.score) { result = r2; resultB64 = rb64; rotated = dir; break; }
+        if (!result.rows.length && r2.rows.length) { result = r2; resultB64 = rb64; rotated = dir; break; }
       }
       /* BY批列模式：已转正图上检红线网格，自信时按数数配对重排；网格失败
        * 或配对无果一律回落现有结果，不抛错、不影响计费（只换行，不换调用）。 */
@@ -1305,6 +1327,7 @@ module.exports = {
   guardRowNames,
   rotationSuspect,
   rotateJpegBase64,
+  pickRotationDirs,
   detectGridFromJpeg,
   parseWithGrid,
   decodeVerticalAmountTail,
