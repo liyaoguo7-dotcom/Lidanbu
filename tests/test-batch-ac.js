@@ -55,8 +55,8 @@ test('任务AC-2Tab栏：图标盒 30px、字号 13px、栏高 50px、底距安�
 // ---------- 3 送礼页三行贴紧 ----------
 test('任务AC-3送礼页：三行间距归零（页面级覆盖）、全局 .card 不动', () => {
   const g = readMp('pages/gifts/gifts.wxss');
-  assert(g.includes('.searchbar { padding-bottom: 0; position: sticky; top: 0; z-index: 10; background: #F6F6F6; }'), '搜索行下内边距 10→0（BX 加冻结 sticky，仍是页面级覆盖）');
-  assert(g.includes('.card.entry-row { margin-top: 0; margin-bottom: 0; }'), '横置礼单本入口行上下外边距 10→0');
+  assert(g.includes('.searchbar { padding-bottom: 0; background: #F6F6F6; }'), '搜索行下内边距 10→0（CT批：不再 sticky，随固定头不动）');
+  assert(g.includes('.card.entry-row { margin-top: 0; margin-bottom: 0; background: #FDE8E8; }'), '横置礼单本入口行上下外边距 10→0＋CT批首页拍照导入粉');
   assert(g.includes('.card.list-card { margin-top: 0; overflow: hidden; }'), '共计与记录合并卡上外边距 10→0（BX 加裁溢出，仍是页面级覆盖）');
   assert(readMp('app.wxss').includes('margin: 10px 12px;'), '全局 .card margin 保持 10px 12px（只动送礼页）');
 });

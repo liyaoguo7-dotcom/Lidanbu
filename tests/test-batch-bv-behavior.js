@@ -86,7 +86,7 @@ test('BV 我的页会员卡片红稍淡已由 BX 六色取代：渐变改送礼�
 
 test('BV 送礼记录列表交替已由 BX 统一淡色块取代：行统铺色且保留 last', () => {
   const wxml = readMp('pages/gifts/gifts.wxml');
-  assert(wxml.includes(`class="gift-row rowbg {{index === shown.length - 1 ? 'last' : ''}}"`), '送礼行统铺色且保留 last');
+  assert(wxml.includes(`class="gift-row {{index === shown.length - 1 ? 'last' : ''}}"`), '送礼行恢复纯白（CT批：去掉 rowbg 淡色底）且保留 last');
   assert(readMp('pages/gifts/gifts.wxss').includes('.gift-row {'), '送礼行样式在位');
 });
 

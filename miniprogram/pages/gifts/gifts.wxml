@@ -1,4 +1,6 @@
 <!-- 送礼记录列表 -->
+<!-- CT批（用户 2026-10-29 定）：固定头＋独立滚动（仿往来页）——搜索框＋横置入口＋共计块固定不动，记录只在下方滚动区里滚，不再从共计块下面冒出半行字 -->
+<view class="gifts-page">
 <view class="searchbar">
   <view class="searchbox">
     <input placeholder="搜索姓名" value="{{keyword}}" bindinput="onSearchInput"
@@ -12,14 +14,17 @@
   <text class="entry-arrow">></text>
 </view>
 
-<!-- 共计与记录合并为一张卡（任务AE 第 8 项复刻定版图）：共计居中大字、数字红字；
-     共计↔记录、记录↔记录之间无灰底间隔、只有细线；列表末尾「完」 -->
+<!-- CT批：共计块移出记录卡、独立成块（米黄底、居中、收短），与横置块各一块、中间留隙 -->
+<view class="total-line" wx:if="{{!searching}}">
+  <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
+</view>
+
+<!-- 记录列表区：独立滚动（共计块与横置块固定在上，不随滚动走） -->
+<scroll-view class="gift-scroll" scroll-y>
+<!-- CT批：共计已移出，记录卡只含记录行＋「完」；记录行去掉淡色底、恢复纯白 -->
 <view class="card list-card" wx:if="{{shown.length > 0 || !searching}}">
-  <view class="total-line" wx:if="{{!searching}}">
-    <text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text>
-  </view>
-  <!-- BX批：斑马交替取消，送礼记录行统一淡色块（行本身无底色，全局 .rowbg 直接生效） -->
-  <view class="gift-row rowbg {{index === shown.length - 1 ? 'last' : ''}}" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
+  <!-- CT批：记录行去掉淡色底（.rowbg），恢复纯白 -->
+  <view class="gift-row {{index === shown.length - 1 ? 'last' : ''}}" wx:for="{{shown}}" wx:key="_id" data-id="{{item._id}}" bindtap="goDetail">
     <view class="pat"><image class="pat-img" src="{{item.icon}}" mode="aspectFit" /></view>
     <view class="mid">
       <text class="nm">{{item.name}}</text>
@@ -43,8 +48,11 @@
   <text class="empty-text">没有找到"{{keyword}}"相关记录</text>
 </view>
 
-<view class="fab" bindtap="goAdd">＋</view>
-
 <!-- 底部自定义 Tab 栏（任务Z 第 1 项）：占位避免内容被栏遮挡，本页不高亮任何一项 -->
 <view class="tabbar-spacer"></view>
+</scroll-view>
+</view>
+
+<view class="fab" bindtap="goAdd">＋</view>
+
 <tab-bar selected="{{-1}}"></tab-bar>

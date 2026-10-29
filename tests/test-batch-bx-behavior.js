@@ -25,7 +25,7 @@ test('BX 统一淡色块：全局色更淡、各处行统铺色、无交替绑�
   assert(readMp('pages/choose-contact/choose-contact.wxml').includes('class="contact-row rowbg"'), '选联系人行统铺色');
   assert(readMp('pages/receive/receive.wxml').includes('class="event-row rowbg"'), '收礼礼簿行统铺色');
   assert(readMp('pages/receive/receive.wxss').includes('.event-row.rowbg { background: #FBF8F0; }'), '收礼行白底提权覆盖');
-  assert(readMp('pages/gifts/gifts.wxml').includes('class="gift-row rowbg'), '送礼行统铺色');
+  assert(!readMp('pages/gifts/gifts.wxml').includes('class="gift-row rowbg'), '送礼行不再统铺色（CT批：恢复纯白）');
   for (const f of ['pages/mine/mine.wxml', 'pages/wanglai/wanglai.wxml', 'pages/choose-contact/choose-contact.wxml', 'pages/receive/receive.wxml', 'pages/gifts/gifts.wxml']) {
     assert(!readMp(f).includes('% 2 === 1'), `${f} 无交替绑定残留`);
   }
@@ -74,8 +74,8 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
 
 test('BX 送礼页冻结：搜索栏贴顶、共计贴在搜索栏下方、白底盖住滚动行', () => {
   const wxss = readMp('pages/gifts/gifts.wxss');
-  assert(wxss.includes('.searchbar { padding-bottom: 0; position: sticky; top: 0; z-index: 10; background: #F6F6F6; }'), '搜索栏 sticky 贴顶＋页灰底');
-  assert(wxss.includes('.total-line { position: sticky; top: 44px; z-index: 9; background: #fff; }'), '共计行 sticky 在搜索栏下方（搜索栏高 44px）＋白底');
+  assert(wxss.includes('.gifts-page { display: flex; flex-direction: column; height: 100vh;'), 'CT批取代 BX sticky：固定头＋独立滚动（仿往来页）');
+  assert(!wxss.includes('position: sticky'), 'CT批：本页不再有任何 sticky（固定头＋滚动区，不再从块下面冒字）');
 });
 
 /* CG批（用户 2026-10-29 定）取代 BX 一体冻结：搜索框＋礼薄名一行固定贴顶，头像头滚动；断言见 test-batch-cg-behavior.js，本块删除。 */
