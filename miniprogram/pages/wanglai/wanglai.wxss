@@ -110,7 +110,7 @@
   color: #333;
   margin-top: 6px;
 }
-.side-count { font-size: 13px; color: #999; margin-top: 4px; }
+.side-count { font-size: 13px; color: #666; margin-top: 4px; } /* DB批：收送两块笔数字体加深 #999→#666 */
 /* 合计（BG批：白底，与上下方块直接贴合，不再坐在灰底上） */
 .total-line {
   text-align: center;

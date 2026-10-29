@@ -55,7 +55,7 @@
 .del-text { font-size: 17px; }
 .del-note { font-size: 12px; color: #C2C2C2; margin-top: 2px; }
 .sopt.cancel { display: flex; align-items: center; justify-content: center; line-height: normal; }
-.cancel-btn { flex: 1; margin: 0 32px; height: 44px; line-height: 44px; text-align: center; font-size: 17px; color: #fff; background: #F0575A; border-radius: 22px; }
+.cancel-btn { padding: 0 12px; height: 40px; line-height: 40px; text-align: center; font-size: 17px; color: #fff; background: #F0575A; border-radius: 20px; } /* DB批：取消按钮改小——高 44→40px，宽不再通长、贴合文字（左右各留 12px），行里居中 */
 /* （删除弹窗已改走全产品统一的 confirm-modal 组件，样式见组件） */
 
 /* 加号下移（2026-10-23 任务AC 第 6 项）：三页 .fab 的 bottom 本来就都是 64px（无页面级覆盖），

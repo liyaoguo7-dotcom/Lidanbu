@@ -18,7 +18,7 @@ test('CW 联系人弹窗字体大一档＋删除栏含提示＋取消红胶囊',
   assert(wxss.includes('.sopt.del { display: flex; flex-direction: column; align-items: center; justify-content: center;'), '删除栏两行上下排、整栏居中（整栏仍 58px，见 .sopt 高度）');
   assert(wxss.includes('.del-note { font-size: 12px; color: #C2C2C2;'), '提示小字灰色 12px');
   assert(wxml.includes('class="cancel-btn">取消</view>'), '取消是胶囊按钮');
-  assert(wxss.includes('.cancel-btn { flex: 1; margin: 0 32px; height: 44px; line-height: 44px;') && wxss.includes('color: #fff; background: #F0575A; border-radius: 22px;'), '取消胶囊：红底白字、44px、左右留边 32px、半圆角');
+  assert(wxss.includes('.cancel-btn { padding: 0 12px; height: 40px; line-height: 40px;') && wxss.includes('color: #fff; background: #F0575A; border-radius: 20px;'), '取消胶囊：红底白字、40px、贴合文字（DB批改小）');
   assert(wxss.includes('.sopt.cancel { display: flex; align-items: center; justify-content: center;'), '取消行 58px、按钮行里居中');
   assert(!wxss.includes('padding-bottom: calc(20px + env(safe-area-inset-bottom))'), '弹窗底部多垫的 20px 留白已去掉');
   assert(wxss.includes('padding-bottom: env(safe-area-inset-bottom);'), '弹窗底部只留安全区');
