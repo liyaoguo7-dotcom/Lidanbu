@@ -49,20 +49,25 @@ test('BA-2 我的页引导按竞品视频复刻：红幅小三角+教程层步�
   assert(!wxss.includes('.addmp-mock'), '旧迷你界面样式应已删净');
 });
 
-test('BA-3 往来页：整页 100vh flex、联系人列表进 scroll-view 独立滚动', () => {
+test('BA-3/DC 往来页：取消固定头、搜索＋对照＋合计 sticky 置顶、联系人随页滑动', () => {
   const wxml = rd('miniprogram/pages/wanglai/wanglai.wxml');
   const wxss = rd('miniprogram/pages/wanglai/wanglai.wxss');
-  assert(wxml.includes('class="wl-page {{swipeAnim ? \'swipe-back\' : \'\'}}"'), '往来页应有整页 flex 容器（DA批加弹回类）');
-  assert(/\.wl-page\s*\{[^}]*height: 100vh/.test(wxss), '整页容器应为 100vh');
-  assert(/\.wl-page\s*\{[^}]*flex-direction: column/.test(wxss), '整页容器应纵向 flex');
-  // 汇总/差额在 scroll-view 之上（固定区），列表行在 scroll-view 之内
-  const iScroll = wxml.indexOf('<scroll-view');
-  const iDiff = wxml.indexOf('diff-bar');
+  assert(wxml.includes('class="wl-page {{swipeAnim ? \'swipe-back\' : \'\'}}"'), '往来页应有整页容器（DA批加弹回类）');
+  // DC批取代 BA 固定头：整页不再 100vh，列表不再用 scroll-view 独立滚动
+  const pageRule = wxss.slice(wxss.indexOf('.wl-page {'), wxss.indexOf('.wl-page {') + 80);
+  assert(!pageRule.includes('height: 100vh'), 'DC批：整页不再 100vh 固定');
+  assert(!wxml.includes('<scroll-view'), 'DC批：列表不再用 scroll-view 独立滚动');
+  // sticky 组顺序：搜索框＋对照＋合计在 sticky 内、列表之前；列表行在列表区内
+  const iSticky = wxml.indexOf('class="wl-sticky"');
+  const iSearch = wxml.indexOf('class="searchbar"');
+  const iCompare = wxml.indexOf('class="compare"');
+  const iSummary = wxml.indexOf('class="summary-card"');
+  const iList = wxml.indexOf('class="wl-list"');
   const iRow = wxml.indexOf('wl-row');
-  assert(iDiff >= 0 && iDiff < iScroll, '差额区应在 scroll-view 之前（固定不滚）');
-  assert(iRow > iScroll, '联系人列表行应在 scroll-view 内独立滚动');
-  assert(wxml.includes('class="wl-scroll" scroll-y'), '列表区应为可纵向滚动的 scroll-view');
-  assert(/\.wl-scroll\s*\{[^}]*flex: 1/.test(wxss) && /\.wl-scroll\s*\{[^}]*height: 0/.test(wxss), '列表区应 flex:1＋height:0 撑满剩余高度');
+  assert(iSticky >= 0 && iSticky < iSearch && iSearch < iCompare && iCompare < iSummary && iSummary < iList, '搜索框＋对照＋合计应在 sticky 组内、列表之前');
+  assert(iRow > iList, '联系人列表行应在列表区内随页滑动');
+  assert(/\.wl-sticky\s*\{[^}]*position: sticky[^}]*top: 0/.test(wxss), 'sticky 组应吸顶（top:0）');
+  assert(wxml.includes('<view class="wl-list">'), '列表区应为普通 view 随页滑动');
 });
 
 test('BA-4 横置样式面板：6 个样式选项两排整排居中', () => {

@@ -46,8 +46,8 @@ test('BG我的页默认头像：空白人头图、无字圈残留', () => {
 
 test('BG往来页去灰：方块全宽贴合、合计白底、差额无下边距、列表区白底', () => {
   const wxss = rd('miniprogram/pages/wanglai/wanglai.wxss');
-  assert(wxss.includes('.wl-scroll { flex: 1; height: 0; background: #fff; }'), '列表滚动区白底不露灰');
-  assert(wxss.includes('.wl-scroll .card { margin: 0; border-radius: 0; }'), '名单卡全宽无边距');
+  assert(wxss.includes('.wl-list { background: #fff; }'), '列表区白底不露灰（DC批：随页滑动的普通 view）');
+  assert(wxss.includes('.wl-list .card { margin: 0; border-radius: 0; }'), '名单卡全宽无边距');
   assert(wxss.includes('margin: 6px 12px 0'), '对照卡卡片化、上边距收小（CD批取代 BG 全宽贴合）');
   const total = wxss.slice(wxss.indexOf('\n.total-line {'), wxss.indexOf('\n.total-line {') + 200);
   assert(total.includes('background: #fff'), '合计行基底白底（CD批：卡内由后代规则覆为透明淡黄）');

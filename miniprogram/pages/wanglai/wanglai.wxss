@@ -1,15 +1,19 @@
 /* 往来页（v3.1 第五章） */
-/* BA批：整页 100vh 纵向 flex——上半部分（时间/搜索/汇总/差额）固定不滚，
-   下方联系人列表区（.wl-scroll）独立滚动 */
+/* DC批（用户 2026-10-29 选 B）取代 BA 固定头：整页正常滑动，时间标签随页滑走；
+   搜索框＋收送两块＋合计卡包一层 sticky，滑到顶部时整组吸顶固定，下面只剩
+   联系人滑动。sticky 底色取整页底色 #F6F6F6，联系人滑过时缝隙不露白 */
 .wl-page {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
   box-sizing: border-box;
 }
-/* BG批：列表区整片白底——与上方对照卡/合计/差额连成一片，滚动区里也不露灰 */
-.wl-scroll { flex: 1; height: 0; background: #fff; }
-.wl-scroll .card { margin: 0; border-radius: 0; }
+.wl-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #F6F6F6;
+}
+/* 列表区整片白底，随整页滑动 */
+.wl-list { background: #fff; }
+.wl-list .card { margin: 0; border-radius: 0; }
 /* 任务AC 第 7 项（用户标"重点"）：本页全部文字字号整体大一号（+1px），只动本页、不动全局。
    姓名原名义 16px 与其他列表页同值，但用户观感明显偏小（疑与同行 13~15px 小字衬托有关），按用户原话整体 +1。 */
 .member-tip {

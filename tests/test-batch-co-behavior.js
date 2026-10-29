@@ -31,5 +31,5 @@ test('CO 四页接线：共用逻辑＋手势绑定', () => {
     assert(wxml.includes('bindtouchstart="onTabSwipeStart"') && wxml.includes('bindtouchend="onTabSwipeEnd"'), `${p} 绑定手势`);
   }
   const wl = readMp('pages/wanglai/wanglai.wxml');
-  assert(wl.includes('<scroll-view class="wl-scroll" scroll-y>'), '往来列表仍是竖向滚动（不受横滑干扰）');
+  assert(wl.includes('<view class="wl-list">') && wl.includes('bindtouchstart="onTabSwipeStart"'), '往来列表随页竖向滑动、横滑手势仍在（DC批：不受横滑干扰）');
 });

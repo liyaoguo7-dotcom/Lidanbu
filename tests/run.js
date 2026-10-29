@@ -130,3 +130,4 @@ require('./test-batch-cy-behavior');
 require('./test-batch-cz-behavior');
 require('./test-batch-da-behavior');
 require('./test-batch-db-behavior');
+require('./test-batch-dc-behavior');

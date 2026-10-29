@@ -1,5 +1,6 @@
-<!-- 往来页（v3.1 第五章；BA批：整页 100vh 纵向 flex——上半部分固定不滚，
-     只有下方联系人列表在 scroll-view 里独立滚动） -->
+<!-- 往来页（v3.1 第五章；DC批取代 BA 固定头：整页正常滑动；搜索框＋收送两块
+     ＋合计卡包一层 sticky——往上滑、时间标签滑走后，搜索框滑到顶部时整组停住
+     固定，下面只剩联系人滑动） -->
 <view class="wl-page {{swipeAnim ? 'swipe-back' : ''}}" style="position: relative; left: {{swipeX}}px" bindtouchstart="onTabSwipeStart" bindtouchmove="onTabSwipeMove" bindtouchend="onTabSwipeEnd">
 <view class="member-tip" wx:if="{{isMember}}">仅统计已授权给你的记录</view>
 
@@ -19,6 +20,8 @@
 </view>
 <view class="daterange num">{{rangeText}}</view>
 
+<!-- DC批 sticky 组：搜索框＋收送两块＋合计卡（搜索时两块与合计卡隐藏，只剩搜索框吸顶） -->
+<view class="wl-sticky">
 <!-- 搜索框 -->
 <view class="searchbar">
   <view class="searchbox">
@@ -53,9 +56,10 @@
     </view>
   </view>
 </block>
+</view>
 
-<!-- 联系人列表区：独立滚动（搜索结果也落在这一区） -->
-<scroll-view class="wl-scroll" scroll-y>
+<!-- 联系人列表区：随整页滑动（搜索结果也落在这一区） -->
+<view class="wl-list">
   <!-- 搜索结果 -->
   <view class="card" wx:if="{{searching}}">
     <view class="contact-row" wx:for="{{searchResults}}" wx:key="contactId"
@@ -88,5 +92,5 @@
       <text class="empty-text">该时间范围内暂无往来记录</text>
     </view>
   </block>
-</scroll-view>
+</view>
 </view>
