@@ -25,7 +25,7 @@ test('CT 送礼页固定头＋独立滚动＋两块颜色', () => {
   assert(wxml.indexOf('tabbar-spacer') < wxml.indexOf('</scroll-view>'), 'Tab 栏占位在滚动区内（末行不被遮挡）');
   assert(wxss.includes('.total-line { text-align: center; font-size: 20px; padding: 8px 16px 6px; color: #333; background: #F7F3EA; border-radius: 12px; margin: 10px 12px 0; }'), '共计块米黄＋居中＋收短＋全圆角＋与横置块留隙');
   assert(!wxss.includes('position: sticky'), '本页无 sticky');
-  assert(wxss.includes('.card.entry-row { margin-top: 0; margin-bottom: 0; background: #FDE8E8; }'), '横置块首页拍照导入粉');
+  assert(wxss.includes('.card.entry-row { margin-top: 0; margin-bottom: 0; background: #FBF3D9; }'), '横置块本月淡黄（CZ批，取代 CT批拍照导入粉）');
   assert(wxss.includes('.disc-photo { background: #FDE8E8; }') || readMp('pages/index/index.wxss').includes('.disc-photo { background: #FDE8E8; }'), '拍照导入粉对照 #FDE8E8');
   assert(!wxml.includes('gift-row rowbg'), '记录行无淡色底（纯白）');
   assert(wxml.includes('<text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text>'), '共计分段格式不变');

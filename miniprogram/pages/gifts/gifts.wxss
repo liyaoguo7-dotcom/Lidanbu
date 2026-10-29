@@ -2,7 +2,8 @@
 /* CT批（用户 2026-10-29 定）：固定头＋独立滚动（仿往来页）——搜索框＋横置入口＋共计块固定不动，记录只在下方滚动区里滚 */
 .gifts-page { display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
 .gift-scroll { flex: 1; height: 0; background: #fff; }
-.entry-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+/* CZ批（用户 2026-10-29 定）：横置入口块底色改首页本月淡黄 #FBF3D9；上下内边距 14px→10px、高度收短一点 */
+.entry-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
 .entry-title { font-size: 15px; font-weight: 600; }
 .entry-arrow { color: #C2C2C2; font-size: 16px; }
 /* CT批：共计块独立成块——米黄底（用户定，与礼薄详情共计条同色）、居中、上下收短（14/12→8/6）、全圆角、与横置块留 10px 隙、不再 sticky */
@@ -52,5 +53,5 @@
 /* CT批：搜索栏不再 sticky——随固定头不动（固定头由 .gifts-page 纵向 flex＋下方独立滚动实现，取代 BX 的 sticky 冻结） */
 .searchbar { padding-bottom: 0; background: #F6F6F6; }
 /* CT批：横置入口块独立成块——首页拍照导入粉 #FDE8E8（用户定），与共计块各一块、中间留隙 */
-.card.entry-row { margin-top: 0; margin-bottom: 0; background: #FDE8E8; }
+.card.entry-row { margin-top: 0; margin-bottom: 0; background: #FBF3D9; }
 .card.list-card { margin-top: 0; overflow: hidden; }
