@@ -46,9 +46,11 @@
   <view class="sname">{{sheetName}}</view>
   <view class="sopt red" bindtap="goWanglai">往来记录</view>
   <view class="sopt" bindtap="goEdit">修改姓名</view>
-  <view class="sopt" bindtap="onDelete">删除姓名</view>
-  <view class="snote">数据无价，谨慎删除</view>
-  <view class="sopt cancel" bindtap="closeSheet">取消</view>
+  <view class="sopt del" bindtap="onDelete">
+    <view class="del-text">删除姓名</view>
+    <view class="del-note">数据无价，谨慎删除</view>
+  </view>
+  <view class="sopt cancel" bindtap="closeSheet"><view class="cancel-btn">取消</view></view>
 </view>
 
 <!-- 删除二次确认（全产品统一弹窗） -->
