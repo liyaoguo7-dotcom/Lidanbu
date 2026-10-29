@@ -13,7 +13,7 @@ test('CK 亲友录字母行透明淡黄＋上下收窄＋全圆角', () => {
   assert(!ct.includes('#E2EEFB'), '字母行不再有浅蓝');
   assert(!ct.includes('#FDEFCB'), '字母行不再是实色淡黄');
   const gt = ct.slice(ct.indexOf('.group-title {'), ct.indexOf('.contact-row {'));
-  assert(gt.includes('padding: 2px 16px 1px;'), '字母行上下内边距收窄');
+  assert(gt.includes('padding: 2px 16px 1px 2px;'), '字母行上下内边距收窄、左内边距 2px（CL批）');
   assert(!gt.includes('margin:'), '字母行左右长度不动（无侧边距）');
   assert(gt.includes('border-radius: 8px;'), '字母行全部圆角');
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动');

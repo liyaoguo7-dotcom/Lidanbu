@@ -3,10 +3,12 @@
 .card { overflow: hidden; }
 /* CK批（用户 2026-10-29 定）＋CK修正（用户同日纠正：是上下太宽不是
    左右宽）：字母行浅蓝改淡黄再透明一点（rgba 0.6）；上下收窄（内边距
-   6px/2px 改 2px/1px）；左右长度不动，全部换圆角 */
+   6px/2px 改 2px/1px）；左右长度不动，全部换圆角。
+   CL批（用户同日定）：联系人整体向左移、左边只留 2px（字母行与联系人
+   行左内边距 16px 改 2px），右边给 A-Z 字母索引行腾位置；索引行不动 */
 .group-title {
   border-radius: 8px;
-  padding: 2px 16px 1px;
+  padding: 2px 16px 1px 2px;
   font-size: 12px;
   color: #666;
   background: rgba(253, 239, 203, 0.6);
@@ -20,7 +22,7 @@
 .contact-row {
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 16px 0 2px;
   min-height: 50px;
   border-bottom: 1px solid #F0F0F0;
 }
