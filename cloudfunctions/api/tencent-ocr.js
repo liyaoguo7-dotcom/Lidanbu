@@ -926,6 +926,128 @@ function guardRowNames(rows) {
   });
 }
 
+/* ---------------- 列模式（BY批，用户定：红线分列＋数数配对） ----------------
+ * 适用：市面横置纸质礼单本（印好红线表格，一列一人：上姓名、下金额）。
+ * 原理：先从已转正图的像素里找红线网格（自上而下定格子，不猜列），
+ * 再把碎片按中心横坐标归列；姓名列从左数、金额列从左数，按序号配对
+ * （手写左右漂移不改变左右顺序，漂移不串列——这是按横坐标重叠配对
+ * 做不到的）。花纹图案忽略：浅粉花纹进不了强红阈值，边角花纹不成
+ * 行、形不成均匀间距，过不了峰值＋均匀性两道门；模板印刷字（贺礼类）
+ * 仍走跨列重复剔除。网格不自信（峰太少、间距不均）一律回落现有流程，
+ * 绝不强行用网格；数量对不上时回落列内配对并把 mismatch 写进留痕。
+ * 注意：本分支只要像素（已转正图），不新增腾讯调用，不增加费用。 */
+function detectGridFromJpeg(imageBase64) {
+  let jpeg;
+  try { jpeg = require('jpeg-js'); } catch (e) { return null; }
+  let img;
+  try {
+    img = jpeg.decode(Buffer.from(imageBase64, 'base64'), { useTArray: true, maxMemoryUsageInMB: 256 });
+  } catch (e) { return null; }
+  const W = img.width, H = img.height, data = img.data;
+  if (!W || !H || !data) return null;
+  const isRed = (i) => {
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    return r > 140 && (r - g) > 50 && (r - b) > 50;
+  };
+  const proj = new Array(W).fill(0);
+  for (let y = 0; y < H; y++) {
+    const rowOff = y * W * 4;
+    for (let x = 0; x < W; x++) if (isRed(rowOff + x * 4)) proj[x]++;
+  }
+  const sm = proj.map((_, i) => {
+    let s = 0, n = 0;
+    for (let k = Math.max(0, i - 2); k <= Math.min(W - 1, i + 2); k++) { s += proj[k]; n++; }
+    return s / n;
+  });
+  const max = Math.max(...sm);
+  if (!max) return null;
+  const minSep = Math.max(30, Math.round(W * 0.02));
+  const peaks = [];
+  for (let i = 2; i < W - 2; i++) {
+    if (sm[i] >= sm[i - 1] && sm[i] >= sm[i + 1] && sm[i] > max * 0.4) {
+      if (!peaks.length || i - peaks[peaks.length - 1].pos > minSep) peaks.push({ pos: i, val: sm[i] });
+      else if (sm[i] > peaks[peaks.length - 1].val) peaks[peaks.length - 1] = { pos: i, val: sm[i] };
+    }
+  }
+  if (peaks.length < 5) return null;
+  const divs = peaks.map((p) => p.pos);
+  const gaps = [];
+  for (let i = 1; i < divs.length; i++) gaps.push(divs[i] - divs[i - 1]);
+  const sorted = [...gaps].sort((a, b) => a - b);
+  const med = sorted[Math.floor(sorted.length / 2)];
+  if (!med) return null;
+  const regular = gaps.filter((g) => g >= med * 0.7 && g <= med * 1.4).length;
+  if (regular < gaps.length * 0.7) return null;
+  // 宽段拆分：任一段 ≈2 倍中位间距时，说明中间一条分界线被边角花纹盖住
+  // 或照片裁切（如横置本左缘首段 290px），按中位间距在段内补线；切开宽列也
+  // 安全（空子列被跳过，名/金额仍按序号配对），循环补到全部段 ≤1.6 倍中位
+  for (let i = 0; i < divs.length - 1; i++) {
+    while (divs[i + 1] - divs[i] > med * 1.6) {
+      divs.splice(i + 1, 0, divs[i] + med);
+      if (divs.length > 40) break;
+    }
+  }
+  const columns = [];
+  for (let i = 1; i < divs.length; i++) columns.push({ x0: divs[i - 1], x1: divs[i] });
+  if (columns.length < 3) return null;
+  return { dividers: divs, columns, medianGap: med };
+}
+
+/* 网格列模式解析：detections（已选引擎的碎片）＋网格 → 行。
+ * 姓名序列、金额序列各按列序排，按序号配对；数量不等回落列内配对。 */
+function parseWithGrid(detections, grid) {
+  const frags = (Array.isArray(detections) ? detections : [])
+    .map((d) => {
+      const text = String((d && d.DetectedText) || '').trim();
+      if (!text) return null;
+      const b = bboxOf(d);
+      return { text, ...b, cy: b.y + b.h / 2 };
+    })
+    .filter(Boolean);
+  if (!frags.length) return { rows: [], paired: false, mismatch: null };
+  const cols = grid.columns.map((c) => ({ x0: c.x0, x1: c.x1, xMin: c.x0, cxMin: c.x0, cxMax: c.x1, list: [] }));
+  for (const f of frags) {
+    const cx = f.x + f.w / 2;
+    let col = cols.find((c) => cx >= c.x0 && cx < c.x1);
+    if (!col && cx >= cols[cols.length - 1].x1) col = cols[cols.length - 1]; // 右缘出框一点也算入末列
+    if (col) col.list.push(f);
+  }
+  const inGrid = frags.filter((f) => cols.some((c) => c.list.includes(f)));
+  const cleaned = dropRepeatedPrintFrags(inGrid, cols);
+  const kept = new Set(cleaned);
+  for (const c of cols) c.list = c.list.filter((f) => kept.has(f));
+  const names = [];
+  const amounts = [];
+  for (const c of cols) {
+    const sorted = [...c.list].sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    // 拼读：碎片直接拼接（中文大写金额不断字），但数字-数字边界须空格隔开，
+    // 否则漂移到同列的两个金额会粘成一个数（如 800＋1000 → 8001000）
+    let joined = '';
+    for (const f of sorted) {
+      if (joined && /[0-9]$/.test(joined) && /^[0-9]/.test(f.text)) joined += ' ';
+      joined += f.text;
+    }
+    const text = joined.replace(/賀禮|贺礼|奠儀|奠仪/g, '');
+    if (!text) continue;
+    const found = findAllAmounts(text);
+    let nameText = text;
+    if (found.length) {
+      for (let i = found.length - 1; i >= 0; i--) nameText = nameText.slice(0, found[i].index) + nameText.slice(found[i].end);
+      for (const a of found) amounts.push(Math.round(a.yuan * 100));
+    }
+    let nm = nameText;
+    if (nm.length > 1) nm = nm[0] + nm.slice(1).replace(/[贺賀礼禮]/g, '');
+    nm = nm.replace(/[A-Za-z0-9、，,。·\s]/g, '');
+    if (nm) names.push(nm);
+  }
+  if (names.length && names.length === amounts.length) {
+    const rows = names.map((n, i) => ({ name: toSimplified(snapName(n)), amountFen: amounts[i], note: '', raw: n }));
+    return { rows: guardRowNames(rows), paired: true, mismatch: null };
+  }
+  const fallback = guardRowNames(parseVertical(cleaned, cols));
+  return { rows: fallback, paired: false, mismatch: { names: names.length, amounts: amounts.length } };
+}
+
 /* ---------------- 识别质量评估（AS批质量门，纯函数） ----------------
  * 阈值常量（摘要列明）：平均置信度 < 70 判低（腾讯 Confidence 0–100，
  * 至少半数碎片带该字段才启用）；碎片中单字碎片占比 > 60%（且碎片 ≥4）
@@ -1106,12 +1228,12 @@ function createAdapter(deps = {}) {
           return { dets, q };
         };
         if (mode === 'print') {
-          const { q } = await runCall('GeneralBasicOCR');
-          return { rows: q.rows, chosen: 'print', score: q.score, traceCalls, firstDets };
+          const { dets, q } = await runCall('GeneralBasicOCR');
+          return { rows: q.rows, chosen: 'print', score: q.score, traceCalls, firstDets, chosenDets: dets };
         }
         if (mode === 'handwriting') {
-          const { q } = await runCall('GeneralHandwritingOCR');
-          return { rows: q.rows, chosen: 'handwriting', score: q.score, traceCalls, firstDets };
+          const { dets, q } = await runCall('GeneralHandwritingOCR');
+          return { rows: q.rows, chosen: 'handwriting', score: q.score, traceCalls, firstDets, chosenDets: dets };
         }
         /* BM批（用户拍板试效果）：双调取优——手写、印刷都调，按质量分
          * （含姓名可信度）选优。旧版手写过关即短路，模板单上印刷根本没机
@@ -1126,10 +1248,12 @@ function createAdapter(deps = {}) {
         }
         let best = hw.q;
         let chosen = 'handwriting';
-        if (print && print.q.score > hw.q.score) { best = print.q; chosen = 'print'; }
-        return { rows: best.rows, chosen, score: best.score, traceCalls, firstDets };
+        let bestDets = hw.dets;
+        if (print && print.q.score > hw.q.score) { best = print.q; chosen = 'print'; bestDets = print.dets; }
+        return { rows: best.rows, chosen, score: best.score, traceCalls, firstDets, chosenDets: bestDets };
       };
       let result = await attempt(imageBase64);
+      let resultB64 = imageBase64;
       let rotated = '';
       /* BL批转正：首轮碎片呈转置特征（横长条为主）且质量分低 → 把图
        * 转正后整轮重识，按质量分取优；先试顺时针，不行再试逆时针。
@@ -1139,13 +1263,29 @@ function createAdapter(deps = {}) {
           const rb64 = rotateJpegBase64(imageBase64, dir);
           if (!rb64) break;
           const r2 = await attempt(rb64);
-          if (r2.rows.length && r2.score > result.score) { result = r2; rotated = dir; break; }
-          if (!result.rows.length && r2.rows.length) { result = r2; rotated = dir; break; }
+          if (r2.rows.length && r2.score > result.score) { result = r2; resultB64 = rb64; rotated = dir; break; }
+          if (!result.rows.length && r2.rows.length) { result = r2; resultB64 = rb64; rotated = dir; break; }
         }
       }
+      /* BY批列模式：已转正图上检红线网格，自信时按数数配对重排；网格失败
+       * 或配对无果一律回落现有结果，不抛错、不影响计费（只换行，不换调用）。 */
+      let gridInfo = null;
+      try {
+        const grid = detectGridFromJpeg(resultB64);
+        if (grid && result.chosenDets) {
+          const gp = parseWithGrid(result.chosenDets, grid);
+          if (gp.rows.length) {
+            result = { ...result, rows: gp.rows };
+            gridInfo = { columns: grid.columns.length, paired: gp.paired, mismatch: gp.mismatch || null };
+          } else if (gp.mismatch) {
+            gridInfo = { columns: grid.columns.length, paired: false, mismatch: gp.mismatch };
+          }
+        }
+      } catch (e) { /* 网格失败回落，不挡主流程 */ }
       if (!result.rows.length) throw new Error('这张照片没认出来');
       result.rows.ocrTrace = finalizeTrace(result.traceCalls, result.chosen);
       if (rotated) result.rows.ocrTrace.rotated = rotated;
+      if (gridInfo) result.rows.ocrTrace.grid = gridInfo;
       return result.rows;
     },
   };
@@ -1165,6 +1305,8 @@ module.exports = {
   guardRowNames,
   rotationSuspect,
   rotateJpegBase64,
+  detectGridFromJpeg,
+  parseWithGrid,
   decodeVerticalAmountTail,
   assessQuality,
   createAdapter,
