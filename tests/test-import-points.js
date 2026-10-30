@@ -34,16 +34,16 @@ test('导入积分：识别成功扣费只一次（同 job 重走任务流不重
   const r1 = await importer.startImportTask(db, owner, owner, {
     jobId: 'job-once', kind: 'gift', imagePath: 'wxfile://ok.jpg',
   });
-  assert.eq(r1.cost, 5, '单价读配置 = 5');
+  assert.eq(r1.cost, 2, '单价读配置 = 2');
   assert.eq(r1.duplicated, false, '首次扣费');
   assert.eq(r1.items.length, 3, '识别出 3 条');
-  assert.eq(await points.getBalance(db, owner), 95, '扣 5 剩 95');
+  assert.eq(await points.getBalance(db, owner), 98, '扣 2 剩 98');
 
   const r2 = await importer.startImportTask(db, owner, owner, {
     jobId: 'job-once', kind: 'gift', imagePath: 'wxfile://ok.jpg',
   });
   assert.eq(r2.duplicated, true, '同 job 二次走流程识别为重复');
-  assert.eq(await points.getBalance(db, owner), 95, '余额不变');
+  assert.eq(await points.getBalance(db, owner), 98, '余额不变');
   const spends = await spendEntries(db, owner);
   assert.eq(spends.length, 1, '流水只有一条 spend');
   assert.eq(spends[0].refId, 'import:job-once', 'refId 绑定 job');
@@ -66,7 +66,7 @@ test('导入积分：同 jobId 两遍完整流程（识别+写入），流水只
   }
   const spends = await spendEntries(db, owner);
   assert.eq(spends.length, 1, '两遍流程 spend 仍只有一条');
-  assert.eq(await points.getBalance(db, owner), 95, '只扣一次 5 分');
+  assert.eq(await points.getBalance(db, owner), 98, '只扣一次 2 分');
 });
 
 test('导入积分：识别失败不扣（余额与流水都不动）', async () => {
@@ -94,7 +94,7 @@ test('导入积分：额度拦截自动返还全额，且只退一次', async ()
   const r = await importer.startImportTask(db, owner, owner, {
     jobId: 'job-quota', kind: 'gift', imagePath: 'wxfile://ok.jpg',
   });
-  assert.eq(await points.getBalance(db, owner), 95, '识别成功已扣 5');
+  assert.eq(await points.getBalance(db, owner), 98, '识别成功已扣 2');
 
   // 模拟会员到期变免费用户：免费送礼额度 50 已满，整批写入被额度拦截
   await db.collection(COLLECTIONS.User).update(
@@ -117,7 +117,7 @@ test('导入积分：额度拦截自动返还全额，且只退一次', async ()
 
 test('导入积分：积分不足在识别前拦下，不产生扣款流水', async () => {
   const db = await h.newDB();
-  const owner = await memberWithPoints(db, 'p5', 3); // 余额 3 < 单价 5
+  const owner = await memberWithPoints(db, 'p5', 1); // 余额 1 < 单价 2
   let err = null;
   try {
     await importer.startImportTask(db, owner, owner, {
@@ -125,7 +125,7 @@ test('导入积分：积分不足在识别前拦下，不产生扣款流水', as
     });
   } catch (e) { err = e; }
   assert(err && err.code === 'insufficient-points', `抛 insufficient-points（实际 ${err && err.code}）`);
-  assert.eq(await points.getBalance(db, owner), 3, '余额不变');
+  assert.eq(await points.getBalance(db, owner), 1, '余额不变');
   assert.eq((await spendEntries(db, owner)).length, 0, '无 spend 流水（识别前拦截）');
 });
 

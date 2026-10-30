@@ -102,7 +102,7 @@ const AppConfig = {
    */
   points: {
     registerGrant: 15,
-    photoImportCost: 5,
+    photoImportCost: 2,
     packs: [
       { id: 'points10', name: '10积分包', priceFen: 100, androidPriceFen: 100, iosPriceFen: 200, points: 10 },
       { id: 'points30', name: '30积分包', priceFen: 300, androidPriceFen: 300, iosPriceFen: 500, points: 30 },

@@ -59,6 +59,7 @@ require('./test-demo-seed');
 require('./test-import-points');
 require('./test-payment');
 require('./test-batch-pay-real');
+require('./test-batch-photo-cost');
 require('./test-points');
 require('./test-points-pack');
 require('./test-notify-feedback-cancel');

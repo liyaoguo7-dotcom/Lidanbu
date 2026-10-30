@@ -77,7 +77,7 @@
     </view>
   </view>
   <button class="btn-primary" bindtap="onSaveFeatures" loading="{{saving}}">保存会员功能</button>
-  <view class="note">这一组管「算不算会员专属」：打开的功能只有会员能用，关掉后免费用户也能用。和总开关的区别：总开关管功能本身开不开，这组管谁能用。（拍照导入关掉专属后，免费用户也能用，但每次扣 5 分的规则不变。）</view>
+  <view class="note">这一组管「算不算会员专属」：打开的功能只有会员能用，关掉后免费用户也能用。和总开关的区别：总开关管功能本身开不开，这组管谁能用。（拍照导入关掉专属后，免费用户也能用，但每次扣费的规则不变。）</view>
 
   <view class="group-h">支付开关</view>
   <view class="card">

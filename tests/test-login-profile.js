@@ -65,7 +65,7 @@ test('隐私同意不设门禁：未同意的会员照样能用拍照导入（�
     jobId: 'job-nogate', kind: 'gift', imagePath: 'wxfile://ok.jpg',
   });
   assert.eq(r.items.length, 3, '未同意也正常识别');
-  assert.eq(await core.points.getBalance(db, owner), 95, '未同意也正常扣分（无隐私拦截）');
+  assert.eq(await core.points.getBalance(db, owner), 98, '未同意也正常扣分（无隐私拦截）');
 });
 
 test('隐私同意记录：同意/撤回往返，版本号取配置', async () => {

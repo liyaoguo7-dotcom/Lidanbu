@@ -101,7 +101,7 @@ test('AR 云模式：先上传后启动任务，入参带 imageFileIds 不带本
     assert(!wire.includes('/tmp/ar-p1.jpg'), '任务入参绝不能带本地临时路径（云端取不到）');
     assert(!wire.includes('"imagePath"'), '云模式任务入参不应再带 imagePath');
     assert.eq(r.items.length, 3, '识别结果仍为 Mock 送礼 3 条（服务端选择逻辑未变）');
-    assert.eq(r.cost, 5, '识别成功仍扣 5 分');
+    assert.eq(r.cost, 2, '识别成功仍扣 2 分');
     assert.eq(r.photoFileIds.length, 1, '结果应回带 photoFileIds 供核对页清理');
     assert.eq(r.photoFileIds[0], `cloud://fake-env.fake-bucket/${uploads[0].cloudPath}`, 'photoFileIds 应为上传得到的 fileID');
   } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
@@ -132,7 +132,7 @@ test('AR 云模式多张：上传与 fileID 保序、结果按序拼接、整批
       '张三,李五,王二麻,张三,李五,王二麻',
       '拼接顺序 = 拍照顺序',
     );
-    assert.eq(await dataService.getPointsBalance(), 20, '整批只扣一次：25 − 5 = 20');
+    assert.eq(await dataService.getPointsBalance(), 23, '整批只扣一次：25 − 2 = 23');
   } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
@@ -183,7 +183,7 @@ test('AR 本地模式：不上传云存储、仍走本地路径识别、无 phot
     const r = await dataService.recognizePhoto('/tmp/ar-local.jpg', 'gift', {});
     assert.eq(uploads, 0, '本地演示模式绝不上传');
     assert.eq(r.items.length, 3, '本地识别仍走 Mock 送礼 3 条');
-    assert.eq(r.cost, 5, '本地识别成功仍扣 5 分');
+    assert.eq(r.cost, 2, '本地识别成功仍扣 2 分');
     assert.eq(r.photoFileIds.length, 0, '本地模式没有云端照片可清理');
   } finally { dataService._resetForTest(); }
 });
@@ -228,7 +228,7 @@ test('AR core：imageFileIds 逐张按序识别、结果拼接、整个任务只
   );
   assert.eq(r.items.map((i) => i.name).join(','), '条目1,条目2', '结果按照片顺序拼接');
   assert.eq(r.adapter, 'stub', '任务应回标实际适配器名');
-  assert.eq(await points.getBalance(db, owner), 95, '整个任务只扣 5 分一次');
+  assert.eq(await points.getBalance(db, owner), 98, '整个任务只扣 2 分一次');
   assert.eq(await spendCount(db, owner), 1, '流水只有一条 spend');
 });
 

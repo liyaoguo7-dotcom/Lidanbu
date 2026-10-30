@@ -77,7 +77,7 @@ test('积分：扣费原子性与幂等（同一次拍照任务只扣一次）',
 test('积分：余额不足拒绝（insufficient-points），余额与流水不变', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pts_poor');
-  await core.points.grant(db, uid, 3, { kind: 'manual', refId: 'seed-1' });
+  await core.points.grant(db, uid, 1, { kind: 'manual', refId: 'seed-1' });
   const before = (await ledgerOf(db, uid)).length;
   let err = null;
   try {
@@ -85,7 +85,7 @@ test('积分：余额不足拒绝（insufficient-points），余额与流水不�
   } catch (e) { err = e; }
   assert(err && err.code === 'insufficient-points', '应以 insufficient-points 拒绝，实际 ' + (err && err.code));
   assert(/积分不够啦/.test(err.message), '文案须委婉可读');
-  assert.eq(await core.points.getBalance(db, uid), 3, '拒绝后余额不变');
+  assert.eq(await core.points.getBalance(db, uid), 1, '拒绝后余额不变');
   assert.eq((await ledgerOf(db, uid)).length, before, '拒绝后不产生流水');
 });
 

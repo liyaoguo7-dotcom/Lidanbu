@@ -66,8 +66,8 @@ test('AM 拍照导入：名单含→非会员被拦；名单去掉→非会员�
   assert(err2 && err2.code === 'insufficient-points', '没积分时停在积分关（积分规则不变）');
 
   const r = await core.importer.startImportTask(db, free, free, { jobId: 'am-job3', kind: 'gift', imagePath: 'wxfile://ok.jpg' });
-  assert.eq(r.cost, 5, '免费用户导入照旧扣 5 分');
-  assert.eq(await core.points.getBalance(db, free), 95, '扣 5 剩 95');
+  assert.eq(r.cost, 2, '免费用户导入照旧扣 2 分');
+  assert.eq(await core.points.getBalance(db, free), 98, '扣 2 剩 98');
 });
 
 test('AM 横置两道闸（客户端纯函数）：总关谁都进不去；名单去掉后非会员可进；取不到配置按旧行为', async () => {

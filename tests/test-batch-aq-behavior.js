@@ -218,7 +218,7 @@ test('AQ 选择：有密钥但非管理员 → 仍走 Mock，OCR 零调用', asy
   });
 });
 
-test('AQ 选择：有密钥且管理员 → 真实适配器（取图→签名请求→解析→扣 5 分）', async () => {
+test('AQ 选择：有密钥且管理员 → 真实适配器（取图→签名请求→解析→扣 2 分）', async () => {
   await withEnv(ENV, async () => {
     const calls = [];
     const r = await startViaApi('aq-admin', {
@@ -236,6 +236,6 @@ test('AQ 选择：有密钥且管理员 → 真实适配器（取图→签名请
     assert.eq(r.data.items.length, 1, '解析出 1 条');
     assert.eq(r.data.items[0].name, '何九', '条目姓名');
     assert.eq(r.data.items[0].amountFen, 88800, '条目金额 888 元 → 88800 分');
-    assert.eq(r.data.cost, 5, '识别成功仍按既有口径扣 5 分');
+    assert.eq(r.data.cost, 2, '识别成功仍按既有口径扣 2 分');
   });
 });

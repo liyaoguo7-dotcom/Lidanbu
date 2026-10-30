@@ -22,7 +22,7 @@ Page({
     working: false,
     progressText: '',
     maxPhotos: MAX_PHOTOS,
-    photoCost: 5, // 拍照单价（分）：先按静态默认渲染，进页后读生效配置刷新（BN批）
+    photoCost: 2, // 拍照单价（分）：先按已定价渲染，进页后读生效配置刷新（BN批）
   },
 
   onLoad(q) {

@@ -188,12 +188,12 @@ test('回环：会员拍照导入送礼/收礼全通（任务AE 第 5 项链路�
     const g = await dataService.recognizePhoto('/tmp/p.jpg', 'gift', {});
     assert.eq(g.items.length, 3, '送礼识别返回 3 条（Mock 口径）');
     assert.eq(g.items.map((i) => i.name).join(','), '张三,李五,王二麻', '条目顺序原样透传（顺序契约：适配层不得重排）');
-    assert.eq(g.cost, 5, '拍照单价 5 分');
+    assert.eq(g.cost, 2, '拍照单价 2 分');
     const ev = await dataService.createEvent({ name: '拍照礼薄', tagId: 'jiehun', date: '2026-10-23' });
     const evId = (ev.event && ev.event._id) || ev._id;
     const r = await dataService.recognizePhoto('/tmp/p.jpg', 'receive', { eventId: evId });
     assert.eq(r.items.length, 2, '收礼识别返回 2 条（Mock 口径）');
-    assert.eq(await dataService.getPointsBalance(), 15, '两次识别各扣 5 分：25 − 5 − 5 = 15');
+    assert.eq(await dataService.getPointsBalance(), 21, '两次识别各扣 2 分：25 − 2 − 2 = 21');
   } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 

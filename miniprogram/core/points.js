@@ -21,7 +21,7 @@ function pointsSettingsFromConfig(config = AppConfig) {
   const p = (config && config.points) || {};
   return {
     registerGrant: Number.isInteger(p.registerGrant) ? p.registerGrant : 15,
-    photoImportCost: Number.isInteger(p.photoImportCost) ? p.photoImportCost : 5,
+    photoImportCost: Number.isInteger(p.photoImportCost) ? p.photoImportCost : 2,
     packs: Array.isArray(p.packs) ? p.packs : [],
   };
 }
