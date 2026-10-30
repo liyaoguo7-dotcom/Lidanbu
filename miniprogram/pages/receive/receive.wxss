@@ -44,8 +44,10 @@
   padding: 8px 16px; min-height: 58px;
 }
 /* BX批：本页 .event-row 自带白底（全局 .rowbg 同优先级会被页样式压住），
-   故用双类选择器提权；统一淡色块。 */
-.event-row.rowbg { background: #FBF8F0; }
+   故用双类选择器提权；统一淡色块。
+   DN批（用户 2026-10-30 定，DF 名块作废）：整行方块改首页收礼橙黄渐变，
+   不再是淡色 #FBF8F0；名字本身不再作块。 */
+.event-row.rowbg { background: linear-gradient(135deg, #FFE4B8, #FDBE68); }
 .pat {
   width: 44px; height: 44px; border-radius: 50%;
   background: #F5F6F4;
@@ -56,8 +58,9 @@
 .pat-img { width: 30px; height: 30px; }
 .mid { flex: 1; margin-left: 12px; display: flex; flex-direction: column; min-width: 0; }
 .line1 { display: flex; align-items: baseline; }
-/* DF批：礼薄名本身作橙黄渐变底块（每名各一块、圆角12px、内边距2px 10px；名字颜色不动、日期仍跟在右边同一行） */
-.nm { font-size: 16px; font-weight: 600; background: linear-gradient(135deg, #FFE4B8, #FDBE68); border-radius: 12px; padding: 2px 10px; }
+/* DF批作废（DN批改回）：礼薄名不再作橙黄渐变底块，只留 16px 加粗；
+   渐变移到整行方块 .event-row.rowbg 上。 */
+.nm { font-size: 16px; font-weight: 600; }
 .dt { font-size: 12px; color: #666; margin-left: 8px; }
 .line2 { margin-top: 3px; font-size: 12px; }
 .cnt { color: #666; }

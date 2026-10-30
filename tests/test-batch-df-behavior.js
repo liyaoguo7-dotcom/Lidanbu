@@ -35,7 +35,7 @@ test('DF 送礼页共计：粉红渐变＋数字白字＋标签字深色', () =>
 
 test('DF 收礼主页：礼薄名橙黄底块＋日期共几笔加深＋金额不动', () => {
   const wxss = readMp('pages/receive/receive.wxss');
-  assert(wxss.includes('.nm { font-size: 16px; font-weight: 600; background: linear-gradient(135deg, #FFE4B8, #FDBE68); border-radius: 12px; padding: 2px 10px; }'), '礼薄名本身橙黄渐变底块（每名各一块、圆角12px）');
+  assert(wxss.includes('.nm { font-size: 16px; font-weight: 600; }'), '礼薄名改回只留 16px 加粗（DN批：DF 名块作废，渐变移到整行）');
   assert(wxss.includes('.dt { font-size: 12px; color: #666;'), '日期加深 #666');
   assert(wxss.includes('.cnt { color: #666; }'), '共几笔加深 #666');
   assert(wxss.includes('.amt { color: #1A1A1A; font-weight: 700; font-size: 14px; }'), '金额不动');

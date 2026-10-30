@@ -24,7 +24,7 @@ test('BX 统一淡色块：全局色更淡、各处行统铺色、无交替绑�
   assert(readMp('pages/wanglai/wanglai.wxml').includes('class="wl-row rowbg"'), '往来主列表行统铺色');
   assert(readMp('pages/choose-contact/choose-contact.wxml').includes('class="contact-row rowbg"'), '选联系人行统铺色');
   assert(readMp('pages/receive/receive.wxml').includes('class="event-row rowbg"'), '收礼礼簿行统铺色');
-  assert(readMp('pages/receive/receive.wxss').includes('.event-row.rowbg { background: #FBF8F0; }'), '收礼行白底提权覆盖');
+  assert(readMp('pages/receive/receive.wxss').includes('.event-row.rowbg { background: linear-gradient(135deg, #FFE4B8, #FDBE68); }'), '收礼行整块橙黄渐变提权覆盖（DN批：BX 淡色作废）');
   assert(!readMp('pages/gifts/gifts.wxml').includes('class="gift-row rowbg'), '送礼行不再统铺色（CT批：恢复纯白）');
   for (const f of ['pages/mine/mine.wxml', 'pages/wanglai/wanglai.wxml', 'pages/choose-contact/choose-contact.wxml', 'pages/receive/receive.wxml', 'pages/gifts/gifts.wxml']) {
     assert(!readMp(f).includes('% 2 === 1'), `${f} 无交替绑定残留`);
