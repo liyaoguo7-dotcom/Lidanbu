@@ -133,6 +133,12 @@ Page({
       this.closeAllSwipes();
       return;
     }
+    // DP批（用户 2026-10-30 定）：防重复点按——点按后先查会员／开关才跳转，等待期间再点会压两个详情页；
+    // 故 1.5 秒内重复点按直接忽略（任何行都算）；时间戳在异步查询前就记，等待期间的第二次点按也被挡；
+    // 1.5 秒后自动恢复，跳转失败也不会锁死；收回滑开行那一下不记时间戳。
+    const now = Date.now();
+    if (now - (this._lastRowTap || 0) < 1500) return;
+    this._lastRowTap = now;
     const row = this.data.events.find((r) => r._id === id);
     const membership = await this._ensureMembership();
     const flags = await dataService.getFeatureFlags().catch(() => null);
