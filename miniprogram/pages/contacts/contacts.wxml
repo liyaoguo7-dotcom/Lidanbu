@@ -23,10 +23,13 @@
       <text class="rmk" wx:if="{{item.remark}}">{{item.remark}}</text>
     </view>
   </block>
-  <view class="contact-row" wx:if="{{groups.length === 0}}">
+  <view class="contact-row" wx:if="{{loadingContacts}}">
+    <text class="ph">加载中…</text>
+  </view>
+  <view class="contact-row" wx:if="{{groups.length === 0 && !loadingContacts}}">
     <text class="ph">还没有亲友，点击下方红色＋添加</text>
   </view>
-  <view class="contact-row" wx:if="{{groups.length === 0}}">
+  <view class="contact-row" wx:if="{{groups.length === 0 && !loadingContacts}}">
     <text class="ph">出门在外，想查往来却找不到礼簿？</text>
   </view>
 </view>

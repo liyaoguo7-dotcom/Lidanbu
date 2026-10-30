@@ -192,9 +192,10 @@ test('真适配器：五年卡与积分包数据、分平台价、退款规则�
   assert.eq(packs[0].iosPriceFen, 200, '10 分包苹果价');
   assert.eq(packs[2].iosPriceFen, 800, '50 分包苹果价');
   const notice = AppConfig.payment.refundNotice || '';
-  for (const frag of ['安卓', 'App Store', '180', '未消耗', '剩余天数']) {
-    assert(notice.includes(frag), `退款规则应含「${frag}」`);
-  }
+  // 2026-10-31 DR批（用户定）：购买页展示文案改为“虚拟产品一经购买不能退款”，
+  // 旧“安卓可申请退款/App Store/180天/剩余天数”展示口径作废；服务端退款记账
+  // 口径不变（见 core/payment 退款测试），此处只断言展示文案。
+  assert.eq(notice, '本产品为虚拟产品，一经购买不能退款，购买前请确定。', '退款展示文案应为 DR 新口径');
   const purchaseJs = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/member/purchase/purchase.js'), 'utf8');
   assert(purchaseJs.includes('wx.requestVirtualPayment'), '购买页应调 wx.requestVirtualPayment');
   assert(purchaseJs.includes('confirmRefundNotice'), '购买页应有付款前退款规则确认');

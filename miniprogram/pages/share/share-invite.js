@@ -14,6 +14,12 @@
  *   可用状态改由本地同步计算的 canInvite 决定（只看范围勾选，与勾选同一次
  *   setData 落地）；inviteCode 只负责给分享 path 带码，预生成失败（如非会员
  *   被服务端拦）时再把 canInvite 压回 false 并显示服务端原因。
+ * 2026-10-31 邀请链接失效修复：AP批后按钮只看本地 canInvite，勾选后到预生成
+ *   回来前的窗口里点分享会发无码链接（path 回落到 share-home，对方打不开邀请），
+ *   故分享按钮必须同时 gated 于 inviteCode（wxml：disabled="{{!canInvite ||
+ *   !inviteCode}}"，码未到时显示“邀请准备中”）；无码分享是断链，比红得慢
+ *   一拍更不可接受。另注意：未发布正式版前，开发版分享卡片本身发给非项目
+ *   成员打不开（微信平台限制），与代码无关，发布前须走体验成员或等发布。
  */
 const dataService = require('../../services/data-service.js');
 

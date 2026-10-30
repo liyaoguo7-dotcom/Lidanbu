@@ -36,11 +36,22 @@ let _homeDataInflight = null; // 首页数据在途去重：小结与最近往�
 // 只缓存本人三张列表与礼薄详情；写入走 write-through（新增直接进缓存、
 // 改删精确同步或整表作废），保证缓存与云端一致，不拿旧数据糊弄。
 let _listCache = { contacts: null, gifts: null, eventsStats: null };
+let _listCacheOwner = null; // 列表缓存归属用户：换号后旧缓存不得 serving（2026-10-31，见下）
 const _wanglaiCache = new Map(); // 本人往来列表按范围缓存；任一记录/联系人变更即整表作废
 const _timelineCache = new Map(); // 本人往来明细（竖线树）按联系人缓存；与往来列表同批作废（AH批：真机点开联系人第一下 2 秒多、在途去重+缓存后第二下起秒开）
 function _dirtyWanglai() { _wanglaiCache.clear(); _timelineCache.clear(); }
 const _eventDetailCache = new Map();
 function _dirtyLists(...names) { names.forEach((n) => { _listCache[n] = null; }); }
+// 2026-10-31 缓存污染修复（DR批修正：首版“空结果绝不进缓存”过宽，撞上
+// 2026-10-24 写穿缓存契约——回环测试要求二次读 0 往返。根因不在合法空列表，
+// 而在未登录时查回的空被无归属缓存：未登录路径已提前 return [] 不查不缓存，
+// 故已登录用户的空列表可缓存，但必须带归属；换号、未登录一律不得 serving。
+// 写穿路径只走 data-service 的新增/修改/删除，空缓存 [] 为真值，写穿可正常追加。）
+function _cacheList(name, list) {
+  if (!_userId) return list;
+  if (Array.isArray(list)) { _listCache[name] = list; _listCacheOwner = _userId; }
+  return list;
+}
 let _modeForTest = null; // 仅测试注入用：'local' | 'cloud' | null
 let _transportForTest = null; // 仅测试注入用：远程传输（进程内回环到 api 云函数）
 let _uploaderForTest = null; // 仅测试注入用：云存储上传（AR批，进程内假实现）
@@ -387,10 +398,14 @@ const service = {
   },
 
   // —— 联系人 ——
-  async listContacts() {
-    if (_listCache.contacts) return _listCache.contacts.slice();
+  // opts.force：跳过缓存读（亲友页每次 onShow 强制刷新用）；写缓存带归属，未登录不缓存
+  async listContacts(opts = {}) {
+    const force = !!(opts && opts.force);
+    if (!force && _listCache.contacts && _listCacheOwner === _userId) return _listCache.contacts.slice();
+    // 未登录时不查、不缓存：调用方在 init 完成后重查即恢复（2026-10-31 缓存污染）
+    if (!_userId) return [];
     const list = await core.contacts.listContacts(_db, _userId, _userId);
-    _listCache.contacts = list;
+    _cacheList('contacts', list);
     return list.slice();
   },
   async searchContacts(keyword) {
@@ -437,11 +452,13 @@ const service = {
 
   // —— 送礼 ——
   async listGifts() {
-    if (_listCache.gifts) return _listCache.gifts.slice();
+    if (_listCache.gifts && _listCacheOwner === _userId) return _listCache.gifts.slice();
+    if (!_userId) return [];
     const list = await core.gifts.listGifts(_db, _userId, _userId);
     // 最新在上
-    _listCache.gifts = list.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    return _listCache.gifts.slice();
+    const sorted = list.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    _cacheList('gifts', sorted);
+    return sorted.slice();
   },
   async createGift({ contactId, tagId, amountFen, remark, date }) {
     try {
@@ -942,10 +959,11 @@ const service = {
   },
   /** 礼薄列表页一次取齐：每本带 count/totalFen（替代逐本 getEventStats 的 N+1 往返） */
   async listEventsWithStats() {
-    if (_listCache.eventsStats) return _listCache.eventsStats.slice();
+    if (_listCache.eventsStats && _listCacheOwner === _userId) return _listCache.eventsStats.slice();
+    if (!_userId) return [];
     try {
       const list = await core.receive.listEventSummaries(_db, _userId, _userId);
-      _listCache.eventsStats = list;
+      _cacheList('eventsStats', list);
       return list.slice();
     } catch (e) { throw new Error(friendly(e)); }
   },

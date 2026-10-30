@@ -1,24 +1,21 @@
 /* 礼薄详情 */
 /* CG批：记录卡不再与头卡拼成一张卡，独立全圆角 */
 .pat-card { text-align: center; padding: 0; position: relative; overflow: hidden; margin: 0 12px 10px; border-radius: 12px; }
-/* DE批（用户 2026-10-30 定）：搜索框单独吸顶；头像头（图案＋标签）滚动；礼薄名＋日期＋共计一块吸顶在搜索框下
-   （top＝搜索栏高 54px：上下 padding 各 10px＋搜索框 34px，见 app.wxss .searchbar/.searchbox）；名字只出现一次，用原来 20px 加粗 */
+/* 2026-10-31 顶部重构（用户定）：第一方块（图案＋标签＋礼薄名＋日期）滚动，第二方块
+   （共计）与搜索框一起吸顶；两块都圆角、中间留隙；吸顶位置不动（搜索 top:0，共计 top:54px：
+   上下 padding 各 10px＋搜索框 34px，见 app.wxss .searchbar/.searchbox）；名字只出现一次，用原来 20px 加粗 */
 .search-stick { position: sticky; top: 0; z-index: 10; padding: 0; margin: 0 12px; border-radius: 12px; }
-.info-stick { position: sticky; top: 54px; z-index: 10; padding: 0; margin: 0 12px 10px; border-radius: 12px; text-align: center; }
-/* DO批（用户 2026-10-30 定）：吸顶块本身改与头像、共计同色（喜事淡米／白事淡灰），
-   名＋日期不再透卡片白底；双类提权压过 .card 白底；滑动与吸顶位置不动。 */
-.card.info-stick { background: #F7F3EA; }
-.card.info-stick.baishi { background: #F2F2F2; }
-/* DE批：共计条（复用 .total-line 字号/居中；底色同头部：喜事淡米，白事淡灰；DO批后吸顶块本身已同色，名行与共计之间的 6px 间隙同为底色、整块一色；搜索时隐藏） */
-.event-total { background: #F7F3EA; border-radius: 12px; margin: 6px 0 0; }
-.event-total.baishi { background: #F2F2F2; }
-/* CG批：头像头独立成卡（圆角裁剪底色） */
-.head-card { overflow: hidden; }
-/* BV批：头部底色（喜事淡米，与斑马同一对颜色；白事淡灰，跟白事 palette 走），
-   与下面记录列表分开；卡片上 padding 挪到 pat-head 里，版式不变。 */
+.total-stick { position: sticky; top: 54px; z-index: 10; padding: 0; margin: 0 12px 10px; border-radius: 12px; text-align: center; }
+/* 第二方块底色：送礼页横置栏改动前淡黄（与送礼页共计栏同色）；白事淡灰（沿 DO 批白事口径）；
+   双类提权压过 .card 白底 */
+.card.total-stick { background: #FBF3D9; }
+.card.total-stick.baishi { background: #F2F2F2; }
+/* 第一方块：底色首页收礼最左浅色（整块一色）；白事淡灰；名＋日期居中；底部留 12px 气口 */
+.card.head-card { background: #FFE4B8; overflow: hidden; text-align: center; padding-bottom: 12px; }
+.card.head-card.baishi { background: #F2F2F2; }
+/* BV批：头部底色已移到第一方块整块上，此处只留居中与顶部气口；白事类保留挂钩但不再定底色 */
 /* CG批：恢复居中——BX冻结重构时头部脱离带 text-align:center 的 .pat-card，新容器没有居中规则，导致标签／礼薄名／日期全部偏左（共计因自身居中未受影响）；与导入联系人无关 */
-.pat-head { background: #F7F3EA; padding: 6px 0 0; text-align: center; }
-.pat-head.baishi { background: #F2F2F2; }
+.pat-head { padding: 6px 0 0; text-align: center; }
 .pat-big {
   width: 64px; height: 64px; border-radius: 50%;
   background: #F1E6D3;
@@ -31,7 +28,7 @@
 .pat-name.baishi { color: #3B4046; }
 .event-name { font-size: 20px; font-weight: 700; margin-top: 6px; display: block; }
 .event-date { font-size: 13px; color: #C2C2C2; margin-top: 4px; display: block; }
-.total-line { text-align: center; font-size: 20px; padding: 14px 16px 12px; color: #333; border-bottom: 1px solid #F0F0F0; }
+.total-line { text-align: center; font-size: 20px; padding: 14px 16px 12px; color: #333; }
 .total-line .red { color: #F0575A; font-weight: 600; }
 .list-end { display: flex; align-items: center; gap: 10px; padding: 17px 60px 19px; }
 .end-line { flex: 1; height: 1px; background: #F0F0F0; }

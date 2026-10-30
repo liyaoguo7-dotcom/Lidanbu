@@ -10,7 +10,10 @@ const invJs = rd('miniprogram/pages/share/share-invite.js');
 assert.ok(invJs.includes('canInvite'), 'AP-1 邀请页应有 canInvite 本地状态');
 assert.ok(invJs.includes('_syncBtnState(events, this.data.giftsOn)'), 'AP-1 礼薄勾选应同步重算按钮');
 assert.ok(invJs.includes('_syncBtnState(this.data.events, giftsOn)'), 'AP-1 送礼勾选应同步重算按钮');
-assert.ok(invWxml.includes('disabled="{{!canInvite}}"'), 'AP-1 按钮 disabled 应绑 canInvite 而非 inviteCode');
+/* 2026-10-31 DR批改定：AP-1 原“按钮只绑 canInvite”导致勾选后、预生成回来前的窗口里
+ * 点分享会发无码链接（对方打不开邀请），故按钮必须同时 gated 于 inviteCode；
+ * 码未到时显示“邀请准备中”，AP 的本地同步重算（canInvite）仍保留。 */
+assert.ok(invWxml.includes('disabled="{{!canInvite || !inviteCode}}"'), 'DR批：按钮 disabled 应同时绑 canInvite 与 inviteCode（防无码分享）');
 assert.ok(invWxml.includes('被邀请人的操作权限'), 'AP-1 权限组标题应改为「被邀请人的操作权限」');
 assert.ok(invWxml.includes('（勾上哪项，被邀请人就能对你共享的记录做哪项操作）'), 'AP-1 权限组应有括号解释小字');
 assert.ok(!invWxml.includes('允许查看我标记的项目'), 'AP-1 邀请页不应再有旧标题「允许查看我标记的项目」');

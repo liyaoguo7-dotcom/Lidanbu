@@ -26,10 +26,10 @@ test('DF 核对页：场合与类型平铺面板（无原生轮盘、每排5格�
   assert(wxss.includes('.tile-confirm { color: #F0575A;') && wxss.includes('.tile-cancel { color: #999; }'), '确定红字取消灰字');
 });
 
-test('DF 送礼页共计：粉红渐变＋数字白字＋标签字深色', () => {
+test('DF 送礼页共计（DR批取代 DF 粉红渐变）：淡黄纯色＋数字红字＋标签字深色', () => {
   const wxss = readMp('pages/gifts/gifts.wxss');
-  assert(wxss.includes('background: linear-gradient(135deg, #FFC7C3, #F78C8F);'), '共计块改首页送礼粉红渐变（CT批米黄作废）');
-  assert(wxss.includes('.total-line .red { color: #fff;'), '笔数和金额数字改白字');
+  assert(wxss.includes('.total-line { text-align: center; font-size: 20px; padding: 8px 16px 6px; color: #333; background: #FBF3D9;'), '共计块 DR批淡黄纯色（DF 粉红渐变作废）');
+  assert(wxss.includes('.total-line .red { color: #E05353;'), '笔数和金额数字改收礼共计红（DR批：淡黄上白字看不见，白字作废）');
   assert(wxss.includes('.total-line { text-align: center; font-size: 20px;') && wxss.includes('color: #333;'), '标签字仍深色、居中字号不动');
 });
 

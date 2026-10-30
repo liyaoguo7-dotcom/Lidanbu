@@ -1,5 +1,6 @@
 <!-- 礼薄详情 -->
-<!-- DE批（用户 2026-10-30 定）：搜索框单独吸顶；头像头（图案＋标签）滚动；礼薄名＋日期＋共计作为一块吸顶；名字只出现一次，用原来 20px 加粗 -->
+<!-- 2026-10-31 顶部重构（用户定）：恢复以前结构——第一方块（图案＋标签＋礼薄名＋日期）滚动；
+     第二方块（共计）与搜索框一起吸顶；两块都圆角、中间留隙；名字只出现一次，用原来 20px 加粗 -->
 <view class="card search-stick">
   <!-- BV批：搜索栏（照送礼记录页：搜索姓名＋取消，本地筛） -->
   <view class="searchbar">
@@ -11,22 +12,21 @@
   </view>
 </view>
 
-<!-- DE批：头像头滚动（名字／日期移入下方吸顶块，此处只剩图案＋标签） -->
-<view class="card head-card">
+<!-- 第一方块：图案＋标签＋礼薄名＋日期（滚动，不吸顶；底色首页收礼最左浅色／白事淡灰） -->
+<view class="card head-card {{isBaishi ? 'baishi' : ''}}">
   <view class="pat-head {{isBaishi ? 'baishi' : ''}}">
     <view class="pat-big {{isBaishi ? 'baishi' : ''}}">
       <image class="pat-img" src="{{icon}}" mode="aspectFit" />
     </view>
     <text class="pat-name {{isBaishi ? 'baishi' : ''}}">{{tagName}}</text>
   </view>
-</view>
-
-<!-- DE批：礼薄名＋日期＋共计一块吸顶（名用原来 20px 加粗；共计搜索时隐藏，与原共计一致） -->
-<!-- DO批：吸顶块加白事类，与头像、共计同色 -->
-<view class="card info-stick {{isBaishi ? 'baishi' : ''}}">
   <text class="event-name" wx:if="{{event.name}}">{{event.name}}</text>
   <text class="event-date num">{{date}}</text>
-  <view class="total-line event-total {{isBaishi ? 'baishi' : ''}}" wx:if="{{!searching}}"><text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text></view>
+</view>
+
+<!-- 第二方块：共计（吸顶，与搜索框一起固定；底色送礼页横置栏改动前淡黄／白事淡灰；搜索时隐藏） -->
+<view class="card total-stick {{isBaishi ? 'baishi' : ''}}" wx:if="{{!searching}}">
+  <view class="total-line"><text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text></view>
 </view>
 
 <view class="card pat-card">

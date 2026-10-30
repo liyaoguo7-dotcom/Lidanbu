@@ -76,7 +76,9 @@ test('任务X-共享邀请：页面已去 picker、主按钮即微信分享（�
   assert(wxml.includes('>邀请家人</button>'), '分享按钮文案为「邀请家人」');
   // AP批延迟修复后：按钮置灰改由本地同步计算的 canInvite 决定（勾选同一次
   // setData 落地），inviteCode 只给分享 path 带码——断言随新机制更新
-  assert(wxml.includes('disabled="{{!canInvite}}"'), '未选范围时按钮置灰（AP批 canInvite 口径）');
+  // DR批：按钮除 canInvite 外还须 gated 于 inviteCode（无码不得分享），
+  // 未选范围时 canInvite 为假仍置灰，旧“只绑 canInvite”口径作废
+  assert(wxml.includes('disabled="{{!canInvite || !inviteCode}}"'), '未选范围时按钮置灰（DR批：canInvite＋inviteCode 双门控）');
   assert(js.includes('_prepareInvite') && js.includes('updateGrant'), 'js 应静默预生成并在勾选变化后更新同一份邀请');
   assert(js.includes('onShareAppMessage'), '页面应实现 onShareAppMessage');
   assert(js.includes('/pages/share/share-view?code='), '分享 path 应带 code 落到 share-view');

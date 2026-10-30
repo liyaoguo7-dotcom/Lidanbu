@@ -98,8 +98,10 @@ test('BV 礼薄详情头部底色：头部单层底色、记录列表不动、�
   assert(headStart > 0 && headStart < recStart, '头部层在记录行之前');
   assert(wxml.indexOf('total-line') > headStart && wxml.indexOf('total-line') < wxml.indexOf('card pat-card'), '共计在头像头之后、记录卡之前（DE批：名日期共计一块吸顶，不在头部层内）');
   const wxss = readMp('pages/receive-detail/receive-detail.wxss');
-  assert(wxss.includes('.pat-head { background: #F7F3EA;'), '喜事头部淡米');
-  assert(wxss.includes('.pat-head.baishi { background: #F2F2F2; }'), '白事头部淡灰');
+  // DR批：底色已移到第一方块 head-card 整块上（首页收礼最左浅色），白事淡灰不动
+  assert(wxss.includes('.card.head-card { background: #FFE4B8;'), '第一方块喜事底色首页收礼最左浅色（DR批，BV 淡米作废）');
+  assert(wxss.includes('.card.head-card.baishi { background: #F2F2F2; }'), '第一方块白事淡灰');
+  assert(wxss.includes('.pat-head { padding: 6px 0 0; text-align: center; }'), '头部居中不动（底色已移到整块）');
 });
 
 test('BV 往来搜索：同名两人只有有记录的出结果', async () => {

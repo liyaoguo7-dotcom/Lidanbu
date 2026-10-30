@@ -41,10 +41,15 @@ Page({
 
   async reload() {
     // 记录与联系人并发取（原来串行两趟，2026-10-24 提速）
-    const [list, contacts] = await Promise.all([
+    let [list, contacts] = await Promise.all([
       dataService.listGifts(),
       dataService.listContacts(),
     ]);
+    // 2026-10-31 自愈：联系人缓存被空结果污染时 cmap 为空、名字全变横；
+    // 只要还有送礼记录，就强制重取一次联系人再渲染，不让一排横上屏。
+    if (list.length > 0 && contacts.length === 0) {
+      contacts = await dataService.listContacts({ force: true });
+    }
     const cmap = {};
     contacts.forEach((c) => { cmap[c._id] = c.name; });
     const tags = {};

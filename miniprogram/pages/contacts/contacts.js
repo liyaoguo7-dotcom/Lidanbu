@@ -16,6 +16,7 @@ Page({
   data: {
     hornOff: false, hornRun: false, hornDur: 0, // 小喇叭：关闭（本次打开期间）/长文字慢速左滚（任务AB）
     groups: [],
+    loadingContacts: true, // 2026-10-31：首查未 settled 前显示加载中，不冒充空数据
     presentMap: {},
     hasHashGroup: false,
     indexLetters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), // 右侧字母快选（全部字母，没人的置灰）
@@ -52,10 +53,13 @@ Page({
 
   async reload() {
     const seq = (this._reloadSeq = (this._reloadSeq || 0) + 1);
+    const first = !this._contactsLoaded;
+    if (first) this.setData({ loadingContacts: true });
     const kw = (this.data.keyword || '').trim();
     const list = kw
       ? await dataService.searchContacts(kw)
-      : await dataService.listContacts();
+      // 2026-10-31：亲友页每次 onShow 强制刷新，不吃旧缓存（缓存污染后不再整会话空）
+      : await dataService.listContacts({ force: true });
     if (seq !== this._reloadSeq) return; // 已有更新的查询，丢弃过期结果
     const by = {};
     list.forEach((c) => {
@@ -69,10 +73,12 @@ Page({
     this._barLetters = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
     if (presentMap['#']) this._barLetters.push('#');
     this._barRect = null; // 栏内容可能变，旧量测作废
+    this._contactsLoaded = true;
     this.setData({
       groups,
       presentMap,
       hasHashGroup: !!presentMap['#'],
+      loadingContacts: false,
     }, () => this._measureGroups());
   },
 
