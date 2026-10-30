@@ -2,11 +2,13 @@
  * 礼单簿 · 会员与积分购买页（任务P2：套餐与积分礼包同页）
  *
  * 价格/赠分/礼包全部从配置读（老板平台配置优先），本页不写死任何数字；
+ * 显示价按本机平台取（安卓价/苹果价），用户只看到自己平台的价；
  * 视图状态（下架过滤、非会员礼包置灰、平台开关）由 services/purchase-view
  * 的纯函数算好，页面只渲染。平台开关在 data-service 侧合并配置后判定，
  * 本页只读结果：关闭时隐藏购买按钮、改显配置里的大白话提示。
- * 购买走 core/payment 的建单→调起→回调发货链路；本地演示为模拟支付，
- * 真实环境换微信虚拟支付适配器，本页不改。
+ * 购买走真适配器：付款前弹窗明示退款规则 → 服务端建单签名 →
+ * 前端调 wx.requestVirtualPayment → 前端 success 不等于发货，轮询订单
+ * 等平台发货推送；本地演示仍为模拟支付（直接发货）。
  */
 const dataService = require('../../../services/data-service.js');
 const AppConfig = require('../../../config/app-config.js');
@@ -33,6 +35,8 @@ Page({
     packsLocked: true,
     buyEnabled: true,
     platformDisabledTip: '',
+    refundNotice: '',
+    isDemo: false,
     buyingId: '', // 下单互锁（套餐/礼包共用：处理中时另一边点按被挡住）
     buyingPlan: false, // 仅套餐按钮的“处理中”显示
     buyingPack: false, // 仅礼包按钮的“处理中”显示
@@ -71,6 +75,7 @@ Page({
           plans: d.plans, packs: d.packs, packsLocked: d.packsLocked,
           buyEnabled: d.buyEnabled, platformDisabledTip: d.platformDisabledTip,
           selectedPlanId: d.selectedPlanId, selectedPackId: d.selectedPackId,
+          refundNotice: d.refundNotice,
         },
       });
     } catch (e) { /* 存缓存失败不影响购买 */ }
@@ -97,6 +102,7 @@ Page({
         selectedPlanId: (hot && hot.id) || (view.plans[0] && view.plans[0].id) || '',
         selectedPackId: (view.packs[0] && view.packs[0].id) || '',
         packsLocked: true,
+        refundNotice: (AppConfig.payment && AppConfig.payment.refundNotice) || '',
       });
     } catch (e) { /* 静态渲染失败不拦真数据加载 */ }
   },
@@ -137,6 +143,8 @@ Page({
         packsLocked: view.packsLocked,
         buyEnabled: view.buyEnabled,
         platformDisabledTip: d.platformDisabledTip,
+        refundNotice: d.refundNotice || '',
+        isDemo: !!d.isDemo,
       }, () => this.saveCache());
     } catch (e) {
       this.setData({ loading: false });
@@ -158,16 +166,105 @@ Page({
     this.setData({ selectedPackId: e.currentTarget.dataset.id });
   },
 
+  /** 付款前明示退款规则（真适配器批）：弹窗确认后才下单；无文案时直接放行 */
+  confirmRefundNotice() {
+    const notice = this.data.refundNotice;
+    if (!notice) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      try {
+        wx.showModal({
+          title: '购买前请确认',
+          content: notice,
+          confirmText: '确认购买',
+          cancelText: '再想想',
+          success: (res) => resolve(!!(res && res.confirm)),
+          fail: () => resolve(false),
+        });
+      } catch (e) { resolve(false); }
+    });
+  },
+
+  /** 取一次登录码（供服务端换 session_key 签名用；失败返回空串，服务端会报错提示重进） */
+  loginCode() {
+    return new Promise((resolve) => {
+      try {
+        wx.login({ success: (res) => resolve((res && res.code) || ''), fail: () => resolve('') });
+      } catch (e) { resolve(''); }
+    });
+  },
+
+  /** 调起微信虚拟支付（iOS 需微信 >= 8.0.68 且已配简称开 Apple 支付） */
+  requestVirtualPay(payParams) {
+    return new Promise((resolve) => {
+      if (typeof wx.requestVirtualPayment !== 'function') {
+        resolve({ status: 'unsupported' });
+        return;
+      }
+      try {
+        wx.requestVirtualPayment({
+          signData: payParams.signData,
+          paySig: payParams.paySig,
+          signature: payParams.signature,
+          mode: payParams.mode || 'short_series_goods',
+          success: () => resolve({ status: 'success' }),
+          fail: () => resolve({ status: 'fail' }),
+          cancel: () => resolve({ status: 'cancel' }),
+        });
+      } catch (e) { resolve({ status: 'fail' }); }
+    });
+  },
+
+  /** 轮询订单发货状态（前端 success 不等于发货，等平台发货推送；约 30 秒） */
+  async pollOrderPaid(orderId) {
+    for (let i = 0; i < 15; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      try {
+        const o = await dataService.getOrder(orderId);
+        if (o && o.status === 'paid') return true;
+      } catch (e) { /* 轮询失败继续 */ }
+    }
+    return false;
+  },
+
+  /**
+   * 真实支付收尾：调起 → 成功则轮询发货。返回 'paid'（已发货）/
+   * 'pending'（已付款、等待发货确认）/ 'failed'（未付款，已提示）。
+   */
+  async payAndWait(r) {
+    const res = await this.requestVirtualPay(r.payParams);
+    if (res.status === 'success') {
+      const orderId = r.order && r.order.id;
+      if (!orderId) return 'pending';
+      return (await this.pollOrderPaid(orderId)) ? 'paid' : 'pending';
+    }
+    if (res.status === 'cancel') wx.showToast({ title: '已取消支付', icon: 'none' });
+    else if (res.status === 'unsupported') wx.showToast({ title: '当前微信版本不支持虚拟支付，请升级微信后重试', icon: 'none' });
+    else wx.showToast({ title: '支付失败，请重试', icon: 'none' });
+    return 'failed';
+  },
+
   async onBuyPlan() {
     const planId = this.data.selectedPlanId;
     if (!planId || this.data.buyingId) return;
+    if (!(await this.confirmRefundNotice())) return;
     this.setData({ buyingId: planId, buyingPlan: true, doneText: '' });
     try {
-      const r = await dataService.purchaseMembership(planId);
+      const code = await this.loginCode();
+      const r = await dataService.purchaseMembership(planId, { platform: this.devicePlatform(), loginCode: code });
       if (r.delivered) {
         this.setData({ doneText: '开通成功！会员已经生效，赠送的积分也到账啦。' });
         wx.showToast({ title: '开通成功', icon: 'success' });
         await this.refresh();
+      } else if (r.pendingPay) {
+        const outcome = await this.payAndWait(r);
+        if (outcome === 'paid') {
+          this.setData({ doneText: '开通成功！会员已经生效，赠送的积分也到账啦。' });
+          wx.showToast({ title: '开通成功', icon: 'success' });
+          await this.refresh();
+        } else if (outcome === 'pending') {
+          this.setData({ doneText: '支付成功，系统正在确认，稍后在「我的订单」里查看到账状态。' });
+          wx.showToast({ title: '支付成功，等待确认', icon: 'none' });
+        }
       } else {
         wx.showToast({ title: '支付未完成，请重试', icon: 'none' });
       }
@@ -186,13 +283,25 @@ Page({
     }
     const packId = this.data.selectedPackId;
     if (!packId || this.data.buyingId) return;
+    if (!(await this.confirmRefundNotice())) return;
     this.setData({ buyingId: packId, buyingPack: true, doneText: '' });
     try {
-      const r = await dataService.purchasePointsPack(packId);
+      const code = await this.loginCode();
+      const r = await dataService.purchasePointsPack(packId, { platform: this.devicePlatform(), loginCode: code });
       if (r.delivered) {
         this.setData({ doneText: '购买成功！积分已经到账，去「我的—积分」能看到这笔流水。' });
         wx.showToast({ title: '购买成功', icon: 'success' });
         await this.refresh();
+      } else if (r.pendingPay) {
+        const outcome = await this.payAndWait(r);
+        if (outcome === 'paid') {
+          this.setData({ doneText: '购买成功！积分已经到账，去「我的—积分」能看到这笔流水。' });
+          wx.showToast({ title: '购买成功', icon: 'success' });
+          await this.refresh();
+        } else if (outcome === 'pending') {
+          this.setData({ doneText: '支付成功，系统正在确认，稍后在「我的订单」里查看到账状态。' });
+          wx.showToast({ title: '支付成功，等待确认', icon: 'none' });
+        }
       } else {
         wx.showToast({ title: '支付未完成，请重试', icon: 'none' });
       }

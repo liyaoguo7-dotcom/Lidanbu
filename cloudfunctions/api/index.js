@@ -174,12 +174,14 @@ function createMain({ sdk, core, db, buildXlsx, uploadFile, downloadFile, ocrHtt
       }
       const args = Array.isArray(event.args) ? event.args : [];
       // 支付适配器不能跨 RPC 序列化（任务AD）：payment.purchase /
-      // purchasePointsPack 在服务端注入与小程序端本地演示同口径的
-      // MockPayAdapter（模拟支付，真实通道未接入前两边行为一致）。
-      // 真实支付通道接入时，只改这里：换成 WechatVirtualPayAdapter。
+      // purchasePointsPack 在服务端注入真适配器 WechatVirtualPayAdapter
+      // （2026-10-30 真适配器批：Mock 只留本地演示与自动化测试）。
+      // 真实通道：服务端建单签名返回 payParams，前端调 wx.requestVirtualPayment，
+      // 发货只认平台发货推送。AppKey/AppSecret 只从云函数环境变量读，
+      // 绝不写进代码；缺失时适配器抛带码错误（前端显示通用文案）。
       if (modName === 'payment' && (fnName === 'purchase' || fnName === 'purchasePointsPack')) {
         const opts = (args[1] && typeof args[1] === 'object') ? args[1] : {};
-        opts.adapter = new core.payAdapter.MockPayAdapter({ result: 'success' });
+        opts.adapter = new core.payAdapter.WechatVirtualPayAdapter();
         // 第一版发布口径总闸（任务AF）：注入云端闸口信息，core/payment
         // 据此在建单前拒绝普通用户（开关关且非管理员）；本地演示不经此路。
         const cfgDoc = await db.collection(core.models.COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });

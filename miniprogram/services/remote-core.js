@@ -109,7 +109,7 @@ function createRemoteCore(transport) {
       'countSuccessfulInvites', 'evaluateInvite', 'bindInvite', 'getMyInviteSummary',
     ]),
     payment: Object.assign(makeRemoteModule(t, 'payment', [
-      'resolvePricing', 'purchase', 'purchasePointsPack', 'listOrders', 'getPaymentPlatforms',
+      'resolvePricing', 'purchase', 'purchasePointsPack', 'listOrders', 'getOrderForUser', 'getPaymentPlatforms',
     ]), {
       // 纯函数（只吃配置+平台名）：本地实现，绝不走 RPC
       resolvePlatformPurchaseEnabled: localCore.payment.resolvePlatformPurchaseEnabled,

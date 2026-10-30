@@ -567,10 +567,27 @@ if (!name || name.length > 20) throw badConfig('礼包名称不能为空且不�
 if (!Number.isInteger(p.priceFen) || p.priceFen < 0 || p.priceFen > 100000000) {
 throw badConfig('礼包价格（分）必须为0~100000000的整数');
 }
+// 分平台价（2026-10-30，与会员档 DJ 批同口径：可选；给了必须为0~100000000的整数，不给则不落库、购买仍走 priceFen）
+let androidPriceFen; let iosPriceFen;
+if (p.androidPriceFen!== undefined) {
+if (!Number.isInteger(p.androidPriceFen) || p.androidPriceFen < 0 || p.androidPriceFen > 100000000) {
+throw badConfig('礼包安卓价（分）必须为0~100000000的整数');
+}
+androidPriceFen = p.androidPriceFen;
+}
+if (p.iosPriceFen!== undefined) {
+if (!Number.isInteger(p.iosPriceFen) || p.iosPriceFen < 0 || p.iosPriceFen > 100000000) {
+throw badConfig('礼包苹果价（分）必须为0~100000000的整数');
+}
+iosPriceFen = p.iosPriceFen;
+}
 if (!Number.isInteger(p.points) || p.points < 1 || p.points > 100000) {
 throw badConfig('礼包积分必须为1~100000的整数');
 }
-return { id, name, priceFen: p.priceFen, points: p.points };
+const packOut = { id, name, priceFen: p.priceFen, points: p.points };
+if (androidPriceFen!== undefined) packOut.androidPriceFen = androidPriceFen;
+if (iosPriceFen!== undefined) packOut.iosPriceFen = iosPriceFen;
+return packOut;
 });
 changed.push('积分礼包');
 }

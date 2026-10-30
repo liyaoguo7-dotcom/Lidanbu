@@ -44,12 +44,12 @@ test('档位额度：存量会员无 planId 时按最近已支付订单推导档
   const db = await h.newDB();
   const uid = await h.newUser(db, 'legacy_member', { status: 'member', expireAt: FUTURE, graceUntil: null });
   await db.collection(COLLECTIONS.Order).insert({
-    userId: uid, kind: 'plan', planId: 'decade', status: 'paid', createdAt: Date.now() - 1000,
+    userId: uid, kind: 'plan', planId: 'fiveYear', status: 'paid', createdAt: Date.now() - 1000,
   });
   const base = await core.quota.resolveMemberBaseQuota(db, { _id: uid, membership: { status: 'member', expireAt: FUTURE } });
   assert(base, '应解析出基础额度');
-  assert.eq(base.receiveEvents, 50, '十年卡礼薄 50');
-  assert.eq(base.giftRecords, 1000, '十年卡送礼 1000');
+  assert.eq(base.receiveEvents, 50, '五年卡礼薄 50');
+  assert.eq(base.giftRecords, 1000, '五年卡送礼 1000');
 });
 
 test('档位额度：无档位会员走全局会员额度兜底（落库 memberQuota 优先）', async () => {

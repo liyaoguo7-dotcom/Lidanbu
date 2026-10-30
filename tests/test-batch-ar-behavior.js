@@ -58,7 +58,7 @@ async function initCloudAr(openid, { events, uploader } = {}) {
   if (uploader) dataService._setUploaderForTest(uploader);
   const r = await dataService.init();
   assert(r.ok === true, `云模式 init 应成功（实际 ${JSON.stringify(r)}）`);
-  return { calls };
+  return { calls, db };
 }
 
 function recordingUploader(events, uploads) {
@@ -75,8 +75,12 @@ test('AR 云模式：先上传后启动任务，入参带 imageFileIds 不带本
   try {
     const events = [];
     const uploads = [];
-    const { calls } = await initCloudAr('ar-user-1', { events, uploader: recordingUploader(events, uploads) });
-    await dataService.purchaseMembership('month'); // 会员 + 25 分
+    const { calls, db } = await initCloudAr('ar-user-1', { events, uploader: recordingUploader(events, uploads) });
+    process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
+    const buy1 = await dataService.purchaseMembership('month', { platform: 'android', sessionKey: 'test-session-key' }); // 会员 + 25 分
+    assert(buy1.pendingPay === true, '建单应返回待支付');
+    const delivered1 = await apiCore.payment.processNotify(db, new apiCore.payAdapter.WechatVirtualPayAdapter(), { Event: 'xpay_goods_deliver_notify', OutTradeNo: buy1.order.outTradeNo, WeChatPayInfo: { MchOrderNo: 'wx-ar-1' } });
+    assert(delivered1.delivered === true, '发货推送应发货成功');
     events.length = 0;
     calls.length = 0;
     const r = await dataService.recognizePhoto('/tmp/ar-p1.jpg', 'gift', {});
@@ -100,7 +104,7 @@ test('AR 云模式：先上传后启动任务，入参带 imageFileIds 不带本
     assert.eq(r.cost, 5, '识别成功仍扣 5 分');
     assert.eq(r.photoFileIds.length, 1, '结果应回带 photoFileIds 供核对页清理');
     assert.eq(r.photoFileIds[0], `cloud://fake-env.fake-bucket/${uploads[0].cloudPath}`, 'photoFileIds 应为上传得到的 fileID');
-  } finally { dataService._resetForTest(); }
+  } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
 /* ---------- ② 云模式多张：保序、拼接、只扣一次 ---------- */
@@ -108,8 +112,12 @@ test('AR 云模式：先上传后启动任务，入参带 imageFileIds 不带本
 test('AR 云模式多张：上传与 fileID 保序、结果按序拼接、整批只扣一次', async () => {
   try {
     const uploads = [];
-    await initCloudAr('ar-user-2', { uploader: recordingUploader(null, uploads) });
-    await dataService.purchaseMembership('month'); // 25 分
+    const { db: db2 } = await initCloudAr('ar-user-2', { uploader: recordingUploader(null, uploads) });
+    process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
+    const buy2 = await dataService.purchaseMembership('month', { platform: 'android', sessionKey: 'test-session-key' }); // 25 分
+    assert(buy2.pendingPay === true, '建单应返回待支付');
+    const delivered2 = await apiCore.payment.processNotify(db2, new apiCore.payAdapter.WechatVirtualPayAdapter(), { Event: 'xpay_goods_deliver_notify', OutTradeNo: buy2.order.outTradeNo, WeChatPayInfo: { MchOrderNo: 'wx-ar-2' } });
+    assert(delivered2.delivered === true, '发货推送应发货成功');
     const r = await dataService.recognizePhoto(['/tmp/ar-a.jpg', '/tmp/ar-b.jpg'], 'gift', {});
     assert.eq(uploads.length, 2, '应按序上传 2 张');
     assert.eq(uploads[0].filePath, '/tmp/ar-a.jpg', '第一张先传');
@@ -125,17 +133,21 @@ test('AR 云模式多张：上传与 fileID 保序、结果按序拼接、整批
       '拼接顺序 = 拍照顺序',
     );
     assert.eq(await dataService.getPointsBalance(), 20, '整批只扣一次：25 − 5 = 20');
-  } finally { dataService._resetForTest(); }
+  } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
 /* ---------- ③ 上传失败：不启动任务、不扣分 ---------- */
 
 test('AR 云模式上传失败：明确报错、不启动任务、不扣分', async () => {
   try {
-    const { calls } = await initCloudAr('ar-user-3', {
+    const { calls, db: db3 } = await initCloudAr('ar-user-3', {
       uploader: async () => { throw new Error('uploadFile:fail 网络断开'); },
     });
-    await dataService.purchaseMembership('month'); // 25 分
+    process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
+    const buy3 = await dataService.purchaseMembership('month', { platform: 'android', sessionKey: 'test-session-key' }); // 25 分
+    assert(buy3.pendingPay === true, '建单应返回待支付');
+    const delivered3 = await apiCore.payment.processNotify(db3, new apiCore.payAdapter.WechatVirtualPayAdapter(), { Event: 'xpay_goods_deliver_notify', OutTradeNo: buy3.order.outTradeNo, WeChatPayInfo: { MchOrderNo: 'wx-ar-3' } });
+    assert(delivered3.delivered === true, '发货推送应发货成功');
     calls.length = 0;
     let caught = null;
     try { await dataService.recognizePhoto('/tmp/ar-fail.jpg', 'gift', {}); } catch (e) { caught = e; }
@@ -146,7 +158,7 @@ test('AR 云模式上传失败：明确报错、不启动任务、不扣分', as
       '上传失败绝不能启动导入任务',
     );
     assert.eq(await dataService.getPointsBalance(), 25, '上传失败不扣分');
-  } finally { dataService._resetForTest(); }
+  } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
 /* ---------- ④ 本地模式：不上传、行为不变 ---------- */

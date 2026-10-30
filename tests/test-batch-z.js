@@ -49,7 +49,7 @@ test('任务Z-4：积分礼包三档落配置（金额高风险，逐值断言�
   const cfg = require('../miniprogram/config/app-config');
   const packs = cfg.points.packs;
   assert.eq(packs.length, 3, '三档');
-  assert.eq(packs.map((p) => `${p.priceFen}/${p.points}`).join(','), '200/5,1000/25,2000/50', '三档价格（分）/积分逐值');
+  assert.eq(packs.map((p) => `${p.priceFen}/${p.points}`).join(','), '100/10,300/30,500/50', '三档价格（分）/积分逐值');
   assert.eq(cfg.pricing.length, 4, '会员四档不变');
 });
 

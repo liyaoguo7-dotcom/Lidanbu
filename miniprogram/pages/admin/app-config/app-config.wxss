@@ -5,7 +5,10 @@
 .mini-row { display: flex; gap: 8px; padding: 6px 16px; }
 .mini-field { flex: 1; min-width: 0; }
 .mini-label { display: block; font-size: 13px; color: #999; margin-bottom: 2px; }
-.mini-input { width: 100%; box-sizing: border-box; font-size: 16px; background: #fff; border-radius: 8px; padding: 8px 6px; }
+/* 数字被遮挡修复（2026-10-30）：input 只给上下 padding、不限高度时，安桌真机上字形顶部会被裁切（0 看着像 U）。
+   改为固定高度＋行高等于高度、只留左右 padding，数字上下居中、不再裁切。 */
+.mini-input { width: 100%; box-sizing: border-box; font-size: 16px; line-height: 42px; height: 42px; background: #fff; border-radius: 8px; padding: 0 8px; }
+input.form-val { height: 42px; line-height: 42px; }
 .plan-note { font-size: 13px; color: #999; padding: 0 16px 4px; }
 .del { color: #C0392B; font-size: 14px; padding: 8px 16px 2px; }
 .add { color: #F0575A; font-size: 15px; padding: 10px 16px 2px; }

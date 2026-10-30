@@ -1,7 +1,7 @@
 /** DJ批（用户 2026-10-30 定）：
  * 老板后台每档会员价加安卓价＋苹果价两框（留空=跟现价），落库到档位的
  * androidPriceFen／iosPriceFen；购买仍走现价 priceFen（换真适配器时再按渠道选价）；
- * 积分包不分价（未定）。 */
+ * 积分包也分价（2026-10-30 用户定，与会员档同口径）。 */
 const { test, assert } = require('./fw');
 const { newDB } = require('./helpers');
 const core = require('../core');
@@ -43,6 +43,6 @@ test('DJ 老板后台定价页：每档有安卓价＋苹果价两框', () => {
   assert(wxml.includes('苹果价（元）') && wxml.includes('data-field="iosYuan"'), '每档有苹果价框');
   assert(js.includes('androidYuan: formatAmount') && js.includes('iosYuan: formatAmount'), '旧档位无分平台价时回落现价展示');
   assert(js.includes('androidPriceFen') && js.includes('iosPriceFen'), '保存带分平台价');
-  assert((wxml.match(/data-field="androidYuan"/g) || []).length === 1, '安卓价框只在档位区（积分包无分价）');
-  assert((wxml.match(/data-field="iosYuan"/g) || []).length === 1, '苹果价框只在档位区（积分包无分价）');
+  assert((wxml.match(/data-field="androidYuan"/g) || []).length === 2, '安卓价框在档位区＋积分包区（两处）');
+  assert((wxml.match(/data-field="iosYuan"/g) || []).length === 2, '苹果价框在档位区＋积分包区（两处）');
 });

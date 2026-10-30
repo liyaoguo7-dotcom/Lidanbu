@@ -58,6 +58,7 @@ require('./test-invite-config-e2e');
 require('./test-demo-seed');
 require('./test-import-points');
 require('./test-payment');
+require('./test-batch-pay-real');
 require('./test-points');
 require('./test-points-pack');
 require('./test-notify-feedback-cancel');

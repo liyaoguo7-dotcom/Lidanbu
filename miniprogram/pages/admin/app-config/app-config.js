@@ -90,6 +90,8 @@ Page({
         },
         packs: (pts.packs || []).map((p) => ({
           id: p.id, name: p.name, yuan: formatAmount(p.priceFen), points: String(p.points),
+          androidYuan: formatAmount(p.androidPriceFen !== undefined ? p.androidPriceFen : p.priceFen),
+          iosYuan: formatAmount(p.iosPriceFen !== undefined ? p.iosPriceFen : p.priceFen),
         })),
         platforms: {
           ios: !pf.ios || pf.ios.purchaseEnabled !== false,
@@ -237,6 +239,7 @@ Page({
   onAddPack() {
     const packs = [...this.data.packs, {
       id: `pack${Date.now().toString(36)}`, name: '积分包', yuan: '5.00', points: '5',
+      androidYuan: '5.00', iosYuan: '5.00',
     }];
     this.setData({ packs });
   },
@@ -253,9 +256,14 @@ Page({
         const priceFen = yuanToFen(p.yuan);
         if (!p.name.trim()) throw new Error(`第 ${i + 1} 个礼包名称不能为空`);
         if (priceFen === null) throw new Error(`第 ${i + 1} 个礼包价格不正确`);
+        // 分平台价（2026-10-30，与会员档 DJ 批同口径：留空=跟现价；填了必须合法，购买仍走现价、换真适配器时再按渠道选价）
+        const androidPriceFen = p.androidYuan ? yuanToFen(p.androidYuan) : priceFen;
+        if (androidPriceFen === null) throw new Error(`第 ${i + 1} 个礼包安卓价不正确`);
+        const iosPriceFen = p.iosYuan ? yuanToFen(p.iosYuan) : priceFen;
+        if (iosPriceFen === null) throw new Error(`第 ${i + 1} 个礼包苹果价不正确`);
         const pts = Number(p.points);
         if (!Number.isInteger(pts) || pts < 1) throw new Error(`第 ${i + 1} 个礼包积分不正确`);
-        return { id: p.id, name: p.name.trim(), priceFen, points: pts };
+        return { id: p.id, name: p.name.trim(), priceFen, points: pts, androidPriceFen, iosPriceFen };
       });
       payload = { registerGrant, photoImportCost, packs };
     } catch (e) {

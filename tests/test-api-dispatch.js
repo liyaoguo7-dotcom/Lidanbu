@@ -15,6 +15,7 @@ function makeMain(openid, seedDoc) {
   sdk.getWXContext = () => ({ OPENID: openid });
   const db = new core.db.CloudDB({ sdk });
   const main = createMain({ sdk, core, db });
+  main.db = db; // 测试可直连同一数据库（如模拟平台发货推送）
   if (seedDoc) {
     // 种 appConfig 单例（如开发布开关）；insert 须在首个业务调用前完成，
     // 用同步启动的 promise 串到 main 前——简单起见测试里直接 await 种子
@@ -94,18 +95,29 @@ test('api分发：importer 导出任务记录与列表（任务AD）', async () 
   assert(empty.ok && empty.data.length === 0, '他人导出历史应为空');
 });
 
-test('api分发：支付经服务端注入 Mock 适配器完成购买；错误码透传（任务AD；任务AF 后需开购买总开关）', async () => {
+test('api分发：支付经服务端注入真适配器建单签名，发货推送到账；错误码透传（任务AD；任务AF 后需开购买总开关）', async () => {
   const main = makeMain('owner-6', { payment: { enabled: true } });
   await main.seedPromise;
-  const buy = await main({ action: 'payment.purchase', args: ['month', {}] });
-  assert(buy.ok, `购买失败：${buy.error || ''}`);
-  assert(buy.data.delivered === true, 'Mock 支付应发货成功');
-  const bal = await main({ action: 'points.getBalance', args: [] });
-  assert(bal.ok, '查余额应成功');
-  assert.eq(bal.data, 25, '注册赠 15 + 月卡赠 10 = 25 分');
-  const bad = await main({ action: 'payment.purchase', args: ['no-such-plan', {}] });
-  assert(bad.ok === false, '不存在的档位应被拒');
-  assert.eq(bad.code, 'plan-not-found', '信封应透传机器错误码 plan-not-found');
+  // 云端注入的真适配器从环境变量读 AppKey（生产同口径）：测试用假密钥，用完删掉
+  process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
+  try {
+    const buy = await main({ action: 'payment.purchase', args: ['month', { platform: 'android', sessionKey: 'test-session-key' }] });
+    assert(buy.ok, `建单失败：${buy.error || ''}`);
+    assert(buy.data.pendingPay === true, '真适配器建单应返回待支付（不直接发货）');
+    assert(buy.data.payParams && buy.data.payParams.paySig, '应返回签名');
+    assert.eq(buy.data.productId, 'month_android', '安卓平台应对 month_android 道具');
+    // 模拟平台发货推送（发货只认推送，不认前端回调）
+    const delivered = await core.payment.processNotify(main.db, new core.payAdapter.WechatVirtualPayAdapter(), { Event: 'xpay_goods_deliver_notify', OutTradeNo: buy.data.order.outTradeNo, WeChatPayInfo: { MchOrderNo: 'wx-test-001' } });
+    assert(delivered.delivered === true, '发货推送应发货成功');
+    const bal = await main({ action: 'points.getBalance', args: [] });
+    assert(bal.ok, '查余额应成功');
+    assert.eq(bal.data, 25, '注册赠 15 + 月卡赠 10 = 25 分');
+    const bad = await main({ action: 'payment.purchase', args: ['no-such-plan', { platform: 'android', sessionKey: 'test-session-key' }] });
+    assert(bad.ok === false, '不存在的档位应被拒');
+    assert.eq(bad.code, 'plan-not-found', '信封应透传机器错误码 plan-not-found');
+  } finally {
+    delete process.env.VIRTUAL_PAY_APP_KEY;
+  }
 });
 
 test('api分发：fontFile 服务端代取字体（白名单＋容器缓存＋非法 fileID 拒绝）', async () => {

@@ -53,6 +53,11 @@ const MESSAGES = {
   'order-not-found': '订单不存在',
   'not-order-owner': '无权查看该订单',
   'pay-not-implemented': '支付通道正在接入中，请稍后再试',
+  'pay-platform-required': '未识别到设备平台，请重新进入购买页再试',
+  'pay-product-missing': '该商品尚未在微信后台配置道具，请联系客服',
+  'pay-appkey-missing': '支付通道正在接入中，请稍后再试',
+  'pay-appsecret-missing': '支付通道正在接入中，请稍后再试',
+  'pay-session-missing': '登录已过期，请重新进入小程序再试',
   // —— 第一版发布口径（任务AF） ——
   'payment-closed': '会员购买暂未开放，敬请期待',
   'photo-import-closed': '拍照导入敬请期待',

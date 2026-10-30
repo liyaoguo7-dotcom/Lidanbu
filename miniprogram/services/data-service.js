@@ -135,6 +135,17 @@ function friendly(err) {
 const ORDER_STATUS_TEXT = {
   pending: '待支付', paid: '已开通', failed: '支付失败', cancelled: '已取消', refunded: '已退款',
 };
+/** 分平台显示价（纯函数）：优先用本地 core 的 platformPriceFen（与服务端同口径），
+ * 拿不到时跟现价 priceFen；页面与服务端显示一致，用户只看到自己平台的价。 */
+function platformPriceFenOf(item, platform) {
+  try {
+    if (coreLib && coreLib.payAdapter && typeof coreLib.payAdapter.platformPriceFen === 'function') {
+      return coreLib.payAdapter.platformPriceFen(item, platform);
+    }
+  } catch (e) { /* 兜底跟现价 */ }
+  return item.priceFen;
+}
+
 function presentOrder(o) {
   if (!o) return null;
   const dstr = (ts) => (ts ? new Date(ts).toLocaleDateString('zh-CN') : '');
@@ -144,6 +155,7 @@ function presentOrder(o) {
     kindText: o.kind === 'pointsPack' ? '积分礼包' : '会员套餐',
     planId: o.planId,
     planName: o.planName,
+    outTradeNo: o.outTradeNo || '',
     days: o.days,
     pointsAmount: o.pointsAmount || 0,
     amountText: core.format.formatAmount(o.amountFen),
@@ -536,23 +548,31 @@ const service = {
   },
 
   // —— 支付与会员订单（任务K：适配层 + 模拟支付） ——
-  /** 生效价格档位：老板平台配置优先、否则静态占位价；金额已格式化，页面不写死价格 */
-  async getPricing() {
+  /** 生效价格档位：老板平台配置优先、否则静态占位价；金额已格式化，页面不写死价格。
+   * 真适配器批：显示价按终端平台取（安卓价/苹果价，缺省跟现价），用户在
+   * 应用里只看到自己手机平台的价（苹果端不提示去安卓付）。 */
+  async getPricing(platform) {
     const plans = await core.payment.resolvePricing(_db);
-    return plans.map((p) => ({ ...p, priceText: core.format.formatAmount(p.priceFen) }));
+    return plans.map((p) => ({ ...p, priceText: core.format.formatAmount(platformPriceFenOf(p, platform)) }));
   },
 
   /**
    * 购买会员：本地演示走 Mock 模拟支付（默认成功，走与真实通道相同的
-   * 建单→调起→回调发货链路）；真实环境换 WechatVirtualPayAdapter，
-   * 本方法与页面均不改（见 core/pay-adapter.js、docs/T0.3）。
+   * 建单→调起→回调发货链路）；云模式由 api 分发在服务端注入真适配器：
+   * 建单只返回 payParams（不发货），页面拿它调 wx.requestVirtualPayment，
+   * 发货以平台发货推送为准（本方法返回 pendingPay + payParams，页面轮询订单）。
+   * @param {string} planId 档位 id
+   * @param {{platform?:string, loginCode?:string}} opts 平台与登录码（页面传入，
+   *   云模式经 RPC 原样透传到服务端建单签名用；loginCode 由页面 wx.login 实时取）
    */
-  async purchaseMembership(planId) {
+  async purchaseMembership(planId, opts = {}) {
     try {
-      // 支付适配器不能跨 RPC：本地模式本地注入 Mock；云模式传空 opts，
-      // 由 api 分发在服务端注入同口径的 MockPayAdapter（见 cloudfunctions/api/index.js）
-      const opts = _isCloud() ? {} : { adapter: new coreLib.payAdapter.MockPayAdapter({ result: 'success' }) };
-      const r = await core.payment.purchase(_db, _userId, planId, opts);
+      // 支付适配器不能跨 RPC：本地模式本地注入 Mock；云模式传平台与登录码，
+      // 由 api 分发在服务端注入真适配器（见 cloudfunctions/api/index.js）。
+      // sessionKey 仅测试用（回环测试免网络签名）；页面只传 loginCode。
+      const callOpts = _isCloud() ? { platform: opts.platform, loginCode: opts.loginCode, sessionKey: opts.sessionKey } : { adapter: new coreLib.payAdapter.MockPayAdapter({ result: 'success' }) };
+      const r = await core.payment.purchase(_db, _userId, planId, callOpts);
+      if (r.pendingPay) return { delivered: false, pendingPay: true, payParams: r.payParams, productId: r.productId, order: presentOrder(r.order) };
       return { delivered: r.delivered, order: presentOrder(r.order) };
     } catch (e) {
       if (e && e.code === 'plan-not-found') throw new Error('这个会员档位已经下架啦，看看其他档位吧');
@@ -608,25 +628,29 @@ const service = {
     } catch (e) { throw new Error(friendly(e)); }
   },
 
-  /** 生效积分规则（数字全部读配置：注册赠送/拍照单价/礼包档位，礼包金额已格式化） */
-  async getPointsSettings() {
+  /** 生效积分规则（数字全部读配置：注册赠送/拍照单价/礼包档位，礼包金额已格式化；
+   * 真适配器批：显示价按终端平台取，与套餐同口径） */
+  async getPointsSettings(platform) {
     const s = await core.points.resolvePointsSettings(_db);
     return {
       registerGrant: s.registerGrant,
       photoImportCost: s.photoImportCost,
-      packs: (s.packs || []).map((p) => ({ ...p, priceText: core.format.formatAmount(p.priceFen) })),
+      packs: (s.packs || []).map((p) => ({ ...p, priceText: core.format.formatAmount(platformPriceFenOf(p, platform)) })),
     };
   },
 
   /**
    * 购买积分礼包：仅会员可买（core 下单层校验，非会员不产生订单）。
-   * 本地演示走 Mock 模拟支付，链路与套餐购买同构。
+   * 本地演示走 Mock 模拟支付，链路与套餐购买同构；云模式走真适配器，
+   * 返回 pendingPay + payParams（页面调起虚拟支付、轮询订单），与套餐同口径。
    */
-  async purchasePointsPack(packId) {
+  async purchasePointsPack(packId, opts = {}) {
     try {
-      // 适配器注入方式同 purchaseMembership（云模式由服务端注入）
-      const opts = _isCloud() ? {} : { adapter: new coreLib.payAdapter.MockPayAdapter({ result: 'success' }) };
-      const r = await core.payment.purchasePointsPack(_db, _userId, packId, opts);
+      // 适配器注入方式同 purchaseMembership（云模式由服务端注入真适配器；
+      // sessionKey 仅测试用，页面只传 loginCode）
+      const callOpts = _isCloud() ? { platform: opts.platform, loginCode: opts.loginCode, sessionKey: opts.sessionKey } : { adapter: new coreLib.payAdapter.MockPayAdapter({ result: 'success' }) };
+      const r = await core.payment.purchasePointsPack(_db, _userId, packId, callOpts);
+      if (r.pendingPay) return { delivered: false, pendingPay: true, payParams: r.payParams, productId: r.productId, order: presentOrder(r.order) };
       return { delivered: r.delivered, order: presentOrder(r.order) };
     } catch (e) {
       if (e && (e.code === 'points-pack-member-only' || e.code === 'points-pack-not-found')) {
@@ -634,6 +658,14 @@ const service = {
       }
       throw new Error(friendly(e));
     }
+  },
+
+  /** 取一张订单（购买页轮询发货状态用；仅本人可见） */
+  async getOrder(orderId) {
+    try {
+      const o = await core.payment.getOrderForUser(_db, _userId, orderId);
+      return presentOrder(o);
+    } catch (e) { throw new Error(friendly(e)); }
   },
 
   /**
@@ -649,8 +681,8 @@ const service = {
     const [membership, pointsBalance, plans, settings, platformOverrides] = await Promise.all([
       this.getMembership(),
       this.getPointsBalance(),
-      this.getPricing(),
-      this.getPointsSettings(),
+      this.getPricing(platform),
+      this.getPointsSettings(platform),
       (async () => {
         try { return await core.payment.getPaymentPlatforms(_db, _userId); }
         catch (e) { return null; /* 读不到覆盖就用静态配置 */ }
@@ -672,6 +704,8 @@ const service = {
       photoImportCost: settings.photoImportCost,
       purchaseEnabled: core.payment.resolvePlatformPurchaseEnabled(mergedConfig, platform),
       platformDisabledTip: (AppConfig.payment && AppConfig.payment.platformDisabledTip) || '',
+      refundNotice: (AppConfig.payment && AppConfig.payment.refundNotice) || '',
+      isDemo: !_isCloud(),
     };
   },
 

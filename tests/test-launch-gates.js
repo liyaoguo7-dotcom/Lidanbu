@@ -65,35 +65,38 @@ test('AF发布口径：云端普通用户购买被拒——不建单、不赠分
     await initCloud('af-user-1');
     assert.eq(await dataService.getPointsBalance(), 15, '注册赠分 15');
     await expectThrow(() => dataService.purchaseMembership('month'), '会员购买暂未开放，敬请期待', '买月卡应被总闸拒');
-    await expectThrow(() => dataService.purchasePointsPack('pack10'), '会员购买暂未开放，敬请期待', '买积分包应被总闸拒（先于会员门禁）');
+    await expectThrow(() => dataService.purchasePointsPack('points10'), '会员购买暂未开放，敬请期待', '买积分包应被总闸拒（先于会员门禁）');
     assert.eq(await dataService.getPointsBalance(), 15, '被拒后余额不变');
     const orders = await dataService.listMyOrders();
     assert.eq(orders.length, 0, '被拒不产生订单');
   } finally { dataService._resetForTest(); }
 });
 
-test('AF发布口径：管理员模拟购买成功、订单标 mock、会员生效', async () => {
+test('AF发布口径：管理员绕过总闸建单（真适配器待支付，订单不标 mock）', async () => {
+  process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
   try {
     await initCloud('af-admin-1', { adminIds: ['af-admin-1'] });
     assert.eq(await dataService.isAdmin(), true, '名单内应判管理员');
-    const r = await dataService.purchaseMembership('month');
-    assert(r && r.delivered === true, '管理员购买应发货');
+    const r = await dataService.purchaseMembership('month', { platform: 'android', sessionKey: 'test-session-key' });
+    assert(r && r.pendingPay === true, '管理员建单应返回待支付（发货只认推送）');
+    assert(r.payParams && r.payParams.paySig, '应返回签名');
     const orders = await dataService.listMyOrders();
     assert.eq(orders.length, 1, '应有 1 张订单');
-    assert.eq(orders[0].mock, true, '模拟渠道订单应标 mock');
-    assert.eq(await dataService.getPointsBalance(), 25, '注册 15 + 月卡赠 10');
-  } finally { dataService._resetForTest(); }
+    assert.eq(orders[0].status, 'pending', '订单应为待支付');
+    assert.eq(orders[0].mock, false, '真实渠道订单不应标 mock');
+  } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
-test('AF发布口径：打开 payment.enabled 后普通用户可买（仍标 mock）', async () => {
+test('AF发布口径：打开 payment.enabled 后普通用户可建单（真适配器待支付）', async () => {
+  process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
   try {
     await initCloud('af-user-2', { payment: { enabled: true } });
-    const r = await dataService.purchaseMembership('year');
-    assert(r && r.delivered === true, '开闸后应购买成功');
+    const r = await dataService.purchaseMembership('year', { platform: 'ios', sessionKey: 'test-session-key' });
+    assert(r && r.pendingPay === true, '开闸后应建单成功（待支付）');
     const orders = await dataService.listMyOrders();
-    assert.eq(orders[0].mock, true, '真实支付接入前渠道仍是模拟、订单标 mock');
-    assert.eq(await dataService.getPointsBalance(), 15 + 100, '年卡赠 100 分到账');
-  } finally { dataService._resetForTest(); }
+    assert.eq(orders[0].status, 'pending', '订单应为待支付');
+    assert.eq(orders[0].mock, false, '真实渠道订单不应标 mock');
+  } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
 test('AF发布口径：拍照默认关——开关读取为关、识别与写入服务端双拒', async () => {

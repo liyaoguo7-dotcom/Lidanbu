@@ -11,6 +11,8 @@
 
 <view class="warn-banner" wx:if="{{!buyEnabled && platformDisabledTip}}">{{platformDisabledTip}}</view>
 <view class="warn-banner" wx:if="{{doneText}}">{{doneText}}</view>
+<!-- 真适配器批：付款前明示退款规则（文案来自配置，改文案不动页面；付款时还会弹窗再确认一次） -->
+<view class="tip" wx:if="{{refundNotice}}">{{refundNotice}}</view>
 
 <view class="section-title" id="plans-section">会员套餐</view>
 <!-- 套餐小方块（任务Z 第 4 项）：两列网格、点按选中、底部统一购买；
@@ -59,4 +61,4 @@
   </view>
 </view>
 
-<view class="tip">现在是演示环境：点击购买会模拟支付成功，不会产生真实扣费。价格以本页显示为准，后台可随时调整。</view>
+<view class="tip">价格以本页显示为准，后台可随时调整。</view>

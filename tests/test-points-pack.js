@@ -134,13 +134,13 @@ test('购买页渲染数据来自配置：改价/改赠分随变，下架档位�
   const viewM = buildPurchaseView({ plans, packs: AppConfig.points.packs, state: 'member', purchaseEnabled: true });
   assert(!viewM.packsLocked && viewM.packs.every((p) => !p.locked), '会员视角礼包可买');
 
-  // 老板平台改配置：年卡改价+改赠分、十年卡下架、礼包改积分 → 渲染随变
+  // 老板平台改配置：年卡改价+改赠分、五年卡下架、礼包改积分 → 渲染随变
   await db.collection(core.models.COLLECTIONS.AppConfig).insert({
     _id: 'singleton',
     adminIds: ['bossP2'],
     pricing: plans.map((p) => (p.id === 'year'
       ? { ...p, priceFen: 6600, grantPoints: 88 }
-      : p.id === 'decade' ? { ...p, onShelf: false } : p)),
+      : p.id === 'fiveYear' ? { ...p, onShelf: false } : p)),
     points: { packs: [{ id: 'pack9', name: '大礼包', priceFen: 900, points: 12 }] },
   });
   const plans2 = await core.payment.resolvePricing(db);
@@ -148,7 +148,7 @@ test('购买页渲染数据来自配置：改价/改赠分随变，下架档位�
   const year2 = view2.plans.find((p) => p.id === 'year');
   assert.eq(year2.priceFen, 6600, '卡片价格随配置变');
   assert.eq(year2.grantPoints, 88, '卡片赠分随配置变');
-  assert(!view2.plans.some((p) => p.id === 'decade'), '下架档位不出现在购买页');
+  assert(!view2.plans.some((p) => p.id === 'fiveYear'), '下架档位不出现在购买页');
   assert.eq(view2.packs.length, 1, '礼包渲染新配置档位');
   assert.eq(view2.packs[0].points, 12, '礼包积分随配置变');
   // 改后的礼包真能按新价新分购买到账
@@ -186,6 +186,20 @@ test('老板平台：积分规则与平台开关写接口（管理员校验+落�
   const eff = await core.points.resolvePointsSettings(db);
   assert.eq(eff.photoImportCost, 6, '拍照单价生效');
   assert.eq(eff.packs[0].points, 3, '礼包档位生效（购买页/下单同源）');
+
+  // 2026-10-30：积分包分平台价（与会员档同口径：可选、给了必须合法、购买仍走现价）
+  const r1b = await core.admin.updatePointsSettings(db, 'bossP2', {
+    packs: [{ id: 'packa', name: '小包', priceFen: 300, points: 3, androidPriceFen: 300, iosPriceFen: 400 }],
+  });
+  assert.eq(r1b.points.packs[0].androidPriceFen, 300, '礼包安卓价落库');
+  assert.eq(r1b.points.packs[0].iosPriceFen, 400, '礼包苹果价落库');
+  err = null;
+  try {
+    await core.admin.updatePointsSettings(db, 'bossP2', {
+      packs: [{ id: 'packa', name: '小包', priceFen: 300, points: 3, iosPriceFen: -1 }],
+    });
+  } catch (e) { err = e; }
+  assert(err && err.code === 'bad-config', '礼包苹果价负数被拒');
 
   const r2 = await core.admin.updatePaymentPlatforms(db, 'bossP2', { ios: { purchaseEnabled: false } });
   assert.eq(r2.paymentPlatforms.ios.purchaseEnabled, false, 'iOS 开关落库');

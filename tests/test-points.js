@@ -171,16 +171,16 @@ test('积分：退款时赠分已部分消耗，只写审计不强扣', async ()
   assert(logs.some((l) => l.detail.includes('不强扣')), '只写审计：审计里记明不强扣口径');
 });
 
-test('积分：套餐配置（十年卡下架下单被拒、改赠分新单快照随变、推荐标记可读）', async () => {
+test('积分：套餐配置（五年卡下架下单被拒、改赠分新单快照随变、推荐标记可读）', async () => {
   const db = await h.newDB();
   const uid = await h.newUser(db, 'pts_shelf');
-  // 十年卡下架（注入配置）→ 下单被拒，不产生订单
+  // 五年卡下架（注入配置）→ 下单被拒，不产生订单
   const offShelf = {
     ...AppConfig,
-    pricing: AppConfig.pricing.map((p) => (p.id === 'decade' ? { ...p, onShelf: false } : p)),
+    pricing: AppConfig.pricing.map((p) => (p.id === 'fiveYear' ? { ...p, onShelf: false } : p)),
   };
   let err = null;
-  try { await core.payment.createOrder(db, uid, 'decade', { now: T0, config: offShelf }); } catch (e) { err = e; }
+  try { await core.payment.createOrder(db, uid, 'fiveYear', { now: T0, config: offShelf }); } catch (e) { err = e; }
   assert(err && err.code === 'plan-not-found', '下架档位下单应以 plan-not-found 拒绝');
   assert.eq(await db.collection(COLLECTIONS.Order).count({}), 0, '拒绝后未产生订单');
   // 改价/改赠分 → 新单快照随变

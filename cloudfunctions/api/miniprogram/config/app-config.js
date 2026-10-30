@@ -88,10 +88,10 @@ const AppConfig = {
    * onShelf=false 即"一键下架"：购买页不显示、下单被拒（与不存在同口径）。
    */
   pricing: [
-    { id: 'month', name: '月卡', priceFen: 1000, days: 30, grantPoints: 10, quota: { receiveEvents: 10, recordsPerEvent: 200, giftRecords: 200, contacts: 200 }, recommended: false, onShelf: true },
-    { id: 'halfYear', name: '半年卡', priceFen: 4900, days: 180, grantPoints: 50, quota: { receiveEvents: 20, recordsPerEvent: 350, giftRecords: 350, contacts: 350 }, recommended: false, onShelf: true },
-    { id: 'year', name: '年卡', priceFen: 7000, days: 365, grantPoints: 100, quota: { receiveEvents: 30, recordsPerEvent: 500, giftRecords: 500, contacts: 500 }, recommended: true, onShelf: true },
-    { id: 'decade', name: '十年卡', priceFen: 19800, days: 3650, grantPoints: 500, quota: { receiveEvents: 50, recordsPerEvent: 1000, giftRecords: 1000, contacts: 1000 }, recommended: false, onShelf: true },
+    { id: 'month', name: '月卡', priceFen: 1000, androidPriceFen: 1000, iosPriceFen: 1200, days: 30, grantPoints: 10, quota: { receiveEvents: 10, recordsPerEvent: 200, giftRecords: 200, contacts: 200 }, recommended: false, onShelf: true },
+    { id: 'halfYear', name: '半年卡', priceFen: 4900, androidPriceFen: 4900, iosPriceFen: 5600, days: 180, grantPoints: 50, quota: { receiveEvents: 20, recordsPerEvent: 350, giftRecords: 350, contacts: 350 }, recommended: false, onShelf: true },
+    { id: 'year', name: '年卡', priceFen: 7000, androidPriceFen: 7000, iosPriceFen: 7900, days: 365, grantPoints: 100, quota: { receiveEvents: 30, recordsPerEvent: 500, giftRecords: 500, contacts: 500 }, recommended: true, onShelf: true },
+    { id: 'fiveYear', name: '五年卡', priceFen: 19800, androidPriceFen: 19800, iosPriceFen: 22500, days: 1825, grantPoints: 500, quota: { receiveEvents: 50, recordsPerEvent: 1000, giftRecords: 1000, contacts: 1000 }, recommended: false, onShelf: true },
   ],
 
   /** 积分规则（用户 2026-10-21 确认口径；数字全放配置，老板平台可覆盖 appConfig 文档 points 段）
@@ -104,9 +104,9 @@ const AppConfig = {
     registerGrant: 15,
     photoImportCost: 5,
     packs: [
-      { id: 'pack2', name: '5积分包', priceFen: 200, points: 5 },
-      { id: 'pack10', name: '25积分包', priceFen: 1000, points: 25 },
-      { id: 'pack20', name: '50积分包', priceFen: 2000, points: 50 },
+      { id: 'points10', name: '10积分包', priceFen: 100, androidPriceFen: 100, iosPriceFen: 200, points: 10 },
+      { id: 'points30', name: '30积分包', priceFen: 300, androidPriceFen: 300, iosPriceFen: 500, points: 30 },
+      { id: 'points50', name: '50积分包', priceFen: 500, androidPriceFen: 500, iosPriceFen: 800, points: 50 },
     ],
   },
 
@@ -133,6 +133,10 @@ const AppConfig = {
     },
     /** 某终端购买入口关闭时，购买页显示的大白话提示（可改文案，不改页面代码） */
     platformDisabledTip: '这台设备上暂时不能购买，会员和积分在其他设备上也能正常用，换台设备试试吧',
+    /** 付款前明示的退款规则（真适配器批）：购买页展示 + 付款前弹窗确认共用
+     * 同一段文案，改文案不动页面代码。注意：苹果端不得提示用户去安卓付，
+     * 本段只讲各渠道自己的退款路径，不作跨端购买引导。 */
+    refundNotice: '退款规则：安卓用户可在购买后主动申请退款；iOS 用户须自行向 App Store 申请退款。支付 180 天内的退款，平台退还手续费。套餐退款时，未消耗的赠送积分整额收回，已消耗的不强扣。会员退款按剩余天数退，扣掉已用天数。',
   },
 
   /** 功能总开关（任务AF）：默认关，老板平台可改（appConfig 文档 features 段覆盖） */

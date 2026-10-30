@@ -20,19 +20,19 @@ async function expireAtOf(db, userId) {
   return u.membership && u.membership.expireAt;
 }
 
-test('支付：生效档位默认来自静态配置（月/半年/年/十年四档，用户已定价）', async () => {
+test('支付：生效档位默认来自静态配置（月/半年/年/五年四档，用户已定价）', async () => {
   const db = await h.newDB();
   const plans = await core.payment.resolvePricing(db);
   assert.eq(plans.length, 4, '默认四档');
-  assert.eq(plans.map((p) => p.id).join(','), 'month,halfYear,year,decade', '档位顺序与静态配置一致');
+  assert.eq(plans.map((p) => p.id).join(','), 'month,halfYear,year,fiveYear', '档位顺序与静态配置一致');
   assert.eq(plans[0].priceFen, AppConfig.pricing[0].priceFen, '价格与静态配置一致');
   assert.eq(plans[0].grantPoints, 10, '月卡赠 10 积分');
   assert.eq(plans[1].grantPoints, 50, '半年卡赠 50 积分');
   assert.eq(plans[2].days, 365, '年卡 365 天');
   assert.eq(plans[2].grantPoints, 100, '年卡赠 100 积分');
   assert(plans[2].recommended === true, '年卡带"推荐"标记');
-  assert.eq(plans[3].days, 3650, '十年卡 3650 天');
-  assert.eq(plans[3].grantPoints, 500, '十年卡赠 500 积分');
+  assert.eq(plans[3].days, 1825, '五年卡 1825 天');
+  assert.eq(plans[3].grantPoints, 500, '五年卡赠 500 积分');
   assert(plans.every((p) => p.onShelf === true), '四档默认全部上架');
 });
 
@@ -209,16 +209,19 @@ test('订单可见性：他人订单不可见、不可取、不可退款', async
   assert(err && err.code === 'order-not-found', '不存在的订单如实报错');
 });
 
-test('支付适配层：微信虚拟支付骨架未接真实支付（pay-not-implemented）', async () => {
-  const wx = new core.payAdapter.WechatVirtualPayAdapter();
+test('支付适配层：微信虚拟支付已接通（建单签名、调起与退款走前端/后台通道）', async () => {
+  const wx = new core.payAdapter.WechatVirtualPayAdapter({ appKey: 'k', appSecret: 's', env: {} });
   assert.eq(wx.channel, 'wxvirtual', '通道名');
-  for (const m of ['createOrder', 'requestPay', 'refund']) {
+  const r = await wx.createOrder({ outTradeNo: 'LD1', amountFen: 1000, planId: 'month', kind: 'plan' }, { platform: 'android', sessionKey: 'sk' });
+  assert(r.payParams && r.payParams.paySig, '建单应返回签名');
+  assert.eq(r.productId, 'month_android', '安卓道具');
+  for (const m of ['requestPay', 'refund']) {
     let err = null;
     try { await wx[m]({ outTradeNo: 'X', amountFen: 1 }); } catch (e) { err = e; }
-    assert(err && err.code === 'pay-not-implemented', `${m} 应为未接状态`);
+    assert(err && err.code === 'pay-not-implemented', `${m} 应为未接服务端口径（调起走前端、退款走后台/应用商店）`);
   }
-  const n = wx.handleNotify({ Event: 'xpay_goods_deliver_notify', OutTradeNo: 'LD1', amountFen: 100 });
-  assert(n.paid && n.outTradeNo === 'LD1' && n.amountFen === 100, '发货推送报文归一化形状正确');
+  const n = wx.handleNotify({ Event: 'xpay_goods_deliver_notify', OutTradeNo: 'LD1', WeChatPayInfo: { MchOrderNo: 'wx-9' } });
+  assert(n.paid && n.outTradeNo === 'LD1' && n.platformOrderNo === 'wx-9', '发货推送报文归一化形状正确');
 });
 
 test('支付：赠送积分随订单快照入账，改配置后已下单仍按快照送分', async () => {

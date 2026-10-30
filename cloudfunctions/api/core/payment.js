@@ -10,6 +10,9 @@
  *   createOrder 建单(pending) → adapter.requestPay 调起支付
  *   → 成功后经"回调"入口 processNotify/handleNotify 验单发货；
  *   前端结果不直接发货，发货只认回调（真实通道为平台发货推送）。
+ * 真实通道（wxvirtual）流程不同：purchase 建单后只返回 payParams（不调起、
+ * 不发货），前端调 wx.requestVirtualPayment，平台发货推送经 processNotify
+ * 发货；requestPay / buildNotify 在真实适配器上故意抛错，防旧编排误调。
  *
  * 发货（会员续期）规则 —— 与老板平台手工开通 admin.setMemberPlan 同一口径：
  *   base = max(当前时刻, 现有 expireAt)；newExpireAt = base + days。
@@ -52,6 +55,7 @@ const { COLLECTIONS, now } = require('./models');
 const AppConfig = require('../miniprogram/config/app-config');
 const audit = require('./audit');
 const errors = require('./errors');
+const payAdapter = require('./pay-adapter');
 const points = require('./points');
 const quota = require('./quota');
 
@@ -82,6 +86,9 @@ function normalizePlan(p) {
     recommended: !!p.recommended,
     onShelf: p.onShelf !== false, // 只有显式 false 才算下架（一键下架口径）
   };
+  // 分平台价（DJ 批 + 真适配器批）：整数才带出，缺省时购买走 priceFen 兜底
+  if (Number.isInteger(p.androidPriceFen)) out.androidPriceFen = p.androidPriceFen;
+  if (Number.isInteger(p.iosPriceFen)) out.iosPriceFen = p.iosPriceFen;
   // 档位额度（2026-10-25 会员额度按档位分）：合法才带出，core/quota 据此拦截
   const q = quota.sanitizePlanQuota(p.quota);
   if (q) out.quota = q;
@@ -139,12 +146,29 @@ async function createOrder(db, userId, planId, opts = {}) {
   const plan = plans.find((p) => p.id === planId);
   // 档位不存在与已下架同口径拒绝（下架档位购买页不显示；绕过页面直接下单也拒）
   if (!plan || plan.onShelf === false) throw payError('plan-not-found', errors.userMessage('plan-not-found'));
+  // 分平台价（真适配器批）：真实通道必须带合法平台，按平台价快照并锁定
+  // 对应道具 ID（道具与渠道一致校验）；模拟/演示通道无平台时走现价。
+  const platform = payAdapter.normalizePlatform(opts.platform);
+  const isReal = !!(opts.adapter && opts.adapter.channel === 'wxvirtual');
+  let amountFen = plan.priceFen;
+  let productId = null;
+  if (isReal) {
+    if (!platform) throw payError('pay-platform-required', errors.userMessage('pay-platform-required'));
+    amountFen = payAdapter.platformPriceFen(plan, platform);
+    productId = payAdapter.resolveProductId(plan.id, platform);
+    if (!productId) throw payError('pay-product-missing', errors.userMessage('pay-product-missing'));
+  } else if (platform) {
+    amountFen = payAdapter.platformPriceFen(plan, platform);
+    productId = payAdapter.resolveProductId(plan.id, platform);
+  }
   const doc = {
     userId,
     kind: 'plan', // 订单种类：'plan' 会员套餐 | 'pointsPack' 积分礼包（见 models 字典）
     planId: plan.id,
     planName: plan.name,
-    amountFen: plan.priceFen, // 快照：之后改价不影响本单，回调按此验金额
+    amountFen, // 快照：之后改价不影响本单，回调按此验金额
+    platform: platform || null,
+    productId,
     days: plan.days,
     grantPoints: plan.grantPoints || 0, // 赠送积分快照：之后改配置不影响本单，发货时按此入账
     status: 'pending',
@@ -163,9 +187,12 @@ async function createOrder(db, userId, planId, opts = {}) {
   return { ...doc, _id };
 }
 
-/** 积分礼包字段归一化（配置 points.packs 的一项） */
+/** 积分礼包字段归一化（配置 points.packs 的一项；分平台价同档位口径） */
 function normalizePack(p) {
-  return { id: p.id, name: p.name, priceFen: p.priceFen, points: p.points };
+  const out = { id: p.id, name: p.name, priceFen: p.priceFen, points: p.points };
+  if (Number.isInteger(p.androidPriceFen)) out.androidPriceFen = p.androidPriceFen;
+  if (Number.isInteger(p.iosPriceFen)) out.iosPriceFen = p.iosPriceFen;
+  return out;
 }
 
 /**
@@ -203,12 +230,29 @@ async function createPointsPackOrder(db, userId, packId, opts = {}) {
   const packs = await resolvePointsPacks(db, config);
   const pack = packs.find((p) => p.id === packId);
   if (!pack) throw payError('points-pack-not-found', errors.userMessage('points-pack-not-found'));
+  // 分平台价（真适配器批）：与套餐建单同口径（真实通道必须带合法平台，
+  // 按平台价快照并锁定对应道具 ID；模拟通道无平台时走现价）。
+  const platform = payAdapter.normalizePlatform(opts.platform);
+  const isReal = !!(opts.adapter && opts.adapter.channel === 'wxvirtual');
+  let amountFen = pack.priceFen;
+  let productId = null;
+  if (isReal) {
+    if (!platform) throw payError('pay-platform-required', errors.userMessage('pay-platform-required'));
+    amountFen = payAdapter.platformPriceFen(pack, platform);
+    productId = payAdapter.resolveProductId(pack.id, platform);
+    if (!productId) throw payError('pay-product-missing', errors.userMessage('pay-product-missing'));
+  } else if (platform) {
+    amountFen = payAdapter.platformPriceFen(pack, platform);
+    productId = payAdapter.resolveProductId(pack.id, platform);
+  }
   const doc = {
     userId,
     kind: 'pointsPack',
     planId: pack.id,
     planName: pack.name,
-    amountFen: pack.priceFen, // 快照：回调按此验金额
+    amountFen, // 快照：回调按此验金额
+    platform: platform || null,
+    productId,
     days: 0, // 积分礼包不发会员时长
     grantPoints: 0, // 套餐赠分字段对礼包不用，积分走 pointsAmount 快照
     pointsAmount: pack.points, // 积分快照：发货时经 points.grant 幂等入账
@@ -260,20 +304,26 @@ async function handleNotify(db, payload, opts = {}) {
     return { ok: true, delivered: false, duplicated: true, expireAt: order.deliveredExpireAt };
   }
   if (order.status !== 'pending') return { ok: false, reason: 'order-not-payable' };
-  // 金额以订单快照为准，不一致拒绝发货（订单保持 pending，可由正确回调再发）
-  if (payload.amountFen !== order.amountFen) {
-    await audit.log(db, {
-      ownerId: order.userId, actorId: 'pay-notify', action: 'payment',
-      targetType: 'order', targetId: order._id,
-      detail: '支付回调金额与订单快照不一致，已拒绝发货',
-    });
-    return { ok: false, reason: 'amount-mismatch' };
+  // 金额以订单快照为准，不一致拒绝发货（订单保持 pending，可由正确回调再发）。
+  // 平台推送不带可信金额字段时（amountFen 为空）凭平台单号放行：金额已在
+  // 下单签名时由平台验过；无平台单号又无金额的报文一律拒绝（防伪造回调）。
+  if (payload.amountFen !== undefined && payload.amountFen !== null) {
+    if (payload.amountFen !== order.amountFen) {
+      await audit.log(db, {
+        ownerId: order.userId, actorId: 'pay-notify', action: 'payment',
+        targetType: 'order', targetId: order._id,
+        detail: '支付回调金额与订单快照不一致，已拒绝发货',
+      });
+      return { ok: false, reason: 'amount-mismatch' };
+    }
+  } else if (!payload.platformOrderNo) {
+    return { ok: false, reason: 'notify-not-authenticated' };
   }
 
   // 积分礼包发货：不发会员时长，只把快照积分经 points.grant 幂等入账
   // （kind='pack_purchase'、refId=订单号，与套餐赠分并列的对账口径）
   if (order.kind === 'pointsPack') {
-    await col.update({ _id: order._id }, { status: 'paid', paidAt: nowTs });
+    await col.update({ _id: order._id }, { status: 'paid', paidAt: nowTs, platformOrderNo: payload.platformOrderNo || null });
     if (order.pointsAmount > 0) {
       await points.grant(db, order.userId, order.pointsAmount, {
         kind: 'pack_purchase', refId: order.outTradeNo, note: `购买${order.planName}`,
@@ -301,6 +351,7 @@ async function handleNotify(db, payload, opts = {}) {
   await col.update({ _id: order._id }, {
     status: 'paid', paidAt: nowTs,
     baseAt: base, prevExpireAt, deliveredExpireAt: newExpireAt,
+    platformOrderNo: payload.platformOrderNo || null,
   });
   // 套餐赠送积分入账：金额取订单快照 grantPoints，refId=outTradeNo 与时长幂等并列——
   // 同一订单的重复回调只送一次（points.grant 内部幂等，双保险）
@@ -320,7 +371,28 @@ async function handleNotify(db, payload, opts = {}) {
 /** 经适配器归一化后处理回调（真实通道的发货推送从这里进） */
 async function processNotify(db, adapter, rawPayload, opts = {}) {
   const normalized = adapter.handleNotify(rawPayload);
+  if (normalized.refund) return handleRefundPush(db, normalized, opts);
   return handleNotify(db, normalized, opts);
+}
+
+/**
+ * 平台退款推送（xpay_refund_notify）：只记账、不自动改状态。
+ * 退款回收仍走 payment.refund 人工通道（安卓后台/接口退款、iOS 用户向
+ * App Store 申请后由人工确认），避免未验签推送直接回收会员/积分；
+ * 推送验签接线（云联调）后可升级为自动回收。
+ */
+async function handleRefundPush(db, payload, opts = {}) {
+  const nowTs = opts.now !== undefined ? opts.now : now();
+  const col = db.collection(COLLECTIONS.Order);
+  const order = await col.findOne({ outTradeNo: payload.outTradeNo });
+  if (!order) return { ok: false, reason: 'order-not-found' };
+  await col.update({ _id: order._id }, { refundNotifiedAt: nowTs });
+  await audit.log(db, {
+    ownerId: order.userId, actorId: 'pay-notify', action: 'refund-notify',
+    targetType: 'order', targetId: order._id,
+    detail: '收到平台退款推送（xpay_refund_notify），已记录，回收走 payment.refund 人工通道',
+  });
+  return { ok: true, refundNotified: true };
 }
 
 /**
@@ -368,6 +440,14 @@ async function purchasePointsPack(db, userId, packId, opts = {}) {
 async function runOrderPayment(db, order, adapter, opts = {}) {
   const nowTs = opts.now !== undefined ? opts.now : now();
   const userId = order.userId;
+  if (adapter.channel === 'wxvirtual') {
+    // 真实通道：服务端只建单签名，不调起、不发货；前端拿 payParams 调
+    // wx.requestVirtualPayment，发货只认平台发货推送（processNotify）。
+    // opts 里的 platform / loginCode / sessionKey 由前端经 RPC 传入。
+    const ch = await adapter.createOrder(order, opts);
+    const fresh = await db.collection(COLLECTIONS.Order).findOne({ _id: order._id });
+    return { order: fresh, payParams: ch.payParams, productId: ch.productId, delivered: false, pendingPay: true, reason: 'pending-pay' };
+  }
   const ch = await adapter.createOrder(order);
   if (ch && ch.channelTradeNo) {
     await db.collection(COLLECTIONS.Order).update({ _id: order._id }, { channelTradeNo: ch.channelTradeNo });
@@ -491,6 +571,7 @@ module.exports = {
   resolvePointsPacks,
   createPointsPackOrder,
   handleNotify,
+  handleRefundPush,
   processNotify,
   purchase,
   purchasePointsPack,

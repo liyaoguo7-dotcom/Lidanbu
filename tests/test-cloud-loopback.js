@@ -7,7 +7,7 @@
  *
  * 场景：init 以服务端 openid 建号 → 注册赠分 15 经服务端到账 → 建亲友 →
  * 建礼薄 → 记收礼 → 往来/礼薄统计有数 → 首页小结/最近往来有数 →
- * 导出概览与导出历史通 → 购买会员（服务端注入 Mock 适配器）到账赠分 →
+ * 导出概览与导出历史通 → 购买会员（服务端注入真适配器建单签名＋发货推送）到账赠分 →
  * 额度超限时云端与本地模式抛出同一句卖惨文案 → 传输失败时 init 优雅失败。
  */
 const path = require('path');
@@ -104,11 +104,23 @@ test('回环：建亲友→建礼薄→记收礼→统计/首页/导出全通', 
   } finally { dataService._resetForTest(); }
 });
 
-test('回环：购买会员经服务端 Mock 适配器发货，赠分到账', async () => {
+test('回环：购买会员经服务端真适配器建单签名，发货推送到账赠分', async () => {
+  process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
   try {
-    await initCloud('loop-user-3', { payment: { enabled: true } }); // 任务AF：购买总开关默认关，本用例验发货链路故开闸
-    const r = await dataService.purchaseMembership('month');
-    assert(r.delivered === true, '云模式购买应发货成功');
+    const { transport, db } = makeLoopback('loop-user-3');
+    await db.collection('appConfig').insert({ _id: 'singleton', payment: { enabled: true } });
+    dataService._resetForTest();
+    dataService._setModeForTest('cloud');
+    dataService._setTransportForTest(transport);
+    dataService._setUploaderForTest(async (cloudPath) => `cloud://fake-env.fake-bucket/${cloudPath}`);
+    const r0 = await dataService.init();
+    assert(r0.ok === true, '云模式 init 应成功');
+    const r = await dataService.purchaseMembership('month', { platform: 'android', sessionKey: 'test-session-key' });
+    assert(r.pendingPay === true, '真适配器建单应返回待支付（不直接发货）');
+    assert(r.payParams && r.payParams.paySig, '应返回签名');
+    // 模拟平台发货推送（发货只认推送，不认前端回调）
+    const delivered = await apiCore.payment.processNotify(db, new apiCore.payAdapter.WechatVirtualPayAdapter(), { Event: 'xpay_goods_deliver_notify', OutTradeNo: r.order.outTradeNo, WeChatPayInfo: { MchOrderNo: 'wx-test-002' } });
+    assert(delivered.delivered === true, '发货推送应发货成功');
     const bal = await dataService.getPointsBalance();
     assert.eq(bal, 25, '注册 15 + 月卡赠 10 = 25 分');
     const m = await dataService.getMembership();
@@ -116,7 +128,7 @@ test('回环：购买会员经服务端 Mock 适配器发货，赠分到账', as
     const orders = await dataService.listMyOrders();
     assert.eq(orders.length, 1, '应有 1 张订单');
     assert.eq(orders[0].status, 'paid', '订单已支付');
-  } finally { dataService._resetForTest(); }
+  } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
 test('回环：额度超限文案与本地模式逐字一致（卖惨口径）', async () => {
@@ -158,9 +170,21 @@ test('回环：传输失败时 init 优雅失败（不抛死）', async () => {
 });
 
 test('回环：会员拍照导入送礼/收礼全通（任务AE 第 5 项链路坐实）', async () => {
+  process.env.VIRTUAL_PAY_APP_KEY = 'test-app-key-abc';
   try {
-    await initCloud('loop-user-photo', { payment: { enabled: true }, features: { photoImport: true } }); // 任务AF：两开关默认关，本用例验识别链路故开闸
-    await dataService.purchaseMembership('month'); // 15 + 10 = 25 分
+    const { transport, db } = makeLoopback('loop-user-photo');
+    await db.collection('appConfig').insert({ _id: 'singleton', payment: { enabled: true }, features: { photoImport: true } });
+    dataService._resetForTest();
+    dataService._setModeForTest('cloud');
+    dataService._setTransportForTest(transport);
+    dataService._setUploaderForTest(async (cloudPath) => `cloud://fake-env.fake-bucket/${cloudPath}`);
+    const r0 = await dataService.init();
+    assert(r0.ok === true, '云模式 init 应成功');
+    // 先买会员：真适配器建单 + 发货推送到账（15 + 10 = 25 分）
+    const buy = await dataService.purchaseMembership('month', { platform: 'android', sessionKey: 'test-session-key' });
+    assert(buy.pendingPay === true, '建单应返回待支付');
+    const delivered = await apiCore.payment.processNotify(db, new apiCore.payAdapter.WechatVirtualPayAdapter(), { Event: 'xpay_goods_deliver_notify', OutTradeNo: buy.order.outTradeNo, WeChatPayInfo: { MchOrderNo: 'wx-test-003' } });
+    assert(delivered.delivered === true, '发货推送应发货成功');
     const g = await dataService.recognizePhoto('/tmp/p.jpg', 'gift', {});
     assert.eq(g.items.length, 3, '送礼识别返回 3 条（Mock 口径）');
     assert.eq(g.items.map((i) => i.name).join(','), '张三,李五,王二麻', '条目顺序原样透传（顺序契约：适配层不得重排）');
@@ -170,7 +194,7 @@ test('回环：会员拍照导入送礼/收礼全通（任务AE 第 5 项链路�
     const r = await dataService.recognizePhoto('/tmp/p.jpg', 'receive', { eventId: evId });
     assert.eq(r.items.length, 2, '收礼识别返回 2 条（Mock 口径）');
     assert.eq(await dataService.getPointsBalance(), 15, '两次识别各扣 5 分：25 − 5 − 5 = 15');
-  } finally { dataService._resetForTest(); }
+  } finally { dataService._resetForTest(); delete process.env.VIRTUAL_PAY_APP_KEY; }
 });
 
 test('回环：免费用户拍照被会员门禁拦下，code 透传到页面层', async () => {
