@@ -136,11 +136,12 @@ function createBookPage(kind) {
 
       // 入口门禁：横置礼单本是会员专属，非会员跳会员介绍页
       // BV批：会员与开关并行取（原来串行两趟云端往返，是进页 2-3 秒的一部分）
-      const [m, flags] = await Promise.all([
+      const [m, flags, isAdmin] = await Promise.all([
         dataService.getMembership(),
         dataService.getFeatureFlags().catch(() => null),
+        dataService.isAdmin().catch(() => false),
       ]);
-      const gate = landscapeRoute.resolveLandscapeGate({ membership: m, flags });
+      const gate = landscapeRoute.resolveLandscapeGate({ membership: m, flags, isAdmin });
       if (gate === 'master-off') {
         wx.showToast({ title: '横置礼单本暂未开放', icon: 'none' });
         wx.navigateBack({ delta: 1, fail: () => wx.reLaunch({ url: '/pages/index/index' }) });

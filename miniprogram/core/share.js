@@ -63,7 +63,8 @@ async function invite(db, ownerId, { switches, scope }) {
   // 会员门禁（AM批接「会员功能」名单）：名单含 familyShareInvite 时，
   // 有效会员才能发起邀请（缓冲期内不算有效）；名单不含时免费用户也能邀。
   const inviter = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
-  if ((await features.isMemberOnlyFeature(db, 'familyShareInvite')) && !quota.isMemberActive(inviter || {})) {
+  // 管理员免会员（2026-10-30）：管理员可发起家庭共享邀请，不受会员门禁限制。
+  if ((await features.isMemberOnlyFeature(db, 'familyShareInvite')) && !quota.isMemberActive(inviter || {}) && !(await quota.isAdminUser(db, ownerId))) {
     throw errors.memberRequired('家庭共享邀请');
   }
   const sw = normalizeSwitches(switches);

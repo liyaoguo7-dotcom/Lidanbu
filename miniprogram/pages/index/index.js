@@ -178,8 +178,12 @@ Page({
 
   async refreshMember() {
     try {
-      const m = await dataService.getMembership();
-      this.setData({ isMember: m.state === 'member' || m.state === 'grace' });
+      // 管理员免会员（2026-10-30）：管理员视同会员，首页金刚区（家庭共享/拍照导入）直接放行。
+      const [m, isAdmin] = await Promise.all([
+        dataService.getMembership(),
+        dataService.isAdmin().catch(() => false),
+      ]);
+      this.setData({ isMember: m.state === 'member' || m.state === 'grace' || !!isAdmin });
     } catch (e) { /* 演示期忽略 */ }
   },
 

@@ -32,8 +32,14 @@
 * wx.requestVirtualPayment；发货只认平台发货推送（payment.processNotify）。
 * 因此本适配器的 requestPay / buildNotify 故意抛错，防旧编排误调。
 */
-const crypto = require('crypto');
-const https = require('https');
+/**
+ * ★前端可加载铁律（2026-10-30 白屏教训）：本文件经 sync-core.sh 原样同步到
+ * 小程序前端（miniprogram/core/），而微信小程序环境没有 Node 内置模块。
+ * 因此模块顶层绝不 require('crypto') / require('https') 等 Node 专属模块
+ * （顶层 require 会在前端加载时直接抛错，导致所有用 data-service 的页白屏，
+ * 沙箱 Node 环境却能正常加载、测不出来）。服务端才用的模块一律在函数内
+ * 懒加载（hmacSha256Hex、defaultHttpGetJson），前端永远不走这些函数。
+ */
 const errors = require('./errors');
 
 function notImplemented(what) {
@@ -134,6 +140,8 @@ return item.priceFen;
 }
 
 function hmacSha256Hex(key, msg) {
+// 服务端才调用：懒加载 crypto，前端加载本模块时不触碰 Node 内置模块。
+const crypto = require('crypto');
 return crypto.createHmac('sha256', key).update(msg, 'utf8').digest('hex');
 }
 
@@ -169,6 +177,8 @@ mode: 'short_series_goods',
 
 /** 默认 code2Session 请求（https GET + JSON 解析；测试可注入 httpGetJson 替换） */
 function defaultHttpGetJson(url) {
+// 服务端才调用：懒加载 https，前端加载本模块时不触碰 Node 内置模块。
+const https = require('https');
 return new Promise((resolve, reject) => {
 https.get(url, (res) => {
 let data = '';

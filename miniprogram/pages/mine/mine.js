@@ -214,7 +214,9 @@ Page({
         return;
       }
       const landOnly = !flags || !Array.isArray(flags.memberOnly) || flags.memberOnly.includes('landscapeMode');
-      if (landOnly && !this.data.isMember) {
+      // 管理员免会员（2026-10-30）：管理员可直接开横置；我的页会员展示（会员有效/开通会员）不动，仍按真实会员状态显示。
+      const isAdmin = await dataService.isAdmin().catch(() => false);
+      if (landOnly && !this.data.isMember && !isAdmin) {
       wx.showModal({
         title: '会员专属功能',
         content: '「横置礼单本」是会员专属功能，开通会员后即可使用。',

@@ -27,12 +27,14 @@ Page({
   },
 
   async onShow() {
-    const [m, received] = await Promise.all([
+    const [m, received, isAdmin] = await Promise.all([
       dataService.getMembership().catch(() => null),
       dataService.myReceivedShares().catch(() => []),
+      dataService.isAdmin().catch(() => false),
     ]);
     this.setData({
-      isMember: !!(m && (m.state === 'member' || m.state === 'grace')),
+      // 管理员免会员（2026-10-30）：管理员可直接发起家庭共享邀请。
+      isMember: !!((m && (m.state === 'member' || m.state === 'grace')) || isAdmin),
       received,
     });
   },

@@ -102,17 +102,20 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
    * 后面的积分关照旧。名单读不到时回退静态默认=含，宁可拦住） —— */
   const owner = await db.collection(COLLECTIONS.User).findOne({ _id: ownerId });
   if (!owner) throw new Error('账本主人不存在');
-  if (await features.isMemberOnlyFeature(db, 'photoImport')) {
+  // 管理员免会员（2026-10-30）：管理员跳过会员门禁与积分预检，识别成功后也不扣费；
+  // 拍照总开关与写入口限制（上面两行）仍对管理员生效，不放全局开关。
+  const isAdmin = await quota.isAdminUser(db, actorId);
+  if (!isAdmin && await features.isMemberOnlyFeature(db, 'photoImport')) {
     const state = quota.getMembershipState(owner, AppConfig);
     if (state !== 'member' && state !== 'grace') {
       throw errors.memberRequired('拍照导入');
     }
   }
 
-  /* —— 第二关：积分预检（余额 < 单价直接拦下，不识别、不扣款） —— */
+  /* —— 第二关：积分预检（余额 < 单价直接拦下，不识别、不扣款；管理员跳过） —— */
   const settings = await points.resolvePointsSettings(db, AppConfig);
   const cost = settings.photoImportCost;
-  if (cost > 0) {
+  if (!isAdmin && cost > 0) {
     const balance = await points.getBalance(db, ownerId);
     if (balance < cost) throw errors.pointsDenied('insufficient-points');
   }
@@ -138,10 +141,10 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
   const adapterName = ocrAdapter && typeof ocrAdapter.name === 'string' && ocrAdapter.name
     ? ocrAdapter.name : (provider || 'mock');
 
-  /* —— 识别成功 → 扣费（refId 绑定 job，幂等只扣一次） —— */
+  /* —— 识别成功 → 扣费（refId 绑定 job，幂等只扣一次；管理员不扣费） —— */
   const id = jobId || _newJobId();
   let duplicated = false;
-  if (cost > 0) {
+  if (!isAdmin && cost > 0) {
     const r = await points.spend(db, ownerId, cost, {
       kind: 'photo_import',
       refId: `import:${id}`,
@@ -165,7 +168,7 @@ async function startImportTask(db, actorId, ownerId, { jobId, kind, eventId, ima
       });
     } catch (e) { /* 留痕失败不拦导入 */ }
   }
-  return { jobId: id, items, cost, duplicated, adapter: adapterName };
+  return { jobId: id, items, cost: isAdmin ? 0 : cost, duplicated, adapter: adapterName };
 }
 
 /**
@@ -208,8 +211,11 @@ async function _batchCapacity(db, ownerId, kind, eventId) {
   if (!user) throw new Error('账本主人不存在');
   const successfulInvites = await quota.countSuccessfulInvites(db, ownerId);
   const settings = await quota.resolveInviteSettings(db, AppConfig);
-  const planQuota = await quota.resolveMemberBaseQuota(db, user, AppConfig);
-  const q = quota.getEffectiveQuota(user, AppConfig, Date.now(), { successfulInvites, settings, planQuota });
+  // 管理员免会员（2026-10-30）：管理员写容量按五年卡额度算。
+  const isAdmin = await quota.isAdminUser(db, ownerId);
+  let planQuota = await quota.resolveMemberBaseQuota(db, user, AppConfig);
+  if (isAdmin) planQuota = quota.fiveYearQuotaFromConfig(AppConfig) || planQuota;
+  const q = quota.getEffectiveQuota(user, AppConfig, Date.now(), { successfulInvites, settings, planQuota, isAdmin });
   if (kind === 'gift') {
     const used = await db.collection(COLLECTIONS.GiftRecord).count({ ownerId });
     return { capacity: Math.max(0, q.giftRecords - used), quotaReason: 'quota-exceeded:gift' };

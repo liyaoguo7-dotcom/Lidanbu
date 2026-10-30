@@ -52,12 +52,13 @@ const MEMBER_ONLY_DEFAULT = ['familyShareInvite', 'photoImport', 'landscapeMode'
  * 横置两道闸（AM批）：先总开关（features.landscape，关→谁都进不去），
  * 再会员功能名单（含 landscapeMode 且非会员→拦）。flags 取不到时按
  * 总开+算专属处理（与接线前行为一致）。
+ * 管理员免会员（2026-10-30）：isAdmin=true 时跳过会员门禁（总开关仍生效）。
  * @returns {'ok'|'master-off'|'member-only'}
  */
-function resolveLandscapeGate({ membership, flags } = {}) {
+function resolveLandscapeGate({ membership, flags, isAdmin } = {}) {
   if (flags && flags.landscape === false) return 'master-off';
   const list = flags && Array.isArray(flags.memberOnly) ? flags.memberOnly : MEMBER_ONLY_DEFAULT;
-  if (list.includes('landscapeMode') && !isMemberLike(membership)) return 'member-only';
+  if (list.includes('landscapeMode') && !isMemberLike(membership) && !isAdmin) return 'member-only';
   return 'ok';
 }
 
@@ -65,9 +66,9 @@ function resolveLandscapeGate({ membership, flags } = {}) {
  * @param {{landscapeOn?: boolean, membership?: object|boolean, flags?: object}} input
  * @returns {'landscape'|'portrait'}
  */
-function resolveBookRoute({ landscapeOn, membership, flags } = {}) {
+function resolveBookRoute({ landscapeOn, membership, flags, isAdmin } = {}) {
   if (!landscapeOn) return 'portrait';
-  if (resolveLandscapeGate({ membership, flags }) !== 'ok') return 'portrait';
+  if (resolveLandscapeGate({ membership, flags, isAdmin }) !== 'ok') return 'portrait';
   return 'landscape';
 }
 

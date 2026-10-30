@@ -146,3 +146,4 @@ require('./test-batch-dm-behavior');
 require('./test-batch-dn-behavior');
 require('./test-batch-do-behavior');
 require('./test-batch-dp-behavior');
+require('./test-batch-dq-behavior');

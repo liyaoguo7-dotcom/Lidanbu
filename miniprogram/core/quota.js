@@ -29,6 +29,34 @@ const AppConfig = require('../config/app-config');
 const ZERO_QUOTA = { receiveEvents: 0, recordsPerEvent: 0, receivePool: 0, giftRecords: 0, contacts: 0 };
 
 /**
+ * 管理员判定（2026-10-30 管理员免会员批）：读 AppConfig 单例文档的
+ * adminIds ∪ addedAdminIds，与 admin.isAdmin 同口径。本模块不 require
+ * admin.js（admin.js 反向依赖 quota，会循环），故直接读文档字段。
+ * 无 db / 无文档 / 读失败时返回 false（本地演示模式默认非管理员）。
+ */
+async function isAdminUser(db, userId) {
+  if (!db || !userId) return false;
+  try {
+    const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+    if (!doc) return false;
+    const ids = [...(Array.isArray(doc.adminIds) ? doc.adminIds : []), ...(Array.isArray(doc.addedAdminIds) ? doc.addedAdminIds : [])];
+    return ids.includes(userId);
+  } catch (e) { return false; }
+}
+
+/**
+ * 五年卡档位额度（管理员免会员口径：管理员一律按最高档五年卡算）。
+ * 取静态 pricing 的 fiveYear 档位；取不到则走全局会员额度兜底；仍取不到返回 null。
+ */
+function fiveYearQuotaFromConfig(config = AppConfig) {
+  const plans = (config && config.pricing) || [];
+  const plan = plans.find((p) => p && p.id === 'fiveYear');
+  const q = plan ? sanitizePlanQuota(plan.quota) : null;
+  if (q) return q;
+  return sanitizePlanQuota((config && config.membership && config.membership.quota) || {});
+}
+
+/**
  * 从静态配置对象提取邀请奖励设置（统一口径，供各处复用）
  * @returns {{enabled:boolean, perInvite:{receivePool:number, giftRecords:number}, maxSuccessfulInvites:number}}
  */
@@ -182,9 +210,10 @@ function getMemberQuota(user, config = AppConfig, now = Date.now()) {
  *   与既有到期规则一致——到期回落免费口径、超额记录只读、邀请池继续生效。
  * recordsPerEvent：每礼薄上限（邀请不增加此项）
  * receivePool：用户级收礼额度池（邀请奖励来源）
- * @param {object} [inviteOpts] {successfulInvites, settings, planQuota}：
+ * @param {object} [inviteOpts] {successfulInvites, settings, planQuota, isAdmin}：
  *   邀请侧入参；缺省成功邀请数按 0 计（同步调用方无 db 时用；带 db 的
- *   检查路径 checkAddQuota 会从发放记录实数并传入）
+ *   检查路径 checkAddQuota 会从发放记录实数并传入）；isAdmin=true 时走
+ *   管理员免会员口径（2026-10-30：管理员视同会员、额度按五年卡算）。
  */
 function getEffectiveQuota(user, config = AppConfig, now = Date.now(), inviteOpts = {}) {
   const free = config.freeQuota;
@@ -193,11 +222,14 @@ function getEffectiveQuota(user, config = AppConfig, now = Date.now(), inviteOpt
     inviteOpts.successfulInvites || 0,
     inviteOpts.settings || inviteSettingsFromConfig(config)
   );
-  if (user && isMemberActive(user, now)) {
+  // 管理员免会员（2026-10-30）：管理员走会员分支、额度按最高档（五年卡）算，
+  // 与是否持有真实会员无关；普通用户口径一字不动。
+  const adminExempt = inviteOpts.isAdmin === true;
+  if (user && (isMemberActive(user, now) || adminExempt)) {
     const caps = config.safetyCaps || { books: 1000, perBook: 5000, giftRecords: 10000, contacts: 5000 };
     const base = inviteOpts.planQuota !== undefined && inviteOpts.planQuota !== null
       ? inviteOpts.planQuota
-      : (planQuotaFromConfig(user, config) || sanitizePlanQuota((config.membership || {}).quota) || {});
+      : (adminExempt ? (fiveYearQuotaFromConfig(config) || {}) : (planQuotaFromConfig(user, config) || sanitizePlanQuota((config.membership || {}).quota) || {}));
     const cap = (v, c) => Math.min(Number.isInteger(v) ? v : 0, c);
     return {
       receiveEvents: cap(base.receiveEvents, caps.books),
@@ -287,8 +319,11 @@ async function checkAddQuota(db, user, kind, config = AppConfig, eventId, now = 
   const successfulInvites = await countSuccessfulInvites(db, user._id);
   const settings = await resolveInviteSettings(db, config);
   // 会员档位额度（落库优先，含存量订单推导与无档位兜底）
-  const planQuota = await resolveMemberBaseQuota(db, user, config, now);
-  const quota = getEffectiveQuota(user, config, now, { successfulInvites, settings, planQuota });
+  // 管理员免会员（2026-10-30）：管理员一律按五年卡额度算，不读其真实档位。
+  const isAdmin = await isAdminUser(db, user._id);
+  let planQuota = await resolveMemberBaseQuota(db, user, config, now);
+  if (isAdmin) planQuota = fiveYearQuotaFromConfig(config) || planQuota;
+  const quota = getEffectiveQuota(user, config, now, { successfulInvites, settings, planQuota, isAdmin });
   if (kind === 'receiveRecord') {
     return checkAddReceiveRecord(db, user._id, eventId, quota);
   }
@@ -340,6 +375,8 @@ module.exports = {
   resolveInviteSettings,
   countSuccessfulInvites,
   isMemberActive,
+  isAdminUser,
+  fiveYearQuotaFromConfig,
   getMemberQuota,
   sanitizePlanQuota,
   planQuotaFromConfig,
