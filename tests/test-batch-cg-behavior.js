@@ -14,7 +14,7 @@ test('CG 礼薄详情：礼薄名居中＋头像头滚动（结构以 DE 为准�
   const searchbarIdx = wxml.indexOf('class="searchbar"', searchIdx);
   const headCardIdx = wxml.indexOf('class="card head-card"');
   const patHeadIdx = wxml.indexOf('class="pat-head', headCardIdx);
-  const infoIdx = wxml.indexOf('class="card info-stick"');
+  const infoIdx = wxml.indexOf('class="card info-stick'); /* DO批：吸顶块后加白事类插值，改前缀匹配 */
   const patCardIdx = wxml.indexOf('class="card pat-card"');
   assert(searchIdx >= 0 && searchbarIdx > searchIdx, '搜索框在单独的吸顶容器内（DE 取代 CG 的 detail-head）');
   assert(headCardIdx > searchIdx && patHeadIdx > headCardIdx && infoIdx > headCardIdx && patCardIdx > infoIdx, '头像头在搜索框之后、随滚动上去，吸顶块与记录卡在其后');

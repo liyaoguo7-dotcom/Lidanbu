@@ -22,7 +22,8 @@
 </view>
 
 <!-- DE批：礼薄名＋日期＋共计一块吸顶（名用原来 20px 加粗；共计搜索时隐藏，与原共计一致） -->
-<view class="card info-stick">
+<!-- DO批：吸顶块加白事类，与头像、共计同色 -->
+<view class="card info-stick {{isBaishi ? 'baishi' : ''}}">
   <text class="event-name" wx:if="{{event.name}}">{{event.name}}</text>
   <text class="event-date num">{{date}}</text>
   <view class="total-line event-total {{isBaishi ? 'baishi' : ''}}" wx:if="{{!searching}}"><text>共计：</text><text class="red num">{{totalCount}}</text><text>笔 ¥</text><text class="red num">{{totalAmountText}}</text><text>元</text></view>

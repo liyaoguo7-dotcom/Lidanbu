@@ -15,7 +15,7 @@ test('DE 礼薄详情：搜索吸顶＋头像滚动＋名日期共计吸顶＋�
   const searchbarIdx = wxml.indexOf('class="searchbar"', searchIdx);
   const headCardIdx = wxml.indexOf('class="card head-card"');
   const patHeadIdx = wxml.indexOf('class="pat-head', headCardIdx);
-  const infoIdx = wxml.indexOf('class="card info-stick"');
+  const infoIdx = wxml.indexOf('class="card info-stick'); /* DO批：吸顶块后加白事类插值，改前缀匹配 */
   const nameIdx = wxml.indexOf('class="event-name"', infoIdx);
   const dateIdx = wxml.indexOf('class="event-date', infoIdx);
   const totalIdx = wxml.indexOf('event-total', infoIdx);
