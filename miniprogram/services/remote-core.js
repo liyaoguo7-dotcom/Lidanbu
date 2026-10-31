@@ -132,8 +132,12 @@ function createRemoteCore(transport) {
       'getProfile', 'getSelf', 'updateProfile', 'getPrivacyConsent', 'setPrivacyConsent',
       'getCompanionDays',
     ]), {
-      // 纯函数（用户文档 → 显示名）：本地实现，绝不走 RPC
+      // 纯函数（用户文档 → 显示名/陪伴天数）：本地实现，绝不走 RPC；
+      // 2026-10-31 真机教训：companionDays 漏登记时，云模式下 data-service
+      // 直接调它即报错、被我的页静默吞掉，方块永显“每天陪伴你”，而本地
+      // 测试因本地 core 有此函数全过、掩盖了漏登记。
       displayName: localCore.users.displayName,
+      companionDays: localCore.users.companionDays,
     }),
     account: makeRemoteModule(t, 'account', [
       'requestCancellation', 'revokeCancellation', 'getCancellationStatus',

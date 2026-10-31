@@ -25,7 +25,7 @@ test('陪伴天数：无/非法注册日返回 null，不显示 0 天或乱数',
   assert.eq(companionDays('not-a-date', at(2026, 10, 31)), null, '非法注册日应为 null');
 });
 
-test('我的页陪伴方块：位置、淡粉底、小书本图标、文案与天数接线', async () => {
+test('我的页陪伴方块：位置、淡粉底、小程序头像、文案与天数接线', async () => {
   const wxml = read('miniprogram/pages/mine/mine.wxml').replace(/<!--[\s\S]*?-->/g, '');
   const wxss = read('miniprogram/pages/mine/mine.wxss');
   const mineJs = read('miniprogram/pages/mine/mine.js');
@@ -33,7 +33,7 @@ test('我的页陪伴方块：位置、淡粉底、小书本图标、文案与�
   const companionIdx = wxml.indexOf('人情礼单簿已陪伴你');
   const landscapeIdx = wxml.indexOf('横置礼单本');
   assert(memberIdx >= 0 && companionIdx > memberIdx && landscapeIdx > companionIdx, '方块应在会员卡片下、横置上面');
-  assert(wxml.includes('/images/icons/mine-companion.png'), '方块前应有小书本图标（PNG，SVG 真机上是空框）');
+  assert(wxml.includes('/images/logo.png'), '方块前应有小程序头像（logo.png，与陪伴文字同大 14px）');
   assert(wxml.includes('companionDays'), '方块应接 companionDays 天数');
   assert(wxss.includes('#FDE8E8'), '方块底色应为拍照导入淡粉 #FDE8E8');
   assert(mineJs.includes('getCompanionDays'), '我的页应从 data-service 取陪伴天数');
@@ -92,7 +92,7 @@ test('陪伴方块样式：上下 8px、字号 14px，陪伴图标改 PNG（SVG 
   assert(wxss.includes('justify-content: center'), '陪伴方块应水平居中');
   assert(wxss.includes('align-items: center'), '陪伴方块应垂直居中');
   assert(/\.companion-card \{[^}]*text-align: center/.test(wxss), '陪伴方块文字应居中');
-  assert(wxml.includes('/images/icons/mine-companion.png'), '陪伴图标应改 PNG，不再用 book.svg');
+  assert(wxml.includes('/images/logo.png'), '陪伴图标应为小程序头像 logo.png，不再用小书本图标');
   assert(!wxml.includes('/images/icons/book.svg'), '我的页不应再引用 book.svg');
 });
 
@@ -146,4 +146,25 @@ test('无注册日时陪伴方块显示“人情礼单簿每天陪伴你”', as
   assert(wxml.includes('人情礼单簿每天陪伴你'), '无注册日时方块应显示每天陪伴你');
   assert(wxml.includes('wx:else'), '无注册日分支应用 wx:else，与有天数分支区分');
   assert(wxml.includes('wx:if="{{companionDays}}">人情礼单簿已陪伴你'), '有天数时仍应显示已陪伴你 X 天');
+});
+
+/** 2026-10-31 真机教训＋用户定头像（陪伴根因）：云模式 remote-core users
+ * 清单漏了本地纯函数 companionDays，data-service 在云模式下直接调它即
+ * 报错、被我的页静默吞掉，方块永显“每天陪伴你”，而本地测试因本地 core
+ * 有此函数全过、掩盖了漏登记。本测试直接建 remote-core 实例断言：
+ * users.companionDays 必须是本地函数、2026-10-23 到 10 月 31 日算出 9 天；
+ * 陪伴图标改为小程序头像 logo.png、尺寸与陪伴文字同大 14px。 */
+test('云模式 remote-core：users.companionDays 必须本地登记、算出 9 天', async () => {
+  const { createRemoteCore } = require('../miniprogram/services/remote-core');
+  const remote = createRemoteCore();
+  assert.eq(typeof remote.users.companionDays, 'function', '云模式 remote-core users.companionDays 应为本地函数，漏登记时本测试失败');
+  assert.eq(remote.users.companionDays(at(2026, 10, 23), at(2026, 10, 31)), 9, '云模式下 2026-10-23 到 10 月 31 日应为 9 天');
+});
+
+test('陪伴图标：小程序头像 logo.png、14px 与文字同大', async () => {
+  const wxml = read('miniprogram/pages/mine/mine.wxml');
+  const wxss = read('miniprogram/pages/mine/mine.wxss');
+  assert(wxml.includes('/images/logo.png'), '陪伴图标应为小程序头像 logo.png');
+  assert(!wxml.includes('/images/icons/mine-companion.png'), '陪伴图标不应再用小书本图标');
+  assert(wxss.includes('.companion-icon { width: 14px; height: 14px;'), '陪伴头像应为 14px，与陪伴文字 14px 同大');
 });

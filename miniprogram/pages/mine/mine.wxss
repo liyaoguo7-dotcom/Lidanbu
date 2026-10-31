@@ -36,9 +36,9 @@
   border: none;
   display: flex; flex-direction: column;
 }
-/* 2026-10-31 陪伴方块：拍照导入淡粉 #FDE8E8，居中一行，小书本图标 20px，天数加粗 */
+/* 2026-10-31 陪伴方块：拍照导入淡粉 #FDE8E8，居中一行，小程序头像 14px（与陪伴文字 14px 同大），天数加粗 */
 .companion-card { background: #FDE8E8; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px 16px; }
-.companion-icon { width: 20px; height: 20px; flex: none; margin-right: 8px; }
+.companion-icon { width: 14px; height: 14px; flex: none; margin-right: 8px; }
 .companion-text { font-size: 14px; color: #333; text-align: center; }
 .companion-days { font-weight: 600; }
 /* 我的页 7 行行首小图标（2026-10-31 用户定）：单色灰 PNG 约 20px，与文字留 8px 间距；

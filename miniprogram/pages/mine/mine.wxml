@@ -40,9 +40,9 @@
   </view>
 </view>
 
-<!-- ②b 陪伴方块（2026-10-31 用户定）：会员卡片下、横置上面；淡粉底＋小书本图标＋“人情礼单簿已陪伴你 X 天”；无注册日时显示“人情礼单簿每天陪伴你” -->
+<!-- ②b 陪伴方块（2026-10-31 用户定）：会员卡片下、横置上面；淡粉底＋小程序头像 14px＋“人情礼单簿已陪伴你 X 天”；无注册日时显示“人情礼单簿每天陪伴你” -->
 <view class="card companion-card">
-  <image class="companion-icon" src="/images/icons/mine-companion.png" mode="aspectFit" />
+  <image class="companion-icon" src="/images/logo.png" mode="aspectFit" />
   <text class="companion-text" wx:if="{{companionDays}}">人情礼单簿已陪伴你<text class="companion-days"> {{companionDays}} 天</text></text>
   <text class="companion-text" wx:else>人情礼单簿每天陪伴你</text>
 </view>
