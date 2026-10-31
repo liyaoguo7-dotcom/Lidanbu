@@ -75,6 +75,10 @@ test('任务Z-5：邀请页无可见邀请码/无填码入口，分享走 invite
   const wxml = readMp('pages/invite/invite-reward.wxml');
   assert(!wxml.includes('我的邀请码'), '不展示邀请码');
   assert(!wxml.includes('填写邀请码') && !wxml.includes('<input'), '没有填码入口');
+  // 2026-10-31 用户定：邀请页删上边两处黄字，最下面奖励额度那句留着
+  assert(!wxml.includes('还可再邀请'), '邀请页不应再有“还可再邀请”黄字');
+  assert(!wxml.includes('点按钮就能直接发给微信好友'), '邀请页不应再有发给好友说明黄字');
+  assert(wxml.includes('奖励额度发放后立即计入'), '邀请页最下面奖励额度说明应留着');
   assert(!wxml.includes('onCopyCode') && !wxml.includes('复制'), '没有复制邀请码');
   assert(wxml.includes('open-type="share"'), '发给好友按钮调起微信发送面板');
   const js = readMp('pages/invite/invite-reward.js');

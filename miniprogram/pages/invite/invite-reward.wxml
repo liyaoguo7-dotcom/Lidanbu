@@ -16,13 +16,11 @@
       <view style="height:6px;border-radius:3px;background:#F0E6D4">
         <view style="height:6px;border-radius:3px;background:#F0575A;width:{{progressPct}}%"></view>
       </view>
-      <view class="tip" style="padding:6px 0 0">还可再邀请 {{summary.remainingInvites}} 位新朋友</view>
     </view>
   </view>
 
   <view class="section-title">邀请好友</view>
   <button class="btn-primary" open-type="share" style="margin:12px 24px 0">发给好友</button>
-  <view class="tip">点按钮就能直接发给微信好友，对方点开卡片即可，不用填任何码。</view>
   <view wx:if="{{summary.myBinding}}" class="tip">你已通过好友的邀请加入礼单簿</view>
 
   <view class="section-title">邀请记录</view>

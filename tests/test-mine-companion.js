@@ -82,11 +82,11 @@ test('陪伴兜底：优先 createdAt，无则注册赠送流水，仍无回 nul
   assert.eq(await getCompanionDays(fakeDb('u1', null, null), '', now), null, '无用户时应回 null');
 });
 
-test('陪伴方块样式：上下 8px、字号 14px，陪伴图标改 PNG（SVG 真机空框）', async () => {
+test('陪伴方块样式：上下 8px、字号 16px，陪伴图标改 PNG（SVG 真机空框）', async () => {
   const wxml = read('miniprogram/pages/mine/mine.wxml');
   const wxss = read('miniprogram/pages/mine/mine.wxss');
   assert(wxss.includes('padding: 8px 16px'), '陪伴方块上下内边距应为 8px（左右 16px 不动）');
-  assert(wxss.includes('.companion-text { font-size: 14px'), '陪伴文字应为 14px');
+  assert(wxss.includes('.companion-text { font-size: 16px'), '陪伴文字应恢复为 16px');
   assert(wxss.includes('.companion-days { font-weight: 600'), '天数加粗不动');
   // 2026-10-31 用户定：陪伴文本上下左右居中（图标＋文字整组居中，不靠左）
   assert(wxss.includes('justify-content: center'), '陪伴方块应水平居中');
@@ -161,10 +161,10 @@ test('云模式 remote-core：users.companionDays 必须本地登记、算出 9 
   assert.eq(remote.users.companionDays(at(2026, 10, 23), at(2026, 10, 31)), 9, '云模式下 2026-10-23 到 10 月 31 日应为 9 天');
 });
 
-test('陪伴图标：小程序头像 logo.png、14px 与文字同大', async () => {
+test('陪伴图标：小程序头像 logo.png、17px 比文字大一号', async () => {
   const wxml = read('miniprogram/pages/mine/mine.wxml');
   const wxss = read('miniprogram/pages/mine/mine.wxss');
   assert(wxml.includes('/images/logo.png'), '陪伴图标应为小程序头像 logo.png');
   assert(!wxml.includes('/images/icons/mine-companion.png'), '陪伴图标不应再用小书本图标');
-  assert(wxss.includes('.companion-icon { width: 14px; height: 14px;'), '陪伴头像应为 14px，与陪伴文字 14px 同大');
+  assert(wxss.includes('.companion-icon { width: 17px; height: 17px;'), '陪伴头像应为 17px，比陪伴文字 16px 大一号');
 });
