@@ -67,6 +67,7 @@ require('./test-offline-hint');
 require('./test-login-profile');
 require('./test-mine-privacy-guide');
 require('./test-mine-companion');
+require('./test-refund-notice-backend');
 require('./test-contacts-tile');
 require('./test-guide-assets');
 require('./test-home-summary');

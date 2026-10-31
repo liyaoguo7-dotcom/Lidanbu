@@ -556,6 +556,18 @@ async function getPaymentPlatforms(db, actorId) {
   return (doc && doc.paymentPlatforms) || null;
 }
 
+/**
+ * 购买页退款文案（2026-10-31 用户定：放后端，老板后台可改）：
+ * 云端 appConfig 文档 payment.refundNotice 段优先，未配置/空白时返回 null，
+ * 调用方回退静态配置短句；与 getPaymentPlatforms 同口径：本函数不要求
+ * 管理员身份，只读这一个公开段（文案本就是给所有买家看的）。
+ */
+async function getRefundNotice(db, actorId) {
+  const doc = await db.collection(COLLECTIONS.AppConfig).findOne({ _id: 'singleton' });
+  const v = doc && doc.payment && typeof doc.payment.refundNotice === 'string' ? doc.payment.refundNotice.trim() : '';
+  return v ? v : null;
+}
+
 /** 取一张订单：不存在或非本人一律拒绝 */
 async function getOrderForUser(db, userId, orderId) {
   const order = await db.collection(COLLECTIONS.Order).findOne({ _id: orderId });
@@ -579,4 +591,5 @@ module.exports = {
   listOrders,
   getOrderForUser,
   getPaymentPlatforms,
+  getRefundNotice,
 };

@@ -714,7 +714,7 @@ const service = {
   async getPurchasePageData(platform) {
     // 五个读互相独立，必须并发（2026-10-24 真机反馈：串行 5 个云端往返
     // 让购买页套餐 3~4 秒才出现；并发后约等于 1 个往返）
-    const [membership, pointsBalance, plans, settings, platformOverrides] = await Promise.all([
+    const [membership, pointsBalance, plans, settings, platformOverrides, serverRefundNotice] = await Promise.all([
       this.getMembership(),
       this.getPointsBalance(),
       this.getPricing(platform),
@@ -722,6 +722,10 @@ const service = {
       (async () => {
         try { return await core.payment.getPaymentPlatforms(_db, _userId); }
         catch (e) { return null; /* 读不到覆盖就用静态配置 */ }
+      })(),
+      (async () => {
+        try { return await core.payment.getRefundNotice(_db, _userId); }
+        catch (e) { return null; /* 读不到云端文案就用静态短句兜底 */ }
       })(),
     ]);
     const mergedConfig = {
@@ -740,7 +744,7 @@ const service = {
       photoImportCost: settings.photoImportCost,
       purchaseEnabled: core.payment.resolvePlatformPurchaseEnabled(mergedConfig, platform),
       platformDisabledTip: (AppConfig.payment && AppConfig.payment.platformDisabledTip) || '',
-      refundNotice: (AppConfig.payment && AppConfig.payment.refundNotice) || '',
+      refundNotice: serverRefundNotice || (AppConfig.payment && AppConfig.payment.refundNotice) || '',
       isDemo: !_isCloud(),
     };
   },
@@ -1481,6 +1485,10 @@ const service = {
   },
   async adminUpdateLaunchSwitches(switches) {
     try { return await core.admin.updateLaunchSwitches(_db, _userId, switches); }
+    catch (e) { throw new Error(friendly(e)); }
+  },
+  async adminUpdateRefundNotice(text) {
+    try { return await core.admin.updateRefundNotice(_db, _userId, text); }
     catch (e) { throw new Error(friendly(e)); }
   },
 

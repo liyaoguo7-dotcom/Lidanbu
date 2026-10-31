@@ -313,6 +313,9 @@ pricing: doc.pricing || (StaticConfig.pricing || []).map((x) => ({ ...x })),
 points: await points.resolvePointsSettings(db),
 paymentPlatforms: doc.paymentPlatforms || { ...(StaticConfig.payment ? StaticConfig.payment.platforms : {}) },
 paymentEnabled: (doc.payment && typeof doc.payment.enabled === 'boolean') ? doc.payment.enabled : !!(StaticConfig.payment && StaticConfig.payment.enabled),
+refundNotice: (doc.payment && typeof doc.payment.refundNotice === 'string' && doc.payment.refundNotice.trim())
+  ? doc.payment.refundNotice.trim()
+  : ((StaticConfig.payment && StaticConfig.payment.refundNotice) || ''),
 photoImportEnabled: (doc.features && typeof doc.features.photoImport === 'boolean') ? doc.features.photoImport : !!(StaticConfig.features && StaticConfig.features.photoImport),
 eInvitationEnabled: (doc.features && typeof doc.features.eInvitation === 'boolean') ? doc.features.eInvitation : !!(StaticConfig.features && StaticConfig.features.eInvitation),
 familyShareEnabled: (doc.features && typeof doc.features.familyShare === 'boolean') ? doc.features.familyShare : !!(StaticConfig.features && StaticConfig.features.familyShare),
@@ -621,6 +624,23 @@ const merged = { ...base };
 for (const k of keys) merged[k] = { ...(base[k] || {}), purchaseEnabled: platforms[k].purchaseEnabled };
 const updatedAt = await writeConfigPatch(db, actorId, { paymentPlatforms: merged }, `修改支付平台开关：${keys.join('、')}`);
 return { paymentPlatforms: merged, updatedAt };
+}
+
+/**
+ * 修改购买页退款文案（仅管理员，2026-10-31 用户定：放后端，老板后台可改）：
+ * 写入 appConfig 文档 payment.refundNotice 段；购买页读云端值优先、未配置
+ * 时回退静态短句。空字符串 = 清空云端值、恢复默认短句；非空最长 500 字，
+ * 超长拒绝（防误粘长文把底行撑成多页）。保存后购买页刷新即生效，不用打包。
+ */
+async function updateRefundNotice(db, actorId, text) {
+await requireAdmin(db, actorId);
+if (typeof text !== 'string') throw badConfig('退款文案必须是文字');
+const v = text.trim();
+if (v.length > 500) throw badConfig('退款文案最长 500 字');
+const doc = (await readConfigDoc(db)) || {};
+const patch = { payment: { ...(doc.payment || {}), refundNotice: v } };
+const updatedAt = await writeConfigPatch(db, actorId, patch, v ? '修改退款文案' : '清空退款文案，恢复默认短句');
+return { refundNotice: v || ((StaticConfig.payment && StaticConfig.payment.refundNotice) || ''), updatedAt };
 }
 
 /**
@@ -1006,6 +1026,7 @@ updateInviteSettings,
 updatePointsSettings,
 updatePaymentPlatforms,
 updateLaunchSwitches,
+updateRefundNotice,
 searchAccounts,
 importUsage,
 feedbackList,

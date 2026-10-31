@@ -120,3 +120,13 @@
 
 <!-- 会员专属清单 -->
 
+
+<!-- 退款文案（2026-10-31 用户定：放后端，老板后台可改） -->
+<block wx:if="{{!loading && !error && section === 'refund'}}">
+  <view class="card">
+    <view class="form-row"><text class="form-val" style="font-weight:bold">购买页最下边那行字</text></view>
+    <textarea class="form-val" style="height:120px" value="{{refundNotice}}" bindinput="onRefundInput" placeholder="例如：本产品为虚拟产品，一经购买不能退款，购买前请确定。" maxlength="500" />
+    <view class="note">保存后购买页刷新即显示新文案，不用重新打包。留空保存则恢复默认短句。最长 500 字，底行小字太长会换多行，建议保持一两句。</view>
+  </view>
+  <button class="btn-primary" bindtap="onSaveRefund" loading="{{saving}}">保存退款文案</button>
+</block>

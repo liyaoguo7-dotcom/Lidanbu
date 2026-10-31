@@ -23,6 +23,7 @@ const SECTIONS = {
   pricing: { title: '额度与会员价格设置' },
   switches: { title: '功能开关' },
   points: { title: '会员与积分配置' },
+  refund: { title: '退款文案' },
 };
 const QUOTA_FIELDS = [
   { key: 'receiveEvents', label: '收礼礼薄（个）', short: '礼薄（个）' },
@@ -43,6 +44,7 @@ Page({
     freeQuota: {}, memberQuota: {}, plans: [], memberOnly: [],
     pricingFromStatic: false, saving: false,
     pointsCfg: { registerGrant: '', photoImportCost: '' }, packs: [],
+    refundNotice: '',
     platforms: { ios: true, android: true },
     launch: { paymentEnabled: false, photoImportEnabled: false },
     gates: { eInvitation: true, familyShare: true, maintenance: false, registration: true, landscape: true }, // 总开关组（在「功能开关」页总开关组保存）
@@ -109,6 +111,7 @@ Page({
           landscape: cfg.landscapeEnabled !== false,
         },
         featureChecked: Object.fromEntries(FEATURE_FIELDS.map((f) => [f.key, (cfg.memberOnlyFeatures || []).includes(f.key)])),
+        refundNotice: cfg.refundNotice || '',
       });
     } catch (e) {
       this.setData({ loading: false, error: ds.friendly(e) });
@@ -289,6 +292,19 @@ Page({
       await ds.adminUpdateLaunchSwitches({ paymentEnabled });
       await ds.adminUpdatePaymentPlatforms(platforms);
     });
+  },
+
+  // —— 退款文案（2026-10-31 用户定：放后端，老板后台可改） ——
+  onRefundInput(e) {
+    this.setData({ refundNotice: e.detail.value });
+  },
+  onSaveRefund() {
+    const text = String(this.data.refundNotice || '');
+    if (text.trim().length > 500) {
+      wx.showToast({ title: '退款文案最长 500 字', icon: 'none' });
+      return;
+    }
+    this.confirmSave('退款文案', () => ds.adminUpdateRefundNotice(text));
   },
 
   // —— 第一版发布开关（任务AF） ——
