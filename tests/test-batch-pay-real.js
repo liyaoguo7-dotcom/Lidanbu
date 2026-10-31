@@ -207,6 +207,9 @@ test('真适配器：五年卡与积分包数据、分平台价、退款规则�
   assert(!purchaseWxml.includes('价格以本页显示为准'), '价格那句应已取消');
   assert(purchaseWxml.includes('数据云端保存，安全可靠，随时可下载'), '购买页应有云端保存标语');
   assert(purchaseWxml.includes('无隐形收费，到期不自动续费'), '购买页应有无隐形收费、不自动续费标语');
+  // 2026-10-31 用户定：购买页顶部会员到期日直接拼年月日数字，不用英文简写、不用 toLocaleDateString
+  assert(purchaseJs.includes('fmtExpireDate'), '购买页会员到期日应用 fmtExpireDate 拼年月日');
+  assert(!purchaseJs.includes("toLocaleDateString('zh-CN')"), '购买页到期日不应再用 toLocaleDateString（部分机型会回英文简写）');
   assert(!purchaseWxml.includes('模拟支付成功'), '购买页不得再宣称模拟支付（真实通道已接通）');
   const remote = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/services/remote-core.js'), 'utf8');
   assert(remote.includes('getOrderForUser'), '远程 core 应开放 getOrderForUser（轮询发货状态用）');

@@ -21,6 +21,14 @@ const STATE_TEXT = {
   expired: '会员已过期',
 };
 
+/** 2026-10-31 用户定：会员到期日不用英文简写、不用 toLocaleDateString（部分机型会回英文），直接拼年月日数字 */
+function fmtExpireDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
 Page({
   data: {
     loading: true,
@@ -133,7 +141,7 @@ Page({
         loading: false,
         hydrated: true,
         stateText: STATE_TEXT[d.state] || d.state,
-        expireText: d.expireAt ? new Date(d.expireAt).toLocaleDateString('zh-CN') : '',
+        expireText: fmtExpireDate(d.expireAt),
         pointsBalance: d.pointsBalance,
         photoImportCost: d.photoImportCost,
         plans: view.plans,
