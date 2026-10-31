@@ -166,24 +166,7 @@ Page({
     this.setData({ selectedPackId: e.currentTarget.dataset.id });
   },
 
-  /** 付款前明示退款规则（真适配器批）：弹窗确认后才下单；无文案时直接放行 */
-  confirmRefundNotice() {
-    const notice = this.data.refundNotice;
-    if (!notice) return Promise.resolve(true);
-    return new Promise((resolve) => {
-      try {
-        wx.showModal({
-          title: '购买前请确认',
-          content: notice,
-          confirmText: '确认购买',
-          cancelText: '再想想',
-          success: (res) => resolve(!!(res && res.confirm)),
-          fail: () => resolve(false),
-        });
-      } catch (e) { resolve(false); }
-    });
-  },
-
+  /** 2026-10-31 用户定：退款文案只放购买页最下边，不再弹窗确认；下单不再经 confirmRefundNotice */
   /** 取一次登录码（供服务端换 session_key 签名用；失败返回空串，服务端会报错提示重进） */
   loginCode() {
     return new Promise((resolve) => {
@@ -246,7 +229,6 @@ Page({
   async onBuyPlan() {
     const planId = this.data.selectedPlanId;
     if (!planId || this.data.buyingId) return;
-    if (!(await this.confirmRefundNotice())) return;
     this.setData({ buyingId: planId, buyingPlan: true, doneText: '' });
     try {
       const code = await this.loginCode();
@@ -283,7 +265,6 @@ Page({
     }
     const packId = this.data.selectedPackId;
     if (!packId || this.data.buyingId) return;
-    if (!(await this.confirmRefundNotice())) return;
     this.setData({ buyingId: packId, buyingPack: true, doneText: '' });
     try {
       const code = await this.loginCode();

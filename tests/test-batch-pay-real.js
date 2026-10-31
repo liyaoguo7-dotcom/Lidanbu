@@ -198,9 +198,15 @@ test('真适配器：五年卡与积分包数据、分平台价、退款规则�
   assert.eq(notice, '本产品为虚拟产品，一经购买不能退款，购买前请确定。', '退款展示文案应为 DR 新口径');
   const purchaseJs = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/member/purchase/purchase.js'), 'utf8');
   assert(purchaseJs.includes('wx.requestVirtualPayment'), '购买页应调 wx.requestVirtualPayment');
-  assert(purchaseJs.includes('confirmRefundNotice'), '购买页应有付款前退款规则确认');
+  // 2026-10-31 用户定：退款文案只放购买页最下边，顶部和付款前弹窗均去掉
+  assert(!purchaseJs.includes('await this.confirmRefundNotice'), '购买页下单不应再弹退款确认弹窗');
+  assert(!purchaseJs.includes('confirmRefundNotice() {'), '购买页不应再有退款确认弹窗函数');
   const purchaseWxml = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/pages/member/purchase/purchase.wxml'), 'utf8');
   assert(purchaseWxml.includes('refundNotice'), '购买页模板应展示退款规则');
+  assert(purchaseWxml.includes('refund-foot'), '退款文案应放在购买页最下边小字半透明区');
+  assert(!purchaseWxml.includes('价格以本页显示为准'), '价格那句应已取消');
+  assert(purchaseWxml.includes('数据云端保存，安全可靠，随时可下载'), '购买页应有云端保存标语');
+  assert(purchaseWxml.includes('无隐形收费，到期不自动续费'), '购买页应有无隐形收费、不自动续费标语');
   assert(!purchaseWxml.includes('模拟支付成功'), '购买页不得再宣称模拟支付（真实通道已接通）');
   const remote = fs.readFileSync(path.join(__dirname, '..', 'miniprogram/services/remote-core.js'), 'utf8');
   assert(remote.includes('getOrderForUser'), '远程 core 应开放 getOrderForUser（轮询发货状态用）');

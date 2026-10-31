@@ -11,9 +11,6 @@
 
 <view class="warn-banner" wx:if="{{!buyEnabled && platformDisabledTip}}">{{platformDisabledTip}}</view>
 <view class="warn-banner" wx:if="{{doneText}}">{{doneText}}</view>
-<!-- 真适配器批：付款前明示退款规则（文案来自配置，改文案不动页面；付款时还会弹窗再确认一次） -->
-<view class="tip" wx:if="{{refundNotice}}">{{refundNotice}}</view>
-
 <view class="section-title" id="plans-section">会员套餐</view>
 <!-- 套餐小方块（任务Z 第 4 项）：两列网格、点按选中、底部统一购买；
      「推荐」角标在方块顶边外侧，不遮挡金额 -->
@@ -30,6 +27,8 @@
 <view class="btn-primary buy-btn" wx:if="{{hydrated && buyEnabled && plans.length}}" bindtap="onBuyPlan">{{buyingPlan ? '处理中…' : '购买所选套餐'}}</view>
 <!-- CX批（用户 2026-10-29 定）：会员权益文案删去末尾一句 -->
 <view class="tip">会员权益：横置礼单本（6 种样式 · 6 种字体）· 拍照录入 · 家庭共享邀请</view>
+<!-- 2026-10-31 用户定：云端保存标语，放购买页会员权益下面 -->
+<view class="tip">数据云端保存，安全可靠，随时可下载</view>
 
 <view class="section-title">积分礼包</view>
 <!-- 积分礼包小方块：金棕色系与会员方块（红米系）区分；非会员整区置灰 -->
@@ -47,6 +46,8 @@
   <view class="tip" wx:if="{{!packsLocked}}">拍照录入每次用 {{photoImportCost}} 积分，积分不过期</view>
 </view>
 <view class="btn-primary buy-btn gold" wx:if="{{hydrated && buyEnabled && !packsLocked && packs.length}}" bindtap="onBuyPack">{{buyingPack ? '处理中…' : '购买所选礼包'}}</view>
+<!-- 2026-10-31 用户定：无隐形收费、不自动续费标语，放购买页（即支付页）购买按钮下面，付款前可见 -->
+<view class="tip">无隐形收费，到期不自动续费</view>
 
 <view class="card">
   <view class="form-row" bindtap="onOrders">
@@ -61,4 +62,5 @@
   </view>
 </view>
 
-<view class="tip">价格以本页显示为准，后台可随时调整。</view>
+<!-- 2026-10-31 用户定：退款文案只放购买页最下边，一行小字半透明；顶部和付款前弹窗均去掉，价格那句取消 -->
+<view class="refund-foot" wx:if="{{refundNotice}}">{{refundNotice}}</view>
