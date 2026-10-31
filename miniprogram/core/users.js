@@ -160,10 +160,28 @@ async function getSelf(db, userId) {
  * 陪伴天数（2026-10-31 用户定，我的页新方块用）：从注册日（用户文档 createdAt）
  * 起算，注册当天算第 1 天，之后每天加 1；无/非法注册日返回 null，页面不显示
  * 天数、不显示 0 天或乱数。按本地自然日算（两端都先归到当天 0 点再相减）。
+ * 注册日格式（2026-10-31 用户批准的格式兼容改法）：数字时间戳、数字文字、
+ * Date 对象、ISO 日期文字（2026-10-23T…）、日期文字（2026-10-23）都认；
+ * 账号查询服务端用 new Date 解析能显示的日期，小程序这边也不能因格式算成空。
  */
+function parseCreatedAt(createdAt) {
+  if (createdAt instanceof Date) return createdAt.getTime();
+  if (typeof createdAt === 'number') return createdAt;
+  if (createdAt && typeof createdAt === 'object' && createdAt.$date) {
+    return parseCreatedAt(createdAt.$date);
+  }
+  if (typeof createdAt === 'string') {
+    const s = createdAt.trim();
+    if (!s) return NaN;
+    if (/^-?\d+$/.test(s)) return Number(s);
+    return Date.parse(s);
+  }
+  return NaN;
+}
+
 function companionDays(createdAt, nowMs) {
-  const t = Number(createdAt);
-  if (!t || Number.isNaN(t)) return null;
+  const t = parseCreatedAt(createdAt);
+  if (!t || !Number.isFinite(t)) return null;
   const now = Number(nowMs) || Date.now();
   const start = new Date(t);
   start.setHours(0, 0, 0, 0);

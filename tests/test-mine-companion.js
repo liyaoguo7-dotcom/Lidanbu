@@ -124,3 +124,26 @@ test('我的页 7 行行首图标：PNG、最左、右边不动，演示行不�
   const remote = read('miniprogram/services/remote-core.js');
   assert(remote.includes('getCompanionDays'), '云函数远程清单应登记 getCompanionDays');
 });
+
+/** 2026-10-31 用户批准的格式兼容改法 + 无注册日文案纠正：
+ * - companionDays 认数字、数字文字、Date 对象、ISO 日期文字、日期文字；
+ *   账号查询服务端 new Date 能显示的日期，小程序这边也不能因格式算成空
+ * - 无注册日（null）时方块显示“人情礼单簿每天陪伴你”，有天数时仍是
+ *   “人情礼单簿已陪伴你 X 天”，不编天数 */
+test('陪伴天数：日期文字格式也认，非法仍回 null', async () => {
+  const now = at(2026, 10, 31);
+  assert.eq(companionDays('2026-10-20', now), 12, '日期文字 2026-10-20 到 10 月 31 日应为 12 天');
+  assert.eq(companionDays(new Date(2026, 9, 20, 12, 0, 0).toISOString(), now), 12, 'ISO 日期文字应为 12 天');
+  assert.eq(companionDays(new Date(2026, 9, 20, 12, 0, 0), now), 12, 'Date 对象应为 12 天');
+  assert.eq(companionDays(String(at(2026, 10, 20)), now), 12, '数字文字应为 12 天');
+  assert.eq(companionDays({ $date: '2026-10-20T04:00:00.000Z' }, now), 12, '$date 包裹的日期文字应为 12 天');
+  assert.eq(companionDays('', now), null, '空文字应为 null');
+  assert.eq(companionDays('2026-13-40', now), null, '不存在的日期文字应为 null');
+});
+
+test('无注册日时陪伴方块显示“人情礼单簿每天陪伴你”', async () => {
+  const wxml = read('miniprogram/pages/mine/mine.wxml').replace(/<!--[\s\S]*?-->/g, '');
+  assert(wxml.includes('人情礼单簿每天陪伴你'), '无注册日时方块应显示每天陪伴你');
+  assert(wxml.includes('wx:else'), '无注册日分支应用 wx:else，与有天数分支区分');
+  assert(wxml.includes('wx:if="{{companionDays}}">人情礼单簿已陪伴你'), '有天数时仍应显示已陪伴你 X 天');
+});

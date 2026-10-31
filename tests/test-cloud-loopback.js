@@ -456,3 +456,27 @@ test('回环：往来明细会话缓存（首开在途去重、再开零往返�
     assert.eq(t4.items.length, 2, '新数据应有 2 条');
   } finally { dataService._resetForTest(); }
 });
+
+/** 2026-10-31 往来页搜索真机报错回归（用户报）：往来搜索走
+ * searchContactsWithRecords，服务端早有该函数，但 remote-core contacts
+ * 清单漏登记，云模式下调用未定义函数，页面只弹通用“操作失败，请重试”。
+ * 本测试用云模式回环跑通往来搜索：有记录的出、无记录的滤掉；
+ * 漏登记时本测试直接失败（此前回环对齐测试只查远程→本地单向，拦不住漏登记）。 */
+test('回环：云模式往来搜索（searchContactsWithRecords 已登记）', async () => {
+  try {
+    await initCloud('loop-wanglai-search');
+    const c1 = await dataService.createContact({ name: '张三', remark: '同学' });
+    const id1 = (c1.contact && c1.contact._id) || c1._id;
+    const c2 = await dataService.createContact({ name: '李四', remark: '同事' });
+    const id2 = (c2.contact && c2.contact._id) || c2._id;
+    assert(id1 && id2, '应拿到两亲友 id');
+    const ev = await dataService.createEvent({ name: '张三的婚礼', tagId: 'jiehun', date: '2026-10-01' });
+    const eventId = (ev.event && ev.event._id) || ev._id;
+    await dataService.createRecord(eventId, { contactId: id1, amountFen: 30000, type: '现金', date: '2026-10-01' });
+    const hit = await dataService.searchWanglaiContacts({ keyword: '张' });
+    assert.eq(hit.length, 1, '搜“张”应只出有记录的张三');
+    assert.eq(hit[0]._id, id1, '搜“张”应返回张三');
+    const miss = await dataService.searchWanglaiContacts({ keyword: '李' });
+    assert.eq(miss.length, 0, '搜“李”应不出无记录的李四');
+  } finally { dataService._resetForTest(); }
+});
