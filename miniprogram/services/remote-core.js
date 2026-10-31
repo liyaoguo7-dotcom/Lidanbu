@@ -93,8 +93,9 @@ function createRemoteCore(transport) {
       resolveRangeOpt: localCore.stats.resolveRangeOpt,
     }),
     share: makeRemoteModule(t, 'share', [
-      'invite', 'accept', 'updateGrant', 'removeMember', 'listMembers',
       'getGrant', 'getMembership', 'listReceived', 'getMyGrantFor',
+      'invite', 'accept', 'updateGrant', 'removeMember', 'memberLeave',
+      'updateReceivedName', 'listMembers',
     ]),
     quota: Object.assign(makeRemoteModule(t, 'quota', [
       'resolveInviteSettings', 'computePoolUsed',

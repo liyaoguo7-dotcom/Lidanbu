@@ -37,6 +37,26 @@ function normalizeRemark(input) {
   const s = String(input).trim();
   return Array.from(s).slice(0, 16).join('');
 }
+/** 被邀请人自定的收到共享显示名：只被邀请人可见、不改主人备注与主人名；
+ * 选填、限 16 字；空串表示回默认“我收到的共享”（前端兜底显示）。 */
+function normalizeReceivedName(input) {
+  if (input === undefined || input === null) return undefined;
+  const s = String(input).trim();
+  return Array.from(s).slice(0, 16).join('');
+}
+/** 规范关系（2026-11-01 去重核心）：同一主人＋同一被邀请人只保留一条
+ * 已接受关系作为规范关系——按 (acceptedAt||createdAt) 倒序取最新一条。
+ * 成员侧所有读取（getMyGrantFor、authz、memberEvents/memberStats、往来成员路径、
+ * 收到列表）都必须走这一条，不得再 findOne 取第一条，否则主人改第二条、
+ * 被邀请人读第一条，权限与范围改了也像没改。 */
+async function canonicalMembership(db, ownerId, memberId) {
+  if (!ownerId || !memberId) return null;
+  const mss = await db.collection(COLLECTIONS.ShareMembership)
+    .find({ ownerId, memberId, status: 'active' });
+  if (!mss || !mss.length) return null;
+  mss.sort((a, b) => ((b.acceptedAt || b.createdAt || 0) - (a.acceptedAt || a.createdAt || 0)));
+  return mss[0];
+}
 
 /** 家庭共享总开关守卫（2026-10-25 用户加）：老板平台关掉后，共享的
  * 新建/接受/改权限/移除/列表一律拒绝（入口层另有提示，双保险）。 */
@@ -125,6 +145,16 @@ async function accept(db, memberId, membershipId) {
     throw new Error('邀请已失效，请让邀请人重新邀请');
   }
   if (ms.status !== 'pending') throw new Error('邀请已处理');
+  // 去重（2026-11-01）：同一对已存在已接受关系时，新接受的这一条成为唯一
+  // 已接受，旧的置为已移除并审计（不删库、不删账本记录），此后主人改权限
+  // 与被邀请人读取用同一条规范关系，不再错位。
+  const olds = await db.collection(COLLECTIONS.ShareMembership)
+    .find({ ownerId: ms.ownerId, memberId, status: 'active' });
+  for (const old of (olds || [])) {
+    if (old._id === membershipId) continue;
+    await db.collection(COLLECTIONS.ShareMembership).update({ _id: old._id }, { status: 'removed' });
+    await audit.log(db, { ownerId: ms.ownerId, actorId: memberId, action: 'grant', targetType: 'member', targetId: old._id, detail: '接受新邀请：旧已接受关系置为已移除（去重，唯一规范关系）' });
+  }
   await db.collection(COLLECTIONS.ShareMembership).update(
     { _id: membershipId },
     { memberId, status: 'active', acceptedAt: now() }
@@ -138,12 +168,24 @@ async function accept(db, memberId, membershipId) {
 async function updateGrant(db, ownerId, membershipId, { switches, scope, remark }) {
   await assertFamilyShareOn(db);
   await restriction.assertWritable(db, ownerId);
-  const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
+  let ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
   if (!ms) throw new Error('成员关系不存在');
   if (ms.status === 'removed') throw new Error('成员关系不存在');
   if (ms.status === 'expired' || isPendingExpired(ms)) {
     await markExpiredIfNeeded(db, ms);
     throw new Error('邀请已失效，请重新邀请');
+  }
+  // 去重（2026-11-01）：主人改的若不是规范关系，改规范关系、旧的置为已移除，
+  // 否则主人改旧条、被邀请人读新条，权限改了也像没改。待接受（无 memberId）
+  // 不走此分支，仍改本条。
+  if (ms.status === 'active' && ms.memberId) {
+    const canon = await canonicalMembership(db, ownerId, ms.memberId);
+    if (canon && canon._id !== ms._id) {
+      await db.collection(COLLECTIONS.ShareMembership).update({ _id: ms._id }, { status: 'removed' });
+      await audit.log(db, { ownerId, actorId: ownerId, action: 'grant', targetType: 'member', targetId: ms._id, detail: '改权限时去重：旧已接受关系置为已移除，改规范关系' });
+      ms = canon;
+      membershipId = canon._id;
+    }
   }
   const remarkNorm = normalizeRemark(remark);
   if (remarkNorm !== undefined) {
@@ -180,6 +222,38 @@ async function removeMember(db, ownerId, membershipId) {
   // 待接受作废同样只改状态、不删库，之后不再列出。
   await audit.log(db, { ownerId, actorId: ownerId, action: 'share', targetType: 'member', targetId: membershipId, detail: ms.status === 'pending' ? '作废待接受邀请' : '移除成员，其新增记录保留' });
   await notifyShareChanged(db, ms.memberId, 'memberRemoved'); // 通知被移除的成员
+  return { ok: true };
+}
+
+/**
+ * 被邀请人退出共享（2026-11-01）：actor 须为被邀请人本人、关系须为已接受。
+ * 只把共享关系置为已移除并审计，之后主人成员列表与被邀请人收到列表均不再列出；
+ * 被邀请人已加的收送记录仍留在主人账本，绝不删账本记录。
+ */
+async function memberLeave(db, memberId, membershipId) {
+  await assertFamilyShareOn(db);
+  await restriction.assertWritable(db, memberId);
+  const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, memberId });
+  if (!ms) throw new Error('共享关系不存在');
+  if (ms.status !== 'active') throw new Error('只有已接受的共享才能退出');
+  await db.collection(COLLECTIONS.ShareMembership).update({ _id: membershipId }, { status: 'removed' });
+  await audit.log(db, { ownerId: ms.ownerId, actorId: memberId, action: 'share', targetType: 'member', targetId: membershipId, detail: '被邀请人退出共享，其新增记录保留在主人账本' });
+  await notifyShareChanged(db, ms.ownerId, 'memberLeft');
+  return { ok: true };
+}
+
+/** 被邀请人改收到共享显示名（2026-11-01）：只被邀请人可见、不改主人备注
+ * 与主人名；限 16 字，空串回默认（前端显示“我收到的共享”）。 */
+async function updateReceivedName(db, memberId, membershipId, name) {
+  await assertFamilyShareOn(db);
+  await restriction.assertWritable(db, memberId);
+  const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, memberId });
+  if (!ms) throw new Error('共享关系不存在');
+  if (ms.status !== 'active') throw new Error('只有已接受的共享才能改名');
+  const norm = normalizeReceivedName(name);
+  if (norm === undefined) throw new Error('显示名不能为空');
+  await db.collection(COLLECTIONS.ShareMembership).update({ _id: membershipId }, { receivedName: norm });
+  await audit.log(db, { ownerId: ms.ownerId, actorId: memberId, action: 'share', targetType: 'member', targetId: membershipId, detail: '被邀请人改收到共享显示名' });
   return { ok: true };
 }
 
@@ -249,15 +323,28 @@ async function getMembership(db, actorId, membershipId) {
  * 我收到的共享列表（任务AD 切云新增）：与 data-service 原直连拼装同口径——
  * 本人 active 的共享关系 + 每位账本主人的用户文档（显示名由调用方本地解析，
  * 主人文档不存在时返回 owner:null，调用方兜底显示"家人"）。
+ * 2026-11-01 去重：按主人只列一条（规范关系），同一主人多条已接受不再
+ * 出现重复行；每条附被邀请人自定的 receivedName（空则前端显示“我收到的共享”）。
  */
 async function listReceived(db, actorId) {
   await assertFamilyShareOn(db);
   const mss = await db.collection(COLLECTIONS.ShareMembership)
     .find({ memberId: actorId, status: 'active' });
+  const byOwner = new Map();
+  for (const ms of (mss || [])) {
+    const cur = byOwner.get(ms.ownerId);
+    const key = (ms.acceptedAt || ms.createdAt || 0);
+    const curKey = cur ? (cur.acceptedAt || cur.createdAt || 0) : -1;
+    if (!cur || key > curKey) byOwner.set(ms.ownerId, ms);
+  }
   const out = [];
-  for (const ms of mss) {
+  for (const ms of byOwner.values()) {
     const owner = await db.collection(COLLECTIONS.User).findOne({ _id: ms.ownerId });
-    out.push({ membershipId: ms._id, ownerId: ms.ownerId, owner: owner || null, createdAt: ms.createdAt });
+    out.push({
+      membershipId: ms._id, ownerId: ms.ownerId, owner: owner || null,
+      createdAt: ms.createdAt, acceptedAt: ms.acceptedAt || null,
+      receivedName: typeof ms.receivedName === 'string' ? ms.receivedName : '',
+    });
   }
   return out;
 }
@@ -265,10 +352,10 @@ async function listReceived(db, actorId) {
 /**
  * 我作为成员对某账本的授权（任务AD 切云新增）：与 data-service 原直连拼装
  * 同口径——无有效共享/无授权文档返回 null，有则返回 { switches, scope }。
+ * 2026-11-01：走规范关系（最新已接受），不再 findOne 取第一条。
  */
 async function getMyGrantFor(db, actorId, ownerId) {
-  const ms = await db.collection(COLLECTIONS.ShareMembership)
-    .findOne({ ownerId, memberId: actorId, status: 'active' });
+  const ms = await canonicalMembership(db, ownerId, actorId);
   if (!ms) return null;
   const grant = await db.collection(COLLECTIONS.ShareGrant)
     .findOne({ membershipId: ms._id });
@@ -276,4 +363,4 @@ async function getMyGrantFor(db, actorId, ownerId) {
   return { switches: grant.switches || {}, scope: grant.scope || {} };
 }
 
-module.exports = { invite, accept, updateGrant, removeMember, listMembers, getGrant, getMembership, listReceived, getMyGrantFor, SWITCH_IDS, PENDING_TTL_MS, isPendingExpired, normalizeRemark };
+module.exports = { invite, accept, updateGrant, removeMember, memberLeave, updateReceivedName, canonicalMembership, listMembers, getGrant, getMembership, listReceived, getMyGrantFor, SWITCH_IDS, PENDING_TTL_MS, isPendingExpired, normalizeRemark, normalizeReceivedName };

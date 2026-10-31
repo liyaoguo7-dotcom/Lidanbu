@@ -185,11 +185,15 @@ test('BF前端：邀请页备注＋48 小时提醒；成员详情可补改备注
   const invWxml = mp('share/share-invite.wxml');
   const invJs = mp('share/share-invite.js');
   assert(!invWxml.includes('点下方按钮发给微信好友，对方点开就能加入你的账本，不用填任何码。'), '邀请家人按钮上方旧提示应去掉');
-  assert(invWxml.includes('你给家人的备注'), '邀请页应有"给家人的备注"输入框');
+  // 2026-11-01 用户改定：邀请页备注标签由“你给家人的备注”改为“给家人的备注”
+  // （成员详情页补改备注标签不动，仍为“你给家人的备注”）。
+  assert(invWxml.includes('给家人的备注') && !invWxml.includes('你给家人的备注'), '邀请页应有“给家人的备注”输入框');
   assert(invWxml.includes('如：老婆、儿子，不填则显示对方昵称'), '备注占位应为"如：老婆、儿子，不填则显示对方昵称"');
   assert(invWxml.includes('maxlength="16"'), '备注限 16 字');
   assert(invWxml.includes('被邀请人须在48小时内接受，超时邀请自动失效，须重新邀请。'), '备注下应有 48 小时提醒小字');
-  assert(invJs.includes('remark: this.data.remark'), '预生成 payload 应带备注');
+  // 2026-11-01 竞态修复：_payload 改为显式 remarkOverride 直传（不读滞后 this.data），
+  // 仍带备注；旧“remark: this.data.remark”字串被取代，意图不变。
+  assert(invJs.includes('_payload') && invJs.includes('remarkOverride') && invJs.includes('remark:'), '预生成 payload 应带备注（显式直传）');
   assert(invJs.includes('onRemarkInput'), '备注输入应有处理函数');
   const grantWxml = mp('share/share-grant.wxml');
   const grantJs = mp('share/share-grant.js');

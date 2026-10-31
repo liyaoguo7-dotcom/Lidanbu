@@ -790,6 +790,20 @@ const service = {
       return await core.share.removeMember(_db, _userId, membershipId);
     } catch (e) { throw new Error(friendly(e)); }
   },
+  /** 被邀请人退出共享（2026-11-01）：本人、已接受；关系置为已移除，
+   * 主人成员列表与收到列表不再列出，已加记录仍留在主人账本。 */
+  async memberLeave(membershipId) {
+    try {
+      return await core.share.memberLeave(_db, _userId, membershipId);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
+  /** 被邀请人改收到共享显示名（2026-11-01）：只被邀请人可见、限16字，
+   * 空则回默认“我收到的共享”。 */
+  async updateReceivedName(membershipId, name) {
+    try {
+      return await core.share.updateReceivedName(_db, _userId, membershipId, name);
+    } catch (e) { throw new Error(friendly(e)); }
+  },
   /** 我收到的共享（我是成员的账本） */
   async myReceivedShares() {
     try {
@@ -800,6 +814,10 @@ const service = {
         membershipId: ms.membershipId,
         ownerId: ms.ownerId,
         ownerName: ms.owner ? core.users.displayName(ms.owner) : '家人',
+        receivedName: ms.receivedName || '',
+        // 2026-11-01：收到块名初始为“我收到的共享”，不写礼友…的账本；
+        // 被邀请人改名后显示改后的名。
+        displayName: (ms.receivedName || '').trim() ? ms.receivedName : '我收到的共享',
         createdAt: ms.createdAt,
       }));
     } catch (e) { throw new Error(friendly(e)); }

@@ -36,8 +36,9 @@ test('AZ共享两页：邀请页撤标语+权限说明同段；共享首页标�
   assert(home.includes('bindtap="onCloseSlogans"'), '标语块应有低调小叉关闭');
   assert(homeJs.includes('shareHomeSlogansClosed'), '关闭标记应落本机 storage');
   assert(homeJs.includes('onCloseSlogans'), '页面应有关闭处理函数');
-  // ④ 去灰：邀请卡 margin-top:0、标语块全宽（margin:0）
-  // 2026-10-31 改版后首块样式串后接渐变，故按 margin-top:0 片段断言（贴合意图不变）。
-  assert(home.includes('class="card" style="margin-top:0'), '邀请卡应贴黄条/标语块（margin-top:0）');
+  // ④ 2026-11-01 用户改定：邀请卡与上方黄色小字之间留空、不挨到一起，
+  // 故 margin-top 由 0 改为 20px（与两卡之间空隙同级），取代 AZ 贴合口径；
+  // 标语块全宽白底贴合（margin:0）不动。
+  assert(home.includes('class="card" style="margin-top:20px'), '邀请卡应与上方黄色小字留空（margin-top:20px）');
   assert(home.includes('background:#FFFFFF;margin:0'), '标语块应全宽白底贴合（不留灰）');
 });

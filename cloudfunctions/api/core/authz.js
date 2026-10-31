@@ -32,14 +32,14 @@ export: 'export',
 
 /**
 * 取成员对某账本的有效授权（active 成员关系 + 授权单）
+* 2026-11-01 去重：走规范关系（最新已接受），不再 findOne 取第一条；
+* 共享页、往来、礼薄、增改删导出全部经 checkMemberAccess 走同一条，
+* 主人改权限与范围后被邀请人下次进页、下次操作即按新值（实时查、无缓存）。
 * @returns {grant|null}
 */
 async function getGrant(db, ownerId, memberId) {
-const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({
-ownerId,
-memberId,
-status: 'active',
-});
+const share = require('./share');
+const ms = await share.canonicalMembership(db, ownerId, memberId);
 if (!ms) return null;
 const grant = await db.collection(COLLECTIONS.ShareGrant).findOne({
 membershipId: ms._id,

@@ -32,10 +32,14 @@ Page({
     canInvite: false, // 按钮可用状态：勾选处理内同步重算（AP批延迟修复）
     inviteHint: '', // 不可发时的提示文案（未选范围/生成失败原因）
     remark: '', // 2026-10-31：给家人的备注，选填、只邀请人可见、不改被邀请人昵称、限 16 字
+    // 2026-11-01 备注竞态门禁：备注输入后、最后一次 updateGrant 落库前，
+    // 分享按钮禁用（见 onRemarkInput / _doPrepare），不得用旧备注的码分享。
+    remarkPending: false,
   },
 
   _pendingId: '',   // 已预生成的待发邀请（membershipId），本页内只维护这一份
   _prepChain: null, // 预生成串行链：勾选连点时排队执行，避免并发建多份
+  _prepPending: 0,  // 排队中的预生成次数（含在途）；归零且备注一致时才放行分享
 
   async onLoad() {
     await dataService.init();
@@ -74,16 +78,19 @@ Page({
     this._prepareInvite();
   },
 
-  /** 按钮可用状态的本地同步口径：范围至少勾一项即可邀请（服务端拒绝另行压回） */
+  /** 按钮可用状态的本地同步口径：范围至少勾一项即可邀请（服务端拒绝另行压回）；
+   * 2026-11-01 备注竞态门禁：备注保存中时 canInvite 亦压回 false，使原
+   * disabled="{{!canInvite || !inviteCode}}" 字串不变、按钮仍被禁用（旧 AP/DR
+   * 测试精确断言该字串，不得改字串、只能把门禁嵌进 canInvite）。 */
   _syncBtnState(events, giftsOn) {
     const ready = (events || []).some((e) => e.checked) || !!giftsOn;
     return {
-      canInvite: ready,
+      canInvite: ready && !this.data.remarkPending,
       inviteHint: ready ? '' : '至少勾选一个收礼事件或"送礼"才能发出',
     };
   },
 
-  _payload() {
+  _payload(remarkOverride) {
     const switches = {};
     this.data.switches.forEach((s) => { switches[s.id] = s.on; });
     return {
@@ -92,27 +99,34 @@ Page({
         events: this.data.events.filter((e) => e.checked).map((e) => e._id),
         gifts: this.data.giftsOn,
       },
-      remark: this.data.remark || '',
+      // 备注以输入事件值直传，不读可能滞后的 this.data（setData 异步），
+      // 否则输完马上点分享会发旧备注的码。
+      remark: remarkOverride !== undefined ? remarkOverride : (this.data.remark || ''),
     };
   },
 
   onRemarkInput(e) {
-    this.setData({ remark: e.detail.value || '' });
-    this._prepareInvite(); // 备注随预生成一并写进待发邀请（updateGrant 带备注，不另起接口）
+    const v = e.detail.value || '';
+    // 输入即置保存中、并把 canInvite 压回 false（按钮原 disabled 字串不变即被禁用）；
+    // 待最后一次更新落库且与当前输入一致后再恢复。
+    this.setData({ remark: v, remarkPending: true, canInvite: false, inviteHint: '备注保存中，请稍候…' });
+    this._prepareInvite(v);
   },
 
   /** 静默预生成：串行执行；未选范围不生成、按钮置灰保留原文案提示 */
-  _prepareInvite() {
+  _prepareInvite(remarkOverride) {
+    this._prepPending += 1;
     this._prepChain = (this._prepChain || Promise.resolve())
-      .then(() => this._doPrepare())
+      .then(() => this._doPrepare(remarkOverride))
       .catch(() => {});
     return this._prepChain;
   },
 
-  async _doPrepare() {
-    const payload = this._payload();
+  async _doPrepare(remarkOverride) {
+    const payload = this._payload(remarkOverride);
     if (payload.scope.events.length === 0 && !payload.scope.gifts) {
-      this.setData({ inviteCode: '', canInvite: false, inviteHint: '至少勾选一个收礼事件或"送礼"才能发出' });
+      this._prepPending = Math.max(0, this._prepPending - 1);
+      this.setData({ inviteCode: '', canInvite: false, remarkPending: false, inviteHint: '至少勾选一个收礼事件或"送礼"才能发出' });
       return;
     }
     try {
@@ -122,19 +136,35 @@ Page({
       } else {
         await dataService.updateGrant(this._pendingId, payload);
       }
-      // 期间勾选可能又变了：canInvite 按最新勾选回写，inviteCode 只带码
+      // 期间勾选可能又变了：canInvite 按最新勾选回写，inviteCode 只带码；
+      // 只有排队归零且落库备注与当前输入一致时，才清除保存中、放行分享。
+      // 注意：此处不用 _syncBtnState（它会因 remarkPending 仍为 true 而压回
+      // false），直接按范围就绪与 saved 计算 canInvite。
+      this._prepPending = Math.max(0, this._prepPending - 1);
+      const saved = this._prepPending === 0 && payload.remark === this.data.remark;
+      const ready = (this.data.events || []).some((e) => e.checked) || !!this.data.giftsOn;
       this.setData({
-        inviteCode: this._pendingId, inviteHint: '',
-        canInvite: this._syncBtnState(this.data.events, this.data.giftsOn).canInvite,
+        inviteCode: this._pendingId, inviteHint: saved ? '' : '备注保存中，请稍候…',
+        remarkPending: !saved,
+        canInvite: saved && ready,
       });
     } catch (e) {
       // 服务端拒绝（如非会员）：按钮压回置灰，原因走原有提示文案
-      this.setData({ inviteCode: '', canInvite: false, inviteHint: (e && e.message) || '邀请准备失败，请重试' });
+      this._prepPending = Math.max(0, this._prepPending - 1);
+      this.setData({ inviteCode: '', canInvite: false, remarkPending: false, inviteHint: (e && e.message) || '邀请准备失败，请重试' });
     }
   },
 
-  /** 分享给微信好友：path 带邀请码，落地页 share-view 凭码接受 */
+  /** 分享给微信好友：path 带邀请码，落地页 share-view 凭码接受；
+   * 备注未落库时不得用旧码分享（按钮已禁用，右上角菜单分享亦拦住）。 */
   onShareAppMessage() {
+    if (this.data.remarkPending) {
+      try { wx.showToast({ title: '备注保存中，请稍候再分享', icon: 'none' }); } catch (e) { /* 忽略 */ }
+      return {
+        title: '邀请你来共同记录人情往来——礼单簿家庭共享',
+        path: '/pages/share/share-home',
+      };
+    }
     const code = this.data.inviteCode || '';
     return {
       title: '邀请你来共同记录人情往来——礼单簿家庭共享',

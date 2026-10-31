@@ -13,30 +13,54 @@
 </view>
 
 <!-- 家庭共享页上边两项（2026-10-31）：拆成两个独立圆角方块，底色只复刻首页两大卡渐变；
-     邀请家人=送礼粉红，成员管理=收礼橙黄；主标16px白字、副文案浅白、三角20px白字 -->
-<view class="card" style="margin-top:0;background:linear-gradient(135deg, #FFC7C3, #F78C8F);border-radius:12px;">
+     邀请家人=送礼粉红，成员管理=收礼橙黄；2026-11-01：主标与副文案白改黑、三角不动（仍白20px）；
+     邀请家人卡上间距加大（20px，与两卡之间空隙同级），与上方黄色小字提示留空、不挨到一起 -->
+<view class="card" style="margin-top:20px;background:linear-gradient(135deg, #FFC7C3, #F78C8F);border-radius:12px;">
   <view class="form-row" bindtap="onInvite">
-    <text class="form-label" style="font-size:16px;color:#FFFFFF;">邀请家人</text>
-    <text class="form-val ph" style="color:rgba(255,255,255,0.9);">先勾选权限和范围，再发出邀请</text>
+    <text class="form-label" style="font-size:16px;color:#000000;">邀请家人</text>
+    <text class="form-val ph" style="color:#000000;">先勾选权限和范围，再发出邀请</text>
     <text class="chev" style="font-size:20px;color:#FFFFFF;">›</text>
   </view>
 </view>
 
 <view class="card" style="background:linear-gradient(135deg, #FFE4B8, #FDBE68);border-radius:12px;">
   <view class="form-row" bindtap="onMembers">
-    <text class="form-label" style="font-size:16px;color:#FFFFFF;">成员管理</text>
-    <text class="form-val ph" style="color:rgba(255,255,255,0.9);">查看与修改家人权限</text>
+    <text class="form-label" style="font-size:16px;color:#000000;">成员管理</text>
+    <text class="form-val ph" style="color:#000000;">查看与修改家人权限</text>
     <text class="chev" style="font-size:20px;color:#FFFFFF;">›</text>
   </view>
 </view>
 
-<!-- 我收到的共享（2026-10-31）：淡蓝 #E2EEFB 独立圆角方块；标题上边距加大，
-     与上边两块之间露出页面灰底、形成明显隔断（不只画一条细线）；块内深色字在淡蓝上可读 -->
-<view class="section-title" wx:if="{{received.length}}" style="margin-top:20px;">我收到的共享</view>
-<view class="card" wx:if="{{received.length}}" style="background:#E2EEFB;border-radius:12px;">
-  <view class="form-row" wx:for="{{received}}" wx:key="membershipId" bindtap="onViewShare" data-owner="{{item.ownerId}}">
-    <text class="form-label" style="font-size:16px;">{{item.ownerName}}的账本</text>
-    <text class="form-val"></text>
-    <text class="chev" style="font-size:20px;">›</text>
+<!-- 我收到的共享（2026-11-01）：上面小字标题去掉；成员管理与收到块之间一条红色横线
+     （按钮红 #F0575A、2px、上下留空）；每条收到共享各为一个块，与上方两块一样大
+     （同 .card、同圆角12px、同行高），块名初始为“我收到的共享”、不写礼友…的账本；
+     右边“⋯”或左滑后右边出现修改（橙）、删除（红），与收礼礼簿行一致 -->
+<view wx:if="{{received.length}}" style="height:2px;background:#F0575A;margin:20px 12px 0"></view>
+<view wx:for="{{received}}" wx:key="membershipId" style="position:relative;margin:10px 12px;border-radius:12px;overflow:hidden" data-id="{{item.membershipId}}" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd">
+  <view style="position:absolute;top:0;right:0;bottom:0;display:flex">
+    <view style="width:56px;background:#FCA523;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:16px" data-id="{{item.membershipId}}" catchtap="onEditReceived">修改</view>
+    <view style="width:56px;background:#F06D6A;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:16px" data-id="{{item.membershipId}}" catchtap="onLeaveReceived">删除</view>
+  </view>
+  <view style="background:#E2EEFB;border-radius:12px;transform:translateX({{item.offset}}px)">
+    <view class="form-row" bindtap="onViewShare" data-owner="{{item.ownerId}}">
+      <!-- form-label 宽 82px 会把“我收到的共享”6 字折成两行、块变高；此处用 flex 文本单行，
+           与上方两块同高、同内边距 -->
+      <text style="font-size:16px;flex:1">{{item.displayName}}</text>
+      <text style="font-size:20px;color:#C2C2C2;margin-right:8px" data-id="{{item.membershipId}}" catchtap="onMoreReceived">⋯</text>
+      <text class="chev" style="font-size:20px;">›</text>
+    </view>
+  </view>
+</view>
+
+<!-- 收到共享改名（2026-11-01）：被邀请人自定显示名、限16字，空则回“我收到的共享”；
+     只被邀请人可见，不改主人备注与主人名 -->
+<view wx:if="{{editingId}}" style="background:#FFFFFF;border-radius:12px;margin:10px 12px;padding:14px 16px">
+  <view style="font-size:16px;margin-bottom:8px">修改收到共享的名称</view>
+  <view class="form-row" style="border:none;padding:0">
+    <input style="flex:1;height:40px;background:#F6F6F6;border-radius:8px;text-align:center;font-size:16px" placeholder="我收到的共享" maxlength="16" value="{{editingName}}" bindinput="onEditingNameInput" />
+  </view>
+  <view style="display:flex;margin-top:12px">
+    <view style="flex:1;height:44px;line-height:44px;text-align:center;background:#F0575A;color:#FFFFFF;border-radius:22px;margin-right:8px" bindtap="onSaveReceivedName">保存</view>
+    <view style="flex:1;height:44px;line-height:44px;text-align:center;background:#EEEEEE;border-radius:22px" bindtap="onCancelReceivedName">取消</view>
   </view>
 </view>

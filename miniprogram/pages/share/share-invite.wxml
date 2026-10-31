@@ -2,46 +2,49 @@
      已于后台静默备好，主按钮从一开始就是微信分享，点一次直接发给好友，对方点开即接受） -->
 <!-- AZ批（用户 2026-10-27 真机反馈）：顶部标语撤掉（标语改放共享首页）；
      权限说明跟在「权限」二字后同段连排，不再单独起一行 -->
-<view class="section-title">被邀请人的操作权限<text style="font-size:12px">（勾上哪项，被邀请人就能对你共享的记录做哪项操作）</text></view>
+<!-- 2026-11-01 邀请页字体一律加 2px（只改本页内联样式，不改全局 app.wxss、不改其他页） -->
+<view class="section-title" style="font-size:15px">被邀请人的操作权限<text style="font-size:14px">（勾上哪项，被邀请人就能对你共享的记录做哪项操作）</text></view>
 <view class="card">
   <view class="form-row" wx:for="{{switches}}" wx:key="id" bindtap="onSwitchToggle" data-id="{{item.id}}">
-    <text class="form-label">{{item.name}}</text>
-    <text class="form-val ph" wx:if="{{item.alwaysOn}}">恒开，不可取消</text>
-    <text class="form-val" wx:else></text>
+    <text class="form-label" style="font-size:17px">{{item.name}}</text>
+    <text class="form-val ph" style="font-size:17px" wx:if="{{item.alwaysOn}}">恒开，不可取消</text>
+    <text class="form-val" style="font-size:17px" wx:else></text>
     <view class="switch {{item.on ? 'on' : ''}}" style="{{item.alwaysOn ? 'opacity:.6' : ''}}"><view class="dot"></view></view>
   </view>
 </view>
 
-<view class="section-title">共享范围（至少选一项；你选中的礼薄和送礼记录，被邀请人都能看到）</view>
+<view class="section-title" style="font-size:15px">共享范围（至少选一项；你选中的礼薄和送礼记录，被邀请人都能看到）</view>
 <view class="card">
   <view class="form-row" wx:for="{{events}}" wx:key="_id" bindtap="onEventToggle" data-id="{{item._id}}">
-    <text class="form-label">{{item.name}}</text>
-    <text class="form-val"></text>
-    <text class="check {{item.checked ? 'on' : ''}}">{{item.checked ? '✓' : ''}}</text>
+    <text class="form-label" style="font-size:17px">{{item.name}}</text>
+    <text class="form-val" style="font-size:17px"></text>
+    <text class="check {{item.checked ? 'on' : ''}}" style="font-size:16px">{{item.checked ? '✓' : ''}}</text>
   </view>
   <view class="form-row" bindtap="onGiftsToggle">
-    <text class="form-label">送礼记录</text>
-    <text class="form-val"></text>
-    <text class="check {{giftsOn ? 'on' : ''}}">{{giftsOn ? '✓' : ''}}</text>
+    <text class="form-label" style="font-size:17px">送礼记录</text>
+    <text class="form-val" style="font-size:17px"></text>
+    <text class="check {{giftsOn ? 'on' : ''}}" style="font-size:16px">{{giftsOn ? '✓' : ''}}</text>
   </view>
   <view class="form-row" wx:if="{{!events.length && !giftsOn}}">
-    <text class="form-val ph">还没有礼薄，可先去添加礼薄</text>
+    <text class="form-val ph" style="font-size:17px">还没有礼薄，可先去添加礼薄</text>
   </view>
 </view>
 
-<!-- 2026-10-31：旧提示卡删掉，换成"给家人的备注"输入框（选填、只邀请人可见、
-     不改被邀请人自己的昵称、限 16 字）＋48 小时提醒小字 -->
-<view class="card" style="padding:14px 16px">
-  <view class="form-row" style="border:none">
-    <text class="form-label">你给家人的备注</text>
-    <input class="form-val" style="flex:1;text-align:right" placeholder="如：老婆、儿子，不填则显示对方昵称" maxlength="16" value="{{remark}}" bindinput="onRemarkInput" />
+<!-- 2026-11-01：备注块——左边“给家人的备注”在红色圆角方块内，红用下面邀请家人
+     按钮那个红 #F0575A，标签红底白字；红块里套白色圆角输入框（右），输入的名字居中；
+     48 小时小字仍在红块下面（块外），不动 -->
+<view style="background:#F0575A;border-radius:12px;padding:14px 16px;margin:10px 12px">
+  <view class="form-row" style="border:none;padding:0;min-height:44px">
+    <text style="font-size:17px;color:#FFFFFF;flex:none;margin-right:12px">给家人的备注</text>
+    <input style="flex:1;height:40px;background:#FFFFFF;border-radius:8px;text-align:center;font-size:17px;color:#333333" placeholder="如：老婆、儿子，不填则显示对方昵称" placeholder-style="text-align:center;color:#C2C2C2" maxlength="16" value="{{remark}}" bindinput="onRemarkInput" />
   </view>
-  <view style="font-size:12px;color:#999;margin-top:8px">被邀请人须在48小时内接受，超时邀请自动失效，须重新邀请。</view>
 </view>
+<view style="font-size:14px;color:#999;margin:8px 12px 0">被邀请人须在48小时内接受，超时邀请自动失效，须重新邀请。</view>
 
 <view style="height:110px"></view>
 <view class="btn-bottom">
-  <button class="btn-primary" open-type="share" disabled="{{!canInvite || !inviteCode}}" style="{{(canInvite && inviteCode) ? '' : 'opacity:.45'}}">邀请家人</button>
-  <view wx:if="{{canInvite && !inviteCode}}" style="text-align:center;font-size:12px;color:#999;margin-top:10px">邀请准备中，请稍候…</view>
-  <view wx:if="{{inviteHint}}" style="text-align:center;font-size:12px;color:#999;margin-top:10px">{{inviteHint}}</view>
+  <button class="btn-primary" open-type="share" disabled="{{!canInvite || !inviteCode}}" style="font-size:19px;{{(canInvite && inviteCode) ? '' : 'opacity:.45'}}">邀请家人</button>
+  <view wx:if="{{remarkPending}}" style="text-align:center;font-size:14px;color:#999;margin-top:10px">备注保存中，请稍候…</view>
+  <view wx:if="{{canInvite && !inviteCode}}" style="text-align:center;font-size:14px;color:#999;margin-top:10px">邀请准备中，请稍候…</view>
+  <view wx:if="{{inviteHint}}" style="text-align:center;font-size:14px;color:#999;margin-top:10px">{{inviteHint}}</view>
 </view>
