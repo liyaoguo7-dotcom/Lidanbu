@@ -50,7 +50,8 @@ test('BX 联系人字体大一号：各页人名＋1px，横置不动、礼薄�
 
 test('BX 会员卡片偏粉色已由六色取代：渐变改送礼粉红（深色在上）、开通会员白底红字不动', () => {
   const wxss = readMp('pages/mine/mine.wxss');
-  assert(wxss.includes('linear-gradient(135deg, #F67070, #F0575A)'), '会员卡片渐变识别送礼红（DG批）');
+  // 2026-10-31 用户定：DG 红渐变作废，会员卡改首页送礼右边浓粉红 #F78C8F 纯色不渐变
+  assert(wxss.includes('background: #F78C8F;'), '会员卡片已改送礼右边浓粉红纯色（2026-10-31）');
   assert(/\.m-btn\s*\{[^}]*color: #F0575A/.test(wxss), '开通会员白底红字不动');
 });
 
@@ -67,7 +68,8 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动，只改色值');
   assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出、通铺撤销（DD批）');
   const mine = readMp('pages/mine/mine.wxss');
-  assert(mine.includes('.card.profile { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }'), '头像栏识别收礼橙黄（DG批）');
+  // 2026-10-31 用户定：DG 橙黄渐变作废，头像栏改首页收礼左边 #FFE4B8 半透明淡黄纯色不渐变
+  assert(mine.includes('.card.profile { background: rgba(255, 228, 184, 0.6); }'), '头像栏收礼左边半透明淡黄纯色（2026-10-31）');
   assert(mine.includes('.m-badge {') && mine.includes('background: #E2EEFB; color: #333;'), '会员有效家庭共享蓝＋深字（CF批）');
   assert(mine.includes('.m-btn.ghost {') && mine.includes('background: #E0F3E4; color: #333;'), '我的积分导出备份绿＋深字');
 });

@@ -21,8 +21,8 @@
 }
 .contact-btn::after { border: none; }
 .profile { padding: 12px 16px; display: flex; align-items: center; }
-/* DG批（用户 2026-10-30 定）：头像栏改识别收礼方块色（橙黄渐变，与首页大卡色不同） */
-.card.profile { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }
+/* 2026-10-31 用户定：头像栏改首页收礼左边色 #FFE4B8 半透明淡黄，纯色不渐变（原 DG 橙黄渐变作废） */
+.card.profile { background: rgba(255, 228, 184, 0.6); }
 .avatar {
   width: 56px; height: 56px;
   flex: none; margin-right: 14px;
@@ -31,11 +31,16 @@
 .usub { font-size: 16px; color: #666; margin-top: 4px; display: block; } /* DI批（用户 2026-10-30 定）：头像栏“会员”二字加深 #999→#666 */
 .member-card {
   padding: 12px 16px;
-  /* DG批（用户 2026-10-30 定）：卡片改识别送礼方块色（红色渐变；BX 的送礼粉红作废） */
-  background: linear-gradient(135deg, #F67070, #F0575A);
+  /* 2026-10-31 用户定：会员卡改首页送礼右边浓粉红 #F78C8F，纯色不渐变（原 DG 红渐变作废） */
+  background: #F78C8F;
   border: none;
   display: flex; flex-direction: column;
 }
+/* 2026-10-31 陪伴方块：拍照导入淡粉 #FDE8E8，居中一行，小书本图标 20px，天数加粗 */
+.companion-card { background: #FDE8E8; display: flex; align-items: center; justify-content: center; padding: 12px 16px; }
+.companion-icon { width: 20px; height: 20px; flex: none; margin-right: 8px; }
+.companion-text { font-size: 16px; color: #333; }
+.companion-days { font-weight: 600; }
 .m-title { color: #fff; font-size: 16px; font-weight: 600; }
 .m-desc { color: rgba(255,255,255,.85); font-size: 16px; margin-top: 6px; line-height: 1.55; }
 .m-btn {

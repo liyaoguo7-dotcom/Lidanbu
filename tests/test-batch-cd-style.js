@@ -13,7 +13,8 @@ test('CD 颜色：亲友录统一浅蓝、我的页深蓝＋以下纯白', () =>
   for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 米色（DD批，取代 CY批暗灰）`);
   assert(!ct.includes('#FDE8E8') && !ct.includes('#FFC7C3') && !ct.includes('#FFE4B8'), '亲友录不再有粉/橙六色');
   const mine = readMp('pages/mine/mine.wxss');
-  assert(mine.includes('.card.profile { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }'), '头像栏识别收礼橙黄（DG批）');
+  // 2026-10-31 用户定：DG 橙黄渐变作废，头像栏改首页收礼左边 #FFE4B8 半透明淡黄纯色不渐变
+  assert(mine.includes('.card.profile { background: rgba(255, 228, 184, 0.6); }'), '头像栏收礼左边半透明淡黄纯色（2026-10-31）');
   assert(mine.includes('.form-row.rowbg { background: #FFFFFF; }'), '横置行往下纯白');
   assert(mine.includes('.contact-btn.rowbg { background: #FFFFFF; }'), '联系客服纯白');
 });
@@ -30,5 +31,6 @@ test('CD 颜色：往来收送卡片化＋合计差额合并卡靠紧＋联系�
   // 不动项：时间按钮六色、差额红字、会员卡渐变
   assert(wl.includes('.tchip.chip-all { background: #E2EEFB; }'), '时间按钮蓝不动');
   assert(wl.includes('.tchip.chip-lastYear { background: #FFC7C3; }'), '时间按钮送礼粉不动');
-  assert(readMp('pages/mine/mine.wxss').includes('linear-gradient(135deg, #F67070, #F0575A)'), '会员卡改识别送礼红渐变（DG批）');
+  // 2026-10-31 用户定：DG 红渐变作废，会员卡改首页送礼右边浓粉红 #F78C8F 纯色不渐变
+  assert(readMp('pages/mine/mine.wxss').includes('background: #F78C8F;'), '会员卡改送礼右边浓粉红纯色（2026-10-31）');
 });

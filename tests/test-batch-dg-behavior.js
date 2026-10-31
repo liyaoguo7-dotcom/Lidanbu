@@ -11,8 +11,9 @@ test('DG 我的页：头像栏识别收礼橙黄＋会员卡识别送礼红＋�
   const mine = readMp('pages/mine/mine.wxss');
   const wxml = readMp('pages/mine/mine.wxml');
   const home = readMp('pages/import/import-home.wxss');
-  assert(mine.includes('.card.profile { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }'), '头像栏改识别收礼橙黄渐变（不是首页大卡色）');
-  assert(mine.includes('background: linear-gradient(135deg, #F67070, #F0575A);'), '会员卡片改识别送礼红渐变');
+  // 2026-10-31 用户定：DG 两渐变作废，头像栏改首页收礼左边 #FFE4B8 半透明淡黄、会员卡改首页送礼右边 #F78C8F，均为纯色不渐变
+  assert(mine.includes('.card.profile { background: rgba(255, 228, 184, 0.6); }'), '头像栏收礼左边半透明淡黄纯色（2026-10-31，取代 DG 渐变）');
+  assert(mine.includes('background: #F78C8F;'), '会员卡片送礼右边浓粉红纯色（2026-10-31，取代 DG 渐变）');
   assert(home.includes('.kind-card.receive { background: linear-gradient(135deg, #FFB84D, #FF9F2E); }'), '头像栏色与识别收礼方块同值');
   assert(home.includes('.kind-card.gift { background: linear-gradient(135deg, #F67070, #F0575A); }'), '会员卡色与识别送礼方块同值');
   assert(mine.includes('.chev { font-size: 18px; }'), '本页所有行右边箭头统一 18px（头像栏＋下面各行一致）');

@@ -30,6 +30,7 @@ Page({
     memberStateText: '免费用户',
     isMember: false,
     memberText: '',
+    companionDays: null, // 2026-10-31：我的页陪伴方块天数，无注册日时为 null、不显示天数
     pointsBalance: 0,
     landscapeOn: false,
     demoMode: false,
@@ -110,6 +111,11 @@ Page({
         demoStateText: DEMO_STATE_LABELS[m.state] || m.state,
       });
     } catch (e) { /* 演示期忽略 */ } })());
+    // ②b 陪伴天数：注册日起算、当天算第 1 天；无注册日为 null，方块只显示前半句
+    jobs.push((async () => { try {
+      const days = await dataService.getCompanionDays();
+      this.setData({ companionDays: days });
+    } catch (e) { /* 忽略 */ } })());
     // ④ 邀请进度：已邀请 x/上限（读真实汇总，页面不写死）
     jobs.push((async () => { try {
       const s = await dataService.getInviteSummary();

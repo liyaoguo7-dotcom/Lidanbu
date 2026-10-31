@@ -376,6 +376,11 @@ const service = {
     await ensureUser();
     return core.users.getProfile(_db, _userId);
   },
+  /** 陪伴天数（我的页新方块用）：注册日起算、当天算第 1 天；无注册日返回 null */
+  async getCompanionDays() {
+    const user = await ensureUser();
+    return core.users.companionDays(user && user.createdAt);
+  },
   /** 改昵称/头像：昵称过长度与内容安全校验（core/users），违规抛委婉文案 */
   async updateProfile(patch) {
     try {

@@ -156,6 +156,23 @@ async function getSelf(db, userId) {
   return db.collection(COLLECTIONS.User).findOne({ _id: userId });
 }
 
+/**
+ * 陪伴天数（2026-10-31 用户定，我的页新方块用）：从注册日（用户文档 createdAt）
+ * 起算，注册当天算第 1 天，之后每天加 1；无/非法注册日返回 null，页面不显示
+ * 天数、不显示 0 天或乱数。按本地自然日算（两端都先归到当天 0 点再相减）。
+ */
+function companionDays(createdAt, nowMs) {
+  const t = Number(createdAt);
+  if (!t || Number.isNaN(t)) return null;
+  const now = Number(nowMs) || Date.now();
+  const start = new Date(t);
+  start.setHours(0, 0, 0, 0);
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.floor((today - start) / 86400000);
+  return diff >= 0 ? diff + 1 : 1;
+}
+
 /** 取用户资料的展示形状：{ displayName, nickname(原始存值), avatarUrl } */
 async function getProfile(db, userId) {
   const user = await db.collection(COLLECTIONS.User).findOne({ _id: userId });
@@ -189,6 +206,7 @@ module.exports = {
   DEFAULT_DISPLAY_NAME,
   generatedNickname,
   displayName,
+  companionDays,
   consentOf,
   getPrivacyConsent,
   setPrivacyConsent,
