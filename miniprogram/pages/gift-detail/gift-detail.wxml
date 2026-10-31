@@ -16,20 +16,20 @@
     <view class="dt-row"><text class="dt-label">备注</text><text class="dt-val {{remark === '无' ? 'ph' : ''}}">{{remark}}</text></view>
   </view>
 
-  <view class="dt-actions">
-    <view class="dt-act" bindtap="onDelete">
+  <view class="dt-actions" wx:if="{{canDel || canEdit}}">
+    <view class="dt-act" wx:if="{{canDel}}" bindtap="onDelete">
       <image class="dt-act-icon" src="/images/icons/trash.svg" mode="aspectFit" />
       <text class="dt-act-text">删除</text>
     </view>
-    <view class="dt-vline"></view>
-    <view class="dt-act" bindtap="goEdit">
+    <view class="dt-vline" wx:if="{{canDel && canEdit}}"></view>
+    <view class="dt-act" wx:if="{{canEdit}}" bindtap="goEdit">
       <image class="dt-act-icon" src="/images/icons/pen.svg" mode="aspectFit" />
       <text class="dt-act-text">修改</text>
     </view>
   </view>
 </view>
 
-<view class="wanglai-link" bindtap="goWanglai">查看往来记录＞＞</view>
+<view class="wanglai-link" wx:if="{{canWanglai}}" bindtap="goWanglai">查看往来记录＞＞</view>
 
 <!-- 统一删除弹窗 -->
 <confirm-modal show="{{showDelModal}}" title="删除送礼记录" content="{{delContent}}"

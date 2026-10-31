@@ -20,7 +20,8 @@ Page({
   async onLoad(options) {
     await dataService.init();
     this.recordId = options.id;
-    const d = await dataService.getRecordDetail(this.recordId);
+    this.ownerId = options.ownerId || ''; // 成员视角：账本主人 id，缺省=自己
+    const d = await dataService.getRecordDetail(this.recordId, this.ownerId || undefined);
     const r = d && d.record;
     if (!r) {
       wx.showToast({ title: '记录不存在', icon: 'none' });
@@ -77,7 +78,8 @@ Page({
   },
 
   goChooseContact() {
-    wx.navigateTo({ url: '/pages/choose-contact/choose-contact?from=receive-record-edit' });
+    const owner = this.ownerId ? `&ownerId=${this.ownerId}` : '';
+    wx.navigateTo({ url: `/pages/choose-contact/choose-contact?from=receive-record-edit${owner}` });
   },
 
   async onSave() {
@@ -95,7 +97,7 @@ Page({
         contactId: this.data.contactId,
         amount: fen,
         remark: (this.data.remark || '').trim(),
-      });
+      }, this.ownerId || undefined);
       wx.showToast({ title: '已保存', icon: 'success' });
       wx.navigateBack(); // 成功提示是全局浮层，返回后仍可见：不再固定多等 600ms（2026-10-24 提速，用户反馈新建礼薄等保存后延迟）
     } catch (e) {

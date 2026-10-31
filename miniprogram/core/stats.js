@@ -430,7 +430,18 @@ async function memberEvents(db, actorId, ownerId) {
   if (!pre.switches.view) throw errors.permDenied('switch-off:view');
   const ids = pre.scope.events || [];
   if (!ids.length) return [];
-  return db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId, _id: { $in: ids } });
+  const events = await db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId, _id: { $in: ids } });
+  // 2026-10-31 共享页礼薄块用：每本附笔数与合计（只算该本明细，不改原字段）。
+  const records = await db.collection(COLLECTIONS.ReceiveRecord).find({ ownerId });
+  const agg = new Map();
+  for (const r of records) {
+    const a = agg.get(r.eventId) || { count: 0, totalFen: 0 };
+    a.count += 1; a.totalFen += (r.amount || 0); agg.set(r.eventId, a);
+  }
+  return events.map((e) => {
+    const a = agg.get(e._id) || { count: 0, totalFen: 0 };
+    return { ...e, count: a.count, totalFen: a.totalFen };
+  });
 }
 
 /**

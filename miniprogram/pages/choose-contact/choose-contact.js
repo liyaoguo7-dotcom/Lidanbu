@@ -15,6 +15,7 @@ Page({
     keyword: '',
     tipText: '若亲友姓名不在列表中，请点击下方红色按钮添加',
     addSheetOpen: false,
+    canAddContact: true, // 2026-10-31：成员视角只选账本主人可见的亲友，不新增其亲友录联系人
   },
 
   // ---- 小喇叭（统一规格 任务AB：常驻不闪烁、长文字慢速左滚，点 × 本次打开期间不再显示） ----
@@ -26,6 +27,9 @@ Page({
     this.setData({ hornOff: hornState.isDismissed('choose-contact') }); this._syncHorn();
     await dataService.init();
     this.from = (options && options.from) || '';
+    this.ownerId = (options && options.ownerId) || ''; // 成员视角：账本主人 id，缺省=自己
+    const isMember = this.ownerId && this.ownerId !== dataService.getMyUserId();
+    this.setData({ canAddContact: !isMember });
   },
 
   async onShow() {
@@ -35,9 +39,10 @@ Page({
   async reload() {
     const seq = (this._reloadSeq = (this._reloadSeq || 0) + 1);
     const kw = (this.data.keyword || '').trim();
+    const owner = this.ownerId || undefined;
     const list = kw
-      ? await dataService.searchContacts(kw)
-      : await dataService.listContacts();
+      ? await dataService.searchContacts(kw, owner)
+      : await dataService.listContactsFor(owner || dataService.getMyUserId());
     if (seq !== this._reloadSeq) return; // 丢弃过期查询结果
     this.setData({ contacts: list });
   },
@@ -69,6 +74,11 @@ Page({
 
   async onAddConfirm(e) {
     if (this._saving) return; // 在途锁（任务AE补修）
+    // 成员视角不得新增账本主人的亲友录联系人（服务端也会驳回，前端直接拦住）
+    if (this.ownerId && this.ownerId !== dataService.getMyUserId()) {
+      wx.showModal({ title: '提示', content: '成员不能为账本主人新增亲友，请从列表中选择已有亲友。', showCancel: false });
+      return;
+    }
     this._saving = true;
     const { name, remark } = e.detail;
     try {

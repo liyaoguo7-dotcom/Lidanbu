@@ -24,11 +24,13 @@ Page({
     remark: '',
   },
 
-  async onLoad() {
+  async onLoad(options) {
     await dataService.init();
+    this.ownerId = (options && options.ownerId) || ''; // 成员视角：账本主人 id，缺省=自己；保存必须带它，绝不写自己账
     const st = wxStorage();
     const saved = restoreForm(st, GIFT_ADD_KEY);
-    if (saved) {
+    // 表单缓存按账本主人区分：自己账的草稿不复用到成员账（反之亦然），防串账
+    if (saved && (saved.ownerId || '') === (this.ownerId || '')) {
       this.setData(saved);
     } else {
       this.setData({
@@ -45,6 +47,7 @@ Page({
     if (pick) {
       const saved = restoreForm(st, GIFT_ADD_KEY) || {};
       const merged = {
+        ownerId: this.ownerId || '',
         tagId: saved.tagId || this.data.tagId,
         date: saved.date || this.data.date,
         contactId: pick.contactId,
@@ -95,6 +98,7 @@ Page({
 
   persist() {
     saveForm(wxStorage(), GIFT_ADD_KEY, {
+      ownerId: this.ownerId || '',
       tagId: this.data.tagId,
       date: this.data.date,
       contactId: this.data.contactId,
@@ -106,7 +110,8 @@ Page({
 
   goChooseContact() {
     this.persist();
-    wx.navigateTo({ url: '/pages/choose-contact/choose-contact?from=gift-add' });
+    const owner = this.ownerId ? `&ownerId=${this.ownerId}` : '';
+    wx.navigateTo({ url: `/pages/choose-contact/choose-contact?from=gift-add${owner}` });
   },
 
   async onSave() {
@@ -125,7 +130,7 @@ Page({
     try {
       await dataService.createGift({
         contactId, tagId, amountFen: fen, remark: (remark || '').trim(), date,
-      });
+      }, this.ownerId || undefined);
       clearForm(wxStorage(), GIFT_ADD_KEY);
       wx.showToast({ title: '已保存', icon: 'success' });
       wx.navigateBack(); // 成功提示是全局浮层，返回后仍可见：不再固定多等 600ms（2026-10-24 提速，用户反馈新建礼薄等保存后延迟）

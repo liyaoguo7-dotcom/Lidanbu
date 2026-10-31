@@ -28,13 +28,16 @@ test('AZ共享两页：邀请页撤标语+权限说明同段；共享首页标�
   for (const s of SLOGANS) assert(home.includes(s), `共享首页标语块应含「${s}」`);
   const iTip = home.indexOf('class="tip"');
   const iSlogan = home.indexOf(SLOGANS[0]);
-  const iCard = home.indexOf('form-label">邀请家人');
+  // 2026-10-31 家庭共享页改版：上边两项拆成独立渐变方块，主标带内联字号/颜色，
+  // 故不再按旧式 'form-label">邀请家人' 精确串定位，改按标签文本定位（顺序意图不变）。
+  const iCard = home.indexOf('>邀请家人<');
   assert(iTip >= 0 && iTip < iSlogan && iSlogan < iCard, '标语块应在黄条之下、邀请卡之上');
   assert(home.includes('wx:if="{{showSlogans}}"'), '标语块受 showSlogans 控制');
   assert(home.includes('bindtap="onCloseSlogans"'), '标语块应有低调小叉关闭');
   assert(homeJs.includes('shareHomeSlogansClosed'), '关闭标记应落本机 storage');
   assert(homeJs.includes('onCloseSlogans'), '页面应有关闭处理函数');
   // ④ 去灰：邀请卡 margin-top:0、标语块全宽（margin:0）
-  assert(home.includes('class="card" style="margin-top:0"'), '邀请卡应贴黄条/标语块（margin-top:0）');
+  // 2026-10-31 改版后首块样式串后接渐变，故按 margin-top:0 片段断言（贴合意图不变）。
+  assert(home.includes('class="card" style="margin-top:0'), '邀请卡应贴黄条/标语块（margin-top:0）');
   assert(home.includes('background:#FFFFFF;margin:0'), '标语块应全宽白底贴合（不留灰）');
 });

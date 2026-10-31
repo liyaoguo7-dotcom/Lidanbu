@@ -28,9 +28,10 @@ Page({
   async onLoad(options) {
     await dataService.init();
     this.eventId = options.eventId || '';
+    this.ownerId = options.ownerId || ''; // 成员视角：账本主人 id，缺省=自己；保存必须带它，绝不写自己账
     const types = dataService.getRecordTypes();
     const saved = restoreForm(wxStorage(), RECORD_ADD_KEY);
-    if (saved && saved.eventId === this.eventId && saved.type) {
+    if (saved && saved.eventId === this.eventId && (saved.ownerId || '') === (this.ownerId || '') && saved.type) {
       this.setData({ ...saved, types });
     } else {
       this.setData({ types, type: '微信', date: today() });
@@ -51,6 +52,7 @@ Page({
         amount: saved.amount || this.data.amount,
         remark: saved.remark || this.data.remark,
         eventId: this.eventId,
+        ownerId: this.ownerId || '',
       };
       this.setData(merged);
       saveForm(st, RECORD_ADD_KEY, merged);
@@ -95,6 +97,7 @@ Page({
   persist() {
     saveForm(wxStorage(), RECORD_ADD_KEY, {
       eventId: this.eventId,
+      ownerId: this.ownerId || '',
       type: this.data.type,
       date: this.data.date,
       contactId: this.data.contactId,
@@ -106,7 +109,8 @@ Page({
 
   goChooseContact() {
     this.persist();
-    wx.navigateTo({ url: '/pages/choose-contact/choose-contact?from=receive-record-add' });
+    const owner = this.ownerId ? `&ownerId=${this.ownerId}` : '';
+    wx.navigateTo({ url: `/pages/choose-contact/choose-contact?from=receive-record-add${owner}` });
   },
 
   async onSave() {
@@ -129,7 +133,7 @@ Page({
     try {
       await dataService.createRecord(this.eventId, {
         contactId, amountFen: fen, type, remark: (remark || '').trim(), date,
-      });
+      }, this.ownerId || undefined);
       clearForm(wxStorage(), RECORD_ADD_KEY);
       wx.showToast({ title: '已保存', icon: 'success' });
       wx.navigateBack(); // 成功提示是全局浮层，返回后仍可见：不再固定多等 600ms（2026-10-24 提速，用户反馈新建礼薄等保存后延迟）

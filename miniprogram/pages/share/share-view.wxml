@@ -1,4 +1,7 @@
 <!-- XX的账本（家人视角） -->
+<!-- 链接进来的提示页右上角叉：只关当前页、直接到首页；从家庭共享进来时没有这个叉 -->
+<view class="close-btn" wx:if="{{fromLink}}" bindtap="onClosePage">×</view>
+
 <view class="card" style="background:#F1E6D3">
   <view class="form-row" style="border:none">
     <text class="form-val" style="text-align:center;font-weight:bold">正在查看：{{ownerName}}的账本</text>
@@ -6,21 +9,61 @@
   <view style="text-align:center;font-size:12px;color:#999;padding-bottom:12px">仅统计已授权给你的记录</view>
 </view>
 
-<view class="section-title">已授权的礼薄</view>
-<view class="card" wx:if="{{events.length}}">
-  <view class="form-row" wx:for="{{events}}" wx:key="_id">
-    <text class="form-label">{{item.name}}</text>
-    <text class="form-val"></text>
+<!-- 权限展示：只展示、点它不做事（无 bindtap），被授权绿、未授权灰 -->
+<view class="grant-row">
+  <text class="grant-label">你被授权：</text>
+  <view class="capsules">
+    <text class="capsule {{item.on ? 'capsule-on' : 'capsule-off'}}" wx:for="{{switches}}" wx:key="id">{{item.name}}</text>
   </view>
 </view>
-<view class="tip" wx:if="{{!events.length}}">对方尚未授权任何礼薄给你。</view>
+
+<view class="section-title">已授权的礼薄</view>
+<view wx:if="{{events.length || giftsOn}}">
+  <view class="ledger-block" wx:for="{{events}}" wx:key="_id" bindtap="onEventTap" data-id="{{item._id}}">
+    <image class="ledger-icon" wx:if="{{item.icon}}" src="{{item.icon}}" />
+    <view class="ledger-main">
+      <text class="ledger-name">{{item.name}}</text>
+      <text class="ledger-date">{{item.date}}</text>
+    </view>
+    <view class="ledger-right">
+      <text class="ledger-count">共{{item.count}}笔</text>
+      <text class="ledger-amount">¥{{item.totalText}}</text>
+    </view>
+  </view>
+  <!-- 送礼被授权时也作为一行放在礼薄里：圆圈"送"图标，点它进账本主人的送礼页 -->
+  <view class="ledger-block" wx:if="{{giftsOn}}" bindtap="onGiftsTap">
+    <view class="gift-icon">送</view>
+    <view class="ledger-main">
+      <text class="ledger-name">送礼记录</text>
+      <text class="ledger-date">全部送礼</text>
+    </view>
+    <view class="ledger-right">
+      <text class="ledger-count">共{{giftCount}}笔</text>
+      <text class="ledger-amount">¥{{giftTotalText}}</text>
+    </view>
+  </view>
+</view>
+<view class="tip" wx:if="{{!events.length && !giftsOn}}">对方尚未授权任何礼薄给你。</view>
 
 <view class="section-title">往来（已授权部分）</view>
-<view class="card">
-  <view class="form-row">
-    <text class="form-label">收到</text><text class="form-val num">{{totalIn}}</text>
+<!-- 往来方块本身不跳转（无 bindtap）：左送礼粉红、右收礼橙黄，名在上、金额在中、笔数在下 -->
+<view class="wanglai-row">
+  <view class="wanglai-block wanglai-gift">
+    <text class="wanglai-name">送礼</text>
+    <text class="wanglai-amount">¥{{totalOut}}</text>
+    <text class="wanglai-count">{{giftCount}}笔</text>
   </view>
-  <view class="form-row">
-    <text class="form-label">送出</text><text class="form-val num">{{totalOut}}</text>
+  <view class="wanglai-block wanglai-receive">
+    <text class="wanglai-name">收礼</text>
+    <text class="wanglai-amount">¥{{totalIn}}</text>
+    <text class="wanglai-count">{{receiveCount}}笔</text>
   </view>
 </view>
+<!-- 差额块：淡黄底、合计灰字、差额红字，合计与差额同块显示 -->
+<view class="diff-block">
+  <text class="diff-total">{{totalCountText}}</text>
+  <text class="diff-val">差额 ¥{{diffText}}</text>
+</view>
+
+<!-- 底部红条：仅点邀请链接进来时显示；本身不是按钮、无叉、无 bindtap -->
+<view class="link-bar" wx:if="{{fromLink}}">请从家庭共享入口进入</view>

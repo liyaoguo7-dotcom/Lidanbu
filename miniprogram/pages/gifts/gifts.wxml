@@ -53,6 +53,6 @@
 </scroll-view>
 </view>
 
-<view class="fab" bindtap="goAdd">＋</view>
+<view class="fab" wx:if="{{canAdd}}" bindtap="goAdd">＋</view>
 
 <tab-bar selected="{{-1}}"></tab-bar>

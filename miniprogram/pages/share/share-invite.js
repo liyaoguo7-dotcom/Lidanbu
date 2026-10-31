@@ -31,6 +31,7 @@ Page({
     inviteCode: '', // 预生成后 = membershipId（只给分享 path 带码，不再决定按钮颜色）
     canInvite: false, // 按钮可用状态：勾选处理内同步重算（AP批延迟修复）
     inviteHint: '', // 不可发时的提示文案（未选范围/生成失败原因）
+    remark: '', // 2026-10-31：给家人的备注，选填、只邀请人可见、不改被邀请人昵称、限 16 字
   },
 
   _pendingId: '',   // 已预生成的待发邀请（membershipId），本页内只维护这一份
@@ -91,7 +92,13 @@ Page({
         events: this.data.events.filter((e) => e.checked).map((e) => e._id),
         gifts: this.data.giftsOn,
       },
+      remark: this.data.remark || '',
     };
+  },
+
+  onRemarkInput(e) {
+    this.setData({ remark: e.detail.value || '' });
+    this._prepareInvite(); // 备注随预生成一并写进待发邀请（updateGrant 带备注，不另起接口）
   },
 
   /** 静默预生成：串行执行；未选范围不生成、按钮置灰保留原文案提示 */

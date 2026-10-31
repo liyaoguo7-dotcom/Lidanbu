@@ -21,7 +21,7 @@
   </view>
 </view>
 
-<view class="fab fab-low" bindtap="goAdd">＋</view>
+<view class="fab fab-low" wx:if="{{canAddContact}}" bindtap="goAdd">＋</view>
 
 <!-- 添加亲友半屏 -->
 <contact-sheet show="{{addSheetOpen}}"

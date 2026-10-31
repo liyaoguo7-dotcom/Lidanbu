@@ -427,8 +427,9 @@ const service = {
     _cacheList('contacts', list);
     return list.slice();
   },
-  async searchContacts(keyword) {
-    return core.contacts.searchContacts(_db, _userId, _userId, keyword);
+  async searchContacts(keyword, ownerId) {
+    // 2026-10-31：成员视角传账本主人，只搜账本主人可见的亲友（core 已按授权过滤）
+    return core.contacts.searchContacts(_db, _userId, ownerId || _userId, keyword);
   },
   async createContact({ name, remark }) {
     try {
@@ -470,24 +471,28 @@ const service = {
   },
 
   // —— 送礼 ——
-  async listGifts() {
-    if (_listCache.gifts && _listCacheOwner === _userId) return _listCache.gifts.slice();
+  async listGifts(ownerId) {
+    const owner = ownerId || _userId;
+    const isSelf = owner === _userId;
+    if (isSelf && _listCache.gifts && _listCacheOwner === _userId) return _listCache.gifts.slice();
     if (!_userId) return [];
-    const list = await core.gifts.listGifts(_db, _userId, _userId);
+    const list = await core.gifts.listGifts(_db, _userId, owner);
     // 最新在上
     const sorted = list.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    _cacheList('gifts', sorted);
+    if (isSelf) _cacheList('gifts', sorted);
     return sorted.slice();
   },
-  async createGift({ contactId, tagId, amountFen, remark, date }) {
+  async createGift({ contactId, tagId, amountFen, remark, date }, ownerId) {
+    const owner = ownerId || _userId;
+    const isSelf = owner === _userId;
     try {
-      const r = await core.gifts.createGift(_db, _userId, _userId, {
+      const r = await core.gifts.createGift(_db, _userId, owner, {
         contactId, tagId, amount: amountFen, remark, date,
       });
-      await evalInviteQuiet(); // 送礼记录是邀请奖励的有效动作之一
-      // 写穿缓存：新记录立刻在送礼列表最上方（列表按 createdAt 倒序）
+      if (isSelf) await evalInviteQuiet(); // 送礼记录是邀请奖励的有效动作之一；成员记账本主人的账不算自己的邀请奖励
+      // 写穿缓存只针对自己的账；成员账不进自己的列表缓存，绝不混账
       _dirtyWanglai();
-      if (_listCache.gifts && r && r._id) {
+      if (isSelf && _listCache.gifts && r && r._id) {
         _listCache.gifts = [{
           _id: r._id, ownerId: _userId, contactId, tagId, amount: amountFen,
           remark: remark || '', date, createdBy: _userId, createdAt: Date.now(),
@@ -496,31 +501,33 @@ const service = {
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
-  async updateGift(giftId, patch) {
+  async updateGift(giftId, patch, ownerId) {
+    const owner = ownerId || _userId;
     try {
-      const r = await core.gifts.updateGift(_db, _userId, _userId, giftId, patch);
-      if (_listCache.gifts) {
+      const r = await core.gifts.updateGift(_db, _userId, owner, giftId, patch);
+      if (owner === _userId && _listCache.gifts) {
         _listCache.gifts = _listCache.gifts.map((g) => (g._id === giftId ? { ...g, ...patch } : g));
       }
       _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
-  async deleteGift(giftId) {
+  async deleteGift(giftId, ownerId) {
+    const owner = ownerId || _userId;
     try {
-      const r = await core.gifts.deleteGift(_db, _userId, _userId, giftId);
-      if (_listCache.gifts) _listCache.gifts = _listCache.gifts.filter((g) => g._id !== giftId);
+      const r = await core.gifts.deleteGift(_db, _userId, owner, giftId);
+      if (owner === _userId && _listCache.gifts) _listCache.gifts = _listCache.gifts.filter((g) => g._id !== giftId);
       _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
-  async getGift(giftId) {
+  async getGift(giftId, ownerId) {
     // 补记账人显示名在 core.gifts.getGift 内完成（任务Q1/AD，与原直连拼装同口径）
-    return core.gifts.getGift(_db, _userId, _userId, giftId);
+    return core.gifts.getGift(_db, _userId, ownerId || _userId, giftId);
   },
-  /** 送礼详情一次取齐（记录+联系人名，1 趟云端往返） */
-  async getGiftDetail(giftId) {
-    try { return await core.gifts.getGiftDetail(_db, _userId, _userId, giftId); }
+  /** 送礼详情一次取齐（记录+联系人名，1 趟云端往返）；ownerId 缺省=自己 */
+  async getGiftDetail(giftId, ownerId) {
+    try { return await core.gifts.getGiftDetail(_db, _userId, ownerId || _userId, giftId); }
     catch (e) { throw new Error(friendly(e)); }
   },
 
@@ -750,10 +757,11 @@ const service = {
   },
 
   // —— 家庭共享（阶段3） ——
-  /** 发起邀请：{ switches, scope:{events:[], gifts} }；会员专属 */
-  async shareInvite({ switches, scope }) {
+  /** 发起邀请：{ switches, scope:{events:[], gifts}, remark? }；会员专属；
+   * 2026-10-31：备注只邀请人可见、不改被邀请人昵称，服务端限 16 字。 */
+  async shareInvite({ switches, scope, remark }) {
     try {
-      return await core.share.invite(_db, _userId, { switches, scope });
+      return await core.share.invite(_db, _userId, { switches, scope, remark });
     } catch (e) { throw new Error(friendly(e)); }
   },
   /** 我发出的成员列表（含权限摘要） */
@@ -770,10 +778,10 @@ const service = {
       return await core.share.getGrant(_db, _userId, membershipId);
     } catch (e) { throw new Error(friendly(e)); }
   },
-  /** 修改成员权限（立即生效） */
-  async updateGrant(membershipId, { switches, scope }) {
+  /** 修改成员权限（立即生效）；remark 不为 undefined 时同批改邀请人备注 */
+  async updateGrant(membershipId, { switches, scope, remark }) {
     try {
-      return await core.share.updateGrant(_db, _userId, membershipId, { switches, scope });
+      return await core.share.updateGrant(_db, _userId, membershipId, { switches, scope, remark });
     } catch (e) { throw new Error(friendly(e)); }
   },
   /** 移除成员（记录保留） */
@@ -1011,6 +1019,7 @@ const service = {
         _listCache.eventsStats = _listCache.eventsStats.map((e) => (e._id === eventId ? { ...e, ...patch } : e));
       }
       _eventDetailCache.delete(eventId);
+      _eventDetailCache.delete(`${_userId}:${eventId}`);
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
@@ -1022,6 +1031,7 @@ const service = {
         _listCache.eventsStats = _listCache.eventsStats.filter((e) => e._id !== eventId);
       }
       _eventDetailCache.delete(eventId);
+      _eventDetailCache.delete(`${_userId}:${eventId}`);
       _dirtyWanglai(); // 删礼薄连带删其收礼记录
       return r;
     } catch (e) { throw new Error(friendly(e)); }
@@ -1042,67 +1052,75 @@ const service = {
       return await core.receive.listRecords(_db, _userId, _userId, eventId);
     } catch (e) { throw new Error(friendly(e)); }
   },
-  async createRecord(eventId, { contactId, amountFen, type, remark, date }) {
+  async createRecord(eventId, { contactId, amountFen, type, remark, date }, ownerId) {
+    const owner = ownerId || _userId;
+    const isSelf = owner === _userId;
     try {
-      const r = await core.receive.createRecord(_db, _userId, _userId, eventId, {
+      const r = await core.receive.createRecord(_db, _userId, owner, eventId, {
         contactId, amount: amountFen, type, remark, date,
       });
-      await evalInviteQuiet(); // 收礼记录是邀请奖励的有效动作之一
-      // 写穿缓存：礼薄列表的条数/合计即时更新；礼薄详情若在缓存里，新记录插到最上方
-      if (_listCache.eventsStats) {
+      if (isSelf) await evalInviteQuiet(); // 收礼记录是邀请奖励的有效动作之一；成员记账本主人的账不算自己的邀请奖励
+      // 写穿缓存只针对自己的账；成员账不进自己的列表/详情缓存，绝不混账
+      if (isSelf && _listCache.eventsStats) {
         _listCache.eventsStats = _listCache.eventsStats.map((e) => (e._id === eventId
           ? { ...e, count: (e.count || 0) + 1, totalFen: (e.totalFen || 0) + amountFen }
           : e));
       }
       _dirtyWanglai();
-      const det = _eventDetailCache.get(eventId);
-      if (det && r && r._id) {
-        const cDoc = (_listCache.contacts || []).find((c) => c._id === contactId);
-        det.records = [{
-          _id: r._id, ownerId: _userId, eventId, contactId, amount: amountFen,
-          type, remark: remark || '', date, createdBy: _userId, createdAt: Date.now(),
-          contactName: cDoc ? cDoc.name : '',
-        }, ...det.records];
-        det.count += 1;
-        det.totalFen += amountFen;
+      if (isSelf) {
+        const det = _eventDetailCache.get(`${_userId}:${eventId}`) || _eventDetailCache.get(eventId);
+        if (det && r && r._id) {
+          const cDoc = (_listCache.contacts || []).find((c) => c._id === contactId);
+          det.records = [{
+            _id: r._id, ownerId: _userId, eventId, contactId, amount: amountFen,
+            type, remark: remark || '', date, createdBy: _userId, createdAt: Date.now(),
+            contactName: cDoc ? cDoc.name : '',
+          }, ...det.records];
+          det.count += 1;
+          det.totalFen += amountFen;
+        }
       }
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
-  async updateRecord(recordId, patch) {
+  async updateRecord(recordId, patch, ownerId) {
     try {
-      const r = await core.receive.updateRecord(_db, _userId, _userId, recordId, patch);
+      const r = await core.receive.updateRecord(_db, _userId, ownerId || _userId, recordId, patch);
       _dirtyLists('eventsStats'); // 金额/归属可能变，礼薄汇总整表作废重取
       _eventDetailCache.clear();
       _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
-  async deleteRecord(recordId) {
+  async deleteRecord(recordId, ownerId) {
     try {
-      const r = await core.receive.deleteRecord(_db, _userId, _userId, recordId);
+      const r = await core.receive.deleteRecord(_db, _userId, ownerId || _userId, recordId);
       _dirtyLists('eventsStats');
       _eventDetailCache.clear();
       _dirtyWanglai();
       return r;
     } catch (e) { throw new Error(friendly(e)); }
   },
-  async getRecord(recordId) {
+  async getRecord(recordId, ownerId) {
     // 补记账人显示名在 core.receive.getRecord 内完成（任务Q1/AD，与原直连拼装同口径）
-    return core.receive.getRecord(_db, _userId, _userId, recordId);
+    return core.receive.getRecord(_db, _userId, ownerId || _userId, recordId);
   },
-  /** 礼薄详情一次取齐（礼薄+明细+联系人名+合计，1 趟）；会话内缓存，写操作精确同步 */
-  async getEventDetail(eventId) {
-    if (_eventDetailCache.has(eventId)) return _eventDetailCache.get(eventId);
+  /** 礼薄详情一次取齐（礼薄+明细+联系人名+合计，1 趟）；会话内缓存，写操作精确同步；
+   * ownerId 缺省=自己；成员视角不走自己的详情缓存（键含账本主人，防串本）。 */
+  async getEventDetail(eventId, ownerId) {
+    const owner = ownerId || _userId;
+    const cacheKey = `${owner}:${eventId}`;
+    if (_eventDetailCache.has(cacheKey)) return _eventDetailCache.get(cacheKey);
+    // 旧键（自己账）绝不复用于成员视角：成员视角只查新键，查不到即重取。
     try {
-      const d = await core.receive.getEventDetail(_db, _userId, _userId, eventId);
-      if (d) _eventDetailCache.set(eventId, d);
+      const d = await core.receive.getEventDetail(_db, _userId, owner, eventId);
+      if (d) _eventDetailCache.set(cacheKey, d);
       return d;
     } catch (e) { throw new Error(friendly(e)); }
   },
-  /** 收礼记录详情一次取齐（记录+联系人+所属礼薄，1 趟） */
-  async getRecordDetail(recordId) {
-    try { return await core.receive.getRecordDetail(_db, _userId, _userId, recordId); }
+  /** 收礼记录详情一次取齐（记录+联系人+所属礼薄，1 趟）；ownerId 缺省=自己 */
+  async getRecordDetail(recordId, ownerId) {
+    try { return await core.receive.getRecordDetail(_db, _userId, ownerId || _userId, recordId); }
     catch (e) { throw new Error(friendly(e)); }
   },
 

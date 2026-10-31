@@ -18,11 +18,15 @@ Page({
     remark: '',
     showDelModal: false,
     delContent: '',
+    canEdit: true, // 2026-10-31：成员视角按授权 edit/del 开关显隐修改／删除
+    canDel: true,
+    canWanglai: true, // 成员视角不进自己的往来竖线树（会串人），故隐藏
   },
 
   async onLoad(options) {
     await dataService.init();
     this.recordId = options.id;
+    this.ownerId = options.ownerId || ''; // 成员视角：账本主人 id，缺省=自己
     await this.reload();
   },
 
@@ -32,7 +36,16 @@ Page({
 
   async reload() {
     // 一次取齐（记录+联系人+所属礼薄）：原来三趟串行
-    const d = await dataService.getRecordDetail(this.recordId);
+    // 成员视角必须带账本主人，否则读到自己的记录；修改／删除按钮按授权开关显隐
+    const owner = this.ownerId || '';
+    const isMember = owner && owner !== dataService.getMyUserId();
+    const d = await dataService.getRecordDetail(this.recordId, owner || undefined);
+    let canEdit = true; let canDel = true;
+    if (isMember) {
+      const grant = await dataService.getGrantFor(owner).catch(() => null);
+      canEdit = !!(grant && grant.switches && grant.switches.edit);
+      canDel = !!(grant && grant.switches && grant.switches.del);
+    }
     const r = d && d.record;
     if (!r) {
       wx.showToast({ title: '记录不存在', icon: 'none' });
@@ -56,6 +69,7 @@ Page({
       amountText: amountAbs, // 收礼金额，展示时带正号
       remark: r.remark || '无',
       delContent: `${contactName} · ${r.type || ''} · ${amountAbs}`,
+      canEdit, canDel, canWanglai: !isMember,
     });
   },
 
@@ -65,7 +79,8 @@ Page({
   },
 
   goEdit() {
-    wx.navigateTo({ url: `/pages/receive-record-edit/receive-record-edit?id=${this.recordId}` });
+    const owner = this.ownerId ? `&ownerId=${this.ownerId}` : '';
+    wx.navigateTo({ url: `/pages/receive-record-edit/receive-record-edit?id=${this.recordId}${owner}` });
   },
 
   onDelete() {
@@ -80,7 +95,7 @@ Page({
     if (this._deleting) return; // 在途锁（任务AE补修：弹窗在 await 期间还开着，连点会重复删）
     this._deleting = true;
     try {
-      await dataService.deleteRecord(this.recordId);
+      await dataService.deleteRecord(this.recordId, this.ownerId || undefined);
       wx.showToast({ title: '已删除', icon: 'success' });
       wx.navigateBack(); // 成功提示是全局浮层，返回后仍可见：不再固定多等 600ms（2026-10-24 提速，用户反馈新建礼薄等保存后延迟）
     } catch (e) {

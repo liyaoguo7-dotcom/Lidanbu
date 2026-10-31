@@ -39,22 +39,21 @@ Page({
     });
   },
 
-  /** 邀请家人：会员专属，普通用户弹会员介绍 */
+  /** 邀请家人：会员专属；非会员被邀请人点此不跳转、不弹窗，只出轻提示（2026-10-31） */
   onInvite() {
     if (!this.data.isMember) {
-      wx.showModal({
-        title: '会员专属功能',
-        content: '「家庭共享邀请」是会员专属功能，开通会员后即可邀请家人共记一本账。',
-        confirmText: '去看看',
-        cancelText: '再想想',
-        success: (res) => { if (res.confirm) wx.navigateTo({ url: '/pages/member/member-home' }); },
-      });
+      wx.showToast({ title: '请开通会员邀请家人', icon: 'none', duration: 1500 });
       return;
     }
     wx.navigateTo({ url: '/pages/share/share-invite' });
   },
 
+  /** 成员管理：与邀请家人同门禁；非会员只出轻提示、不跳转（2026-10-31） */
   onMembers() {
+    if (!this.data.isMember) {
+      wx.showToast({ title: '请开通会员邀请家人', icon: 'none', duration: 1500 });
+      return;
+    }
     wx.navigateTo({ url: '/pages/share/share-members' });
   },
 

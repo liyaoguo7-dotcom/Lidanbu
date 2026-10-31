@@ -1,12 +1,26 @@
-<!-- 成员管理 -->
-<view class="card" wx:if="{{members.length}}">
-  <view class="form-row" wx:for="{{members}}" wx:key="membershipId" bindtap="onMember" data-id="{{item.membershipId}}">
+<!-- 成员管理：已接受与待接受分开展示 -->
+<view class="section-title" wx:if="{{accepted.length}}">已接受成员</view>
+<view class="card" wx:if="{{accepted.length}}">
+  <view class="form-row" wx:for="{{accepted}}" wx:key="membershipId" bindtap="onMember" data-id="{{item.membershipId}}">
     <view class="form-val">
       <text>{{item.name}}</text>
-      <text class="ph" style="font-size:12px;color:#999"> {{item.status === 'active' ? '' : '（' + item.status + '）'}}</text>
       <view style="font-size:12px;color:#999;margin-top:4px">{{item.switchesText}}</view>
+      <view style="font-size:12px;color:#999;margin-top:2px">{{item.timeText}}</view>
     </view>
     <text class="chev">›</text>
   </view>
 </view>
-<view class="tip" wx:if="{{!members.length}}">还没有成员。去"邀请家人"发出第一份邀请吧。</view>
+
+<view class="section-title" wx:if="{{pending.length}}">待接受邀请</view>
+<view class="card" wx:if="{{pending.length}}">
+  <view class="form-row" wx:for="{{pending}}" wx:key="membershipId" bindtap="onMember" data-id="{{item.membershipId}}">
+    <view class="form-val">
+      <text>{{item.name}}</text>
+      <view style="font-size:12px;color:#999;margin-top:4px">{{item.switchesText}}</view>
+      <view style="font-size:12px;color:#999;margin-top:2px">{{item.timeText}}</view>
+    </view>
+    <text class="chev">›</text>
+  </view>
+</view>
+<view class="tip" wx:if="{{!accepted.length && !pending.length}}">还没有成员。去"邀请家人"发出第一份邀请吧。</view>
+<view class="tip" wx:if="{{pending.length}}">待接受邀请 48 小时内未接受会自动失效，点进去可作废。</view>

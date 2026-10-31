@@ -23,11 +23,13 @@ Page({
     shown: [],
     keyword: '',
     searching: false,
+    canAdd: true, // 2026-10-31：成员视角按授权 add 开关显隐＋按钮；仅查看时不显示
   },
 
   async onLoad(options) {
     await dataService.init();
     this.eventId = options.id;
+    this.ownerId = options.ownerId || ''; // 成员视角：账本主人 id，缺省=自己
     await this.reload();
   },
 
@@ -37,7 +39,14 @@ Page({
 
   async reload() {
     // 一次取齐（礼薄+明细+联系人名+合计）：原来串行四趟（礼薄→统计→联系人→明细）
-    const d = await dataService.getEventDetail(this.eventId);
+    // 成员视角：账本主人参数必须传，否则会读到自己的账；授权 add 开关决定＋按钮显隐
+    const owner = this.ownerId || '';
+    const d = await dataService.getEventDetail(this.eventId, owner || undefined);
+    let canAdd = true;
+    if (owner && owner !== dataService.getMyUserId()) {
+      const grant = await dataService.getGrantFor(owner).catch(() => null);
+      canAdd = !!(grant && grant.switches && grant.switches.add);
+    }
     if (!d || !d.event) {
       wx.showToast({ title: '礼薄不存在', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 800);
@@ -63,6 +72,7 @@ Page({
       totalAmountText: formatAmountInt(d.totalFen),
       records,
       all: records,
+      canAdd,
     });
     this.applyFilter();
   },
@@ -87,11 +97,13 @@ Page({
   },
 
   goAddRecord() {
-    wx.navigateTo({ url: `/pages/receive-record-add/receive-record-add?eventId=${this.eventId}` });
+    const owner = this.ownerId ? `&ownerId=${this.ownerId}` : '';
+    wx.navigateTo({ url: `/pages/receive-record-add/receive-record-add?eventId=${this.eventId}${owner}` });
   },
 
   goRecordDetail(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/receive-record-detail/receive-record-detail?id=${id}` });
+    const owner = this.ownerId ? `&ownerId=${this.ownerId}` : '';
+    wx.navigateTo({ url: `/pages/receive-record-detail/receive-record-detail?id=${id}${owner}` });
   },
 });

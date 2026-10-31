@@ -29,8 +29,14 @@
   </view>
 </view>
 
+<!-- 2026-10-31：旧提示卡删掉，换成"给家人的备注"输入框（选填、只邀请人可见、
+     不改被邀请人自己的昵称、限 16 字）＋48 小时提醒小字 -->
 <view class="card" style="padding:14px 16px">
-  <view style="font-size:13px;color:#999">点下方按钮发给微信好友，对方点开就能加入你的账本，不用填任何码。</view>
+  <view class="form-row" style="border:none">
+    <text class="form-label">你给家人的备注</text>
+    <input class="form-val" style="flex:1;text-align:right" placeholder="如：老婆、儿子，不填则显示对方昵称" maxlength="16" value="{{remark}}" bindinput="onRemarkInput" />
+  </view>
+  <view style="font-size:12px;color:#999;margin-top:8px">被邀请人须在48小时内接受，超时邀请自动失效，须重新邀请。</view>
 </view>
 
 <view style="height:110px"></view>

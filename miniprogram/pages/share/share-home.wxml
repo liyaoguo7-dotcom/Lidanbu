@@ -12,24 +12,31 @@
   <view bindtap="onCloseSlogans" style="position:absolute;top:0;right:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#C2C2C2">×</view>
 </view>
 
-<view class="card" style="margin-top:0">
+<!-- 家庭共享页上边两项（2026-10-31）：拆成两个独立圆角方块，底色只复刻首页两大卡渐变；
+     邀请家人=送礼粉红，成员管理=收礼橙黄；主标16px白字、副文案浅白、三角20px白字 -->
+<view class="card" style="margin-top:0;background:linear-gradient(135deg, #FFC7C3, #F78C8F);border-radius:12px;">
   <view class="form-row" bindtap="onInvite">
-    <text class="form-label">邀请家人</text>
-    <text class="form-val ph">先勾选权限和范围，再发出邀请</text>
-    <text class="chev">›</text>
-  </view>
-  <view class="form-row" bindtap="onMembers">
-    <text class="form-label">成员管理</text>
-    <text class="form-val ph">查看与修改家人权限</text>
-    <text class="chev">›</text>
+    <text class="form-label" style="font-size:16px;color:#FFFFFF;">邀请家人</text>
+    <text class="form-val ph" style="color:rgba(255,255,255,0.9);">先勾选权限和范围，再发出邀请</text>
+    <text class="chev" style="font-size:20px;color:#FFFFFF;">›</text>
   </view>
 </view>
 
-<view class="section-title" wx:if="{{received.length}}">我收到的共享</view>
-<view class="card" wx:if="{{received.length}}">
+<view class="card" style="background:linear-gradient(135deg, #FFE4B8, #FDBE68);border-radius:12px;">
+  <view class="form-row" bindtap="onMembers">
+    <text class="form-label" style="font-size:16px;color:#FFFFFF;">成员管理</text>
+    <text class="form-val ph" style="color:rgba(255,255,255,0.9);">查看与修改家人权限</text>
+    <text class="chev" style="font-size:20px;color:#FFFFFF;">›</text>
+  </view>
+</view>
+
+<!-- 我收到的共享（2026-10-31）：淡蓝 #E2EEFB 独立圆角方块；标题上边距加大，
+     与上边两块之间露出页面灰底、形成明显隔断（不只画一条细线）；块内深色字在淡蓝上可读 -->
+<view class="section-title" wx:if="{{received.length}}" style="margin-top:20px;">我收到的共享</view>
+<view class="card" wx:if="{{received.length}}" style="background:#E2EEFB;border-radius:12px;">
   <view class="form-row" wx:for="{{received}}" wx:key="membershipId" bindtap="onViewShare" data-owner="{{item.ownerId}}">
-    <text class="form-label">{{item.ownerName}}的账本</text>
+    <text class="form-label" style="font-size:16px;">{{item.ownerName}}的账本</text>
     <text class="form-val"></text>
-    <text class="chev">›</text>
+    <text class="chev" style="font-size:20px;">›</text>
   </view>
 </view>

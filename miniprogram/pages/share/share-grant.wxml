@@ -1,4 +1,12 @@
 <!-- 成员权限详情 -->
+<!-- 2026-10-31：备注编辑（选填、只邀请人可见、不改被邀请人昵称、限 16 字），随"保存"一并生效 -->
+<view class="card" style="padding:14px 16px">
+  <view class="form-row" style="border:none">
+    <text class="form-label">你给家人的备注</text>
+    <input class="form-val" style="flex:1;text-align:right" placeholder="如：老婆、儿子，不填则显示对方昵称" maxlength="16" value="{{remark}}" bindinput="onRemarkInput" />
+  </view>
+</view>
+
 <view class="section-title">允许查看我标记的项目</view>
 <view class="card">
   <view class="form-row" wx:for="{{switches}}" wx:key="id" bindtap="onSwitchToggle" data-id="{{item.id}}">
@@ -27,5 +35,5 @@
 <view style="height:130px"></view>
 <view class="btn-bottom">
   <view class="btn-primary" bindtap="onSave" style="{{dirty ? '' : 'opacity:.55'}}">保存（立即生效）</view>
-  <view class="btn-danger-outline" bindtap="onRemove" style="margin-top:10px">移除成员</view>
+  <view class="btn-danger-outline" bindtap="onRemove" style="margin-top:10px">{{isPending ? '作废邀请' : '移除成员'}}</view>
 </view>

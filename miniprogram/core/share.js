@@ -14,6 +14,29 @@ const restriction = require('./restriction');
 const quota = require('./quota');
 const errors = require('./errors');
 const features = require('./features');
+const users = require('./users');
+
+/** 待接受邀请有效期（2026-10-31 用户定）：48 小时，超时自动失效。
+ * 实现为惰性失效：查邀请、进成员管理、接受时按创建时间算，超期即标为
+ * expired 且不再列出、不再接受；不真删库，审计留痕。 */
+const PENDING_TTL_MS = 48 * 3600 * 1000;
+function isPendingExpired(ms, at = now()) {
+  return !!(ms && ms.status === 'pending' && typeof ms.createdAt === 'number'
+    && (at - ms.createdAt) > PENDING_TTL_MS);
+}
+async function markExpiredIfNeeded(db, ms) {
+  if (!isPendingExpired(ms)) return false;
+  try {
+    await db.collection(COLLECTIONS.ShareMembership).update({ _id: ms._id }, { status: 'expired' });
+  } catch (e) { /* 标失效失败不堵主流程：调用方仍按失效处理 */ }
+  return true;
+}
+/** 邀请人备注：只邀请人可见、不改被邀请人昵称；选填、限 16 字（按码点计）。 */
+function normalizeRemark(input) {
+  if (input === undefined || input === null) return undefined;
+  const s = String(input).trim();
+  return Array.from(s).slice(0, 16).join('');
+}
 
 /** 家庭共享总开关守卫（2026-10-25 用户加）：老板平台关掉后，共享的
  * 新建/接受/改权限/移除/列表一律拒绝（入口层另有提示，双保险）。 */
@@ -57,7 +80,7 @@ function normalizeScope(input = {}) {
  * 已过缓冲期的会员一律拒绝，返回"需要开通会员"）；被邀请的家人可为普通用户。
  * @returns {{membershipId}}
  */
-async function invite(db, ownerId, { switches, scope }) {
+async function invite(db, ownerId, { switches, scope, remark }) {
   await assertFamilyShareOn(db);
   await restriction.assertWritable(db, ownerId);
   // 会员门禁（AM批接「会员功能」名单）：名单含 familyShareInvite 时，
@@ -77,8 +100,10 @@ async function invite(db, ownerId, { switches, scope }) {
     const ev = await db.collection(COLLECTIONS.ReceiveEvent).findOne({ _id: eid, ownerId });
     if (!ev) throw new Error(`共享范围含不属于该账本的事件:${eid}`);
   }
+  const remarkNorm = normalizeRemark(remark);
   const { _id: membershipId } = await db.collection(COLLECTIONS.ShareMembership).insert({
-    ownerId, memberId: '', status: 'pending', createdAt: now(),
+    ownerId, memberId: '', status: 'pending', createdAt: now(), acceptedAt: null,
+    remark: remarkNorm === undefined ? '' : remarkNorm,
   });
   await db.collection(COLLECTIONS.ShareGrant).insert({
     membershipId, switches: sw, scope: sc, updatedAt: now(),
@@ -95,10 +120,14 @@ async function accept(db, memberId, membershipId) {
   await restriction.assertWritable(db, memberId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
   if (!ms) throw new Error('邀请不存在');
+  if (ms.status === 'expired' || isPendingExpired(ms)) {
+    await markExpiredIfNeeded(db, ms);
+    throw new Error('邀请已失效，请让邀请人重新邀请');
+  }
   if (ms.status !== 'pending') throw new Error('邀请已处理');
   await db.collection(COLLECTIONS.ShareMembership).update(
     { _id: membershipId },
-    { memberId, status: 'active' }
+    { memberId, status: 'active', acceptedAt: now() }
   );
   await audit.log(db, { ownerId: ms.ownerId, actorId: memberId, action: 'share', targetType: 'member', targetId: membershipId, detail: '接受共享邀请' });
   await notifyShareChanged(db, ms.ownerId, 'inviteAccepted'); // 通知主人：家人加入了
@@ -106,11 +135,21 @@ async function accept(db, memberId, membershipId) {
 }
 
 /** 修改成员权限（主人操作，立即生效） */
-async function updateGrant(db, ownerId, membershipId, { switches, scope }) {
+async function updateGrant(db, ownerId, membershipId, { switches, scope, remark }) {
   await assertFamilyShareOn(db);
   await restriction.assertWritable(db, ownerId);
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
   if (!ms) throw new Error('成员关系不存在');
+  if (ms.status === 'removed') throw new Error('成员关系不存在');
+  if (ms.status === 'expired' || isPendingExpired(ms)) {
+    await markExpiredIfNeeded(db, ms);
+    throw new Error('邀请已失效，请重新邀请');
+  }
+  const remarkNorm = normalizeRemark(remark);
+  if (remarkNorm !== undefined) {
+    await db.collection(COLLECTIONS.ShareMembership).update(
+      { _id: membershipId }, { remark: remarkNorm });
+  }
   const patch = { updatedAt: now() };
   if (switches) patch.switches = normalizeSwitches(switches);
   if (scope) {
@@ -137,21 +176,52 @@ async function removeMember(db, ownerId, membershipId) {
   const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId, ownerId });
   if (!ms) throw new Error('成员关系不存在');
   await db.collection(COLLECTIONS.ShareMembership).update({ _id: membershipId }, { status: 'removed' });
-  // 记录保留：不删除 ReceiveRecord/GiftRecord，createdBy 原样保留
-  await audit.log(db, { ownerId, actorId: ownerId, action: 'share', targetType: 'member', targetId: membershipId, detail: '移除成员，其新增记录保留' });
+  // 记录保留：不删除 ReceiveRecord/GiftRecord，createdBy 原样保留；
+  // 待接受作废同样只改状态、不删库，之后不再列出。
+  await audit.log(db, { ownerId, actorId: ownerId, action: 'share', targetType: 'member', targetId: membershipId, detail: ms.status === 'pending' ? '作废待接受邀请' : '移除成员，其新增记录保留' });
   await notifyShareChanged(db, ms.memberId, 'memberRemoved'); // 通知被移除的成员
   return { ok: true };
 }
 
-/** 成员列表（含权限摘要） */
+/** 成员列表（含权限摘要）——2026-10-31：超 48 小时待接受标失效且不再列出，
+ * 已移除也不再列出；已接受排前、待接受排后；每条附备注、成员显示名、范围摘要、
+ * 接受时间（旧记录无 acceptedAt 时调用方用发出时间兜底，见前端）。 */
 async function listMembers(db, ownerId) {
   await assertFamilyShareOn(db);
   const mss = await db.collection(COLLECTIONS.ShareMembership).find({ ownerId });
+  const events = await db.collection(COLLECTIONS.ReceiveEvent).find({ ownerId });
+  const eventName = new Map(events.map((e) => [e._id, e.name]));
   const out = [];
   for (const ms of mss) {
+    if (ms.status === 'removed' || ms.status === 'expired') continue;
+    if (isPendingExpired(ms)) {
+      await markExpiredIfNeeded(db, ms);
+      continue;
+    }
     const grant = await db.collection(COLLECTIONS.ShareGrant).findOne({ membershipId: ms._id });
-    out.push({ ...ms, grant });
+    let memberName = '';
+    if (ms.memberId) {
+      const memberUser = await db.collection(COLLECTIONS.User).findOne({ _id: ms.memberId });
+      memberName = memberUser ? users.displayName(memberUser) : '';
+    }
+    const scopeEvents = (grant && grant.scope && Array.isArray(grant.scope.events))
+      ? grant.scope.events : [];
+    const scopeNames = scopeEvents.map((id) => eventName.get(id)).filter(Boolean);
+    if (grant && grant.scope && grant.scope.gifts) scopeNames.push('送礼记录');
+    out.push({
+      ...ms,
+      grant,
+      remark: typeof ms.remark === 'string' ? ms.remark : '',
+      memberName,
+      scopeText: scopeNames.join('、'),
+      scopeEventNames: scopeNames,
+    });
   }
+  out.sort((a, b) => {
+    const rank = (s) => (s === 'active' ? 0 : 1);
+    if (rank(a.status) !== rank(b.status)) return rank(a.status) - rank(b.status);
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
   return out;
 }
 
@@ -163,9 +233,16 @@ async function getGrant(db, ownerId, membershipId) {
   return db.collection(COLLECTIONS.ShareGrant).findOne({ membershipId });
 }
 
-/** 按 id 读共享关系文档（任务AD 切云新增）：分享落地页接受邀请前查状态用，同原直连口径 */
+/** 按 id 读共享关系文档（任务AD 切云新增）：分享落地页接受邀请前查状态用，同原直连口径；
+ * 2026-10-31：待接受超 48 小时时标为 expired 再返回，调用方须按 expired 处理（不得当 pending 接受）。 */
 async function getMembership(db, actorId, membershipId) {
-  return db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
+  const ms = await db.collection(COLLECTIONS.ShareMembership).findOne({ _id: membershipId });
+  if (!ms) return ms;
+  if (isPendingExpired(ms)) {
+    await markExpiredIfNeeded(db, ms);
+    return { ...ms, status: 'expired' };
+  }
+  return ms;
 }
 
 /**
@@ -199,4 +276,4 @@ async function getMyGrantFor(db, actorId, ownerId) {
   return { switches: grant.switches || {}, scope: grant.scope || {} };
 }
 
-module.exports = { invite, accept, updateGrant, removeMember, listMembers, getGrant, getMembership, listReceived, getMyGrantFor, SWITCH_IDS };
+module.exports = { invite, accept, updateGrant, removeMember, listMembers, getGrant, getMembership, listReceived, getMyGrantFor, SWITCH_IDS, PENDING_TTL_MS, isPendingExpired, normalizeRemark };

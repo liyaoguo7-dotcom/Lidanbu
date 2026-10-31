@@ -26,6 +26,7 @@ Page({
       { id: 'export', icon: '/images/icons/export.svg', name: '导出备份' },
     ],
     isMember: false,
+    hasReceivedShare: false, // 家庭共享放行（2026-10-31）：已收到共享的非会员也可进家庭共享页
     initFailed: false,     // 静默初始化失败 → 显示重试条
     privacyShow: false,    // 隐私弹窗是否显示
     privacyDeclined: false, // 已弹过窗且未同意 → 显示委婉说明条（只读浏览保留）
@@ -179,11 +180,17 @@ Page({
   async refreshMember() {
     try {
       // 管理员免会员（2026-10-30）：管理员视同会员，首页金刚区（家庭共享/拍照导入）直接放行。
-      const [m, isAdmin] = await Promise.all([
+      // 家庭共享放行（2026-10-31）：已收到共享的非会员也可进家庭共享页，故 onShow/onLoad
+      // 的 refreshMember 里就一并查好已收到共享状态，点击时不再现查、避免闪拦。
+      const [m, isAdmin, received] = await Promise.all([
         dataService.getMembership(),
         dataService.isAdmin().catch(() => false),
+        dataService.myReceivedShares().catch(() => []),
       ]);
-      this.setData({ isMember: m.state === 'member' || m.state === 'grace' || !!isAdmin });
+      this.setData({
+        isMember: m.state === 'member' || m.state === 'grace' || !!isAdmin,
+        hasReceivedShare: Array.isArray(received) && received.length > 0,
+      });
     } catch (e) { /* 演示期忽略 */ }
   },
 
@@ -305,7 +312,9 @@ Page({
         return;
       }
     }
-    if ((id === 'share' || id === 'photo') && !this.data.isMember) {
+    // 家庭共享放行（2026-10-31）：会员/管理员，或已收到共享的非会员，都可进家庭共享页；
+    // 既非会员又未收到共享的，才走原有会员专属弹窗（拍照导入不受此放行影响）。
+    if ((id === 'share' || id === 'photo') && !this.data.isMember && !(id === 'share' && this.data.hasReceivedShare)) {
       // 会员功能名单（AM批接上）：名单含该功能才拦非会员；不含则免费用户也能用。
       // 名单取不到时按含处理（宁可拦住，与接线前行为一致）。
       const key = id === 'share' ? 'familyShareInvite' : 'photoImport';
