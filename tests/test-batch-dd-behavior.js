@@ -6,19 +6,19 @@ const fs = require('fs');
 const path = require('path');
 const readMp = (p) => fs.readFileSync(path.join(__dirname, '..', 'miniprogram', p), 'utf8');
 
-test('DD 亲友录字母条回米色＋圆角＋留边', () => {
+test('DD 亲友录字母条回米色＋圆角（2026-10-31 用户纠正：只动卡片左右边距）', () => {
   const ct = readMp('pages/contacts/contacts.wxss');
   const wxml = readMp('pages/contacts/contacts.wxml');
   const gt = ct.slice(ct.indexOf('.group-title {'), ct.indexOf('.contact-row {'));
   assert(!gt.includes('margin-right'), '字母行恢复通长不动');
-  assert(gt.includes('padding: 2px 16px 1px 2px;'), '字母行左右留边、上下 2px/1px');
+  assert(gt.includes('padding: 2px 16px 1px 2px;'), '字母行内边距不动、上下 2px/1px');
   assert(gt.includes('border-radius: 8px;'), '字母行圆角 8px');
   assert(gt.includes('color: #666;'), '字母回深灰');
   assert(gt.includes('background: rgba(253, 239, 203, 0.6);'), '字母条底色淡黄半透明米色');
   for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 米色`);
-  assert(ct.includes('.card { overflow: hidden; }'), '卡片回全局边距圆角（通铺撤销）');
+  assert(ct.includes('margin: 10px 0;') && !ct.slice(ct.indexOf('.card {'), ct.indexOf('.group-title {')).includes('border-radius'), '卡片只动左右边距（2026-10-31 用户纠正，其他不动）');
   const row = ct.slice(ct.indexOf('.contact-row {'), ct.indexOf('.contact-row:last-child {'));
-  assert(row.includes('padding: 0 16px 0 2px;'), '联系人行左右留边');
+  assert(row.includes('padding: 0 16px 0 2px;'), '联系人行内边距不动');
   assert(row.includes('min-height: 50px;'), '联系人行高度不动');
   assert(wxml.includes('<view class="fixed-head">'), '提示条＋搜索框置顶层不动');
   assert(ct.includes('.fixed-head { position: sticky; top: 0; z-index: 10; background: #F6F6F6; }'), '置顶层不动');

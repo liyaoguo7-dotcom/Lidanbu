@@ -379,7 +379,21 @@ const service = {
   /** 陪伴天数（我的页新方块用）：注册日起算、当天算第 1 天；无注册日返回 null */
   async getCompanionDays() {
     const user = await ensureUser();
-    return core.users.companionDays(user && user.createdAt);
+    const direct = core.users.companionDays(user && user.createdAt);
+    if (direct !== null) return direct;
+    // 无注册日：走服务端兜底（注册赠送流水）；云函数未重部署、新接口不存在时
+    // 走客户端流水列表兜底（100 条内），仍无则 null，不造假数
+    try {
+      if (typeof core.users.getCompanionDays === 'function') {
+        const days = await core.users.getCompanionDays(_db, _userId);
+        if (days !== null && days !== undefined) return days;
+      }
+    } catch (e) { /* 旧云函数未部署时走客户端兜底 */ }
+    try {
+      const list = await core.points.listLedger(_db, _userId, { limit: 100 });
+      const entry = (list || []).find((e) => e && e.kind === 'register_grant' && e.refId === `register:${_userId}`);
+      return core.users.companionDays(entry && entry.createdAt);
+    } catch (e) { return null; }
   },
   /** 改昵称/头像：昵称过长度与内容安全校验（core/users），违规抛委婉文案 */
   async updateProfile(patch) {

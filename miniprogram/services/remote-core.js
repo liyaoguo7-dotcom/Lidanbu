@@ -130,6 +130,7 @@ function createRemoteCore(transport) {
     ]),
     users: Object.assign(makeRemoteModule(t, 'users', [
       'getProfile', 'getSelf', 'updateProfile', 'getPrivacyConsent', 'setPrivacyConsent',
+      'getCompanionDays',
     ]), {
       // 纯函数（用户文档 → 显示名）：本地实现，绝不走 RPC
       displayName: localCore.users.displayName,

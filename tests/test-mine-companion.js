@@ -33,7 +33,7 @@ test('我的页陪伴方块：位置、淡粉底、小书本图标、文案与�
   const companionIdx = wxml.indexOf('人情礼单簿已陪伴你');
   const landscapeIdx = wxml.indexOf('横置礼单本');
   assert(memberIdx >= 0 && companionIdx > memberIdx && landscapeIdx > companionIdx, '方块应在会员卡片下、横置上面');
-  assert(wxml.includes('/images/icons/book.svg'), '方块前应有小书本图标');
+  assert(wxml.includes('/images/icons/mine-companion.png'), '方块前应有小书本图标（PNG，SVG 真机上是空框）');
   assert(wxml.includes('companionDays'), '方块应接 companionDays 天数');
   assert(wxss.includes('#FDE8E8'), '方块底色应为拍照导入淡粉 #FDE8E8');
   assert(mineJs.includes('getCompanionDays'), '我的页应从 data-service 取陪伴天数');
@@ -45,4 +45,82 @@ test('我的页头像栏与会员卡：新色纯色不渐变', async () => {
   assert(wxss.includes('background: #F78C8F'), '会员卡应为送礼右边浓粉红 #F78C8F');
   assert(!wxss.includes('linear-gradient(135deg, #FFB84D'), '头像栏不应再有旧橙黄渐变');
   assert(!wxss.includes('linear-gradient(135deg, #F67070'), '会员卡不应再有旧红渐变');
+});
+
+/** 2026-10-31 陪伴兜底 + 行图标批（用户定）：
+ * - getCompanionDays：优先 createdAt；无/非法时以注册赠送流水 createdAt 兜底；仍无回 null
+ * - 陪伴方块样式：上下内边距 12px→8px、字号 16px→14px，天数加粗不动
+ * - 7 行行首图标：PNG（不用 SVG，微信 image 对 SVG 支持不好，book.svg 真机上是空框），
+ *   每行最左、文字右移、右边箭头/开关/计数不动；演示行不在内 */
+const { getCompanionDays } = require('../core/users');
+const { COLLECTIONS } = require('../core').models;
+
+function fakeDb(uid, userDoc, ledgerDoc) {
+  return {
+    collection: (name) => ({
+      findOne: async (q) => {
+        if (name === COLLECTIONS.User) return q && q._id === uid ? userDoc : null;
+        if (name === COLLECTIONS.PointsLedger) {
+          return q && q.kind === 'register_grant' && q.refId === `register:${uid}` ? ledgerDoc : null;
+        }
+        return null;
+      },
+    }),
+  };
+}
+
+test('陪伴兜底：优先 createdAt，无则注册赠送流水，仍无回 null', async () => {
+  const now = at(2026, 10, 31);
+  const db1 = fakeDb('u1', { _id: 'u1', createdAt: at(2026, 10, 20) }, { createdAt: at(2026, 10, 25) });
+  assert.eq(await getCompanionDays(db1, 'u1', now), 12, '有 createdAt 时应优先它，不用流水日');
+  const db2 = fakeDb('u1', { _id: 'u1', createdAt: null }, { createdAt: at(2026, 10, 20) });
+  assert.eq(await getCompanionDays(db2, 'u1', now), 12, '无 createdAt 时应以注册赠送流水日兜底');
+  const db3 = fakeDb('u1', { _id: 'u1', createdAt: 'not-a-date' }, null);
+  assert.eq(await getCompanionDays(db3, 'u1', now), null, 'createdAt 非法且无流水时应回 null，不造假');
+  const db4 = fakeDb('u1', null, null);
+  assert.eq(await getCompanionDays(db4, 'u1', now), null, '用户与流水都无时应回 null');
+  assert.eq(await getCompanionDays(fakeDb('u1', null, null), '', now), null, '无用户时应回 null');
+});
+
+test('陪伴方块样式：上下 8px、字号 14px，陪伴图标改 PNG（SVG 真机空框）', async () => {
+  const wxml = read('miniprogram/pages/mine/mine.wxml');
+  const wxss = read('miniprogram/pages/mine/mine.wxss');
+  assert(wxss.includes('padding: 8px 16px'), '陪伴方块上下内边距应为 8px（左右 16px 不动）');
+  assert(wxss.includes('.companion-text { font-size: 14px'), '陪伴文字应为 14px');
+  assert(wxss.includes('.companion-days { font-weight: 600'), '天数加粗不动');
+  // 2026-10-31 用户定：陪伴文本上下左右居中（图标＋文字整组居中，不靠左）
+  assert(wxss.includes('justify-content: center'), '陪伴方块应水平居中');
+  assert(wxss.includes('align-items: center'), '陪伴方块应垂直居中');
+  assert(/\.companion-card \{[^}]*text-align: center/.test(wxss), '陪伴方块文字应居中');
+  assert(wxml.includes('/images/icons/mine-companion.png'), '陪伴图标应改 PNG，不再用 book.svg');
+  assert(!wxml.includes('/images/icons/book.svg'), '我的页不应再引用 book.svg');
+});
+
+test('我的页 7 行行首图标：PNG、最左、右边不动，演示行不在内', async () => {
+  const wxml = read('miniprogram/pages/mine/mine.wxml').replace(/<!--[\s\S]*?-->/g, '');
+  const rows = [
+    ['mine-landscape.png', '横置礼单本'], ['mine-invite.png', '邀请分享'],
+    ['mine-notify.png', '通知'], ['mine-feedback.png', '意见反馈'],
+    ['mine-faq.png', '常见问题'], ['mine-about.png', '关于我们'],
+    ['mine-contact.png', '联系客服'],
+  ];
+  for (const [png, label] of rows) {
+    const iconIdx = wxml.indexOf(png);
+    const labelIdx = wxml.indexOf(label);
+    assert(iconIdx >= 0 && labelIdx > iconIdx, `${label} 行最左应有 ${png}`);
+    const pngPath = path.join(ROOT, 'miniprogram/images/icons', png);
+    const buf = fs.readFileSync(pngPath);
+    assert(buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47, `${png} 应为真 PNG 字节，不是 SVG 文本`);
+  }
+  assert.eq((wxml.match(/class="row-icon"/g) || []).length, 7, '行图标应恰好 7 个，演示行不在内');
+  // 2026-10-31 用户定：联系客服图标由信封改耳机（mine-contact.svg 应为头梁＋两耳罩）
+  const contactSvg = read('miniprogram/images/icons/mine-contact.svg');
+  assert(contactSvg.includes('a16 16'), '联系客服图标应为耳机头梁弧线');
+  assert(contactSvg.includes('y="31"'), '联系客服图标应有两耳罩');
+  const wxss = read('miniprogram/pages/mine/mine.wxss');
+  assert(wxss.includes('.row-icon { width: 20px; height: 20px; flex: none; margin-right: 8px; }'), '行图标应为 20px、与文字留 8px');
+  const ds = read('miniprogram/services/data-service.js');
+  assert(ds.includes('register_grant'), '客户端兜底应查注册赠送流水');
+  const remote = read('miniprogram/services/remote-core.js');
+  assert(remote.includes('getCompanionDays'), '云函数远程清单应登记 getCompanionDays');
 });

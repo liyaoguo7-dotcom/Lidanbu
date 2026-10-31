@@ -1,6 +1,6 @@
 /* 亲友录 */
 /* CD批（用户定：颜色太多看着不舒服）：字母行六色循环取消，全换成图中浅蓝（L 组那个蓝）；卡片裁溢出防首行圆角外露 */
-.card { overflow: hidden; } /* DD批：通铺撤销，恢复全局卡边距圆角（app.wxss：10px 12px、12px） */
+.card { overflow: hidden; margin: 10px 0; } /* 2026-10-31 用户纠正：亲友录只动卡片左右边距归零，其他不动（圆角等回全局） */
 /* CK批（用户 2026-10-29 定）＋CK修正（用户同日纠正：是上下太宽不是
    左右宽）：字母行浅蓝改淡黄再透明一点（rgba 0.6）；上下收窄（内边距
    6px/2px 改 2px/1px）；左右长度不动，全部换圆角。
@@ -29,7 +29,7 @@
 .contact-row {
   display: flex;
   align-items: center;
-  padding: 0 16px 0 2px; /* DD批：通铺撤销，左右留边回 CL 版 */
+  padding: 0 16px 0 2px;
   min-height: 50px;
   border-bottom: 1px solid #F0F0F0;
 }

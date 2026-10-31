@@ -179,8 +179,12 @@ test('任务AE：我的页字体统一（=亲友录联系人姓名 .nm 大小，
   // DG批例外：本页所有行右边箭头统一 18px（用户 2026-10-30 定），是图形符号不是正文，
   // 不纳入 AE 的正文字号规则；扫描前剔除 .chev 规则（DG 自有断言把守 18px）。
   assert(/\.chev \{ font-size: 18px;/.test(wxss), 'DG批箭头统一 18px');
+  // 2026-10-31 批例外：陪伴方块文字用户定 16px→14px（上下 8px），仅此一处豁免，
+  // 其余仍只许 16/17/22；扫描前剔除 .companion-text 规则（陪伴批自有断言把守 14px）。
+  assert(/\.companion-text \{ font-size: 14px/.test(wxss), '陪伴方块文字用户定 14px');
   const wxssNoBar = wxss.replace(/\.addmp-bar \{[^}]*\}/, '')
     .replace(/\.chev \{[^}]*\}/, '')
+    .replace(/\.companion-text \{[^}]*\}/, '')
     .replace(/\/\* BA批教程层[\s\S]*$/, '');
   const sizes = [...wxssNoBar.matchAll(/font-size:\s*(\d+)px/g)].map((m) => Number(m[1]));
   // BX批：行文字／用户名随联系人字号到 17px，会员卡片内文字仍 16px，故允许 16／17／22 三档

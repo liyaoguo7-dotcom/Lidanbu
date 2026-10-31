@@ -13,9 +13,9 @@ test('CK 亲友录字母行透明淡黄＋上下收窄＋全圆角', () => {
   assert(!ct.includes('#E2EEFB'), '字母行不再有浅蓝');
   assert(!ct.includes('#FDEFCB'), '字母行不再是实色淡黄');
   const gt = ct.slice(ct.indexOf('.group-title {'), ct.indexOf('.contact-row {'));
-  assert(gt.includes('padding: 2px 16px 1px 2px;'), '字母行上下 2px/1px、左右留边回 CK 版（DD批）');
+  assert(gt.includes('padding: 2px 16px 1px 2px;'), '字母行上下 2px/1px、左右内边距不动（DD批）');
   assert(!gt.includes('margin-right'), 'CV批收短一半已作废：字母行恢复通长');
   assert(gt.includes('border-radius: 8px;'), '字母行圆角 8px（DD批）');
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动');
-  assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出不动、通铺撤销（DD批）');
+  assert(ct.includes('margin: 10px 0;') && !ct.slice(ct.indexOf('.card {'), ct.indexOf('.group-title {')).includes('border-radius'), '亲友录卡只动左右边距（2026-10-31 用户纠正，其他不动）');
 });

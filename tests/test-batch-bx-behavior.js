@@ -66,7 +66,7 @@ test('BX 六色搭配：往来时间按钮／对照块／差额条、亲友录�
   const ct = readMp('pages/contacts/contacts.wxss');
   for (let i = 0; i < 6; i++) assert(ct.includes(`.group-title.c${i} { background: rgba(253, 239, 203, 0.6); }`), `字母行 c${i} 米色（DD批：暗灰改回）`);
   assert(readMp('pages/contacts/contacts.wxml').includes('group-title c{{gi % 6}}'), '字母行绑定不动，只改色值');
-  assert(ct.includes('.card { overflow: hidden; }'), '亲友录卡裁溢出、通铺撤销（DD批）');
+  assert(ct.includes('margin: 10px 0;') && !ct.slice(ct.indexOf('.card {'), ct.indexOf('.group-title {')).includes('border-radius'), '亲友录卡只动左右边距（2026-10-31 用户纠正，其他不动）');
   const mine = readMp('pages/mine/mine.wxss');
   // 2026-10-31 用户定：DG 橙黄渐变作废，头像栏改首页收礼左边 #FFE4B8 半透明淡黄纯色不渐变
   assert(mine.includes('.card.profile { background: rgba(255, 228, 184, 0.6); }'), '头像栏收礼左边半透明淡黄纯色（2026-10-31）');

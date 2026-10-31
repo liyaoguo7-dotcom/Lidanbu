@@ -173,6 +173,28 @@ function companionDays(createdAt, nowMs) {
   return diff >= 0 ? diff + 1 : 1;
 }
 
+/**
+ * 陪伴天数（带兜底，2026-10-31 用户定修）：优先用户文档 createdAt（第一次进入
+ * 小程序、系统自动登录建号那一刻）；无/非法时以注册赠送流水兜底——建号时系统
+ * 同时发 15 分注册赠送，那笔流水（kind='register_grant'，refId='register:<用户>'）
+ * 的 createdAt 就是建号那一刻，与 createdAt 同源，不是拿记录日凑数；
+ * 仍无流水返回 null，页面只显示前半句，不造假数。
+ * 注意：兜底不写回用户文档——流水日只是恢复出来的建号时刻依据，写回会把
+ * 兜底结果当成原始事实存下来。
+ */
+async function getCompanionDays(db, userId, nowMs) {
+  if (!userId) return null;
+  const user = await db.collection(COLLECTIONS.User).findOne({ _id: userId });
+  const direct = companionDays(user && user.createdAt, nowMs);
+  if (direct !== null) return direct;
+  try {
+    const entry = await db.collection(COLLECTIONS.PointsLedger).findOne({
+      userId, kind: 'register_grant', refId: `register:${userId}`,
+    });
+    return companionDays(entry && entry.createdAt, nowMs);
+  } catch (e) { return null; }
+}
+
 /** 取用户资料的展示形状：{ displayName, nickname(原始存值), avatarUrl } */
 async function getProfile(db, userId) {
   const user = await db.collection(COLLECTIONS.User).findOne({ _id: userId });
@@ -207,6 +229,7 @@ module.exports = {
   generatedNickname,
   displayName,
   companionDays,
+  getCompanionDays,
   consentOf,
   getPrivacyConsent,
   setPrivacyConsent,
